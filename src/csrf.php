@@ -3,7 +3,9 @@ class Csrf
 {
     public static function token(): string
     {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
         }
@@ -17,7 +19,9 @@ class Csrf
             $body = json_decode(file_get_contents('php://input'), true);
             $token = $body['csrf'] ?? $body['csrf_token'] ?? null;
         }
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         if (empty($token) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
             jsonResponse(['error' => 'Token CSRF inválido'], 403);
         }

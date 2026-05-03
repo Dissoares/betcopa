@@ -23,8 +23,32 @@
       <div class="header__user" id="headerUser">
         <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
       </div>
+        <button class="mobile-toggle" id="btnMobileMenu" aria-label="Abrir menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </header>
+
+  <div class="drawer hidden" id="mobileDrawer">
+    <div class="drawer__backdrop" data-action="close-mobile-menu"></div>
+    <div class="drawer__panel">
+      <div class="drawer__top">
+        <a class="drawer__logo" href="#" data-nav="jogos">⚽ BetCopa</a>
+        <button class="drawer__close" data-action="close-mobile-menu" aria-label="Fechar menu">×</button>
+      </div>
+      <nav class="drawer__nav">
+        <button class="nav__btn nav__btn--active" data-nav="jogos">Jogos</button>
+        <button class="nav__btn" data-nav="ganhadores">Ganhadores</button>
+        <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none">Meus Palpites</button>
+        <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none">Admin</button>
+      </nav>
+      <div class="drawer__footer">
+        <div class="header__user" id="drawerUser"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="alerts container" id="alerts"></div>
 

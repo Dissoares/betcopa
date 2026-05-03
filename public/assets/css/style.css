@@ -105,6 +105,105 @@ button, input, select { font: inherit; }
 
 .header__user { margin-left: auto; display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
 
+.mobile-toggle {
+  display: none;
+  border: 0;
+  background: transparent;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin-right: .5rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mobile-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  margin: 4px 0;
+  background: var(--text);
+  border-radius: 999px;
+  transition: transform .2s ease, opacity .2s ease;
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: none;
+}
+
+.drawer--open {
+  display: block;
+}
+
+.drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(6px);
+}
+
+.drawer__panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(320px, 85vw);
+  height: 100%;
+  background: #091020;
+  border-right: 1px solid rgba(255,255,255,.08);
+  padding: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transform: translateX(-100%);
+  animation: slideIn 0.25s forwards ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.drawer__top {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+}
+
+.drawer__logo {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.drawer__close {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.drawer__nav {
+  display: flex; flex-direction: column; gap: .65rem;
+}
+
+.drawer__nav .nav__btn {
+  width: 100%;
+  justify-content: flex-start;
+  padding: .85rem 1rem;
+  border-radius: 16px;
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+}
+
+.drawer__footer {
+  margin-top: auto;
+}
+
 .user-chip {
   display: flex; align-items: center; gap: .55rem;
   background: var(--surface-2);
@@ -755,6 +854,9 @@ select {
 
 @media (max-width: 768px) {
   .header__inner { gap: .75rem; }
+  .nav { display: none; }
+  .mobile-toggle { display: inline-flex; }
+  .header__user { display: none; }
   .nav__btn      { padding: .4rem .65rem; font-size: .82rem; }
   .games-grid    { grid-template-columns: 1fr; }
   .ranking-grid  { grid-template-columns: 1fr; }

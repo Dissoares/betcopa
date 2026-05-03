@@ -166,6 +166,7 @@ const navigate = (view) => {
 // ── Header user chip ──────────────────────────────────────────
 const renderHeader = () => {
   const wrap = document.getElementById('headerUser');
+  const drawerWrap = document.getElementById('drawerUser');
   if (S.user) {
     const initials = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const saldo    = parseFloat(S.user.saldo || 0);
@@ -189,11 +190,23 @@ const renderHeader = () => {
       document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = '');
     }
   } else {
-    wrap.innerHTML = `<button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>`;
-    document.getElementById('btnNavLogin').addEventListener('click', () => navigate('auth'));
+    const loginButton = `<button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>`;
+    if (wrap) wrap.innerHTML = loginButton;
+    if (drawerWrap) drawerWrap.innerHTML = loginButton;
+    document.getElementById('btnNavLogin')?.addEventListener('click', () => navigate('auth'));
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = 'none');
   }
+};
+
+const openMobileMenu = () => {
+  document.getElementById('mobileDrawer')?.classList.add('drawer--open');
+  document.body.classList.add('drawer-open');
+};
+
+const closeMobileMenu = () => {
+  document.getElementById('mobileDrawer')?.classList.remove('drawer--open');
+  document.body.classList.remove('drawer-open');
 };
 
 // ── Game cards ────────────────────────────────────────────────

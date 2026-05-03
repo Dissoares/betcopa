@@ -56,7 +56,6 @@ try {
     if (str_starts_with($uri, '/api/')) {
 
         if ($uri === '/api/csrf' && $method === 'GET') {
-            session_start();
             jsonResponse(['token' => Csrf::token()]);
         }
 
