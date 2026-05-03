@@ -17,68 +17,75 @@ const S = {
   adminEmail:   'admin@betcopa.local',
 };
 
-// ── Flag map: team name → ISO 3166-1 alpha-2 ─────────────────
-const FLAGS = {
-  'brasil': 'br', 'brazil': 'br',
-  'argentina': 'ar',
-  'franca': 'fr', 'franca': 'fr', 'france': 'fr',
-  'alemanha': 'de', 'germany': 'de',
-  'espanha': 'es', 'spain': 'es',
-  'portugal': 'pt',
-  'italia': 'it', 'italy': 'it',
-  'mexico': 'mx',
-  'noruega': 'no', 'norway': 'no',
-  'japao': 'jp', 'japan': 'jp',
-  'coreia': 'kr', 'korea': 'kr', 'south korea': 'kr',
-  'usa': 'us', 'estados unidos': 'us', 'united states': 'us',
-  'inglaterra': 'gb-eng', 'england': 'gb-eng',
-  'holanda': 'nl', 'netherlands': 'nl', 'paises baixos': 'nl',
-  'belgica': 'be', 'belgium': 'be',
-  'croacia': 'hr', 'croatia': 'hr',
-  'marrocos': 'ma', 'morocco': 'ma',
-  'senegal': 'sn',
-  'gana': 'gh', 'ghana': 'gh',
-  'uruguai': 'uy', 'uruguay': 'uy',
-  'chile': 'cl',
-  'colombia': 'co',
-  'equador': 'ec', 'ecuador': 'ec',
-  'australia': 'au',
-  'suica': 'ch', 'switzerland': 'ch',
-  'polonia': 'pl', 'poland': 'pl',
-  'dinamarca': 'dk', 'denmark': 'dk',
-  'suecia': 'se', 'sweden': 'se',
-  'servia': 'rs', 'serbia': 'rs',
-  'turquia': 'tr', 'turkey': 'tr',
-  'tunisia': 'tn',
-  'camaroes': 'cm', 'cameroon': 'cm',
-  'nigeria': 'ng',
-  'costa rica': 'cr',
-  'panama': 'pa',
-  'bolivia': 'bo',
-  'peru': 'pe',
-  'venezuela': 've',
-  'paraguai': 'py', 'paraguay': 'py',
-  'russia': 'ru',
-  'ucrania': 'ua', 'ukraine': 'ua',
-  'austria': 'at',
-  'hungria': 'hu', 'hungary': 'hu',
-  'republica tcheca': 'cz', 'czech republic': 'cz',
-  'escocia': 'gb-sct', 'scotland': 'gb-sct',
-  'gales': 'gb-wls', 'wales': 'gb-wls',
-  'irlanda': 'ie', 'ireland': 'ie',
-  'canada': 'ca',
-  'arabia saudita': 'sa', 'saudi arabia': 'sa',
-  'australia': 'au',
-  'china': 'cn',
-  'indonesia': 'id',
-  'egito': 'eg', 'egypt': 'eg',
-  'costa do marfim': 'ci', 'ivory coast': 'ci',
-  'mali': 'ml',
-  'etiopia': 'et', 'ethiopia': 'et',
-  'africa do sul': 'za', 'south africa': 'za',
-  'iran': 'ir',
-  'coreia do norte': 'kp', 'north korea': 'kp',
-};
+// ── Catálogo de seleções (nome canônico PT-BR + código ISO) ──
+const TEAMS = [
+  { name: 'África do Sul',    code: 'za' },
+  { name: 'Alemanha',         code: 'de' },
+  { name: 'Arábia Saudita',   code: 'sa' },
+  { name: 'Argentina',        code: 'ar' },
+  { name: 'Austrália',        code: 'au' },
+  { name: 'Áustria',          code: 'at' },
+  { name: 'Bélgica',          code: 'be' },
+  { name: 'Bolívia',          code: 'bo' },
+  { name: 'Brasil',           code: 'br' },
+  { name: 'Camarões',         code: 'cm' },
+  { name: 'Canadá',           code: 'ca' },
+  { name: 'Chile',            code: 'cl' },
+  { name: 'China',            code: 'cn' },
+  { name: 'Colômbia',         code: 'co' },
+  { name: 'Coreia do Norte',  code: 'kp' },
+  { name: 'Coreia do Sul',    code: 'kr' },
+  { name: 'Costa do Marfim',  code: 'ci' },
+  { name: 'Costa Rica',       code: 'cr' },
+  { name: 'Croácia',          code: 'hr' },
+  { name: 'Dinamarca',        code: 'dk' },
+  { name: 'Egito',            code: 'eg' },
+  { name: 'Equador',          code: 'ec' },
+  { name: 'Escócia',          code: 'gb-sct' },
+  { name: 'Espanha',          code: 'es' },
+  { name: 'Estados Unidos',   code: 'us' },
+  { name: 'Etiópia',          code: 'et' },
+  { name: 'França',           code: 'fr' },
+  { name: 'Gales',            code: 'gb-wls' },
+  { name: 'Gana',             code: 'gh' },
+  { name: 'Holanda',          code: 'nl' },
+  { name: 'Hungria',          code: 'hu' },
+  { name: 'Indonésia',        code: 'id' },
+  { name: 'Inglaterra',       code: 'gb-eng' },
+  { name: 'Irlanda',          code: 'ie' },
+  { name: 'Irã',              code: 'ir' },
+  { name: 'Itália',           code: 'it' },
+  { name: 'Japão',            code: 'jp' },
+  { name: 'Mali',             code: 'ml' },
+  { name: 'Marrocos',         code: 'ma' },
+  { name: 'México',           code: 'mx' },
+  { name: 'Nigéria',          code: 'ng' },
+  { name: 'Noruega',          code: 'no' },
+  { name: 'Panamá',           code: 'pa' },
+  { name: 'Paraguai',         code: 'py' },
+  { name: 'Peru',             code: 'pe' },
+  { name: 'Polônia',          code: 'pl' },
+  { name: 'Portugal',         code: 'pt' },
+  { name: 'República Tcheca', code: 'cz' },
+  { name: 'Rússia',           code: 'ru' },
+  { name: 'Senegal',          code: 'sn' },
+  { name: 'Sérvia',           code: 'rs' },
+  { name: 'Suécia',           code: 'se' },
+  { name: 'Suíça',            code: 'ch' },
+  { name: 'Tunísia',          code: 'tn' },
+  { name: 'Turquia',          code: 'tr' },
+  { name: 'Ucrânia',          code: 'ua' },
+  { name: 'Uruguai',          code: 'uy' },
+  { name: 'Venezuela',        code: 've' },
+];
+
+// Mantido para lookup reverso (auto-detect por nome em jogos importados)
+const FLAGS = Object.fromEntries(
+  TEAMS.flatMap(t => [
+    [t.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''), t.code],
+    [t.name.toLowerCase(), t.code],
+  ])
+);
 
 const flagUrl = (code) => `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
 
@@ -782,11 +789,13 @@ const submitAdminGame = async (e) => {
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Cadastrando...';
   try {
+    const homeOpt = document.getElementById('adminHome');
+    const awayOpt = document.getElementById('adminAway');
     await api('/api/admin/jogos', 'POST', {
-      time_casa:     document.getElementById('adminHome').value.trim(),
-      time_fora:     document.getElementById('adminAway').value.trim(),
-      bandeira_casa: document.getElementById('adminFlagHome').value.trim() || 'br',
-      bandeira_fora: document.getElementById('adminFlagAway').value.trim() || 'br',
+      time_casa:     homeOpt.value,
+      time_fora:     awayOpt.value,
+      bandeira_casa: homeOpt.options[homeOpt.selectedIndex]?.dataset.code || 'br',
+      bandeira_fora: awayOpt.options[awayOpt.selectedIndex]?.dataset.code || 'br',
       data_hora:     document.getElementById('adminDate').value,
       status:        document.getElementById('adminCreateStatus').value,
       placar_casa:   document.getElementById('adminCreateScoreHome').value !== '' ? parseInt(document.getElementById('adminCreateScoreHome').value, 10) : null,
@@ -810,13 +819,26 @@ const submitAdminGame = async (e) => {
   }
 };
 
+const populateTeamSelects = () => {
+  const opts = '<option value="">— selecione —</option>' +
+    TEAMS.map(t => `<option value="${t.name}" data-code="${t.code}">${flagEmoji(t.code)} ${t.name}</option>`).join('');
+  ['adminHome', 'adminAway'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.innerHTML = opts;
+  });
+};
+
 const setupGameFormPreview = () => {
   const el = id => document.getElementById(id);
+  const codeOf = id => {
+    const sel = el(id);
+    return sel?.options[sel.selectedIndex]?.dataset.code || '';
+  };
   const update = () => {
-    const fh = flagEmoji(el('adminFlagHome')?.value);
-    const fa = flagEmoji(el('adminFlagAway')?.value);
-    const nh = el('adminHome')?.value.trim() || 'Casa';
-    const na = el('adminAway')?.value.trim() || 'Fora';
+    const fh = flagEmoji(codeOf('adminHome'));
+    const fa = flagEmoji(codeOf('adminAway'));
+    const nh = el('adminHome')?.value || 'Casa';
+    const na = el('adminAway')?.value || 'Fora';
     if (el('prevFlagHome'))      el('prevFlagHome').textContent      = fh;
     if (el('prevFlagAway'))      el('prevFlagAway').textContent      = fa;
     if (el('prevNameHome'))      el('prevNameHome').textContent      = nh;
@@ -824,9 +846,7 @@ const setupGameFormPreview = () => {
     if (el('gfFlagPreviewHome')) el('gfFlagPreviewHome').textContent = fh;
     if (el('gfFlagPreviewAway')) el('gfFlagPreviewAway').textContent = fa;
   };
-  ['adminFlagHome', 'adminFlagAway', 'adminHome', 'adminAway'].forEach(id => {
-    el(id)?.addEventListener('input', update);
-  });
+  ['adminHome', 'adminAway'].forEach(id => el(id)?.addEventListener('change', update));
 };
 
 const importFromApi = async () => {
@@ -1019,6 +1039,7 @@ const bind = () => {
   });
 
   // Admin forms
+  populateTeamSelects();
   document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
   setupGameFormPreview();
