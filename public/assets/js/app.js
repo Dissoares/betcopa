@@ -892,7 +892,7 @@ const bind = () => {
   document.getElementById('btnConfirmPay').addEventListener('click', confirmPay);
 
   // Mobile drawer
-  document.getElementById('btnThemeToggle')?.addEventListener('click', toggleTheme);
+  document.querySelectorAll('.btn-theme-toggle').forEach(btn => btn.addEventListener('click', toggleTheme));
   document.getElementById('btnMobileMenu')?.addEventListener('click', openMobileMenu);
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="close-mobile-menu"]');
