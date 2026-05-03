@@ -805,9 +805,271 @@ const bind = () => {
   document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
 
-  // Import / Sync
+  // Admin sidebar tabs
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-admin-tab]');
+    if (btn) switchAdminTab(btn.dataset.adminTab);
+  });
+
+  // Block / unblock user via event delegation
+  document.getElementById('adminUsersList')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action][data-uid]');
+    if (!btn) return;
+    handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
+  });
+
+  // Filtro de apostas
+  document.getElementById('btnFilterBets')?.addEventListener('click', fetchAdminBets);
+
+  // Config form
+  document.getElementById('adminConfigForm')?.addEventListener('submit', submitAdminConfig);
+
+  // Import / Sync (botões dentro da aba Jogos)
   document.getElementById('btnImport')?.addEventListener('click', importFromApi);
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
+};
+
+// ── Admin helpers ─────────────────────────────────────────────
+const fmtR$ = (n) => `R$ ${parseFloat(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+const statusPill = (s) => {
+  const labels = {
+    pendente: 'Pendente', pago: 'Pago', confirmado: 'Confirmado',
+    ganhou: 'Ganhou ✓', perdido: 'Perdeu ✗',
+    ativo: 'Ativo', bloqueado: 'Bloqueado',
+  };
+  return `<span class="status-pill status-pill--${s}">${labels[s] || s}</span>`;
+};
+
+// ── Admin tab navigation ──────────────────────────────────────
+const switchAdminTab = (tab) => {
+  document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.admin-nav__btn').forEach(btn => {
+    btn.classList.toggle('admin-nav__btn--active', btn.dataset.adminTab === tab);
+  });
+  document.getElementById(`atab-${tab}`)?.classList.remove('hidden');
+
+  if (tab === 'dashboard') loadAdminDashboard();
+  if (tab === 'usuarios')  loadAdminUsers();
+  if (tab === 'apostas')   loadAdminBets();
+  if (tab === 'config')    loadAdminConfig();
+  if (tab === 'jogos')     populateAdminSelect();
+};
+
+// ── Dashboard ─────────────────────────────────────────────────
+const loadAdminDashboard = async () => {
+  const statsEl   = document.getElementById('dashStats');
+  const recentEl  = document.getElementById('dashRecentes');
+  const byGameEl  = document.getElementById('dashPorJogo');
+  statsEl.innerHTML = '<p class="text--muted">Carregando...</p>';
+
+  try {
+    const { stats, recentes, por_jogo } = await api('/api/admin/dashboard');
+
+    statsEl.innerHTML = [
+      { label: 'Usuários',        value: stats.total_usuarios,   cls: '' },
+      { label: 'Total apostas',   value: stats.total_apostas,    cls: '' },
+      { label: 'Volume apostado', value: fmtR$(stats.volume_apostado), cls: 'info' },
+      { label: 'Prêmios pagos',   value: fmtR$(stats.volume_pago),     cls: 'danger' },
+      { label: 'Margem da casa',  value: fmtR$(stats.margem_casa),     cls: 'green' },
+      { label: 'Apostas ganhas',  value: stats.apostas_ganhas,   cls: 'green' },
+      { label: 'Pendentes pag.',  value: stats.apostas_pendentes, cls: 'gold' },
+      { label: 'Jogos abertos',   value: stats.jogos_abertos,    cls: '' },
+    ].map(c => `
+      <div class="dash-card">
+        <div class="dash-card__label">${c.label}</div>
+        <div class="dash-card__value ${c.cls ? `dash-card__value--${c.cls}` : ''}">${c.value}</div>
+      </div>`).join('');
+
+    recentEl.innerHTML = recentes.length
+      ? `<table class="admin-table">
+           <thead><tr><th>#</th><th>Usuário</th><th>Jogo</th><th>Valor</th><th>Status</th></tr></thead>
+           <tbody>${recentes.map(b => `
+             <tr>
+               <td>#${b.id}</td>
+               <td>${b.usuario}</td>
+               <td>${b.time_casa} × ${b.time_fora}</td>
+               <td>${fmtR$(b.valor)}</td>
+               <td>${statusPill(b.status)}</td>
+             </tr>`).join('')}
+           </tbody>
+         </table>`
+      : '<p class="text--muted">Nenhuma aposta ainda.</p>';
+
+    byGameEl.innerHTML = por_jogo.length
+      ? `<table class="admin-table">
+           <thead><tr><th>Jogo</th><th>Apostas</th><th>Arrecadado</th><th>Pago</th><th>Pendentes</th></tr></thead>
+           <tbody>${por_jogo.map(g => `
+             <tr>
+               <td>${g.time_casa} × ${g.time_fora}</td>
+               <td>${g.total_apostas}</td>
+               <td>${fmtR$(g.arrecadado)}</td>
+               <td>${fmtR$(g.pago)}</td>
+               <td>${g.pendentes > 0 ? `<span class="status-pill status-pill--pendente">${g.pendentes}</span>` : '0'}</td>
+             </tr>`).join('')}
+           </tbody>
+         </table>`
+      : '<p class="text--muted">Nenhum jogo cadastrado.</p>';
+
+  } catch (err) {
+    statsEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  }
+};
+
+// ── Usuários ──────────────────────────────────────────────────
+const loadAdminUsers = async () => {
+  const el = document.getElementById('adminUsersList');
+  el.innerHTML = '<p class="text--muted">Carregando...</p>';
+  try {
+    const { usuarios } = await api('/api/admin/usuarios');
+    if (!usuarios.length) { el.innerHTML = '<p class="text--muted">Nenhum usuário.</p>'; return; }
+
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Nome</th><th>Email</th><th>Saldo</th><th>Apostas</th><th>Ganhas</th><th>Status</th><th>Ações</th></tr>
+        </thead>
+        <tbody>
+          ${usuarios.map(u => `
+            <tr>
+              <td>${u.id}</td>
+              <td>${u.nome}</td>
+              <td>${u.email}</td>
+              <td>${fmtR$(u.saldo)}</td>
+              <td>${u.total_apostas}</td>
+              <td>${u.apostas_ganhas}</td>
+              <td>${statusPill(u.bloqueado == 1 ? 'bloqueado' : 'ativo')}</td>
+              <td>
+                ${u.bloqueado == 1
+                  ? `<button class="btn btn--primary btn--sm" data-action="unblock" data-uid="${u.id}">Desbloquear</button>`
+                  : `<button class="btn btn--danger  btn--sm" data-action="block"   data-uid="${u.id}">Bloquear</button>`
+                }
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  }
+};
+
+const handleBlockUser = async (uid, block) => {
+  const action = block ? 'bloquear' : 'desbloquear';
+  try {
+    await api(`/api/admin/usuarios/${uid}/${action}`, 'POST', {});
+    showAlert(block ? 'Usuário bloqueado.' : 'Usuário desbloqueado.', 'success');
+    loadAdminUsers();
+  } catch (err) {
+    showAlert(err.message, 'danger');
+  }
+};
+
+// ── Admin Apostas ─────────────────────────────────────────────
+const loadAdminBets = async () => {
+  // popular filtro de jogos
+  const sel = document.getElementById('filterBetGame');
+  if (sel && S.games.length) {
+    sel.innerHTML = '<option value="">Todos os jogos</option>' +
+      S.games.map(g => `<option value="${g.id}">${g.time_casa} × ${g.time_fora}</option>`).join('');
+  }
+  await fetchAdminBets();
+};
+
+const fetchAdminBets = async () => {
+  const el     = document.getElementById('adminBetsList');
+  const jogoId = document.getElementById('filterBetGame')?.value || '';
+  const status = document.getElementById('filterBetStatus')?.value || '';
+  el.innerHTML = '<p class="text--muted">Carregando...</p>';
+
+  const params = new URLSearchParams();
+  if (jogoId) params.set('jogo_id', jogoId);
+  if (status) params.set('status', status);
+
+  try {
+    const { apostas } = await api(`/api/admin/apostas?${params}`);
+    if (!apostas.length) { el.innerHTML = '<p class="text--muted">Nenhuma aposta encontrada.</p>'; return; }
+
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          ${apostas.map(b => `
+            <tr>
+              <td>#${b.id}</td>
+              <td>${b.usuario}</td>
+              <td>${b.time_casa} × ${b.time_fora}</td>
+              <td>${b.placar_casa} × ${b.placar_fora}</td>
+              <td>${fmtR$(b.valor)}</td>
+              <td>${parseFloat(b.multiplicador).toFixed(0)}×</td>
+              <td>${fmtR$(b.possivel_ganho)}</td>
+              <td>${statusPill(b.status)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  }
+};
+
+// ── Configurações ─────────────────────────────────────────────
+const loadAdminConfig = async () => {
+  const statusEl = document.getElementById('configStatus');
+  try {
+    const { config } = await api('/api/admin/config');
+    const set = (id, key) => {
+      const el = document.getElementById(id);
+      if (el && config[key]) el.value = config[key].valor;
+    };
+    set('cfg_site_nome',        'site_nome');
+    set('cfg_site_emoji',       'site_emoji');
+    set('cfg_admin_email',      'admin_email');
+    set('cfg_pix_tipo',         'pix_tipo');
+    set('cfg_pix_chave',        'pix_chave');
+    set('cfg_pix_nome',         'pix_nome');
+    set('cfg_bonus_cadastro',   'bonus_cadastro');
+    set('cfg_valor_base_padrao','valor_base_padrao');
+    set('cfg_mult_min',         'mult_min');
+    set('cfg_mult_max',         'mult_max');
+    set('cfg_max_aposta',       'max_aposta');
+    set('cfg_max_ganho',        'max_ganho');
+    set('cfg_saques_ativos',    'saques_ativos');
+  } catch (err) {
+    statusEl && (statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`);
+  }
+};
+
+const submitAdminConfig = async (e) => {
+  e.preventDefault();
+  const btn      = e.target.querySelector('button[type=submit]');
+  const statusEl = document.getElementById('configStatus');
+  btn.disabled = true; btn.textContent = '⏳ Salvando...';
+  statusEl.innerHTML = '';
+
+  const get = (id) => document.getElementById(id)?.value ?? '';
+  try {
+    const res = await api('/api/admin/config', 'POST', {
+      site_nome:         get('cfg_site_nome'),
+      site_emoji:        get('cfg_site_emoji'),
+      admin_email:       get('cfg_admin_email'),
+      pix_tipo:          get('cfg_pix_tipo'),
+      pix_chave:         get('cfg_pix_chave'),
+      pix_nome:          get('cfg_pix_nome'),
+      bonus_cadastro:    get('cfg_bonus_cadastro'),
+      valor_base_padrao: get('cfg_valor_base_padrao'),
+      mult_min:          get('cfg_mult_min'),
+      mult_max:          get('cfg_mult_max'),
+      max_aposta:        get('cfg_max_aposta'),
+      max_ganho:         get('cfg_max_ganho'),
+      saques_ativos:     get('cfg_saques_ativos'),
+    });
+    statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+  } catch (err) {
+    statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Salvar Configurações';
+  }
 };
 
 // ── Init ──────────────────────────────────────────────────────

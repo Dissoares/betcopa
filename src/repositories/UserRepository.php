@@ -28,4 +28,22 @@ class UserRepository
         $stmt->execute(['nome' => $nome, 'email' => $email, 'senha' => $senha]);
         return (int) $this->db->lastInsertId();
     }
+
+    public function block(int $id): void
+    {
+        $this->db->prepare('UPDATE users SET bloqueado = 1 WHERE id = :id')->execute(['id' => $id]);
+    }
+
+    public function unblock(int $id): void
+    {
+        $this->db->prepare('UPDATE users SET bloqueado = 0 WHERE id = :id')->execute(['id' => $id]);
+    }
+
+    public function isBlocked(int $id): bool
+    {
+        $stmt = $this->db->prepare('SELECT bloqueado FROM users WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row && (bool) $row['bloqueado'];
+    }
 }

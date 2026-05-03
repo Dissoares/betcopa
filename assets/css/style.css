@@ -646,18 +646,123 @@ select {
 .resultado-loss__next-game  { font-weight: 700; font-size: .95rem; }
 
 /* ========================
+   ADMIN LAYOUT
+   ======================== */
+#view-admin { padding: 0; }
+
+.admin-layout {
+  display: flex; min-height: calc(100vh - 60px);
+}
+
+.admin-sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  position: sticky; top: 60px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+.admin-sidebar__title {
+  font-size: .8rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-muted); margin-bottom: 1rem; padding: 0 .5rem;
+}
+
+.admin-nav { display: flex; flex-direction: column; gap: .25rem; }
+.admin-nav__btn {
+  border: 0; background: transparent; color: var(--text-dim);
+  padding: .65rem .85rem; border-radius: var(--radius-sm);
+  cursor: pointer; font-size: .88rem; font-weight: 500;
+  text-align: left; transition: all .15s; width: 100%;
+}
+.admin-nav__btn:hover { background: var(--surface-2); color: var(--text); }
+.admin-nav__btn--active { background: rgba(0,200,83,.13); color: var(--primary); font-weight: 700; }
+
+.admin-content {
+  flex: 1; padding: 2rem;
+  min-width: 0;
+}
+.admin-tab__title {
+  font-size: 1.4rem; font-weight: 800;
+  margin-bottom: 1.5rem;
+}
+
+.admin-grid-2 {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem;
+}
+
+/* ── Dashboard stats ── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 1rem;
+}
+.dash-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+.dash-card__label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
+.dash-card__value { font-size: 1.6rem; font-weight: 900; }
+.dash-card__value--green  { color: var(--primary); }
+.dash-card__value--gold   { color: var(--gold); }
+.dash-card__value--danger { color: var(--danger); }
+.dash-card__value--info   { color: var(--info); }
+
+/* ── Admin tables ── */
+.admin-table {
+  width: 100%; border-collapse: collapse; font-size: .85rem;
+}
+.admin-table th {
+  text-align: left; padding: .6rem .75rem;
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-muted); border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: .65rem .75rem; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.admin-table tr:last-child td { border-bottom: 0; }
+.admin-table tr:hover td { background: var(--surface-2); }
+
+.status-pill {
+  display: inline-flex; align-items: center;
+  padding: .2rem .6rem; border-radius: 999px;
+  font-size: .72rem; font-weight: 700; letter-spacing: .03em;
+}
+.status-pill--pendente   { background: rgba(255,215,0,.15);  color: var(--gold); }
+.status-pill--pago       { background: rgba(61,142,255,.15); color: var(--info); }
+.status-pill--confirmado { background: rgba(61,142,255,.15); color: var(--info); }
+.status-pill--ganhou     { background: rgba(0,200,83,.15);   color: var(--primary); }
+.status-pill--perdido    { background: rgba(255,71,87,.15);  color: var(--danger); }
+.status-pill--ativo      { background: rgba(0,200,83,.15);   color: var(--primary); }
+.status-pill--bloqueado  { background: rgba(255,71,87,.15);  color: var(--danger); }
+
+/* ========================
    RESPONSIVE
    ======================== */
+@media (max-width: 900px) {
+  .admin-layout   { flex-direction: column; }
+  .admin-sidebar  { width: 100%; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); padding: .75rem; }
+  .admin-nav      { flex-direction: row; flex-wrap: wrap; gap: .35rem; }
+  .admin-nav__btn { width: auto; padding: .45rem .75rem; font-size: .82rem; }
+  .admin-content  { padding: 1.25rem; }
+  .admin-grid-2   { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
   .header__inner { gap: .75rem; }
   .nav__btn      { padding: .4rem .65rem; font-size: .82rem; }
   .games-grid    { grid-template-columns: 1fr; }
   .ranking-grid  { grid-template-columns: 1fr; }
-  .admin-grid    { grid-template-columns: 1fr; }
   .form-row      { grid-template-columns: 1fr; }
   .bet-card      { flex-direction: column; align-items: flex-start; }
   .bet-card__actions { margin-left: 0; }
   .view-hero__title  { font-size: 1.75rem; }
+  .dash-grid     { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 480px) {

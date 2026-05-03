@@ -39,6 +39,9 @@ class AuthService
         if (!$user || !password_verify($senha, $user['senha'])) {
             throw new InvalidArgumentException('Credenciais inválidas');
         }
+        if (!empty($user['bloqueado'])) {
+            throw new InvalidArgumentException('Conta suspensa. Entre em contato com o suporte.');
+        }
 
         session_start();
         $_SESSION['user_id']    = $user['id'];
