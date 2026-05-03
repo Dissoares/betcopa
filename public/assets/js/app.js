@@ -82,6 +82,12 @@ const FLAGS = {
 
 const flagUrl = (code) => `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
 
+const flagEmoji = code => {
+  const c = (code || '').trim().toUpperCase().slice(0, 2);
+  if (!/^[A-Z]{2}$/.test(c)) return '🏳️';
+  return String.fromCodePoint(c.charCodeAt(0) + 0x1F1A5, c.charCodeAt(1) + 0x1F1A5);
+};
+
 // Retorna HTML do emblema — logo (img) da API, flag por codigo ISO, ou fallback
 const getEmblem = (game, side) => {
   const teamName = side === 'home' ? game.time_casa : game.time_fora;
@@ -714,6 +720,11 @@ const submitAdminGame = async (e) => {
     });
     showAlert('Jogo cadastrado!', 'success');
     e.target.reset();
+    ['prevFlagHome','prevFlagAway','gfFlagPreviewHome','gfFlagPreviewAway'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '🏳️';
+    });
+    document.getElementById('prevNameHome').textContent = 'Casa';
+    document.getElementById('prevNameAway').textContent = 'Fora';
     await loadGames();
     populateAdminSelect();
   } catch (err) {
@@ -721,6 +732,25 @@ const submitAdminGame = async (e) => {
   } finally {
     btn.disabled = false; btn.textContent = 'Cadastrar Jogo';
   }
+};
+
+const setupGameFormPreview = () => {
+  const el = id => document.getElementById(id);
+  const update = () => {
+    const fh = flagEmoji(el('adminFlagHome')?.value);
+    const fa = flagEmoji(el('adminFlagAway')?.value);
+    const nh = el('adminHome')?.value.trim() || 'Casa';
+    const na = el('adminAway')?.value.trim() || 'Fora';
+    if (el('prevFlagHome'))      el('prevFlagHome').textContent      = fh;
+    if (el('prevFlagAway'))      el('prevFlagAway').textContent      = fa;
+    if (el('prevNameHome'))      el('prevNameHome').textContent      = nh;
+    if (el('prevNameAway'))      el('prevNameAway').textContent      = na;
+    if (el('gfFlagPreviewHome')) el('gfFlagPreviewHome').textContent = fh;
+    if (el('gfFlagPreviewAway')) el('gfFlagPreviewAway').textContent = fa;
+  };
+  ['adminFlagHome', 'adminFlagAway', 'adminHome', 'adminAway'].forEach(id => {
+    el(id)?.addEventListener('input', update);
+  });
 };
 
 const importFromApi = async () => {
@@ -916,6 +946,7 @@ const bind = () => {
   // Admin forms
   document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
+  setupGameFormPreview();
 
   // Admin sidebar tabs
   document.addEventListener('click', e => {

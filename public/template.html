@@ -190,26 +190,48 @@
             <div class="panel">
               <h3 class="panel__title">Cadastrar Jogo</h3>
               <form id="adminGameForm">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Bandeira Casa</label>
-                    <input id="adminFlagHome" type="text" placeholder="ex: br, ar, fr" maxlength="10" />
+
+                <!-- Preview ao vivo do confronto -->
+                <div class="gf-preview">
+                  <span class="gf-preview__flag" id="prevFlagHome">🏳️</span>
+                  <span class="gf-preview__name" id="prevNameHome">Casa</span>
+                  <span class="gf-preview__vs">×</span>
+                  <span class="gf-preview__name" id="prevNameAway">Fora</span>
+                  <span class="gf-preview__flag" id="prevFlagAway">🏳️</span>
+                </div>
+
+                <!-- Times -->
+                <div class="gf-teams">
+                  <div class="gf-team">
+                    <div class="form-group">
+                      <label>Time Casa</label>
+                      <input id="adminHome" type="text" placeholder="Brasil" required />
+                    </div>
+                    <div class="gf-flag-row">
+                      <div class="gf-flag-preview" id="gfFlagPreviewHome">🏳️</div>
+                      <div class="form-group">
+                        <label>Bandeira <small>ISO</small></label>
+                        <input id="adminFlagHome" type="text" placeholder="br" maxlength="4" />
+                      </div>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label>Time Casa</label>
-                    <input id="adminHome" type="text" placeholder="Brasil" required />
+                  <div class="gf-vs">VS</div>
+                  <div class="gf-team">
+                    <div class="form-group">
+                      <label>Time Fora</label>
+                      <input id="adminAway" type="text" placeholder="Argentina" required />
+                    </div>
+                    <div class="gf-flag-row">
+                      <div class="gf-flag-preview" id="gfFlagPreviewAway">🏳️</div>
+                      <div class="form-group">
+                        <label>Bandeira <small>ISO</small></label>
+                        <input id="adminFlagAway" type="text" placeholder="ar" maxlength="4" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Bandeira Fora</label>
-                    <input id="adminFlagAway" type="text" placeholder="ex: ar, de, es" maxlength="10" />
-                  </div>
-                  <div class="form-group">
-                    <label>Time Fora</label>
-                    <input id="adminAway" type="text" placeholder="Argentina" required />
-                  </div>
-                </div>
+
+                <!-- Data, Status, Valores -->
                 <div class="form-row">
                   <div class="form-group">
                     <label>Data e Hora</label>
@@ -226,24 +248,25 @@
                 </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label>Placar Casa</label>
-                    <input id="adminCreateScoreHome" type="number" min="0" max="50" placeholder="0" />
-                  </div>
-                  <div class="form-group">
-                    <label>Placar Fora</label>
-                    <input id="adminCreateScoreAway" type="number" min="0" max="50" placeholder="0" />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Valor base por palpite (R$)</label>
+                    <label>Valor base (R$)</label>
                     <input id="adminValorBase" type="number" min="0.5" max="50" step="0.5" value="1.00" required />
                   </div>
                   <div class="form-group">
-                    <label>Odd padrão</label>
+                    <label>Multiplicador</label>
                     <input id="adminCreateOdd" type="number" min="1" step="0.01" value="1.00" required />
                   </div>
                 </div>
+
+                <!-- Placar -->
+                <div class="form-section">
+                  <div class="form-section__label">Placar <span>(opcional)</span></div>
+                  <div class="gf-score">
+                    <input id="adminCreateScoreHome" type="number" min="0" max="50" placeholder="0" />
+                    <span class="gf-score__sep">×</span>
+                    <input id="adminCreateScoreAway" type="number" min="0" max="50" placeholder="0" />
+                  </div>
+                </div>
+
                 <button class="btn btn--primary btn--full" type="submit">Cadastrar Jogo</button>
               </form>
             </div>
