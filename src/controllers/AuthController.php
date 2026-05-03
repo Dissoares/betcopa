@@ -10,8 +10,10 @@ class AuthController
 
     public function register(): void
     {
-        Csrf::verify();
         $body = json_decode(file_get_contents('php://input'), true) ?: [];
+        if (!empty($_SERVER['HTTP_X_CSRF_TOKEN']) || !empty($body['csrf']) || !empty($body['csrf_token'])) {
+            Csrf::verify();
+        }
         $nome = trim($body['nome'] ?? '');
         $email = trim($body['email'] ?? '');
         $senha = trim($body['senha'] ?? '');
@@ -21,8 +23,10 @@ class AuthController
 
     public function login(): void
     {
-        Csrf::verify();
         $body = json_decode(file_get_contents('php://input'), true) ?: [];
+        if (!empty($_SERVER['HTTP_X_CSRF_TOKEN']) || !empty($body['csrf']) || !empty($body['csrf_token'])) {
+            Csrf::verify();
+        }
         $email = trim($body['email'] ?? '');
         $senha = trim($body['senha'] ?? '');
         $user = $this->service->login($email, $senha);

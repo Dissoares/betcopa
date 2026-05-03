@@ -68,22 +68,44 @@ const getEmblem = (game, side) => {
 
 // ── API helper ────────────────────────────────────────────────
 const api = async (url, method = 'GET', body = null) => {
+  if (method !== 'GET' && !S.csrf) {
+    await loadCsrf();
+  }
+
   const headers = { Accept: 'application/json' };
   if (S.csrf) headers['X-CSRF-Token'] = S.csrf;
-  if (body)   headers['Content-Type']  = 'application/json';
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: 'same-origin',
-  });
-
-  if (!res.ok) {
-    const payload = await res.json().catch(() => ({}));
-    throw new Error(payload.error || 'Erro na requisição');
+  if (body) headers['Content-Type'] = 'application/json';
+  if (body && method !== 'GET' && typeof body === 'object') {
+    body = { ...body, csrf: S.csrf };
   }
-  return res.json();
+
+  const request = async () => {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: 'same-origin',
+    });
+
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      throw new Error(payload.error || 'Erro na requisição');
+    }
+    return res.json();
+  };
+
+  try {
+    return await request();
+  } catch (error) {
+    if (error.message === 'Token CSRF inválido' && method !== 'GET') {
+      await loadCsrf();
+      if (S.csrf) {
+        headers['X-CSRF-Token'] = S.csrf;
+        return await request();
+      }
+    }
+    throw error;
+  }
 };
 
 // ── Alerts ────────────────────────────────────────────────────
