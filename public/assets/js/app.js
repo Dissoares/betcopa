@@ -84,7 +84,7 @@ const api = async (url, method = 'GET', body = null) => {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      credentials: 'same-origin',
+      credentials: 'include',
     });
 
     if (!res.ok) {
@@ -722,7 +722,10 @@ const loadCsrf = async () => {
   try {
     const r = await api('/api/csrf');
     S.csrf = r.token;
-  } catch {}
+    console.debug('CSRF token loaded', S.csrf);
+  } catch (err) {
+    console.warn('Falha ao carregar CSRF token', err);
+  }
 };
 
 const loadUser = async () => {
