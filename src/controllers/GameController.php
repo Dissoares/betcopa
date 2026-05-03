@@ -59,11 +59,16 @@ class GameController
 
         $body     = json_decode(file_get_contents('php://input'), true) ?: [];
         $leagueId = (int) ($body['league_id'] ?? 71);
-        $season   = (int) ($body['season']    ?? date('Y'));
+        $season   = (int) ($body['season']    ?? 2024);
         $next     = min(50, max(1, (int) ($body['next'] ?? 20)));
 
         $api      = new ApiFootballService($apiKey, $timezone);
-        $fixtures = $api->fetchNextFixtures($leagueId, $season, $next);
+        try {
+            $fixtures = $api->fetchNextFixtures($leagueId, $season, $next);
+        } catch (RuntimeException $e) {
+            jsonResponse(['error' => $e->getMessage()], 400);
+            return;
+        }
 
         if (empty($fixtures)) {
             jsonResponse(['message' => 'Nenhum jogo encontrado para essa liga/temporada.', 'importados' => 0]);
