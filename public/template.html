@@ -12,22 +12,31 @@
 
   <!-- HEADER -->
   <header class="header">
-    <div class="container header__inner">
-      <a class="logo" href="#" data-nav="jogos">⚽ <span>Bet</span>Copa</a>
-      <nav class="nav" id="mainNav">
-        <button class="nav__btn nav__btn--active" data-nav="jogos">Jogos</button>
-        <button class="nav__btn" data-nav="ganhadores">Ganhadores</button>
-        <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none">Meus Palpites</button>
-        <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none">Admin</button>
-      </nav>
-      <div class="header__user" id="headerUser">
-        <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
+    <div class="container header__inner header__inner--split">
+      <div class="header__left">
+        <button class="btn btn--ghost btn--icon" id="btnThemeToggle" aria-label="Alternar tema">
+          <span class="theme-icon">🌙</span>
+        </button>
       </div>
+      <div class="header__center">
+        <a class="logo" href="#" data-nav="jogos">⚽ <span>Bet</span>Copa</a>
+      </div>
+      <div class="header__right">
+        <nav class="nav" id="mainNav">
+          <button class="nav__btn nav__btn--active" data-nav="jogos">Jogos</button>
+          <button class="nav__btn" data-nav="ganhadores">Ganhadores</button>
+          <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none">Meus Palpites</button>
+          <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none">Admin</button>
+        </nav>
+        <div class="header__user" id="headerUser">
+          <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
+        </div>
         <button class="mobile-toggle" id="btnMobileMenu" aria-label="Abrir menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </div>
   </header>
 

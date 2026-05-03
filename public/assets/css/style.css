@@ -25,6 +25,26 @@
   --radius-xl:     28px;
 }
 
+.theme-light {
+  --bg:            #f9fafb;
+  --surface:       #ffffff;
+  --surface-2:     #f1f5f9;
+  --surface-3:     #e2e8f0;
+  --border:        rgba(15,23,42,0.08);
+  --border-strong: rgba(15,23,42,0.15);
+  --primary:       #0f766e;
+  --primary-dark:  #0f766e;
+  --primary-glow:  rgba(15,118,110,0.15);
+  --gold:          #d97706;
+  --gold-glow:     rgba(217,119,6,0.15);
+  --danger:        #b91c1c;
+  --danger-glow:   rgba(185,28,28,0.18);
+  --info:          #2563eb;
+  --text:          #0f172a;
+  --text-muted:    #475569;
+  --text-dim:      #64748b;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -81,6 +101,34 @@ button, input, select { font: inherit; }
 
 .header__inner {
   display: flex; align-items: center; gap: 1.25rem;
+}
+
+.header__inner--split {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+}
+
+.header__left,
+.header__center,
+.header__right {
+  display: flex; align-items: center;
+}
+
+.header__center {
+  justify-content: center;
+}
+
+.header__right {
+  justify-content: flex-end;
+  gap: .75rem;
+}
+
+.btn--icon {
+  width: 42px;
+  height: 42px;
+  justify-content: center;
+  padding: 0;
 }
 
 .logo {
@@ -553,6 +601,7 @@ select {
   padding: .75rem .95rem;
   font-size: .92rem;
   transition: border-color .15s, box-shadow .15s;
+  appearance: none;
   -webkit-appearance: none;
 }
 input:focus, select:focus {

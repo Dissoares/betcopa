@@ -211,6 +211,22 @@ const closeMobileMenu = () => {
   document.body.classList.remove('drawer-open');
 };
 
+const setTheme = (theme) => {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('theme-light', isLight);
+  document.querySelectorAll('.theme-icon').forEach(el => el.textContent = isLight ? '☀️' : '🌙');
+  localStorage.setItem('betcopaTheme', theme);
+};
+
+const toggleTheme = () => {
+  setTheme(document.body.classList.contains('theme-light') ? 'dark' : 'light');
+};
+
+const loadTheme = () => {
+  const stored = localStorage.getItem('betcopaTheme');
+  setTheme(stored === 'light' ? 'light' : 'dark');
+};
+
 // ── Game cards ────────────────────────────────────────────────
 const renderGames = () => {
   const grid   = document.getElementById('gamesGrid');
@@ -856,6 +872,7 @@ const bind = () => {
   document.getElementById('btnConfirmPay').addEventListener('click', confirmPay);
 
   // Mobile drawer
+  document.getElementById('btnThemeToggle')?.addEventListener('click', toggleTheme);
   document.getElementById('btnMobileMenu')?.addEventListener('click', openMobileMenu);
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="close-mobile-menu"]');
@@ -1146,6 +1163,7 @@ const submitAdminConfig = async (e) => {
 
 // ── Init ──────────────────────────────────────────────────────
 const init = async () => {
+  loadTheme();
   bind();
   await loadCsrf();
   await loadUser();
