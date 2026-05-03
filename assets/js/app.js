@@ -840,6 +840,13 @@ const bind = () => {
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
   document.getElementById('btnConfirmPay').addEventListener('click', confirmPay);
 
+  // Mobile drawer
+  document.getElementById('btnMobileMenu')?.addEventListener('click', openMobileMenu);
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="close-mobile-menu"]');
+    if (btn) closeMobileMenu();
+  });
+
   // Auth forms
   document.getElementById('loginForm').addEventListener('submit', submitLogin);
   document.getElementById('registerForm').addEventListener('submit', submitRegister);

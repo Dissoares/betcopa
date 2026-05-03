@@ -161,6 +161,8 @@ const navigate = (view) => {
   document.querySelectorAll('.nav__btn').forEach(btn => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
+
+  closeMobileMenu();
 };
 
 // ── Header user chip ──────────────────────────────────────────
@@ -852,6 +854,13 @@ const bind = () => {
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
   document.getElementById('btnConfirmPay').addEventListener('click', confirmPay);
+
+  // Mobile drawer
+  document.getElementById('btnMobileMenu')?.addEventListener('click', openMobileMenu);
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="close-mobile-menu"]');
+    if (btn) closeMobileMenu();
+  });
 
   // Auth forms
   document.getElementById('loginForm').addEventListener('submit', submitLogin);

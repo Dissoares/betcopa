@@ -107,6 +107,8 @@ button, input, select { font: inherit; }
 
 .mobile-toggle {
   display: none;
+  appearance: none;
+  -webkit-appearance: none;
   border: 0;
   background: transparent;
   width: 42px;
@@ -138,6 +140,10 @@ button, input, select { font: inherit; }
 
 .drawer--open {
   display: block;
+}
+
+body.drawer-open {
+  overflow: hidden;
 }
 
 .drawer__backdrop {
