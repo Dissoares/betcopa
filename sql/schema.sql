@@ -1,0 +1,50 @@
+CREATE DATABASE IF NOT EXISTS betcopa CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE betcopa;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  senha VARCHAR(255) NOT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS jogos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  time_casa VARCHAR(100) NOT NULL,
+  time_fora VARCHAR(100) NOT NULL,
+  data_hora DATETIME NOT NULL,
+  status ENUM('aberto','encerrado','finalizado') NOT NULL DEFAULT 'aberto',
+  placar_real VARCHAR(20) DEFAULT NULL,
+  odd DECIMAL(5,2) NOT NULL DEFAULT 1.80,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS apostas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  jogo_id INT NOT NULL,
+  placar_casa TINYINT NOT NULL,
+  placar_fora TINYINT NOT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  odd DECIMAL(5,2) NOT NULL,
+  possivel_ganho DECIMAL(12,2) NOT NULL,
+  status ENUM('pendente','pago','confirmado','perdido','ganhou') NOT NULL DEFAULT 'pendente',
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (jogo_id) REFERENCES jogos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS transacoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  tipo ENUM('credito','debito') NOT NULL,
+  valor DECIMAL(12,2) NOT NULL,
+  descricao VARCHAR(255) NOT NULL,
+  data DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO jogos (time_casa, time_fora, data_hora, status, odd) VALUES
+('Brasil', 'Argentina', DATE_ADD(NOW(), INTERVAL 1 DAY), 'aberto', 1.95),
+('França', 'Alemanha', DATE_ADD(NOW(), INTERVAL 2 DAY), 'aberto', 2.10);

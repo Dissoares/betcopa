@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BetCopa | Apostas em placares</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div class="logo">BetCopa</div>
+      <nav class="nav">
+        <button id="logoutButton">Sair</button>
+      </nav>
+    </header>
+
+    <section id="alerts"></section>
+
+    <section class="panel">
+      <div class="header">
+        <div>
+          <h1>Jogos disponíveis</h1>
+          <p class="meta">Aposte nos placares antes do início do confronto.</p>
+        </div>
+        <div id="userStatus" class="status"></div>
+      </div>
+      <div id="gamesGrid" class="card-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Minhas apostas</h2>
+      <table id="betsTable" class="table">
+        <thead>
+          <tr>
+            <th>Jogo</th>
+            <th>Placar</th>
+            <th>Valor</th>
+            <th>Odd</th>
+            <th>Possível</th>
+            <th>Status</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>Ranking</h2>
+      <p class="notice">Veja vencedores e apostas mais próximas dos resultados reais.</p>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Vencedores</h3>
+          <table id="rankingWinners" class="table">
+            <thead><tr><th>Usuário</th><th>Jogo</th><th>Aposta</th><th>Ganho</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Quase acertos</h3>
+          <table id="rankingNear" class="table">
+            <thead><tr><th>Usuário</th><th>Jogo</th><th>Aposta</th><th>Diferença</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Acesso rápido</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Entrar</h3>
+          <form id="loginForm">
+            <label for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" required />
+            <label for="loginPassword">Senha</label>
+            <input id="loginPassword" type="password" required />
+            <button class="primary" type="submit">Login</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Cadastrar</h3>
+          <form id="registerForm">
+            <label for="registerName">Nome</label>
+            <input id="registerName" type="text" required />
+            <label for="registerEmail">Email</label>
+            <input id="registerEmail" type="email" required />
+            <label for="registerPassword">Senha</label>
+            <input id="registerPassword" type="password" required />
+            <button class="primary" type="submit">Registrar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Painel admin</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Cadastrar jogo</h3>
+          <form id="adminGameForm">
+            <label for="adminHome">Time casa</label>
+            <input id="adminHome" type="text" required />
+            <label for="adminAway">Time fora</label>
+            <input id="adminAway" type="text" required />
+            <label for="adminDate">Data e hora</label>
+            <input id="adminDate" type="datetime-local" required />
+            <label for="adminOdd">Odd fixa</label>
+            <input id="adminOdd" type="number" min="1.1" max="5" step="0.05" value="1.80" required />
+            <button class="primary" type="submit">Cadastrar jogo</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Inserir resultado</h3>
+          <form id="adminResultForm">
+            <label for="adminGameId">ID do jogo</label>
+            <input id="adminGameId" type="number" min="1" required />
+            <label for="adminScoreHome">Placar casa</label>
+            <input id="adminScoreHome" type="number" min="0" required />
+            <label for="adminScoreAway">Placar fora</label>
+            <input id="adminScoreAway" type="number" min="0" required />
+            <button class="primary" type="submit">Registrar resultado</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="betModal" class="modal hidden" style="position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:2rem; z-index:100;">
+    <div style="background:#11172d; border-radius:24px; padding:2rem; width:min(480px,100%); position:relative;">
+      <button class="close" style="position:absolute; top:1rem; right:1rem; background:none;border:0;color:#fff;font-size:1.2rem;">×</button>
+      <h3>Fazer aposta</h3>
+      <p id="betGameLabel"></p>
+      <form id="betForm">
+        <label for="betCasa">Placar casa</label>
+        <input id="betCasa" type="number" min="0" required />
+        <label for="betFora">Placar fora</label>
+        <input id="betFora" type="number" min="0" required />
+        <label for="betAmount">Valor (R$)</label>
+        <input id="betAmount" type="number" min="1" step="0.5" required />
+        <button class="primary" type="submit">Enviar aposta</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="paymentModal" class="modal hidden" style="position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:2rem; z-index:100;">
+    <div style="background:#11172d; border-radius:24px; padding:2rem; width:min(420px,100%); position:relative;">
+      <button class="close" style="position:absolute; top:1rem; right:1rem; background:none;border:0;color:#fff;font-size:1.2rem;">×</button>
+      <h3>Pagamento PIX</h3>
+      <p class="notice">Simulação de pagamento para confirmar a aposta.</p>
+      <form id="paymentForm">
+        <button class="primary" type="submit">Simular pagamento</button>
+      </form>
+      <button id="confirmPaymentButton" class="primary" style="margin-top:1rem;">Confirmar pagamento</button>
+    </div>
+  </div>
+
+  <script src="/assets/js/app.js"></script>
+</body>
+</html>
