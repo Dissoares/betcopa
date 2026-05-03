@@ -1,0 +1,18 @@
+# Logs
+logs/*.log
+
+# Config local (contém senhas)
+src/config.php
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Vendor (se usar composer)
+vendor/
+
+# Node (se usar npm)
+node_modules/
