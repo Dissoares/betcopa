@@ -19,10 +19,12 @@ class ApiFootballService
     ];
 
     private string $apiKey;
+    private string $timezone;
 
-    public function __construct(string $apiKey)
+    public function __construct(string $apiKey, string $timezone = 'America/Sao_Paulo')
     {
         $this->apiKey = $apiKey;
+        $this->timezone = $timezone;
     }
 
     // ── HTTP ──────────────────────────────────────────────────
@@ -118,7 +120,7 @@ class ApiFootballService
 
         // Converte timestamp UTC para horário de Brasília
         $dt = new DateTime('@' . $fixture['timestamp']);
-        $dt->setTimezone(new DateTimeZone('America/Sao_Paulo'));
+        $dt->setTimezone(new DateTimeZone($this->timezone));
 
         $statusShort = $fixture['status']['short'] ?? 'NS';
         $statusLocal = $this->mapStatus($statusShort);

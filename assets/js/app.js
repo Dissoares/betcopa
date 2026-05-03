@@ -1047,6 +1047,8 @@ const loadAdminConfig = async () => {
     set('cfg_site_nome',        'site_nome');
     set('cfg_site_emoji',       'site_emoji');
     set('cfg_admin_email',      'admin_email');
+    set('cfg_api_football_key', 'api_football_key');
+    set('cfg_api_football_timezone', 'api_football_timezone');
     set('cfg_pix_tipo',         'pix_tipo');
     set('cfg_pix_chave',        'pix_chave');
     set('cfg_pix_nome',         'pix_nome');

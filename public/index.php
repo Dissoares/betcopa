@@ -69,7 +69,7 @@ try {
         $betService  = new BetService($bets, $games, $transactions, $config);
 
         $authCtrl    = new AuthController($authService);
-        $gameCtrl    = new GameController($gameService, $games, $betService, $config);
+        $gameCtrl    = new GameController($gameService, $games, $betService, $configRepo, $config);
         $betCtrl     = new BetController($betService, $bets);
         $userCtrl    = new UserController($users, $transactions);
         $rankCtrl    = new RankingController($bets);

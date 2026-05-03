@@ -4,14 +4,18 @@ class GameController
     private GameService $service;
     private GameRepository $repository;
     private BetService $bets;
+    private ConfigRepository $configRepo;
     private array $config;
+    private string $adminEmail;
 
-    public function __construct(GameService $service, GameRepository $repository, BetService $bets, array $config)
+    public function __construct(GameService $service, GameRepository $repository, BetService $bets, ConfigRepository $configRepo, array $config)
     {
         $this->service    = $service;
         $this->repository = $repository;
         $this->bets       = $bets;
+        $this->configRepo = $configRepo;
         $this->config     = $config;
+        $this->adminEmail = $this->configRepo->get('admin_email', $this->config['admin_email']);
     }
 
     public function list(): void
@@ -22,7 +26,7 @@ class GameController
     public function create(): void
     {
         Csrf::verify();
-        ensureAdmin($this->config['admin_email']);
+        ensureAdmin($this->adminEmail);
         $body = json_decode(file_get_contents('php://input'), true) ?: [];
         $id   = $this->service->createGame($body);
         jsonResponse(['id' => $id], 201);
@@ -31,7 +35,7 @@ class GameController
     public function result(int $id): void
     {
         Csrf::verify();
-        ensureAdmin($this->config['admin_email']);
+        ensureAdmin($this->adminEmail);
         $body = json_decode(file_get_contents('php://input'), true) ?: [];
         $casa = (int) ($body['placar_casa'] ?? 0);
         $fora = (int) ($body['placar_fora'] ?? 0);
@@ -44,11 +48,12 @@ class GameController
     public function import(): void
     {
         Csrf::verify();
-        ensureAdmin($this->config['admin_email']);
+        ensureAdmin($this->adminEmail);
 
-        $apiKey = $this->config['api_football']['key'] ?? '';
+        $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football']['key'] ?? '');
+        $timezone = $this->configRepo->get('api_football_timezone', $this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
         if (empty($apiKey)) {
-            jsonResponse(['error' => 'API key não configurada em src/config.php'], 400);
+            jsonResponse(['error' => 'API key não configurada. Atualize em Configurações.'], 400);
             return;
         }
 
@@ -57,7 +62,7 @@ class GameController
         $season   = (int) ($body['season']    ?? date('Y'));
         $next     = min(50, max(1, (int) ($body['next'] ?? 20)));
 
-        $api      = new ApiFootballService($apiKey);
+        $api      = new ApiFootballService($apiKey, $timezone);
         $fixtures = $api->fetchNextFixtures($leagueId, $season, $next);
 
         if (empty($fixtures)) {
@@ -80,15 +85,16 @@ class GameController
     public function sync(): void
     {
         Csrf::verify();
-        ensureAdmin($this->config['admin_email']);
+        ensureAdmin($this->adminEmail);
 
-        $apiKey = $this->config['api_football']['key'] ?? '';
+        $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football']['key'] ?? '');
+        $timezone = $this->configRepo->get('api_football_timezone', $this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
         if (empty($apiKey)) {
-            jsonResponse(['error' => 'API key não configurada em src/config.php'], 400);
+            jsonResponse(['error' => 'API key não configurada. Atualize em Configurações.'], 400);
             return;
         }
 
-        $api          = new ApiFootballService($apiKey);
+        $api          = new ApiFootballService($apiKey, $timezone);
         $pendingGames = $this->repository->findPendingSync();
 
         if (empty($pendingGames)) {

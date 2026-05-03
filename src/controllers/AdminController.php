@@ -82,6 +82,7 @@ class AdminController
         $body    = json_decode(file_get_contents('php://input'), true) ?: [];
         $allowed = [
             'site_nome', 'site_emoji',
+            'api_football_key', 'api_football_timezone',
             'pix_tipo', 'pix_chave', 'pix_nome',
             'bonus_cadastro', 'valor_base_padrao',
             'mult_min', 'mult_max',
