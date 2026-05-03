@@ -693,12 +693,88 @@ const switchAuthTab = (tab) => {
 };
 
 // ── Admin ─────────────────────────────────────────────────────
-const populateAdminSelect = () => {
-  const sel = document.getElementById('adminGameSelect');
-  if (!sel) return;
-  const openGames = S.games.filter(g => g.status !== 'finalizado');
-  sel.innerHTML = '<option value="">— selecione um jogo —</option>' +
-    openGames.map(g => `<option value="${g.id}">${g.time_casa} × ${g.time_fora} (${fmtDate(g.data_hora)})</option>`).join('');
+const ADMIN_PAGE_SIZE = 8;
+let adminGamesPage = 0;
+
+const renderAdminGames = () => {
+  const listEl  = document.getElementById('adminGamesList');
+  const pageEl  = document.getElementById('adminGamesPagination');
+  const countEl = document.getElementById('adminGamesCount');
+  if (!listEl) return;
+
+  const all        = [...S.games].sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+  const total      = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
+  if (adminGamesPage >= totalPages) adminGamesPage = totalPages - 1;
+  const page = all.slice(adminGamesPage * ADMIN_PAGE_SIZE, (adminGamesPage + 1) * ADMIN_PAGE_SIZE);
+
+  if (countEl) countEl.textContent = `${total} jogo${total !== 1 ? 's' : ''}`;
+
+  if (!total) {
+    listEl.innerHTML = '<p class="empty-state">Nenhum jogo cadastrado ainda.</p>';
+    if (pageEl) pageEl.innerHTML = '';
+    return;
+  }
+
+  const statusBadge = s => {
+    const map = { aberto: 'open', encerrado: 'closed', finalizado: 'final' };
+    return `<span class="badge badge--${map[s] || 'closed'}">${s}</span>`;
+  };
+
+  const placar = g =>
+    g.placar_casa !== null && g.placar_fora !== null
+      ? `<strong>${g.placar_casa} × ${g.placar_fora}</strong>`
+      : '<span class="text--dim">—</span>';
+
+  listEl.innerHTML = `
+    <table class="admin-table">
+      <thead><tr>
+        <th>Confronto</th>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Placar</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${page.map(g => `
+          <tr>
+            <td><strong>${g.time_casa} × ${g.time_fora}</strong></td>
+            <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
+            <td>${statusBadge(g.status)}</td>
+            <td>${placar(g)}</td>
+            <td>
+              ${g.status !== 'finalizado'
+                ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}">Resultado</button>`
+                : ''}
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  if (pageEl) {
+    if (totalPages <= 1) { pageEl.innerHTML = ''; return; }
+    pageEl.innerHTML = `
+      <div class="admin-pagination__inner">
+        <button class="btn btn--ghost btn--sm" ${adminGamesPage === 0 ? 'disabled' : ''} data-action="admin-page" data-page="${adminGamesPage - 1}">‹ Anterior</button>
+        <span class="text--muted" style="font-size:.82rem">Página ${adminGamesPage + 1} de ${totalPages}</span>
+        <button class="btn btn--ghost btn--sm" ${adminGamesPage >= totalPages - 1 ? 'disabled' : ''} data-action="admin-page" data-page="${adminGamesPage + 1}">Próxima ›</button>
+      </div>`;
+  }
+};
+
+const populateAdminSelect = () => renderAdminGames();
+
+const openAdminResultado = (id, label) => {
+  document.getElementById('adminGameSelect').value  = id;
+  document.getElementById('adminResultadoJogo').textContent = label;
+  document.getElementById('adminResultForm').reset();
+  document.getElementById('adminScoreHome').value = '';
+  document.getElementById('adminScoreAway').value = '';
+  document.getElementById('modalAdminResultado').classList.remove('hidden');
+};
+
+const closeAdminResultado = () => {
+  document.getElementById('modalAdminResultado').classList.add('hidden');
 };
 
 const submitAdminGame = async (e) => {
@@ -809,11 +885,10 @@ const submitAdminResult = async (e) => {
       placar_fora: Number(document.getElementById('adminScoreAway').value),
     });
     showAlert('Resultado registrado e apostas processadas!', 'success');
-    e.target.reset();
+    closeAdminResultado();
     await loadGames();
     await loadBets();
     await renderRanking();
-    populateAdminSelect();
   } catch (err) {
     showAlert(err.message, 'danger');
   } finally {
@@ -952,6 +1027,19 @@ const bind = () => {
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-admin-tab]');
     if (btn) switchAdminTab(btn.dataset.adminTab);
+  });
+
+  // Admin games list — resultado + paginação + fechar modal
+  document.getElementById('adminGamesList')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="abrir-resultado"]');
+    if (btn) openAdminResultado(Number(btn.dataset.id), btn.dataset.label);
+  });
+  document.getElementById('adminGamesPagination')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="admin-page"]');
+    if (btn && !btn.disabled) { adminGamesPage = Number(btn.dataset.page); renderAdminGames(); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-close="modalAdminResultado"]')) closeAdminResultado();
   });
 
   // Block / unblock user via event delegation

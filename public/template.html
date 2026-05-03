@@ -186,10 +186,10 @@
         <!-- ── ABA: JOGOS ── -->
         <div class="admin-tab hidden" id="atab-jogos">
           <h2 class="admin-tab__title">⚽ Gerenciar Jogos</h2>
-          <div class="admin-grid-2">
-            <div class="panel">
-              <h3 class="panel__title">Cadastrar Jogo</h3>
-              <form id="adminGameForm">
+
+          <div class="panel" style="margin-bottom:1.25rem">
+            <h3 class="panel__title">Cadastrar Jogo</h3>
+            <form id="adminGameForm">
 
                 <!-- Preview ao vivo do confronto -->
                 <div class="gf-preview">
@@ -269,64 +269,15 @@
 
                 <button class="btn btn--primary btn--full" type="submit">Cadastrar Jogo</button>
               </form>
-            </div>
-            <div class="panel">
-              <h3 class="panel__title">Inserir Resultado</h3>
-              <form id="adminResultForm">
-                <div class="form-group">
-                  <label>Jogo</label>
-                  <select id="adminGameSelect" required>
-                    <option value="">— selecione um jogo —</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Placar Casa</label>
-                    <input id="adminScoreHome" type="number" min="0" max="20" placeholder="0" required />
-                  </div>
-                  <div class="form-group">
-                    <label>Placar Fora</label>
-                    <input id="adminScoreAway" type="number" min="0" max="20" placeholder="0" required />
-                  </div>
-                </div>
-                <button class="btn btn--primary btn--full" type="submit">Registrar Resultado</button>
-              </form>
-            </div>
           </div>
 
-          <div class="panel" style="margin-top:1.1rem">
-            <h3 class="panel__title">📡 Importar via API-Football</h3>
-            <p class="text--muted" style="margin-bottom:1rem;font-size:.85rem">
-              Configure sua chave em <code>src/config.php</code> → <code>api_football.key</code>
-            </p>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Liga</label>
-                <select id="importLeague">
-                  <option value="71">🇧🇷 Brasileirão Série A</option>
-                  <option value="73">🇧🇷 Copa do Brasil</option>
-                  <option value="72">🇧🇷 Brasileirão Série B</option>
-                  <option value="13">🌎 Copa Libertadores</option>
-                  <option value="9">🌎 Copa América</option>
-                  <option value="1">🌍 Copa do Mundo FIFA</option>
-                  <option value="2">🏆 Champions League</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Temporada</label>
-                <input id="importSeason" type="number" value="2024" min="2022" max="2024" />
-                <p class="text--muted" style="margin-top:.35rem;font-size:.82rem">Planos grátis suportam apenas temporadas 2022 a 2024.</p>
-              </div>
-              <div class="form-group">
-                <label>Próximos</label>
-                <input id="importNext" type="number" value="20" min="1" max="50" />
-              </div>
+          <div class="panel">
+            <div class="admin-list-header">
+              <h3 class="panel__title" style="margin:0">Jogos cadastrados</h3>
+              <span class="text--muted" id="adminGamesCount"></span>
             </div>
-            <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-              <button class="btn btn--primary" id="btnImport" style="flex:1">📡 Importar Jogos</button>
-              <button class="btn btn--ghost"   id="btnSync"   style="flex:1">🔄 Sincronizar Resultados</button>
-            </div>
-            <div id="importStatus" style="margin-top:.75rem"></div>
+            <div id="adminGamesList"></div>
+            <div class="admin-pagination" id="adminGamesPagination"></div>
           </div>
         </div>
 
@@ -638,6 +589,33 @@
     <div class="modal__backdrop"></div>
     <div class="modal__box modal__box--resultado">
       <div id="resultadoContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: ADMIN — REGISTRAR RESULTADO ===== -->
+  <div class="modal hidden" id="modalAdminResultado">
+    <div class="modal__backdrop" data-close="modalAdminResultado"></div>
+    <div class="modal__box modal__box--sm">
+      <button class="modal__close" data-close="modalAdminResultado">×</button>
+      <div class="modal__header">
+        <span class="modal__icon">🎯</span>
+        <h3>Registrar Resultado</h3>
+        <p class="text--muted" id="adminResultadoJogo" style="margin-top:.3rem;font-size:.88rem"></p>
+      </div>
+      <form id="adminResultForm">
+        <input type="hidden" id="adminGameSelect" />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Gols Casa</label>
+            <input id="adminScoreHome" type="number" min="0" max="20" placeholder="0" required />
+          </div>
+          <div class="form-group">
+            <label>Gols Fora</label>
+            <input id="adminScoreAway" type="number" min="0" max="20" placeholder="0" required />
+          </div>
+        </div>
+        <button class="btn btn--primary btn--full" type="submit">Confirmar Resultado</button>
+      </form>
     </div>
   </div>
 

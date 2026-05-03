@@ -1096,6 +1096,18 @@ select {
   padding-bottom: .7rem;
 }
 
+/* Header da lista de jogos */
+.admin-list-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+/* Paginação */
+.admin-pagination { margin-top: .75rem; }
+.admin-pagination__inner {
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+}
+
 /* Seção com linha separadora */
 .form-section { margin-bottom: .9rem; }
 .form-section__label {
