@@ -6,7 +6,7 @@
   <title>BetCopa | Acerte o Placar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=5" />
 </head>
 <body>
 
@@ -25,6 +25,13 @@
       </div>
     </div>
   </header>
+
+  <!-- BANNER (abaixo do header fixo) -->
+  <div class="banner-area" id="bannerArea">
+    <div class="container">
+      <div class="banner-carousel" id="bannerCarousel"></div>
+    </div>
+  </div>
 
   <div class="alerts container" id="alerts"></div>
 
@@ -118,6 +125,7 @@
           <button class="admin-nav__btn" data-admin-tab="jogos">⚽ Jogos</button>
           <button class="admin-nav__btn" data-admin-tab="apostas">🎯 Apostas</button>
           <button class="admin-nav__btn" data-admin-tab="usuarios">👥 Usuários</button>
+          <button class="admin-nav__btn" data-admin-tab="banners">🖼️ Banners</button>
           <button class="admin-nav__btn" data-admin-tab="config">⚙️ Configurações</button>
         </nav>
       </aside>
@@ -402,6 +410,39 @@
           </form>
         </div>
 
+        <!-- ── ABA: BANNERS ── -->
+        <div class="admin-tab hidden" id="atab-banners">
+          <h2 class="admin-tab__title">🖼️ Banners Promocionais</h2>
+          <div class="panel">
+            <p class="text--muted" style="font-size:.85rem;margin-bottom:1rem">
+              Adicione banners que aparecem no topo da página principal, abaixo da barra de navegação.<br>
+              Use URLs de imagens hospedadas (ex: Imgur, Cloudinary, ou qualquer link direto de imagem).
+            </p>
+
+            <!-- Lista dos banners -->
+            <div id="adminBannerList" style="margin-bottom:1rem"></div>
+
+            <!-- Formulário de novo banner -->
+            <div style="border-top:1px solid var(--border);padding-top:1rem">
+              <h4 style="margin-bottom:.75rem;font-size:.9rem">➕ Novo Banner</h4>
+              <div class="form-row">
+                <div class="form-group" style="flex:2">
+                  <label>URL da Imagem</label>
+                  <input id="bannerImgUrl" type="url" placeholder="https://i.imgur.com/exemplo.jpg" />
+                </div>
+                <div class="form-group" style="flex:2">
+                  <label>Link de destino (opcional)</label>
+                  <input id="bannerLinkUrl" type="url" placeholder="https://exemplo.com" />
+                </div>
+              </div>
+              <div id="bannerPreviewBox" style="margin:.75rem 0;display:none">
+                <img id="bannerPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border)" />
+              </div>
+              <button type="button" class="btn btn--primary" id="btnAddBanner">➕ Adicionar Banner</button>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /admin-content -->
     </div><!-- /admin-layout -->
   </main>
@@ -507,6 +548,6 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=4"></script>
+  <script src="/assets/js/app.js?v=5"></script>
 </body>
 </html>

@@ -397,8 +397,10 @@ const renderGames = () => {
             ${isClosed ? (isFinal ? '🏁 Finalizado' : '🔒 Encerrado') : '🎯 Fazer Palpite'}
           </button>
         </div>
-        <div class="text--muted" style="font-size:.75rem;text-align:center;margin-top:.25rem">
-          R$ ${valorBase}/palpite · ganhe até ${10 * 10}×
+        <div class="game-card__info">
+          <span class="game-card__price">R$ ${valorBase}</span>
+          <span class="game-card__sep">·</span>
+          <span class="game-card__reward">ganhe até <strong>${10 * 10}×</strong></span>
         </div>
       </article>`;
   }).join('');
@@ -993,6 +995,102 @@ const editAdminGame = (id) => {
   document.getElementById(`cancel-game-${id}`).addEventListener('click', () => loadAdminGames());
 };
 
+// ── Banner system ─────────────────────────────────────────────
+let bannerInterval = null;
+let bannerSlide = 0;
+
+const getBanners = () => {
+  try { return JSON.parse(localStorage.getItem('betcopa_banners') || '[]'); } catch { return []; }
+};
+
+const saveBanners = (banners) => {
+  localStorage.setItem('betcopa_banners', JSON.stringify(banners));
+};
+
+const renderBannerCarousel = () => {
+  const area = document.getElementById('bannerArea');
+  const el = document.getElementById('bannerCarousel');
+  if (!area || !el) return;
+
+  const banners = getBanners();
+  if (!banners.length) {
+    area.classList.remove('has-banners');
+    el.innerHTML = '';
+    return;
+  }
+
+  area.classList.add('has-banners');
+
+  const slidesHtml = banners.map((b, i) => `
+    <div class="banner-carousel__slide">
+      ${b.link
+        ? `<a href="${b.link}" target="_blank" rel="noopener"><img src="${b.img}" alt="Banner ${i + 1}" /></a>`
+        : `<img src="${b.img}" alt="Banner ${i + 1}" />`}
+    </div>
+  `).join('');
+
+  const showArrows = banners.length > 3;
+
+  el.innerHTML = `
+    ${showArrows ? '<button class="banner-carousel__arrow banner-carousel__arrow--left">‹</button>' : ''}
+    <div class="banner-carousel__track">${slidesHtml}</div>
+    ${showArrows ? '<button class="banner-carousel__arrow banner-carousel__arrow--right">›</button>' : ''}
+  `;
+
+  // Arrow navigation
+  const track = el.querySelector('.banner-carousel__track');
+  if (track && showArrows) {
+    el.querySelector('.banner-carousel__arrow--left')?.addEventListener('click', () => {
+      track.scrollBy({ left: -track.offsetWidth * 0.6, behavior: 'smooth' });
+    });
+    el.querySelector('.banner-carousel__arrow--right')?.addEventListener('click', () => {
+      track.scrollBy({ left: track.offsetWidth * 0.6, behavior: 'smooth' });
+    });
+  }
+};
+
+const showBannerSlide = () => {}; // kept for compatibility
+
+const renderAdminBannerList = () => {
+  const el = document.getElementById('adminBannerList');
+  if (!el) return;
+  const banners = getBanners();
+  if (!banners.length) {
+    el.innerHTML = '<p class="text--muted" style="font-size:.8rem">Nenhum banner cadastrado.</p>';
+    return;
+  }
+  el.innerHTML = banners.map((b, i) => `
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.5rem;background:var(--surface-2);border-radius:8px;margin-bottom:.4rem">
+      <img src="${b.img}" style="width:120px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" />
+      <span style="flex:1;font-size:.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.link || 'Sem link'}</span>
+      <button class="btn btn--danger btn--sm" data-remove-banner="${i}">🗑️</button>
+    </div>
+  `).join('');
+};
+
+const addBanner = () => {
+  const img = document.getElementById('bannerImgUrl')?.value?.trim();
+  if (!img) { showAlert('Informe a URL da imagem do banner.', 'danger'); return; }
+  const link = document.getElementById('bannerLinkUrl')?.value?.trim() || '';
+  const banners = getBanners();
+  banners.push({ img, link });
+  saveBanners(banners);
+  document.getElementById('bannerImgUrl').value = '';
+  document.getElementById('bannerLinkUrl').value = '';
+  renderAdminBannerList();
+  renderBannerCarousel();
+  showAlert('Banner adicionado!', 'success');
+};
+
+const removeBanner = (idx) => {
+  const banners = getBanners();
+  banners.splice(idx, 1);
+  saveBanners(banners);
+  renderAdminBannerList();
+  renderBannerCarousel();
+  showAlert('Banner removido.', 'success');
+};
+
 // ── Data loaders ──────────────────────────────────────────────
 const loadCsrf = async () => {
   try {
@@ -1141,6 +1239,27 @@ const bind = () => {
     const delBtn = e.target.closest('[data-delete-game]');
     if (delBtn) { deleteAdminGame(Number(delBtn.dataset.deleteGame)); return; }
   });
+
+  // Banner management
+  document.getElementById('btnAddBanner')?.addEventListener('click', addBanner);
+  document.getElementById('adminBannerList')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove-banner]');
+    if (btn) removeBanner(Number(btn.dataset.removeBanner));
+  });
+
+  // Banner image preview
+  document.getElementById('bannerImgUrl')?.addEventListener('input', e => {
+    const url = e.target.value.trim();
+    const box = document.getElementById('bannerPreviewBox');
+    const img = document.getElementById('bannerPreviewImg');
+    if (url && box && img) {
+      img.src = url;
+      box.style.display = 'block';
+      img.onerror = () => { box.style.display = 'none'; };
+    } else if (box) {
+      box.style.display = 'none';
+    }
+  });
 };
 
 // ── Admin helpers ─────────────────────────────────────────────
@@ -1167,6 +1286,7 @@ const switchAdminTab = (tab) => {
   if (tab === 'usuarios')  loadAdminUsers();
   if (tab === 'apostas')   loadAdminBets();
   if (tab === 'config')    loadAdminConfig();
+  if (tab === 'banners')   renderAdminBannerList();
   if (tab === 'jogos')     loadAdminGames();
   if (tab === 'jogos')     populateAdminSelect();
 };
@@ -1467,6 +1587,7 @@ const submitAdminConfig = async (e) => {
 // ── Init ──────────────────────────────────────────────────────
 const init = async () => {
   bind();
+  renderBannerCarousel();
   await loadCsrf();
   await loadUser();
   await loadGames();

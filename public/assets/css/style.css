@@ -68,42 +68,120 @@ button, input, select { font: inherit; }
 .hidden       { display: none !important; }
 
 /* ========================
-   HEADER
+   HEADER (fixo com gradiente)
    ======================== */
 .header {
-  position: sticky; top: 0; z-index: 50;
-  background: rgba(10,15,30,0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid var(--border);
-  padding: .85rem 0;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  background: linear-gradient(180deg, #1b3d1b 0%, #143314 50%, #0d260d 100%);
+  border-bottom: 2px solid #2ecc40;
+  padding: .55rem 0;
+  box-shadow: 0 2px 20px rgba(0,0,0,.6);
 }
 
 .header__inner {
-  display: flex; align-items: center; gap: 1.25rem;
+  display: flex; align-items: center; gap: .6rem;
 }
 
 .logo {
-  font-size: 1.35rem; font-weight: 900;
+  font-size: 1.2rem; font-weight: 900;
   color: var(--text); text-decoration: none;
   letter-spacing: -.03em; flex-shrink: 0;
 }
 .logo span { color: var(--primary); }
 
-.nav { display: flex; gap: .35rem; flex: 1; }
+.nav { display: flex; gap: .2rem; flex: 1; }
 
 .nav__btn {
   border: 0; background: transparent;
   color: var(--text-dim);
-  padding: .45rem .9rem;
+  padding: .35rem .7rem;
   border-radius: 999px;
-  cursor: pointer; font-size: .88rem; font-weight: 500;
+  cursor: pointer; font-size: .82rem; font-weight: 500;
   transition: color .15s, background .15s;
+  white-space: nowrap;
 }
-.nav__btn:hover { color: var(--text); background: var(--surface-2); }
+.nav__btn:hover { color: var(--text); background: rgba(255,255,255,.06); }
 .nav__btn--active { color: var(--primary) !important; background: rgba(0,200,83,0.13) !important; }
 
-.header__user { margin-left: auto; display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
+.header__user { margin-left: auto; display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+
+/* Espaçamento para o conteúdo abaixo do header fixo */
+body { padding-top: 52px; }
+
+/* ========================
+   BANNER AREA (carousel horizontal estilo bet365)
+   ======================== */
+.banner-area {
+  background: var(--bg);
+  padding: .6rem 0 .3rem;
+  display: none;
+}
+.banner-area.has-banners { display: block; }
+
+.banner-carousel {
+  position: relative;
+  width: 100%;
+}
+
+.banner-carousel__track {
+  display: flex;
+  gap: .6rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.banner-carousel__track::-webkit-scrollbar { display: none; }
+
+.banner-carousel__slide {
+  flex: 0 0 calc(33.333% - .4rem);
+  scroll-snap-align: start;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  height: 200px;
+  transition: transform .2s;
+}
+.banner-carousel__slide:hover { transform: scale(1.02); }
+
+.banner-carousel__slide img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+.banner-carousel__slide a { display: block; width: 100%; height: 100%; }
+
+/* Setas de navegação */
+.banner-carousel__arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 5;
+  width: 32px; height: 32px;
+  border-radius: 50%; border: 0;
+  background: rgba(0,0,0,.55);
+  color: #fff; font-size: 1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+  backdrop-filter: blur(4px);
+}
+.banner-carousel__arrow:hover { background: rgba(0,0,0,.8); }
+.banner-carousel__arrow--left  { left: 6px; }
+.banner-carousel__arrow--right { right: 6px; }
+
+@media (max-width: 768px) {
+  .banner-carousel__slide {
+    flex: 0 0 85%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+  .banner-carousel__slide img {
+    object-fit: contain;
+    background: var(--surface);
+  }
+}
+
 
 .user-chip {
   display: flex; align-items: center; gap: .55rem;
@@ -269,6 +347,8 @@ button, input, select { font: inherit; }
   font-size: .75rem; font-weight: 700;
   letter-spacing: .05em; text-transform: uppercase;
   color: var(--text-dim);
+  max-width: 100%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
 }
 
 .game-card__center {
@@ -329,6 +409,38 @@ button, input, select { font: inherit; }
 .game-card__stadium {
   font-size: .73rem; color: var(--text-muted);
   text-align: center;
+}
+
+/* Info premium (valor + multiplicador) */
+.game-card__info {
+  display: flex; align-items: center; justify-content: center;
+  gap: .4rem;
+  font-size: .72rem;
+  padding: .35rem .5rem;
+  margin-top: .1rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(0,255,135,.04), rgba(61,142,255,.04));
+  border: 1px solid rgba(255,255,255,.05);
+}
+.game-card__price {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.game-card__sep {
+  color: rgba(255,255,255,.15);
+  font-size: .6rem;
+}
+.game-card__reward {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.game-card__reward strong {
+  background: linear-gradient(135deg, #00ff87, #60efff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  font-size: .82rem;
 }
 
 /* Logo no modal de palpite */
@@ -754,14 +866,116 @@ select {
 }
 
 @media (max-width: 768px) {
-  .header__inner { gap: .75rem; }
-  .nav__btn      { padding: .4rem .65rem; font-size: .82rem; }
-  .games-grid    { grid-template-columns: 1fr; }
+  .header__inner { gap: .4rem; }
+  .logo { font-size: 1rem; }
+  .nav { gap: .1rem; }
+  .nav__btn { padding: .3rem .45rem; font-size: .68rem; }
+
+  /* ── Cards: 2 colunas premium no mobile ── */
+  .games-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: .55rem;
+  }
+  .game-card {
+    padding: .65rem .55rem;
+    gap: .35rem;
+    border-radius: 12px;
+  }
+  .game-card__top {
+    margin-bottom: 0;
+    gap: .25rem;
+  }
+  .game-card .badge {
+    font-size: .5rem;
+    padding: .12rem .35rem;
+  }
+  .game-card__date {
+    font-size: .55rem;
+    white-space: nowrap;
+  }
+
+  /* Matchup: times menores lado a lado */
+  .game-card__matchup {
+    gap: .2rem;
+    flex-wrap: nowrap;
+  }
+  .game-card__team {
+    gap: .1rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .game-card__emblem {
+    width: 30px;
+    height: 30px;
+  }
+  .game-card__emblem img.team-logo {
+    width: 30px !important;
+    height: auto !important;
+  }
+  .game-card__name {
+    font-size: .48rem;
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+  }
+
+  /* Centro: VS + countdown ultra-compacto */
+  .game-card__center {
+    gap: .05rem;
+    flex-shrink: 0;
+    min-width: 42px;
+    max-width: 52px;
+  }
+  .game-card__vs {
+    font-size: .45rem;
+    letter-spacing: .04em;
+  }
+  .game-card__countdown {
+    padding: .15rem .2rem;
+    gap: 0;
+  }
+  .game-card__countdown-label {
+    font-size: .38rem;
+    margin-bottom: .02rem;
+  }
+  .game-card__countdown-time {
+    font-size: .55rem;
+    letter-spacing: .02em;
+  }
+  .game-card__score-real {
+    font-size: .7rem;
+  }
+
+  /* Botão compacto */
+  .game-card__btn .btn {
+    font-size: .65rem;
+    padding: .35rem .4rem;
+    border-radius: 8px;
+  }
+
+  /* Info premium compacto */
+  .game-card__info {
+    font-size: .48rem;
+    gap: .2rem;
+    padding: .2rem .3rem;
+  }
+  .game-card__reward strong {
+    font-size: .58rem;
+  }
+
+  /* Liga e estádio */
+  .game-card__league { font-size: .55rem; }
+  .game-card__stadium { font-size: .5rem; }
+
+  /* Outros ajustes */
   .ranking-grid  { grid-template-columns: 1fr; }
   .form-row      { grid-template-columns: 1fr; }
   .bet-card      { flex-direction: column; align-items: flex-start; }
   .bet-card__actions { margin-left: 0; }
-  .view-hero__title  { font-size: 1.75rem; }
+  .view-hero__title  { font-size: 1.5rem; }
+  .view-hero__sub    { font-size: .85rem; }
   .dash-grid     { grid-template-columns: repeat(2, 1fr); }
 }
 
