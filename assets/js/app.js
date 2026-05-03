@@ -287,6 +287,16 @@ const navigate = (view) => {
   document.querySelectorAll('.nav__btn').forEach(btn => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
+
+  // Hide banners on admin/auth views
+  const bannerArea = document.getElementById('bannerArea');
+  if (bannerArea) {
+    if (view === 'admin' || view === 'auth') {
+      bannerArea.style.display = 'none';
+    } else {
+      bannerArea.style.display = '';
+    }
+  }
 };
 
 // ── Header user chip ──────────────────────────────────────────
