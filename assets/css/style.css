@@ -159,11 +159,12 @@ button, input, select { font: inherit; }
 .header__user { margin-left: auto; display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
 
 .mobile-toggle {
-  display: none;
+  display: flex;
   appearance: none;
   -webkit-appearance: none;
   border: 0;
   background: transparent;
+  color: var(--text);
   width: 42px;
   height: 42px;
   padding: 0;
@@ -172,6 +173,9 @@ button, input, select { font: inherit; }
   align-items: center;
   justify-content: center;
   position: relative;
+}
+.mobile-toggle i {
+  font-size: 1rem;
 }
 
 .mobile-toggle span {
@@ -472,7 +476,13 @@ body.drawer-open {
   transition: transform .2s;
 }
 .game-card:hover .team-logo { transform: scale(1.08); }
+.team-logo--flag {
+  width: auto; height: 52px;
+  border-radius: 3px;
+  object-fit: cover;
+}
 .team-flag-emoji { font-size: 3rem; line-height: 1; }
+.team-flag-fallback { font-size: 3rem; line-height: 1; }
 
 /* Liga + rodada */
 .game-card__league {
@@ -837,6 +847,12 @@ select {
 }
 .admin-nav__btn:hover { background: var(--surface-2); color: var(--text); }
 .admin-nav__btn--active { background: rgba(0,200,83,.13); color: var(--primary); font-weight: 700; }
+
+.admin-sidebar__footer {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-start;
+}
 
 .admin-content {
   flex: 1; padding: 2rem;

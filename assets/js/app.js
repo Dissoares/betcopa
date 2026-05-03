@@ -17,76 +17,97 @@ const S = {
   adminEmail:   'admin@betcopa.local',
 };
 
-// ── Flag map ─────────────────────────────────────────────────
+// ── Flag map: team name → ISO 3166-1 alpha-2 ─────────────────
 const FLAGS = {
-  'brasil': '🇧🇷', 'brazil': '🇧🇷',
-  'argentina': '🇦🇷',
-  'frança': '🇫🇷', 'france': '🇫🇷',
-  'alemanha': '🇩🇪', 'germany': '🇩🇪',
-  'espanha': '🇪🇸', 'spain': '🇪🇸',
-  'portugal': '🇵🇹',
-  'itália': '🇮🇹', 'italia': '🇮🇹', 'italy': '🇮🇹',
-  'méxico': '🇲🇽', 'mexico': '🇲🇽',
-  'noruega': '🇳🇴', 'norway': '🇳🇴',
-  'japão': '🇯🇵', 'japan': '🇯🇵',
-  'coreia': '🇰🇷', 'korea': '🇰🇷',
-  'usa': '🇺🇸', 'estados unidos': '🇺🇸',
-  'inglaterra': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'england': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  'holanda': '🇳🇱', 'netherlands': '🇳🇱', 'países baixos': '🇳🇱',
-  'bélgica': '🇧🇪', 'belgica': '🇧🇪', 'belgium': '🇧🇪',
-  'croácia': '🇭🇷', 'croatia': '🇭🇷',
-  'marrocos': '🇲🇦', 'morocco': '🇲🇦',
-  'senegal': '🇸🇳',
-  'gana': '🇬🇭', 'ghana': '🇬🇭',
-  'uruguai': '🇺🇾', 'uruguay': '🇺🇾',
-  'chile': '🇨🇱',
-  'colômbia': '🇨🇴', 'colombia': '🇨🇴',
-  'equador': '🇪🇨', 'ecuador': '🇪🇨',
-  'austrália': '🇦🇺', 'australia': '🇦🇺',
-  'suíça': '🇨🇭', 'switzerland': '🇨🇭',
-  'polônia': '🇵🇱', 'poland': '🇵🇱',
-  'dinamarca': '🇩🇰', 'denmark': '🇩🇰',
-  'suécia': '🇸🇪', 'sweden': '🇸🇪',
-  'sérvia': '🇷🇸', 'serbia': '🇷🇸',
-  'turquia': '🇹🇷', 'turkey': '🇹🇷',
-  'tunísia': '🇹🇳', 'tunisia': '🇹🇳',
-  'camarões': '🇨🇲', 'cameroon': '🇨🇲',
+  'brasil': 'br', 'brazil': 'br',
+  'argentina': 'ar',
+  'franca': 'fr', 'franca': 'fr', 'france': 'fr',
+  'alemanha': 'de', 'germany': 'de',
+  'espanha': 'es', 'spain': 'es',
+  'portugal': 'pt',
+  'italia': 'it', 'italy': 'it',
+  'mexico': 'mx',
+  'noruega': 'no', 'norway': 'no',
+  'japao': 'jp', 'japan': 'jp',
+  'coreia': 'kr', 'korea': 'kr', 'south korea': 'kr',
+  'usa': 'us', 'estados unidos': 'us', 'united states': 'us',
+  'inglaterra': 'gb-eng', 'england': 'gb-eng',
+  'holanda': 'nl', 'netherlands': 'nl', 'paises baixos': 'nl',
+  'belgica': 'be', 'belgium': 'be',
+  'croacia': 'hr', 'croatia': 'hr',
+  'marrocos': 'ma', 'morocco': 'ma',
+  'senegal': 'sn',
+  'gana': 'gh', 'ghana': 'gh',
+  'uruguai': 'uy', 'uruguay': 'uy',
+  'chile': 'cl',
+  'colombia': 'co',
+  'equador': 'ec', 'ecuador': 'ec',
+  'australia': 'au',
+  'suica': 'ch', 'switzerland': 'ch',
+  'polonia': 'pl', 'poland': 'pl',
+  'dinamarca': 'dk', 'denmark': 'dk',
+  'suecia': 'se', 'sweden': 'se',
+  'servia': 'rs', 'serbia': 'rs',
+  'turquia': 'tr', 'turkey': 'tr',
+  'tunisia': 'tn',
+  'camaroes': 'cm', 'cameroon': 'cm',
+  'nigeria': 'ng',
+  'costa rica': 'cr',
+  'panama': 'pa',
+  'bolivia': 'bo',
+  'peru': 'pe',
+  'venezuela': 've',
+  'paraguai': 'py', 'paraguay': 'py',
+  'russia': 'ru',
+  'ucrania': 'ua', 'ukraine': 'ua',
+  'austria': 'at',
+  'hungria': 'hu', 'hungary': 'hu',
+  'republica tcheca': 'cz', 'czech republic': 'cz',
+  'escocia': 'gb-sct', 'scotland': 'gb-sct',
+  'gales': 'gb-wls', 'wales': 'gb-wls',
+  'irlanda': 'ie', 'ireland': 'ie',
+  'canada': 'ca',
+  'arabia saudita': 'sa', 'saudi arabia': 'sa',
+  'australia': 'au',
+  'china': 'cn',
+  'indonesia': 'id',
+  'egito': 'eg', 'egypt': 'eg',
+  'costa do marfim': 'ci', 'ivory coast': 'ci',
+  'mali': 'ml',
+  'etiopia': 'et', 'ethiopia': 'et',
+  'africa do sul': 'za', 'south africa': 'za',
+  'iran': 'ir',
+  'coreia do norte': 'kp', 'north korea': 'kp',
 };
 
-const toCountryFlag = (code) => {
-  if (typeof code !== 'string') return '';
-  const normalized = code.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) return '';
-  return normalized
-    .split('')
-    .map(letter => String.fromCodePoint(0x1F1E6 + letter.charCodeAt(0) - 65))
-    .join('');
-};
+const flagUrl = (code) => `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
 
-const isEmoji = (value) => typeof value === 'string' && [...value].length > 1 && /1E6|1E7|1E8|1E9|1EA|1EB|1EC|1ED|1EE|1EF|1F0|1F1|1F2|1F3|1F4|1F5|1F6|1F7|1F8|1F9|1FA|1FB|1FC|1FD|1FE|1FF/.test(value);
-
-// Retorna HTML do emblema — logo (img) se disponível, senão emoji/flag
+// Retorna HTML do emblema — logo (img) da API, flag por codigo ISO, ou fallback
 const getEmblem = (game, side) => {
+  const teamName = side === 'home' ? game.time_casa : game.time_fora;
+
+  // 1. API logo
   const logo = side === 'home' ? game.logo_casa : game.logo_fora;
   if (logo) {
-    const name = side === 'home' ? game.time_casa : game.time_fora;
-    return `<img class="team-logo" src="${logo}" alt="${name}" loading="lazy" onerror="this.style.display='none'" />`;
+    return `<img class="team-logo" src="${logo}" alt="${teamName}" loading="lazy" onerror="this.style.display='none'" />`;
   }
 
-  const stored = side === 'home' ? game.bandeira_casa : game.bandeira_fora;
-  if (stored && stored !== '⚽' && stored !== '') {
-    if (isEmoji(stored)) {
-      return `<span class="team-flag-emoji">${stored}</span>`;
-    }
-    const flag = toCountryFlag(stored);
-    if (flag) {
-      return `<span class="team-flag-emoji">${flag}</span>`;
-    }
-    return `<span class="team-flag-emoji">${stored}</span>`;
+  // 2. Admin-stored ISO code (2-letter or subdivision like gb-eng)
+  const stored = ((side === 'home' ? game.bandeira_casa : game.bandeira_fora) || '').trim();
+  if (/^[a-z]{2}(-[a-z]+)?$/i.test(stored) && stored !== '') {
+    return `<img class="team-logo team-logo--flag" src="${flagUrl(stored)}" alt="${teamName}" loading="lazy" onerror="this.style.display='none'" />`;
   }
 
-  const name = (side === 'home' ? game.time_casa : game.time_fora).toLowerCase().trim();
-  return `<span class="team-flag-emoji">${FLAGS[name] || '🏳️'}</span>`;
+  // 3. Auto-detect by team name (normalize accents via simple map)
+  const normalized = teamName.toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const code = FLAGS[normalized] || FLAGS[teamName.toLowerCase().trim()];
+  if (code) {
+    return `<img class="team-logo team-logo--flag" src="${flagUrl(code)}" alt="${teamName}" loading="lazy" onerror="this.style.display='none'" />`;
+  }
+
+  // 4. Fallback
+  return `<span class="team-flag-fallback">&#127937;</span>`;
 };
 
 // ── API helper ────────────────────────────────────────────────
@@ -682,8 +703,8 @@ const submitAdminGame = async (e) => {
     await api('/api/admin/jogos', 'POST', {
       time_casa:     document.getElementById('adminHome').value.trim(),
       time_fora:     document.getElementById('adminAway').value.trim(),
-      bandeira_casa: document.getElementById('adminFlagHome').value.trim() || '⚽',
-      bandeira_fora: document.getElementById('adminFlagAway').value.trim() || '⚽',
+      bandeira_casa: document.getElementById('adminFlagHome').value.trim() || 'br',
+      bandeira_fora: document.getElementById('adminFlagAway').value.trim() || 'br',
       data_hora:     document.getElementById('adminDate').value,
       status:        document.getElementById('adminCreateStatus').value,
       placar_casa:   document.getElementById('adminCreateScoreHome').value !== '' ? parseInt(document.getElementById('adminCreateScoreHome').value, 10) : null,

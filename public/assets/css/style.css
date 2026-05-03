@@ -838,6 +838,12 @@ select {
 .admin-nav__btn:hover { background: var(--surface-2); color: var(--text); }
 .admin-nav__btn--active { background: rgba(0,200,83,.13); color: var(--primary); font-weight: 700; }
 
+.admin-sidebar__footer {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
 .admin-content {
   flex: 1; padding: 2rem;
   min-width: 0;
