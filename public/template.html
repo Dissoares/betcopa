@@ -320,98 +320,158 @@
         <!-- ── ABA: CONFIGURAÇÕES ── -->
         <div class="admin-tab hidden" id="atab-config">
           <h2 class="admin-tab__title">⚙️ Configurações da Plataforma</h2>
+          <div class="config-tabs" id="configTabs">
+            <button type="button" class="config-tab config-tab--active" data-config-tab="system">Sistema</button>
+            <button type="button" class="config-tab" data-config-tab="payment">Pagamento</button>
+            <button type="button" class="config-tab" data-config-tab="bets">Apostas</button>
+            <button type="button" class="config-tab" data-config-tab="api">API</button>
+            <button type="button" class="config-tab" data-config-tab="users">Usuários</button>
+            <button type="button" class="config-tab" data-config-tab="seo">SEO</button>
+          </div>
+
           <form id="adminConfigForm">
-            <div class="admin-grid-2">
+            <div class="config-panels">
 
-              <div class="panel">
-                <h3 class="panel__title">🎨 Identidade</h3>
-                <div class="form-group">
-                  <label>Nome da plataforma</label>
-                  <input id="cfg_site_nome" type="text" placeholder="BetCopa" />
-                </div>
-                <div class="form-group">
-                  <label>Emoji / ícone</label>
-                  <input id="cfg_site_emoji" type="text" placeholder="⚽" maxlength="4" />
-                </div>
-                <div class="form-group">
-                  <label>Email do administrador</label>
-                  <input id="cfg_admin_email" type="email" placeholder="admin@betcopa.local" />
-                </div>
-              </div>
-
-              <div class="panel">
-                <h3 class="panel__title">🌐 API de jogos</h3>
-                <div class="form-group">
-                  <label>Chave da API Football</label>
-                  <input id="cfg_api_football_key" type="text" placeholder="Chave API Football" />
-                </div>
-                <div class="form-group">
-                  <label>Timezone da API</label>
-                  <input id="cfg_api_football_timezone" type="text" placeholder="America/Sao_Paulo" />
-                </div>
-              </div>
-
-              <div class="panel">
-                <h3 class="panel__title">💳 PIX (Pagamentos)</h3>
-                <div class="form-group">
-                  <label>Tipo da chave</label>
-                  <select id="cfg_pix_tipo">
-                    <option value="email">Email</option>
-                    <option value="cpf">CPF</option>
-                    <option value="telefone">Telefone</option>
-                    <option value="aleatoria">Chave aleatória</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Chave PIX</label>
-                  <input id="cfg_pix_chave" type="text" placeholder="pagamentos@betcopa.com" />
-                </div>
-                <div class="form-group">
-                  <label>Nome do beneficiário</label>
-                  <input id="cfg_pix_nome" type="text" placeholder="BetCopa Ltda" />
-                </div>
-              </div>
-
-              <div class="panel">
-                <h3 class="panel__title">🎲 Apostas</h3>
-                <div class="form-group">
-                  <label>Bônus de cadastro (R$)</label>
-                  <input id="cfg_bonus_cadastro" type="number" min="0" step="0.50" placeholder="100.00" />
-                </div>
-                <div class="form-group">
-                  <label>Valor base padrão por palpite (R$)</label>
-                  <input id="cfg_valor_base_padrao" type="number" min="0.5" step="0.5" placeholder="1.00" />
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Multiplicador mínimo</label>
-                    <input id="cfg_mult_min" type="number" min="1" max="10" placeholder="2" />
+              <div class="config-panel config-panel--active" data-config-panel="system">
+                <div class="admin-grid-2">
+                  <div class="panel">
+                    <h3 class="panel__title">🎨 Sistema</h3>
+                    <div class="form-group">
+                      <label>Nome da plataforma</label>
+                      <input id="cfg_site_nome" type="text" placeholder="BetCopa" />
+                    </div>
+                    <div class="form-group">
+                      <label>Emoji / ícone</label>
+                      <input id="cfg_site_emoji" type="text" placeholder="⚽" maxlength="4" />
+                    </div>
+                    <div class="form-group">
+                      <label>Modo manutenção</label>
+                      <select id="cfg_maintenance_mode">
+                        <option value="0">❌ Desativado</option>
+                        <option value="1">✅ Ativado</option>
+                      </select>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label>Multiplicador máximo</label>
-                    <input id="cfg_mult_max" type="number" min="2" max="50" placeholder="10" />
+
+                  <div class="panel">
+                    <h3 class="panel__title">👤 Usuários</h3>
+                    <div class="form-group">
+                      <label>Email do administrador</label>
+                      <input id="cfg_admin_email" type="email" placeholder="admin@betcopa.local" />
+                    </div>
+                    <div class="form-group">
+                      <label>Cadastro de usuários</label>
+                      <select id="cfg_user_registration_enabled">
+                        <option value="1">✅ Permitido</option>
+                        <option value="0">❌ Bloqueado</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div class="panel">
-                <h3 class="panel__title">🔒 Limites & Saques</h3>
-                <div class="form-group">
-                  <label>Valor máximo por aposta (R$)</label>
-                  <input id="cfg_max_aposta" type="number" min="1" placeholder="500.00" />
-                </div>
-                <div class="form-group">
-                  <label>Ganho máximo por aposta (R$)</label>
-                  <input id="cfg_max_ganho" type="number" min="1" placeholder="5000.00" />
-                </div>
-                <div class="form-group">
-                  <label>Saques habilitados</label>
-                  <select id="cfg_saques_ativos">
-                    <option value="1">✅ Sim</option>
-                    <option value="0">❌ Não</option>
-                  </select>
+              <div class="config-panel" data-config-panel="payment">
+                <div class="admin-grid-2">
+                  <div class="panel">
+                    <h3 class="panel__title">💳 Pagamentos</h3>
+                    <div class="form-group">
+                      <label>Tipo da chave PIX</label>
+                      <select id="cfg_pix_tipo">
+                        <option value="email">Email</option>
+                        <option value="cpf">CPF</option>
+                        <option value="telefone">Telefone</option>
+                        <option value="aleatoria">Chave aleatória</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Chave PIX</label>
+                      <input id="cfg_pix_chave" type="text" placeholder="pagamentos@betcopa.com" />
+                    </div>
+                    <div class="form-group">
+                      <label>Nome do beneficiário</label>
+                      <input id="cfg_pix_nome" type="text" placeholder="BetCopa Ltda" />
+                    </div>
+                    <div class="form-group">
+                      <label>Saques habilitados</label>
+                      <select id="cfg_saques_ativos">
+                        <option value="1">✅ Sim</option>
+                        <option value="0">❌ Não</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div class="config-panel" data-config-panel="bets">
+                <div class="admin-grid-2">
+                  <div class="panel">
+                    <h3 class="panel__title">🎲 Apostas</h3>
+                    <div class="form-group">
+                      <label>Bônus de cadastro (R$)</label>
+                      <input id="cfg_bonus_cadastro" type="number" min="0" step="0.50" placeholder="100.00" />
+                    </div>
+                    <div class="form-group">
+                      <label>Valor base padrão por palpite (R$)</label>
+                      <input id="cfg_valor_base_padrao" type="number" min="0.5" step="0.5" placeholder="1.00" />
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Multiplicador mínimo</label>
+                        <input id="cfg_mult_min" type="number" min="1" max="10" placeholder="2" />
+                      </div>
+                      <div class="form-group">
+                        <label>Multiplicador máximo</label>
+                        <input id="cfg_mult_max" type="number" min="2" max="50" placeholder="10" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>Valor máximo por aposta (R$)</label>
+                      <input id="cfg_max_aposta" type="number" min="1" placeholder="500.00" />
+                    </div>
+                    <div class="form-group">
+                      <label>Ganho máximo por aposta (R$)</label>
+                      <input id="cfg_max_ganho" type="number" min="1" placeholder="5000.00" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="config-panel" data-config-panel="api">
+                <div class="admin-grid-2">
+                  <div class="panel">
+                    <h3 class="panel__title">🌐 API de jogos</h3>
+                    <div class="form-group">
+                      <label>Chave da API Football</label>
+                      <input id="cfg_api_football_key" type="text" placeholder="Chave API Football" />
+                    </div>
+                    <div class="form-group">
+                      <label>Timezone da API</label>
+                      <input id="cfg_api_football_timezone" type="text" placeholder="America/Sao_Paulo" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="config-panel" data-config-panel="seo">
+                <div class="admin-grid-2">
+                  <div class="panel">
+                    <h3 class="panel__title">🔎 SEO</h3>
+                    <div class="form-group">
+                      <label>Título SEO</label>
+                      <input id="cfg_site_title" type="text" placeholder="BetCopa | Acerte o Placar" />
+                    </div>
+                    <div class="form-group">
+                      <label>Descrição</label>
+                      <textarea id="cfg_site_description" rows="3" placeholder="Aposte no placar certo e ganhe muito."></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Palavras-chave</label>
+                      <input id="cfg_site_keywords" type="text" placeholder="futebol, apostas, placar" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div style="margin-top:1.25rem">

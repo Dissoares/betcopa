@@ -81,13 +81,14 @@ class AdminController
 
         $body    = json_decode(file_get_contents('php://input'), true) ?: [];
         $allowed = [
-            'site_nome', 'site_emoji',
+            'site_nome', 'site_emoji', 'site_title', 'site_description', 'site_keywords',
+            'maintenance_mode', 'admin_email', 'user_registration_enabled',
             'api_football_key', 'api_football_timezone',
             'pix_tipo', 'pix_chave', 'pix_nome',
             'bonus_cadastro', 'valor_base_padrao',
             'mult_min', 'mult_max',
             'max_aposta', 'max_ganho',
-            'admin_email', 'saques_ativos',
+            'saques_ativos',
         ];
 
         $saved = [];

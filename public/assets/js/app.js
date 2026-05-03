@@ -888,6 +888,11 @@ const bind = () => {
     tab.addEventListener('click', () => switchAuthTab(tab.dataset.authTab));
   });
 
+  // Config tabs switcher
+  document.querySelectorAll('.config-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchConfigTab(tab.dataset.configTab));
+  });
+
   // Admin forms
   document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
@@ -1109,24 +1114,38 @@ const loadAdminConfig = async () => {
       const el = document.getElementById(id);
       if (el && config[key]) el.value = config[key].valor;
     };
-    set('cfg_site_nome',        'site_nome');
-    set('cfg_site_emoji',       'site_emoji');
-    set('cfg_admin_email',      'admin_email');
-    set('cfg_api_football_key', 'api_football_key');
-    set('cfg_api_football_timezone', 'api_football_timezone');
-    set('cfg_pix_tipo',         'pix_tipo');
-    set('cfg_pix_chave',        'pix_chave');
-    set('cfg_pix_nome',         'pix_nome');
-    set('cfg_bonus_cadastro',   'bonus_cadastro');
-    set('cfg_valor_base_padrao','valor_base_padrao');
-    set('cfg_mult_min',         'mult_min');
-    set('cfg_mult_max',         'mult_max');
-    set('cfg_max_aposta',       'max_aposta');
-    set('cfg_max_ganho',        'max_ganho');
-    set('cfg_saques_ativos',    'saques_ativos');
+    set('cfg_site_nome',                 'site_nome');
+    set('cfg_site_emoji',                'site_emoji');
+    set('cfg_site_title',                'site_title');
+    set('cfg_site_description',          'site_description');
+    set('cfg_site_keywords',             'site_keywords');
+    set('cfg_admin_email',               'admin_email');
+    set('cfg_maintenance_mode',          'maintenance_mode');
+    set('cfg_user_registration_enabled', 'user_registration_enabled');
+    set('cfg_api_football_key',          'api_football_key');
+    set('cfg_api_football_timezone',     'api_football_timezone');
+    set('cfg_pix_tipo',                  'pix_tipo');
+    set('cfg_pix_chave',                 'pix_chave');
+    set('cfg_pix_nome',                  'pix_nome');
+    set('cfg_bonus_cadastro',            'bonus_cadastro');
+    set('cfg_valor_base_padrao',         'valor_base_padrao');
+    set('cfg_mult_min',                  'mult_min');
+    set('cfg_mult_max',                  'mult_max');
+    set('cfg_max_aposta',                'max_aposta');
+    set('cfg_max_ganho',                 'max_ganho');
+    set('cfg_saques_ativos',             'saques_ativos');
   } catch (err) {
     statusEl && (statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`);
   }
+};
+
+const switchConfigTab = (tab) => {
+  document.querySelectorAll('.config-tab').forEach(btn => {
+    btn.classList.toggle('config-tab--active', btn.dataset.configTab === tab);
+  });
+  document.querySelectorAll('.config-panel').forEach(panel => {
+    panel.classList.toggle('config-panel--active', panel.dataset.configPanel === tab);
+  });
 };
 
 const submitAdminConfig = async (e) => {
@@ -1139,19 +1158,26 @@ const submitAdminConfig = async (e) => {
   const get = (id) => document.getElementById(id)?.value ?? '';
   try {
     const res = await api('/api/admin/config', 'POST', {
-      site_nome:         get('cfg_site_nome'),
-      site_emoji:        get('cfg_site_emoji'),
-      admin_email:       get('cfg_admin_email'),
-      pix_tipo:          get('cfg_pix_tipo'),
-      pix_chave:         get('cfg_pix_chave'),
-      pix_nome:          get('cfg_pix_nome'),
-      bonus_cadastro:    get('cfg_bonus_cadastro'),
-      valor_base_padrao: get('cfg_valor_base_padrao'),
-      mult_min:          get('cfg_mult_min'),
-      mult_max:          get('cfg_mult_max'),
-      max_aposta:        get('cfg_max_aposta'),
-      max_ganho:         get('cfg_max_ganho'),
-      saques_ativos:     get('cfg_saques_ativos'),
+      site_nome:                 get('cfg_site_nome'),
+      site_emoji:                get('cfg_site_emoji'),
+      site_title:                get('cfg_site_title'),
+      site_description:          get('cfg_site_description'),
+      site_keywords:             get('cfg_site_keywords'),
+      admin_email:               get('cfg_admin_email'),
+      maintenance_mode:          get('cfg_maintenance_mode'),
+      user_registration_enabled: get('cfg_user_registration_enabled'),
+      api_football_key:          get('cfg_api_football_key'),
+      api_football_timezone:     get('cfg_api_football_timezone'),
+      pix_tipo:                  get('cfg_pix_tipo'),
+      pix_chave:                 get('cfg_pix_chave'),
+      pix_nome:                  get('cfg_pix_nome'),
+      bonus_cadastro:            get('cfg_bonus_cadastro'),
+      valor_base_padrao:         get('cfg_valor_base_padrao'),
+      mult_min:                  get('cfg_mult_min'),
+      mult_max:                  get('cfg_mult_max'),
+      max_aposta:                get('cfg_max_aposta'),
+      max_ganho:                 get('cfg_max_ganho'),
+      saques_ativos:             get('cfg_saques_ativos'),
     });
     statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
   } catch (err) {
