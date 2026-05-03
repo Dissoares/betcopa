@@ -2,7 +2,13 @@
   RewriteEngine On
   RewriteBase /
 
-  # encaminha todos os pedidos para a pasta public, exceto quando já estivermos lá
+  # Se o arquivo já existir em public, sirva ele diretamente
   RewriteCond %{REQUEST_URI} !^/public/
+  RewriteCond %{DOCUMENT_ROOT}/public/%{REQUEST_URI} -f [OR]
+  RewriteCond %{DOCUMENT_ROOT}/public/%{REQUEST_URI} -d
   RewriteRule ^(.*)$ public/$1 [L,QSA]
+
+  # Senão, encaminha para o front controller da pasta public
+  RewriteCond %{REQUEST_URI} !^/public/
+  RewriteRule ^(.*)$ public/index.php [L,QSA]
 </IfModule>
