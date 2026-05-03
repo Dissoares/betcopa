@@ -41,7 +41,8 @@ class AuthService
         }
 
         session_start();
-        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_email'] = $user['email'];
         Logger::info('Login realizado', ['user_id' => $user['id']]);
 
         return $user;

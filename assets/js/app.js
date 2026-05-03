@@ -53,11 +53,17 @@ const FLAGS = {
   'camarões': '🇨🇲', 'cameroon': '🇨🇲',
 };
 
-const getFlag = (game, side) => {
+// Retorna HTML do emblema — logo (img) se disponível, senão emoji/flag
+const getEmblem = (game, side) => {
+  const logo = side === 'home' ? game.logo_casa : game.logo_fora;
+  if (logo) {
+    const name = side === 'home' ? game.time_casa : game.time_fora;
+    return `<img class="team-logo" src="${logo}" alt="${name}" loading="lazy" onerror="this.style.display='none'" />`;
+  }
   const stored = side === 'home' ? game.bandeira_casa : game.bandeira_fora;
-  if (stored && stored !== '⚽') return stored;
+  if (stored && stored !== '⚽' && stored !== '') return `<span class="team-flag-emoji">${stored}</span>`;
   const name = (side === 'home' ? game.time_casa : game.time_fora).toLowerCase().trim();
-  return FLAGS[name] || '🏳️';
+  return `<span class="team-flag-emoji">${FLAGS[name] || '🏳️'}</span>`;
 };
 
 // ── API helper ────────────────────────────────────────────────
@@ -162,10 +168,10 @@ const renderGames = () => {
   empty && empty.classList.add('hidden');
 
   grid.innerHTML = S.games.map(g => {
-    const flagHome = getFlag(g, 'home');
-    const flagAway = getFlag(g, 'away');
-    const isClosed = g.status !== 'aberto';
-    const isFinal  = g.status === 'finalizado';
+    const emblemHome = getEmblem(g, 'home');
+    const emblemAway = getEmblem(g, 'away');
+    const isClosed   = g.status !== 'aberto';
+    const isFinal    = g.status === 'finalizado';
 
     const badgeClass = isFinal ? 'badge--final' : isClosed ? 'badge--closed' : 'badge--open';
     const badgeLabel = isFinal ? '✓ Finalizado' : isClosed ? '⏹ Encerrado' : '● Aberto';
@@ -177,6 +183,17 @@ const renderGames = () => {
            <div class="game-card__countdown-time" id="cdtime-${g.id}">--:--:--</div>
          </div>`;
 
+    const ligaHtml = g.liga_nome
+      ? `<div class="game-card__league">
+           ${g.liga_logo ? `<img src="${g.liga_logo}" alt="${g.liga_nome}" class="league-logo" />` : ''}
+           <span>${g.liga_nome}${g.rodada ? ' · ' + g.rodada : ''}</span>
+         </div>`
+      : '';
+
+    const stadiumHtml = g.estadio
+      ? `<div class="game-card__stadium">📍 ${g.estadio}</div>`
+      : '';
+
     const valorBase = parseFloat(g.valor_base || 1).toFixed(2).replace('.', ',');
 
     return `
@@ -185,9 +202,10 @@ const renderGames = () => {
           <span class="badge ${badgeClass}">${badgeLabel}</span>
           <span class="game-card__date">${fmtDate(g.data_hora)}</span>
         </div>
+        ${ligaHtml}
         <div class="game-card__matchup">
           <div class="game-card__team">
-            <span class="game-card__flag">${flagHome}</span>
+            <div class="game-card__emblem">${emblemHome}</div>
             <span class="game-card__name">${g.time_casa}</span>
           </div>
           <div class="game-card__center">
@@ -195,10 +213,11 @@ const renderGames = () => {
             ${centerHtml}
           </div>
           <div class="game-card__team">
-            <span class="game-card__flag">${flagAway}</span>
+            <div class="game-card__emblem">${emblemAway}</div>
             <span class="game-card__name">${g.time_fora}</span>
           </div>
         </div>
+        ${stadiumHtml}
         <div class="game-card__btn">
           <button
             class="btn btn--primary btn--full"
@@ -207,8 +226,8 @@ const renderGames = () => {
             ${isClosed ? (isFinal ? '🏁 Finalizado' : '🔒 Encerrado') : '🎯 Fazer Palpite'}
           </button>
         </div>
-        <div class="text--muted" style="font-size:.75rem;text-align:center">
-          Valor base: R$ ${valorBase} · ganhe até ${10 * parseFloat(g.valor_base || 1) * 10}×
+        <div class="text--muted" style="font-size:.75rem;text-align:center;margin-top:.25rem">
+          R$ ${valorBase}/palpite · ganhe até ${10 * 10}×
         </div>
       </article>`;
   }).join('');
@@ -365,9 +384,9 @@ const openBetModal = (gameId) => {
   S.scoreAway    = 0;
   S.multiplier   = 5;
 
-  document.getElementById('betFlagHome').textContent  = getFlag(game, 'home');
+  document.getElementById('betFlagHome').innerHTML    = getEmblem(game, 'home');
   document.getElementById('betNameHome').textContent  = game.time_casa;
-  document.getElementById('betFlagAway').textContent  = getFlag(game, 'away');
+  document.getElementById('betFlagAway').innerHTML    = getEmblem(game, 'away');
   document.getElementById('betNameAway').textContent  = game.time_fora;
   document.getElementById('scoreHome').textContent    = '0';
   document.getElementById('scoreAway').textContent    = '0';
@@ -608,6 +627,49 @@ const submitAdminGame = async (e) => {
   }
 };
 
+const importFromApi = async () => {
+  const btn      = document.getElementById('btnImport');
+  const statusEl = document.getElementById('importStatus');
+  const leagueId = Number(document.getElementById('importLeague').value);
+  const season   = Number(document.getElementById('importSeason').value);
+  const next     = Number(document.getElementById('importNext').value);
+
+  btn.disabled = true; btn.textContent = '⏳ Importando...';
+  statusEl.innerHTML = '';
+
+  try {
+    const res = await api('/api/admin/import', 'POST', { league_id: leagueId, season, next });
+    statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+    await loadGames();
+    populateAdminSelect();
+  } catch (err) {
+    statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '📡 Importar Jogos';
+  }
+};
+
+const syncResults = async () => {
+  const btn      = document.getElementById('btnSync');
+  const statusEl = document.getElementById('importStatus');
+
+  btn.disabled = true; btn.textContent = '⏳ Sincronizando...';
+  statusEl.innerHTML = '';
+
+  try {
+    const res = await api('/api/admin/sync', 'POST', {});
+    statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+    await loadGames();
+    await loadBets();
+    await renderRanking();
+    populateAdminSelect();
+  } catch (err) {
+    statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Sincronizar Resultados';
+  }
+};
+
 const submitAdminResult = async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
@@ -742,6 +804,10 @@ const bind = () => {
   // Admin forms
   document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
+
+  // Import / Sync
+  document.getElementById('btnImport')?.addEventListener('click', importFromApi);
+  document.getElementById('btnSync')?.addEventListener('click', syncResults);
 };
 
 // ── Init ──────────────────────────────────────────────────────

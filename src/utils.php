@@ -27,6 +27,17 @@ function ensureLogged(): int
     return (int) $_SESSION['user_id'];
 }
 
+function ensureAdmin(string $adminEmail): void
+{
+    session_start();
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['error' => 'Acesso não autorizado'], 401);
+    }
+    if (empty($_SESSION['user_email']) || $_SESSION['user_email'] !== $adminEmail) {
+        jsonResponse(['error' => 'Acesso restrito ao administrador'], 403);
+    }
+}
+
 function validateEmail(string $email): bool
 {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;

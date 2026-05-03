@@ -169,6 +169,41 @@
         </form>
       </div>
     </div>
+
+    <!-- Import via API -->
+    <div class="panel" style="margin-top:1.1rem">
+      <h3 class="panel__title">📡 Importar via API-Football</h3>
+      <p class="text--muted" style="margin-bottom:1rem;font-size:.85rem">
+        Importa jogos automaticamente da API. Configure sua chave em <code>src/config.php</code>.
+      </p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Liga</label>
+          <select id="importLeague">
+            <option value="71">🇧🇷 Brasileirão Série A</option>
+            <option value="73">🇧🇷 Copa do Brasil</option>
+            <option value="72">🇧🇷 Brasileirão Série B</option>
+            <option value="13">🌎 Copa Libertadores</option>
+            <option value="9">🌎 Copa América</option>
+            <option value="1">🌍 Copa do Mundo FIFA</option>
+            <option value="2">🏆 UEFA Champions League</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Temporada</label>
+          <input id="importSeason" type="number" value="2025" min="2020" max="2030" />
+        </div>
+        <div class="form-group">
+          <label>Próximos jogos</label>
+          <input id="importNext" type="number" value="20" min="1" max="50" />
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn--primary" id="btnImport" style="flex:1">📡 Importar Jogos</button>
+        <button class="btn btn--ghost"   id="btnSync"   style="flex:1">🔄 Sincronizar Resultados</button>
+      </div>
+      <div id="importStatus" style="margin-top:.75rem"></div>
+    </div>
   </main>
 
   <!-- ===== MODAL: PALPITE ===== -->

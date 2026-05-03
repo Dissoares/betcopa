@@ -302,6 +302,39 @@ button, input, select { font: inherit; }
 }
 .game-card__countdown-time--expired { color: var(--text-muted); }
 
+/* Emblema do time (logo ou emoji) */
+.game-card__emblem {
+  width: 64px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+}
+.team-logo {
+  width: 56px; height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  transition: transform .2s;
+}
+.game-card:hover .team-logo { transform: scale(1.08); }
+.team-flag-emoji { font-size: 3rem; line-height: 1; }
+
+/* Liga + rodada */
+.game-card__league {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .75rem; color: var(--text-muted); font-weight: 500;
+}
+.league-logo {
+  width: 16px; height: 16px; object-fit: contain;
+}
+
+/* Estádio */
+.game-card__stadium {
+  font-size: .73rem; color: var(--text-muted);
+  text-align: center;
+}
+
+/* Logo no modal de palpite */
+.bet-team__flag .team-logo { width: 52px; height: 52px; }
+.bet-team__flag .team-flag-emoji { font-size: 2.6rem; }
+
 /* ========================
    PANEL
    ======================== */

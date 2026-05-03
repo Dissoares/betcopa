@@ -21,19 +21,113 @@ class GameRepository
         return $stmt->fetch() ?: null;
     }
 
+    /** Criação manual pelo admin (sem API). */
     public function create(array $data): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO jogos (time_casa, time_fora, bandeira_casa, bandeira_fora, data_hora, status, odd, valor_base)
-             VALUES (:time_casa, :time_fora, :bandeira_casa, :bandeira_fora, :data_hora, :status, :odd, :valor_base)'
+            'INSERT INTO jogos
+               (time_casa, time_fora, bandeira_casa, bandeira_fora, data_hora, status, odd, valor_base)
+             VALUES
+               (:time_casa, :time_fora, :bandeira_casa, :bandeira_fora, :data_hora, :status, :odd, :valor_base)'
         );
         $stmt->execute($data);
         return (int) $this->db->lastInsertId();
     }
 
+    /**
+     * Insert ou update de jogo importado da API-Football.
+     * Identifica duplicatas pelo api_fixture_id.
+     * Retorna o id do registro.
+     */
+    public function upsertByApiId(array $data): int
+    {
+        $stmt = $this->db->prepare('SELECT id FROM jogos WHERE api_fixture_id = :api_fixture_id');
+        $stmt->execute(['api_fixture_id' => $data['api_fixture_id']]);
+        $existing = $stmt->fetch();
+
+        if ($existing) {
+            // Atualiza tudo exceto valor_base (não sobrescreve customização do admin)
+            $stmt = $this->db->prepare(
+                'UPDATE jogos SET
+                   time_casa = :time_casa,
+                   time_fora = :time_fora,
+                   logo_casa = :logo_casa,
+                   logo_fora = :logo_fora,
+                   data_hora = :data_hora,
+                   liga_nome = :liga_nome,
+                   liga_logo = :liga_logo,
+                   estadio   = :estadio,
+                   rodada    = :rodada,
+                   status_api = :status_api
+                 WHERE id = :id'
+            );
+            $stmt->execute([
+                'time_casa'  => $data['time_casa'],
+                'time_fora'  => $data['time_fora'],
+                'logo_casa'  => $data['logo_casa'],
+                'logo_fora'  => $data['logo_fora'],
+                'data_hora'  => $data['data_hora'],
+                'liga_nome'  => $data['liga_nome'],
+                'liga_logo'  => $data['liga_logo'],
+                'estadio'    => $data['estadio'],
+                'rodada'     => $data['rodada'],
+                'status_api' => $data['status_api'],
+                'id'         => $existing['id'],
+            ]);
+            return (int) $existing['id'];
+        }
+
+        $stmt = $this->db->prepare(
+            'INSERT INTO jogos
+               (api_fixture_id, time_casa, time_fora, bandeira_casa, bandeira_fora,
+                logo_casa, logo_fora, data_hora, status, liga_nome, liga_logo,
+                estadio, rodada, odd, valor_base, status_api)
+             VALUES
+               (:api_fixture_id, :time_casa, :time_fora, :bandeira_casa, :bandeira_fora,
+                :logo_casa, :logo_fora, :data_hora, :status, :liga_nome, :liga_logo,
+                :estadio, :rodada, :odd, :valor_base, :status_api)'
+        );
+        $stmt->execute($data);
+        return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * Retorna jogos importados da API que ainda não foram finalizados.
+     * Usado pelo sync de resultados.
+     */
+    public function findPendingSync(): array
+    {
+        $stmt = $this->db->query(
+            "SELECT * FROM jogos
+             WHERE api_fixture_id IS NOT NULL
+               AND status != 'finalizado'
+             ORDER BY data_hora ASC"
+        );
+        return $stmt->fetchAll();
+    }
+
     public function updateResult(int $id, string $placarReal): bool
     {
-        $stmt = $this->db->prepare('UPDATE jogos SET placar_real = :placar_real, status = :status WHERE id = :id');
-        return $stmt->execute(['placar_real' => $placarReal, 'status' => 'finalizado', 'id' => $id]);
+        $stmt = $this->db->prepare(
+            'UPDATE jogos SET placar_real = :placar_real, status = :status, status_api = :status_api WHERE id = :id'
+        );
+        return $stmt->execute([
+            'placar_real' => $placarReal,
+            'status'      => 'finalizado',
+            'status_api'  => 'FT',
+            'id'          => $id,
+        ]);
+    }
+
+    public function updateStatus(int $id, string $status, string $statusApi = ''): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE jogos SET status = :status, status_api = :status_api WHERE id = :id'
+        );
+        return $stmt->execute([
+            'status'     => $status,
+            'status_api' => $statusApi ?: $status,
+            'id'         => $id,
+        ]);
     }
 }
