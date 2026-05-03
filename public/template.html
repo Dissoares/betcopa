@@ -3,157 +3,272 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BetCopa | Apostas em placares</title>
+  <title>BetCopa | Acerte o Placar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/css/style.css" />
 </head>
 <body>
-  <main class="container">
-    <header class="header">
-      <div class="logo">BetCopa</div>
-      <nav class="nav">
-        <button id="logoutButton">Sair</button>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container header__inner">
+      <a class="logo" href="#" data-nav="jogos">⚽ <span>Bet</span>Copa</a>
+      <nav class="nav" id="mainNav">
+        <button class="nav__btn nav__btn--active" data-nav="jogos">Jogos</button>
+        <button class="nav__btn" data-nav="ganhadores">Ganhadores</button>
+        <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none">Meus Palpites</button>
+        <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none">Admin</button>
       </nav>
-    </header>
-
-    <section id="alerts"></section>
-
-    <section class="panel">
-      <div class="header">
-        <div>
-          <h1>Jogos disponíveis</h1>
-          <p class="meta">Aposte nos placares antes do início do confronto.</p>
-        </div>
-        <div id="userStatus" class="status"></div>
+      <div class="header__user" id="headerUser">
+        <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
       </div>
-      <div id="gamesGrid" class="card-grid"></div>
-    </section>
+    </div>
+  </header>
 
-    <section class="panel">
-      <h2>Minhas apostas</h2>
-      <table id="betsTable" class="table">
-        <thead>
-          <tr>
-            <th>Jogo</th>
-            <th>Placar</th>
-            <th>Valor</th>
-            <th>Odd</th>
-            <th>Possível</th>
-            <th>Status</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+  <div class="alerts container" id="alerts"></div>
 
-    <section class="panel">
-      <h2>Ranking</h2>
-      <p class="notice">Veja vencedores e apostas mais próximas dos resultados reais.</p>
-      <div class="card-grid">
-        <div class="card">
-          <h3>Vencedores</h3>
-          <table id="rankingWinners" class="table">
-            <thead><tr><th>Usuário</th><th>Jogo</th><th>Aposta</th><th>Ganho</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="card">
-          <h3>Quase acertos</h3>
-          <table id="rankingNear" class="table">
-            <thead><tr><th>Usuário</th><th>Jogo</th><th>Aposta</th><th>Diferença</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Acesso rápido</h2>
-      <div class="card-grid">
-        <div class="card">
-          <h3>Entrar</h3>
-          <form id="loginForm">
-            <label for="loginEmail">Email</label>
-            <input id="loginEmail" type="email" required />
-            <label for="loginPassword">Senha</label>
-            <input id="loginPassword" type="password" required />
-            <button class="primary" type="submit">Login</button>
-          </form>
-        </div>
-        <div class="card">
-          <h3>Cadastrar</h3>
-          <form id="registerForm">
-            <label for="registerName">Nome</label>
-            <input id="registerName" type="text" required />
-            <label for="registerEmail">Email</label>
-            <input id="registerEmail" type="email" required />
-            <label for="registerPassword">Senha</label>
-            <input id="registerPassword" type="password" required />
-            <button class="primary" type="submit">Registrar</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Painel admin</h2>
-      <div class="card-grid">
-        <div class="card">
-          <h3>Cadastrar jogo</h3>
-          <form id="adminGameForm">
-            <label for="adminHome">Time casa</label>
-            <input id="adminHome" type="text" required />
-            <label for="adminAway">Time fora</label>
-            <input id="adminAway" type="text" required />
-            <label for="adminDate">Data e hora</label>
-            <input id="adminDate" type="datetime-local" required />
-            <label for="adminOdd">Odd fixa</label>
-            <input id="adminOdd" type="number" min="1.1" max="5" step="0.05" value="1.80" required />
-            <button class="primary" type="submit">Cadastrar jogo</button>
-          </form>
-        </div>
-        <div class="card">
-          <h3>Inserir resultado</h3>
-          <form id="adminResultForm">
-            <label for="adminGameId">ID do jogo</label>
-            <input id="adminGameId" type="number" min="1" required />
-            <label for="adminScoreHome">Placar casa</label>
-            <input id="adminScoreHome" type="number" min="0" required />
-            <label for="adminScoreAway">Placar fora</label>
-            <input id="adminScoreAway" type="number" min="0" required />
-            <button class="primary" type="submit">Registrar resultado</button>
-          </form>
-        </div>
-      </div>
-    </section>
+  <!-- ===== VIEW: JOGOS ===== -->
+  <main class="container view" id="view-jogos">
+    <div class="view-hero">
+      <h1 class="view-hero__title">Acerte o Placar.<br/><span class="text--green">Ganhe de Verdade.</span></h1>
+      <p class="view-hero__sub">Escolha o jogo, faça seu palpite e multiplique até <strong>10×</strong>.</p>
+    </div>
+    <div class="section-header">
+      <h2>Próximos Jogos</h2>
+    </div>
+    <div class="games-grid" id="gamesGrid"></div>
+    <p class="empty-state hidden" id="gamesEmpty">Nenhum jogo disponível no momento.</p>
   </main>
 
-  <div id="betModal" class="modal hidden" style="position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:2rem; z-index:100;">
-    <div style="background:#11172d; border-radius:24px; padding:2rem; width:min(480px,100%); position:relative;">
-      <button class="close" style="position:absolute; top:1rem; right:1rem; background:none;border:0;color:#fff;font-size:1.2rem;">×</button>
-      <h3>Fazer aposta</h3>
-      <p id="betGameLabel"></p>
-      <form id="betForm">
-        <label for="betCasa">Placar casa</label>
-        <input id="betCasa" type="number" min="0" required />
-        <label for="betFora">Placar fora</label>
-        <input id="betFora" type="number" min="0" required />
-        <label for="betAmount">Valor (R$)</label>
-        <input id="betAmount" type="number" min="1" step="0.5" required />
-        <button class="primary" type="submit">Enviar aposta</button>
-      </form>
+  <!-- ===== VIEW: MEUS PALPITES ===== -->
+  <main class="container view hidden" id="view-palpites">
+    <div class="section-header"><h2>Meus Palpites</h2></div>
+    <div class="bets-list" id="betsList"></div>
+    <p class="empty-state hidden" id="betsEmpty">Você ainda não fez nenhum palpite.</p>
+  </main>
+
+  <!-- ===== VIEW: GANHADORES ===== -->
+  <main class="container view hidden" id="view-ganhadores">
+    <div class="section-header">
+      <h2>🏆 Hall da Fama</h2>
+    </div>
+    <div id="rankingWinnerSpot" class="hidden"></div>
+    <div class="ranking-grid">
+      <div class="panel">
+        <h3 class="panel__title">🥇 Ganhadores</h3>
+        <div id="rankingWinners"><p class="text--muted">Nenhum ganhador ainda.</p></div>
+      </div>
+      <div class="panel">
+        <h3 class="panel__title">🎯 Quase lá!</h3>
+        <div id="rankingNear"><p class="text--muted">Nenhum palpite registrado ainda.</p></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== VIEW: AUTH ===== -->
+  <main class="container view hidden" id="view-auth">
+    <div class="auth-container">
+      <div class="auth-tabs">
+        <button class="auth-tab auth-tab--active" data-auth-tab="login">Entrar</button>
+        <button class="auth-tab" data-auth-tab="register">Criar conta</button>
+      </div>
+      <div id="authLogin">
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Email</label>
+            <input id="loginEmail" type="email" placeholder="seu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label>Senha</label>
+            <input id="loginPassword" type="password" placeholder="••••••••" required />
+          </div>
+          <button class="btn btn--primary btn--full btn--large" type="submit">Entrar →</button>
+        </form>
+      </div>
+      <div id="authRegister" class="hidden">
+        <form id="registerForm">
+          <div class="form-group">
+            <label>Nome</label>
+            <input id="registerName" type="text" placeholder="Seu nome completo" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input id="registerEmail" type="email" placeholder="seu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label>Senha</label>
+            <input id="registerPassword" type="password" placeholder="Mínimo 6 caracteres" required />
+          </div>
+          <button class="btn btn--primary btn--full btn--large" type="submit">Criar conta grátis →</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== VIEW: ADMIN ===== -->
+  <main class="container view hidden" id="view-admin">
+    <div class="section-header"><h2>⚙️ Painel Admin</h2></div>
+    <div class="admin-grid">
+      <div class="panel">
+        <h3 class="panel__title">Cadastrar Jogo</h3>
+        <form id="adminGameForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bandeira Casa</label>
+              <input id="adminFlagHome" type="text" placeholder="🇧🇷" maxlength="4" />
+            </div>
+            <div class="form-group">
+              <label>Time Casa</label>
+              <input id="adminHome" type="text" placeholder="Brasil" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bandeira Fora</label>
+              <input id="adminFlagAway" type="text" placeholder="🇦🇷" maxlength="4" />
+            </div>
+            <div class="form-group">
+              <label>Time Fora</label>
+              <input id="adminAway" type="text" placeholder="Argentina" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data e Hora</label>
+              <input id="adminDate" type="datetime-local" required />
+            </div>
+            <div class="form-group">
+              <label>Valor base por palpite (R$)</label>
+              <input id="adminValorBase" type="number" min="0.5" max="50" step="0.5" value="1.00" required />
+            </div>
+          </div>
+          <button class="btn btn--primary btn--full" type="submit">Cadastrar Jogo</button>
+        </form>
+      </div>
+      <div class="panel">
+        <h3 class="panel__title">Inserir Resultado</h3>
+        <form id="adminResultForm">
+          <div class="form-group">
+            <label>Jogo</label>
+            <select id="adminGameSelect" required>
+              <option value="">— selecione um jogo —</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Placar Casa</label>
+              <input id="adminScoreHome" type="number" min="0" max="20" placeholder="0" required />
+            </div>
+            <div class="form-group">
+              <label>Placar Fora</label>
+              <input id="adminScoreAway" type="number" min="0" max="20" placeholder="0" required />
+            </div>
+          </div>
+          <button class="btn btn--primary btn--full" type="submit">Registrar Resultado</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== MODAL: PALPITE ===== -->
+  <div class="modal hidden" id="modalPalpite">
+    <div class="modal__backdrop" data-close="modalPalpite"></div>
+    <div class="modal__box">
+      <button class="modal__close" data-close="modalPalpite">×</button>
+      <div class="modal__header">
+        <span class="modal__icon">🎯</span>
+        <h3>Seu Palpite</h3>
+      </div>
+      <div class="bet-matchup">
+        <div class="bet-team">
+          <span class="bet-team__flag" id="betFlagHome"></span>
+          <span class="bet-team__name" id="betNameHome"></span>
+        </div>
+        <span class="bet-vs">VS</span>
+        <div class="bet-team">
+          <span class="bet-team__flag" id="betFlagAway"></span>
+          <span class="bet-team__name" id="betNameAway"></span>
+        </div>
+      </div>
+      <div class="score-picker">
+        <div class="score-counter">
+          <button class="score-btn" data-score="home" data-dir="-1">−</button>
+          <span class="score-value" id="scoreHome">0</span>
+          <button class="score-btn" data-score="home" data-dir="1">+</button>
+        </div>
+        <span class="score-sep">×</span>
+        <div class="score-counter">
+          <button class="score-btn" data-score="away" data-dir="-1">−</button>
+          <span class="score-value" id="scoreAway">0</span>
+          <button class="score-btn" data-score="away" data-dir="1">+</button>
+        </div>
+      </div>
+      <div class="bet-preview-score" id="betPreviewScore">Brasil 0 × 0 Argentina</div>
+      <div class="multiplier-section">
+        <div class="multiplier-header">
+          <span>Multiplicador</span>
+          <span class="multiplier-value" id="multiplierDisplay">5×</span>
+        </div>
+        <input class="multiplier-slider" id="multiplierSlider" type="range" min="2" max="10" value="5" step="1" />
+        <div class="multiplier-labels"><span>2×</span><span>10×</span></div>
+      </div>
+      <div class="bet-summary">
+        <div class="bet-summary__row">
+          <span class="text--muted">Você paga</span>
+          <span class="bet-summary__amount" id="betPayAmount">R$ 5,00</span>
+        </div>
+        <div class="bet-summary__row bet-summary__row--win">
+          <span>🏆 Se acertar</span>
+          <span class="bet-summary__win" id="betWinAmount">R$ 25,00</span>
+        </div>
+      </div>
+      <button class="btn btn--primary btn--full btn--large" id="btnConfirmBet">Confirmar Palpite →</button>
     </div>
   </div>
 
-  <div id="paymentModal" class="modal hidden" style="position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:2rem; z-index:100;">
-    <div style="background:#11172d; border-radius:24px; padding:2rem; width:min(420px,100%); position:relative;">
-      <button class="close" style="position:absolute; top:1rem; right:1rem; background:none;border:0;color:#fff;font-size:1.2rem;">×</button>
-      <h3>Pagamento PIX</h3>
-      <p class="notice">Simulação de pagamento para confirmar a aposta.</p>
-      <form id="paymentForm">
-        <button class="primary" type="submit">Simular pagamento</button>
-      </form>
-      <button id="confirmPaymentButton" class="primary" style="margin-top:1rem;">Confirmar pagamento</button>
+  <!-- ===== MODAL: TICKET PAGAMENTO ===== -->
+  <div class="modal hidden" id="modalTicket">
+    <div class="modal__backdrop" data-close="modalTicket"></div>
+    <div class="modal__box">
+      <button class="modal__close" data-close="modalTicket">×</button>
+      <div class="ticket">
+        <div class="ticket__header">
+          <span class="ticket__icon">🎫</span>
+          <div>
+            <div class="ticket__title">Ticket de Aposta</div>
+            <div class="ticket__id" id="ticketId">#000000</div>
+          </div>
+        </div>
+        <hr class="ticket__divider" />
+        <div class="ticket__row">
+          <span class="ticket__label">Jogo</span>
+          <span class="ticket__val" id="ticketGame">—</span>
+        </div>
+        <div class="ticket__row">
+          <span class="ticket__label">Seu palpite</span>
+          <span class="ticket__val" id="ticketPalpite">—</span>
+        </div>
+        <div class="ticket__row">
+          <span class="ticket__label">Valor</span>
+          <span class="ticket__val" id="ticketValor">—</span>
+        </div>
+        <div class="ticket__row">
+          <span class="ticket__label">Prêmio potencial</span>
+          <span class="ticket__val ticket__val--win" id="ticketPremio">—</span>
+        </div>
+        <hr class="ticket__divider ticket__divider--dashed" />
+        <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay">💳 Pagar via PIX</button>
+        <button class="btn btn--ghost btn--full" id="btnConfirmPay" style="margin-top:.75rem">✓ Confirmar Pagamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: RESULTADO ===== -->
+  <div class="modal hidden" id="modalResultado">
+    <div class="modal__backdrop"></div>
+    <div class="modal__box modal__box--resultado">
+      <div id="resultadoContent"></div>
     </div>
   </div>
 

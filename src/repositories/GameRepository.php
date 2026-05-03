@@ -23,7 +23,10 @@ class GameRepository
 
     public function create(array $data): int
     {
-        $stmt = $this->db->prepare('INSERT INTO jogos (time_casa, time_fora, data_hora, status, odd) VALUES (:time_casa, :time_fora, :data_hora, :status, :odd)');
+        $stmt = $this->db->prepare(
+            'INSERT INTO jogos (time_casa, time_fora, bandeira_casa, bandeira_fora, data_hora, status, odd, valor_base)
+             VALUES (:time_casa, :time_fora, :bandeira_casa, :bandeira_fora, :data_hora, :status, :odd, :valor_base)'
+        );
         $stmt->execute($data);
         return (int) $this->db->lastInsertId();
     }
@@ -32,11 +35,5 @@ class GameRepository
     {
         $stmt = $this->db->prepare('UPDATE jogos SET placar_real = :placar_real, status = :status WHERE id = :id');
         return $stmt->execute(['placar_real' => $placarReal, 'status' => 'finalizado', 'id' => $id]);
-    }
-
-    public function updateOdd(int $id, float $odd): bool
-    {
-        $stmt = $this->db->prepare('UPDATE jogos SET odd = :odd WHERE id = :id');
-        return $stmt->execute(['odd' => $odd, 'id' => $id]);
     }
 }
