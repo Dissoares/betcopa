@@ -211,8 +211,32 @@
                     <input id="adminDate" type="datetime-local" required />
                   </div>
                   <div class="form-group">
+                    <label>Status</label>
+                    <select id="adminCreateStatus">
+                      <option value="aberto">Aberto</option>
+                      <option value="encerrado">Encerrado</option>
+                      <option value="finalizado">Finalizado</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Placar Casa</label>
+                    <input id="adminCreateScoreHome" type="number" min="0" max="50" placeholder="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Placar Fora</label>
+                    <input id="adminCreateScoreAway" type="number" min="0" max="50" placeholder="0" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
                     <label>Valor base por palpite (R$)</label>
                     <input id="adminValorBase" type="number" min="0.5" max="50" step="0.5" value="1.00" required />
+                  </div>
+                  <div class="form-group">
+                    <label>Odd padrão</label>
+                    <input id="adminCreateOdd" type="number" min="1" step="0.01" value="1.00" required />
                   </div>
                 </div>
                 <button class="btn btn--primary btn--full" type="submit">Cadastrar Jogo</button>

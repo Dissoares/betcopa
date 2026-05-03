@@ -690,7 +690,11 @@ const submitAdminGame = async (e) => {
       bandeira_casa: document.getElementById('adminFlagHome').value.trim() || '⚽',
       bandeira_fora: document.getElementById('adminFlagAway').value.trim() || '⚽',
       data_hora:     document.getElementById('adminDate').value,
+      status:        document.getElementById('adminCreateStatus').value,
+      placar_casa:   document.getElementById('adminCreateScoreHome').value !== '' ? parseInt(document.getElementById('adminCreateScoreHome').value, 10) : null,
+      placar_fora:   document.getElementById('adminCreateScoreAway').value !== '' ? parseInt(document.getElementById('adminCreateScoreAway').value, 10) : null,
       valor_base:    parseFloat(document.getElementById('adminValorBase').value),
+      odd:           parseFloat(document.getElementById('adminCreateOdd').value),
     });
     showAlert('Jogo cadastrado!', 'success');
     e.target.reset();

@@ -26,11 +26,21 @@ class GameRepository
     {
         $stmt = $this->db->prepare(
             'INSERT INTO jogos
-               (time_casa, time_fora, bandeira_casa, bandeira_fora, data_hora, status, odd, valor_base)
+               (time_casa, time_fora, bandeira_casa, bandeira_fora, data_hora, status, odd, valor_base, placar_real)
              VALUES
-               (:time_casa, :time_fora, :bandeira_casa, :bandeira_fora, :data_hora, :status, :odd, :valor_base)'
+               (:time_casa, :time_fora, :bandeira_casa, :bandeira_fora, :data_hora, :status, :odd, :valor_base, :placar_real)'
         );
-        $stmt->execute($data);
+        $stmt->execute([
+            'time_casa'      => $data['time_casa'],
+            'time_fora'      => $data['time_fora'],
+            'bandeira_casa'  => $data['bandeira_casa'],
+            'bandeira_fora'  => $data['bandeira_fora'],
+            'data_hora'      => $data['data_hora'],
+            'status'         => $data['status'],
+            'odd'            => $data['odd'],
+            'valor_base'     => $data['valor_base'],
+            'placar_real'    => $data['placar_real'] ?? null,
+        ]);
         return (int) $this->db->lastInsertId();
     }
 
