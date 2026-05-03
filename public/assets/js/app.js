@@ -53,6 +53,18 @@ const FLAGS = {
   'camarões': '🇨🇲', 'cameroon': '🇨🇲',
 };
 
+const toCountryFlag = (code) => {
+  if (typeof code !== 'string') return '';
+  const normalized = code.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) return '';
+  return normalized
+    .split('')
+    .map(letter => String.fromCodePoint(0x1F1E6 + letter.charCodeAt(0) - 65))
+    .join('');
+};
+
+const isEmoji = (value) => typeof value === 'string' && [...value].length > 1 && /\u001F1E6|\u001F1E7|\u001F1E8|\u001F1E9|\u001F1EA|\u001F1EB|\u001F1EC|\u001F1ED|\u001F1EE|\u001F1EF|\u001F1F0|\u001F1F1|\u001F1F2|\u001F1F3|\u001F1F4|\u001F1F5|\u001F1F6|\u001F1F7|\u001F1F8|\u001F1F9|\u001F1FA|\u001F1FB|\u001F1FC|\u001F1FD|\u001F1FE|\u001F1FF/.test(value);
+
 // Retorna HTML do emblema — logo (img) se disponível, senão emoji/flag
 const getEmblem = (game, side) => {
   const logo = side === 'home' ? game.logo_casa : game.logo_fora;
@@ -60,8 +72,19 @@ const getEmblem = (game, side) => {
     const name = side === 'home' ? game.time_casa : game.time_fora;
     return `<img class="team-logo" src="${logo}" alt="${name}" loading="lazy" onerror="this.style.display='none'" />`;
   }
+
   const stored = side === 'home' ? game.bandeira_casa : game.bandeira_fora;
-  if (stored && stored !== '⚽' && stored !== '') return `<span class="team-flag-emoji">${stored}</span>`;
+  if (stored && stored !== '⚽' && stored !== '') {
+    if (isEmoji(stored)) {
+      return `<span class="team-flag-emoji">${stored}</span>`;
+    }
+    const flag = toCountryFlag(stored);
+    if (flag) {
+      return `<span class="team-flag-emoji">${flag}</span>`;
+    }
+    return `<span class="team-flag-emoji">${stored}</span>`;
+  }
+
   const name = (side === 'home' ? game.time_casa : game.time_fora).toLowerCase().trim();
   return `<span class="team-flag-emoji">${FLAGS[name] || '🏳️'}</span>`;
 };
