@@ -18,8 +18,8 @@ Sistema web de apostas em placares de futebol com backend em PHP puro (PDO) e fr
 
 ## Instalação
 
-1. Crie o banco de dados com `sql/schema.sql`
-2. Atualize `src/config.php` com as credenciais do MySQL
+1. Atualize `src/config.php` com as credenciais do MySQL
+2. Acesse `public/install.php` no navegador para criar o banco e as tabelas automaticamente
 3. Acesse `public/` no navegador
 
 ## Endpoints API
