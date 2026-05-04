@@ -198,7 +198,7 @@
 
           <!-- Coluna esquerda: formulário -->
           <div class="panel admin-jogos-form">
-            <h3 class="panel__title">Cadastrar Jogo</h3>
+            <h3 class="panel__title" id="adminGameFormTitle">Cadastrar Jogo</h3>
             <form id="adminGameForm">
 
                 <!-- Preview ao vivo do confronto -->
@@ -269,7 +269,8 @@
                   </div>
                 </div>
 
-                <button class="btn btn--primary btn--full" type="submit">Cadastrar Jogo</button>
+                <button class="btn btn--primary btn--full" type="submit" id="adminGameSubmitBtn">Cadastrar Jogo</button>
+                <button class="btn btn--secondary btn--full hidden" type="button" id="btnCancelEditGame">✕ Cancelar edição</button>
               </form>
           </div><!-- /admin-jogos-form -->
 

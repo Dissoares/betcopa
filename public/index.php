@@ -84,6 +84,8 @@ try {
         route('/api/admin/jogos',  'POST', fn() => $gameCtrl->create());
         route('/api/admin/import', 'POST', fn() => $gameCtrl->import());
         route('/api/admin/sync',   'POST', fn() => $gameCtrl->sync());
+        routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'PUT',
+            fn(int $id) => $gameCtrl->update($id));
         routePattern('/^\/api\/admin\/jogos\/(\d+)\/resultado$/', 'POST',
             fn(int $id) => $gameCtrl->result($id));
 

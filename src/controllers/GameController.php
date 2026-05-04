@@ -32,6 +32,15 @@ class GameController
         jsonResponse(['id' => $id], 201);
     }
 
+    public function update(int $id): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        $body = json_decode(file_get_contents('php://input'), true) ?: [];
+        $this->service->updateGame($id, $body);
+        jsonResponse(['message' => 'Jogo atualizado.']);
+    }
+
     public function result(int $id): void
     {
         Csrf::verify();

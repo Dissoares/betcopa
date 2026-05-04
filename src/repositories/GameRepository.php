@@ -116,6 +116,35 @@ class GameRepository
         return $stmt->fetchAll();
     }
 
+    public function update(int $id, array $data): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE jogos SET
+               time_casa     = :time_casa,
+               time_fora     = :time_fora,
+               bandeira_casa = :bandeira_casa,
+               bandeira_fora = :bandeira_fora,
+               data_hora     = :data_hora,
+               status        = :status,
+               odd           = :odd,
+               valor_base    = :valor_base,
+               placar_real   = :placar_real
+             WHERE id = :id'
+        );
+        return $stmt->execute([
+            'time_casa'     => $data['time_casa'],
+            'time_fora'     => $data['time_fora'],
+            'bandeira_casa' => $data['bandeira_casa'],
+            'bandeira_fora' => $data['bandeira_fora'],
+            'data_hora'     => $data['data_hora'],
+            'status'        => $data['status'],
+            'odd'           => $data['odd'],
+            'valor_base'    => $data['valor_base'],
+            'placar_real'   => $data['placar_real'] ?? null,
+            'id'            => $id,
+        ]);
+    }
+
     public function updateResult(int $id, string $placarReal): bool
     {
         $stmt = $this->db->prepare(

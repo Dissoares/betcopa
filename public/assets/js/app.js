@@ -766,9 +766,10 @@ const renderAdminGames = () => {
             <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
             <td>${statusBadge(g.status)}</td>
             <td>${placar(g)}</td>
-            <td>
+            <td style="white-space:nowrap">
+              <button class="btn btn--ghost btn--sm" data-action="editar-jogo" data-id="${g.id}">✏️ Editar</button>
               ${g.status !== 'finalizado'
-                ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}">Resultado</button>`
+                ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}" style="margin-left:.25rem">Resultado</button>`
                 : ''}
             </td>
           </tr>`).join('')}
@@ -788,6 +789,85 @@ const renderAdminGames = () => {
 
 const populateAdminSelect = () => renderAdminGames();
 
+const editGame = (id) => {
+  const g = (S.games || []).find(x => x.id === id);
+  if (!g) return;
+
+  editingGameId = id;
+
+  // Preenche times
+  const homeEl = document.getElementById('adminHome');
+  const awayEl = document.getElementById('adminAway');
+  if (homeEl) {
+    homeEl.value = g.bandeira_casa || '';
+    // fallback: tenta pelo nome
+    if (!homeEl.value) {
+      Array.from(homeEl.options).forEach(o => { if (o.dataset.name === g.time_casa) homeEl.value = o.value; });
+    }
+  }
+  if (awayEl) {
+    awayEl.value = g.bandeira_fora || '';
+    if (!awayEl.value) {
+      Array.from(awayEl.options).forEach(o => { if (o.dataset.name === g.time_fora) awayEl.value = o.value; });
+    }
+  }
+
+  // Dispara preview
+  ['adminHome', 'adminAway'].forEach(sid => document.getElementById(sid)?.dispatchEvent(new Event('change')));
+
+  // Data (converte 'YYYY-MM-DD HH:MM:SS' → 'YYYY-MM-DDTHH:MM')
+  const dateEl = document.getElementById('adminDate');
+  if (dateEl && g.data_hora) dateEl.value = g.data_hora.replace(' ', 'T').slice(0, 16);
+
+  // Status, valor_base, odd
+  const statusEl = document.getElementById('adminCreateStatus');
+  if (statusEl) statusEl.value = g.status || 'aberto';
+  const vbEl = document.getElementById('adminValorBase');
+  if (vbEl) vbEl.value = g.valor_base || '1.00';
+  const oddEl = document.getElementById('adminCreateOdd');
+  if (oddEl) oddEl.value = g.odd || '1.00';
+
+  // Placar (placar_real = '2x1')
+  if (g.placar_real) {
+    const parts = g.placar_real.split('x');
+    const sh = document.getElementById('adminCreateScoreHome');
+    const sa = document.getElementById('adminCreateScoreAway');
+    if (sh) sh.value = parts[0] ?? '';
+    if (sa) sa.value = parts[1] ?? '';
+  } else {
+    document.getElementById('adminCreateScoreHome').value = '';
+    document.getElementById('adminCreateScoreAway').value = '';
+  }
+
+  // UI: muda título, botão e mostra cancelar
+  const titleEl  = document.getElementById('adminGameFormTitle');
+  const submitEl = document.getElementById('adminGameSubmitBtn');
+  const cancelEl = document.getElementById('btnCancelEditGame');
+  if (titleEl)  titleEl.textContent  = '\u270f\ufe0f Editar Jogo';
+  if (submitEl) submitEl.textContent = 'Salvar Altera\u00e7\u00f5es';
+  if (cancelEl) cancelEl.classList.remove('hidden');
+
+  // Scroll até o formulário
+  document.getElementById('adminGameForm')?.closest('.panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+const cancelEditGame = () => {
+  editingGameId = null;
+  document.getElementById('adminGameForm').reset();
+  ['prevFlagHome','prevFlagAway','gfFlagPreviewHome','gfFlagPreviewAway'].forEach(sid => {
+    const el = document.getElementById(sid); if (el) el.textContent = '\uD83C\uDFF3\uFE0F';
+  });
+  const el = (sid) => document.getElementById(sid);
+  if (el('prevNameHome')) el('prevNameHome').textContent = 'Casa';
+  if (el('prevNameAway')) el('prevNameAway').textContent = 'Fora';
+  const titleEl  = document.getElementById('adminGameFormTitle');
+  const submitEl = document.getElementById('adminGameSubmitBtn');
+  const cancelEl = document.getElementById('btnCancelEditGame');
+  if (titleEl)  titleEl.textContent  = 'Cadastrar Jogo';
+  if (submitEl) submitEl.textContent = 'Cadastrar Jogo';
+  if (cancelEl) cancelEl.classList.add('hidden');
+};
+
 const openAdminResultado = (id, label) => {
   document.getElementById('adminGameSelect').value  = id;
   document.getElementById('adminResultadoJogo').textContent = label;
@@ -804,13 +884,14 @@ const closeAdminResultado = () => {
 const submitAdminGame = async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
-  btn.disabled = true; btn.textContent = 'Cadastrando...';
+  const isEditing = editingGameId !== null;
+  btn.disabled = true; btn.textContent = isEditing ? 'Salvando...' : 'Cadastrando...';
   try {
     const homeOpt = document.getElementById('adminHome');
     const awayOpt = document.getElementById('adminAway');
     const homeCode = homeOpt.value;
     const awayCode = awayOpt.value;
-    await api('/api/admin/jogos', 'POST', {
+    const payload = {
       time_casa:     homeOpt.options[homeOpt.selectedIndex]?.dataset.name || '',
       time_fora:     awayOpt.options[awayOpt.selectedIndex]?.dataset.name || '',
       bandeira_casa: homeCode || 'br',
@@ -821,20 +902,22 @@ const submitAdminGame = async (e) => {
       placar_fora:   document.getElementById('adminCreateScoreAway').value !== '' ? parseInt(document.getElementById('adminCreateScoreAway').value, 10) : null,
       valor_base:    parseFloat(document.getElementById('adminValorBase').value),
       odd:           parseFloat(document.getElementById('adminCreateOdd').value),
-    });
-    showAlert('Jogo cadastrado!', 'success');
-    e.target.reset();
-    ['prevFlagHome','prevFlagAway','gfFlagPreviewHome','gfFlagPreviewAway'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.textContent = '🏳️';
-    });
-    document.getElementById('prevNameHome').textContent = 'Casa';
-    document.getElementById('prevNameAway').textContent = 'Fora';
+    };
+    if (isEditing) {
+      await api(`/api/admin/jogos/${editingGameId}`, 'PUT', payload);
+      showAlert('Jogo atualizado!', 'success');
+    } else {
+      await api('/api/admin/jogos', 'POST', payload);
+      showAlert('Jogo cadastrado!', 'success');
+    }
+    cancelEditGame();
     await loadGames();
     populateAdminSelect();
   } catch (err) {
     showAlert(err.message, 'danger');
   } finally {
-    btn.disabled = false; btn.textContent = 'Cadastrar Jogo';
+    btn.disabled = false;
+    btn.textContent = editingGameId !== null ? 'Salvar Alterações' : 'Cadastrar Jogo';
   }
 };
 
@@ -1089,11 +1172,14 @@ const bind = () => {
     if (btn) switchAdminTab(btn.dataset.adminTab);
   });
 
-  // Admin games list — resultado + paginação + fechar modal
+  // Admin games list — editar + resultado + paginação + fechar modal
   document.getElementById('adminGamesList')?.addEventListener('click', e => {
+    const editBtn = e.target.closest('[data-action="editar-jogo"]');
+    if (editBtn) { editGame(Number(editBtn.dataset.id)); return; }
     const btn = e.target.closest('[data-action="abrir-resultado"]');
     if (btn) openAdminResultado(Number(btn.dataset.id), btn.dataset.label);
   });
+  document.getElementById('btnCancelEditGame')?.addEventListener('click', cancelEditGame);
   document.getElementById('adminGamesPagination')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="admin-page"]');
     if (btn && !btn.disabled) { adminGamesPage = Number(btn.dataset.page); renderAdminGames(); }
