@@ -1575,3 +1575,218 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   align-self: flex-start; margin-top: 3px;
 }
 .bet-step__line--done { background: var(--primary); }
+
+
+/* ============================================================
+   §25  CARD INNER COMPONENTS + UI REFRESH v4
+   Styles for JS-generated inner classes of game cards and
+   global polish improvements.
+   ============================================================ */
+
+/* ── Team name: allow 2-line wrap instead of hard truncation ── */
+.game-card__name {
+  white-space: normal;
+  text-overflow: unset;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.25;
+  max-height: none;
+}
+
+/* ── Center column (VS + score or countdown) ───────────────── */
+.game-card__mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .32rem;
+  flex-shrink: 0;
+  width: 90px;
+}
+
+/* ── Card footer (meta row + CTA button) ───────────────────── */
+.game-card__foot {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  margin-top: auto;
+}
+
+/* ── VS pill ───────────────────────────────────────────────── */
+.gc-vs {
+  font-size: .6rem;
+  font-weight: 900;
+  color: var(--text-muted);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  user-select: none;
+}
+
+/* ── Score block (live & final) ─────────────────────────────── */
+.gc-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .1rem;
+}
+.gc-score__label {
+  font-size: .54rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+}
+.gc-score__val {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.gc-score--live  .gc-score__val { color: var(--danger); }
+.gc-score--final .gc-score__val { color: var(--info); text-shadow: var(--score-shadow); }
+.gc-score__dot {
+  font-size: .5rem;
+  color: var(--danger);
+}
+
+/* ── Countdown block ─────────────────────────────────────────── */
+.gc-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .12rem;
+}
+.gc-countdown__label {
+  font-size: .54rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+}
+.gc-countdown__time {
+  font-size: .84rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+  background: var(--tint-primary);
+  border-radius: var(--radius-sm);
+  padding: .26rem .5rem;
+  white-space: nowrap;
+  line-height: 1.45;
+}
+/* JS adds this class when countdown expires */
+.gc-countdown__time.game-card__countdown-time--expired {
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
+/* ── Dash (closed, no score) ──────────────────────────────── */
+.gc-dash { font-size: 1.1rem; color: var(--text-muted); }
+
+/* ── Meta row (multiplier × price) ──────────────────────────── */
+.gc-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .36rem .7rem;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.gc-meta__odd {
+  font-size: .9rem;
+  font-weight: 800;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: baseline;
+  gap: .06rem;
+}
+.gc-meta__odd small {
+  font-size: .62rem;
+  font-weight: 700;
+  opacity: .7;
+}
+.gc-meta__price {
+  font-size: .76rem;
+  color: var(--text-muted);
+}
+
+/* ── Soon card: warm amber accent ─────────────────────────── */
+.game-card--soon { border-color: rgba(245,158,11,.25); }
+.game-card--soon .gc-countdown__time {
+  color: #f59e0b;
+  background: rgba(245,158,11,.12);
+}
+
+/* ── Section headers: left accent bar ───────────────────────── */
+.games-section__header {
+  position: relative;
+  padding-left: .9rem;
+}
+.games-section__header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 1em;
+  border-radius: 999px;
+  background: var(--text-muted);
+  opacity: .4;
+}
+.games-section--live     .games-section__header::before { background: var(--danger);   opacity: 1; }
+.games-section--upcoming .games-section__header::before { background: var(--primary);  opacity: 1; }
+.games-section--finished .games-section__header::before { background: var(--text-muted); opacity: .45; }
+
+/* ── Hero: tabular numbers, visual separator between stats ──── */
+.copa-hero__stat strong { font-variant-numeric: tabular-nums; }
+.copa-hero__stats { gap: 2.25rem; align-items: stretch; }
+.copa-hero__stat {
+  position: relative;
+  padding-right: 2.25rem;
+}
+.copa-hero__stat::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(255,255,255,.1);
+}
+.copa-hero__stat:last-child::after { display: none; }
+.theme-light .copa-hero__stat::after { background: rgba(0,0,0,.08); }
+
+/* ── Card emblem: slightly larger ──────────────────────────── */
+.game-card__emblem { width: 68px; height: 68px; }
+.team-logo         { width: 58px; height: 58px; }
+.team-logo--flag   { height: 54px; }
+.team-flag-emoji   { font-size: 3.1rem; }
+
+/* ── Matchup: tighten gap so mid column isn't squeezed ──────── */
+.game-card__matchup { gap: .3rem; }
+
+/* ── Card: subtle shimmer on top edge of live cards ─────────── */
+.game-card--live::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--danger), transparent);
+  border-radius: 999px;
+}
+
+/* ── Open card: subtle green shimmer on top ─────────────────── */
+.game-card--open::after,
+.game-card--soon::after {
+  opacity: .55;
+}
+
+/* ── Auth container: more breathing room on large screens ────── */
+@media (min-width: 540px) {
+  .auth-container { padding: 2.5rem; }
+}
+
+/* ── Bet card: tighten label size on mobile ─────────────────── */
+@media (max-width: 480px) {
+  .gc-meta__price { display: none; }
+}
