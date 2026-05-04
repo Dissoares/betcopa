@@ -63,15 +63,48 @@
 
   <!-- ===== VIEW: JOGOS ===== -->
   <main class="container view" id="view-jogos">
-    <div class="view-hero">
-      <h1 class="view-hero__title">Acerte o Placar.<br/><span class="text--green">Ganhe de Verdade.</span></h1>
-      <p class="view-hero__sub">Escolha o jogo, faça seu palpite e multiplique até <strong>10×</strong>.</p>
+
+    <!-- Copa 2026 Hero -->
+    <div class="copa-hero">
+      <div class="copa-hero__content">
+        <div class="copa-hero__eyebrow"><i class="fa-solid fa-futbol"></i> Copa do Mundo 2026</div>
+        <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
+        <p class="copa-hero__sub">Faça seu palpite, escolha seu multiplicador e leve o prêmio para casa.</p>
+        <div class="copa-hero__stats">
+          <div class="copa-hero__stat"><strong id="heroStatGames">—</strong><span>Jogos</span></div>
+          <div class="copa-hero__stat hidden" id="heroStatLiveWrap"><strong id="heroStatLive">0</strong><span>Ao Vivo</span></div>
+          <div class="copa-hero__stat"><strong id="heroStatOpen">—</strong><span>Apostas abertas</span></div>
+        </div>
+      </div>
     </div>
-    <div class="section-header">
-      <h2>Próximos Jogos</h2>
+
+    <!-- Filtros -->
+    <div class="games-toolbar">
+      <div class="games-filters" id="gamesFilters">
+        <button class="games-filter games-filter--active" data-filter="todos">Todos</button>
+        <button class="games-filter" data-filter="live"><i class="fa-solid fa-circle fa-beat" style="color:var(--danger);font-size:.6em"></i> Ao Vivo</button>
+        <button class="games-filter" data-filter="breve"><i class="fa-solid fa-clock"></i> Em Breve</button>
+        <button class="games-filter" data-filter="aberto"><i class="fa-solid fa-unlock"></i> Abertos</button>
+        <button class="games-filter" data-filter="encerrado"><i class="fa-solid fa-lock"></i> Encerrados</button>
+        <button class="games-filter" data-filter="finalizado"><i class="fa-solid fa-flag-checkered"></i> Finalizados</button>
+      </div>
     </div>
+
+    <!-- Skeleton loader (visível enquanto carrega) -->
+    <div class="games-grid games-grid--skeleton hidden" id="gamesSkeletons">
+      <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
+      <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
+      <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
+      <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
+      <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
+      <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
+    </div>
+
     <div class="games-grid" id="gamesGrid"></div>
-    <p class="empty-state hidden" id="gamesEmpty">Nenhum jogo disponível no momento.</p>
+    <p class="empty-state hidden" id="gamesEmpty">
+      <i class="fa-solid fa-futbol" style="display:block;font-size:2.5rem;margin-bottom:.6rem;opacity:.25"></i>
+      Nenhum jogo encontrado para este filtro.
+    </p>
   </main>
 
   <!-- ===== VIEW: MEUS PALPITES ===== -->
@@ -84,16 +117,17 @@
   <!-- ===== VIEW: GANHADORES ===== -->
   <main class="container view hidden" id="view-ganhadores">
     <div class="section-header">
-      <h2>🏆 Hall da Fama</h2>
+      <h2><i class="fa-solid fa-trophy" style="color:var(--gold)"></i> Hall da Fama</h2>
     </div>
     <div id="rankingWinnerSpot" class="hidden"></div>
+    <div class="ranking-podium" id="rankingPodium"></div>
     <div class="ranking-grid">
       <div class="panel">
-        <h3 class="panel__title">🥇 Ganhadores</h3>
+        <h3 class="panel__title"><i class="fa-solid fa-medal" style="color:var(--gold)"></i> Ganhadores</h3>
         <div id="rankingWinners"><p class="text--muted">Nenhum ganhador ainda.</p></div>
       </div>
       <div class="panel">
-        <h3 class="panel__title">🎯 Quase lá!</h3>
+        <h3 class="panel__title"><i class="fa-solid fa-bullseye"></i> Quase lá!</h3>
         <div id="rankingNear"><p class="text--muted">Nenhum palpite registrado ainda.</p></div>
       </div>
     </div>
@@ -574,7 +608,7 @@
     <div class="modal__box">
       <button class="modal__close" data-close="modalPalpite">×</button>
       <div class="modal__header">
-        <span class="modal__icon">🎯</span>
+        <span class="modal__icon"><i class="fa-solid fa-bullseye"></i></span>
         <h3>Seu Palpite</h3>
       </div>
       <div class="bet-matchup">
@@ -631,7 +665,7 @@
       <button class="modal__close" data-close="modalTicket">×</button>
       <div class="ticket">
         <div class="ticket__header">
-          <span class="ticket__icon">🎫</span>
+          <span class="ticket__icon"><i class="fa-solid fa-receipt"></i></span>
           <div>
             <div class="ticket__title">Ticket de Aposta</div>
             <div class="ticket__id" id="ticketId">#000000</div>

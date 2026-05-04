@@ -15,6 +15,7 @@ const S = {
   multiplier:   5,
   timers:       [],        // countdown interval refs
   adminEmail:   'admin@betcopa.local',
+  activeFilter: 'todos',   // filtro ativo nos cards de jogos
 };
 
 // ── Catálogo de seleções (nome canônico PT-BR + código ISO) ──
@@ -236,7 +237,12 @@ const gameBadge = (g) => {
 const navigate = (view) => {
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   const target = document.getElementById(`view-${view}`);
-  if (target) target.classList.remove('hidden');
+  if (target) {
+    target.classList.remove('hidden');
+    target.classList.remove('view--entering');
+    void target.offsetWidth; // reflow para reiniciar animação
+    target.classList.add('view--entering');
+  }
 
   document.querySelectorAll('.nav__btn').forEach(btn => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
@@ -304,6 +310,43 @@ const loadTheme = () => {
   setTheme(stored === 'light' ? 'light' : 'dark');
 };
 
+// ── Game filter helper ────────────────────────────────────────
+const LIVE_API_CODES = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
+
+const filterGames = (games, filter) => {
+  switch (filter) {
+    case 'live':
+      return games.filter(g => LIVE_API_CODES.includes((g.status_api || '').toUpperCase()));
+    case 'breve': {
+      const now = Date.now();
+      return games.filter(g => {
+        const diff = new Date(g.data_hora) - now;
+        return g.status === 'aberto' && diff > 0 && diff < 3600000;
+      });
+    }
+    case 'aberto':    return games.filter(g => g.status === 'aberto');
+    case 'encerrado': return games.filter(g => g.status === 'encerrado');
+    case 'finalizado': return games.filter(g => g.status === 'finalizado');
+    default:          return games;
+  }
+};
+
+const updateHeroStats = () => {
+  const live = S.games.filter(g => LIVE_API_CODES.includes((g.status_api || '').toUpperCase())).length;
+  const open = S.games.filter(g => g.status === 'aberto').length;
+  const el = id => document.getElementById(id);
+  if (el('heroStatGames')) el('heroStatGames').textContent = S.games.length;
+  if (el('heroStatOpen'))  el('heroStatOpen').textContent  = open;
+  if (el('heroStatLive'))  el('heroStatLive').textContent  = live;
+  el('heroStatLiveWrap')?.classList.toggle('hidden', live === 0);
+  // Indicador ao vivo no nav
+  document.querySelectorAll('[data-nav="jogos"]').forEach(btn => {
+    const dot = btn.querySelector('.nav-live-dot');
+    if (live > 0) { if (!dot) btn.insertAdjacentHTML('beforeend', '<span class="nav-live-dot"></span>'); }
+    else            { dot?.remove(); }
+  });
+};
+
 // ── Game cards ────────────────────────────────────────────────
 const renderGames = () => {
   const grid   = document.getElementById('gamesGrid');
@@ -313,18 +356,26 @@ const renderGames = () => {
   S.timers.forEach(clearInterval);
   S.timers = [];
 
-  if (!S.games.length) {
+  updateHeroStats();
+
+  // Sincroniza botões de filtro
+  document.querySelectorAll('.games-filter').forEach(btn => {
+    btn.classList.toggle('games-filter--active', btn.dataset.filter === S.activeFilter);
+  });
+
+  const visibleGames = filterGames(S.games, S.activeFilter);
+
+  if (!visibleGames.length) {
     grid.innerHTML = '';
     empty && empty.classList.remove('hidden');
     return;
   }
   empty && empty.classList.add('hidden');
 
-  grid.innerHTML = S.games.map(g => {
+  grid.innerHTML = visibleGames.map(g => {
     const emblemHome = getEmblem(g, 'home');
     const emblemAway = getEmblem(g, 'away');
-    const LIVE_API   = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
-    const isLive     = LIVE_API.includes((g.status_api || '').toUpperCase());
+    const isLive     = LIVE_API_CODES.includes((g.status_api || '').toUpperCase());
     const isClosed   = g.status !== 'aberto';
     const isFinal    = g.status === 'finalizado';
 
@@ -425,6 +476,26 @@ const startCountdowns = () => {
 };
 
 // ── Bets list ─────────────────────────────────────────────────
+const betTimeline = (status) => {
+  const STEPS = [
+    { key: 'pendente',  label: 'Aguardando' },
+    { key: 'pago',      label: 'Pago' },
+    { key: 'confirmado',label: 'Confirmado' },
+    { key: 'resultado', label: status === 'ganhou' ? '<span style="color:var(--primary)">Ganhou!</span>' : status === 'perdido' ? '<span style="color:var(--danger)">Perdeu</span>' : 'Resultado' },
+  ];
+  const ORDER = ['pendente', 'pago', 'confirmado'];
+  const done  = status === 'ganhou' || status === 'perdido';
+  const idx   = done ? 3 : ORDER.indexOf(status);
+
+  return `<div class="bet-status-steps">${STEPS.map((step, i) => {
+    const state = i < idx ? 'done' : i === idx ? 'active' : '';
+    const line  = i < STEPS.length - 1
+      ? `<span class="bet-step__line${i < idx ? ' bet-step__line--done' : ''}"></span>`
+      : '';
+    return `<span class="bet-step bet-step--${state}"><span class="bet-step__dot"></span><span class="bet-step__label">${step.label}</span></span>${line}`;
+  }).join('')}</div>`;
+};
+
 const renderBets = () => {
   const list  = document.getElementById('betsList');
   const empty = document.getElementById('betsEmpty');
@@ -437,30 +508,40 @@ const renderBets = () => {
   }
   empty && empty.classList.add('hidden');
 
-  const statusLabel = {
-    pendente:   ['<i class="fa-solid fa-clock"></i> Pendente',   ''],
-    pago:       ['<i class="fa-solid fa-credit-card"></i> Pago',   ''],
-    confirmado: ['<i class="fa-solid fa-check"></i> Confirmado',  ''],
-    ganhou:     ['<i class="fa-solid fa-trophy"></i> Ganhou!',    'badge--open'],
-    perdido:    ['<i class="fa-solid fa-x"></i> Perdeu',          'badge--closed'],
-  };
-
   list.innerHTML = S.bets.map(b => {
-    const [slabel, sbadge] = statusLabel[b.status] || [b.status, ''];
     const isWin  = b.status === 'ganhou';
     const isLoss = b.status === 'perdido';
 
+    // Bandeiras: busca o jogo correspondente em S.games
+    const game = S.games.find(g => g.time_casa === b.time_casa && g.time_fora === b.time_fora);
+    const fHome = game?.bandeira_casa;
+    const fAway = game?.bandeira_fora;
+    const flagsHtml = (fHome || fAway)
+      ? `<div class="bet-card__game-flags">
+           ${fHome ? `<img src="${flagUrl(fHome)}" alt="${b.time_casa}" />` : ''}
+           <span>${b.time_casa}</span>
+           <span class="flag-sep">×</span>
+           ${fAway ? `<img src="${flagUrl(fAway)}" alt="${b.time_fora}" />` : ''}
+           <span>${b.time_fora}</span>
+         </div>`
+      : `<div class="bet-card__game-name">${b.time_casa} × ${b.time_fora}</div>`;
+
     const actionHtml = b.status === 'pendente'
-      ? `<button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}">Pagar PIX</button>`
+      ? `<button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}"><i class="fa-solid fa-credit-card"></i> Pagar PIX</button>`
       : b.status === 'pago'
-      ? `<button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}">Confirmar</button>`
-      : `<span class="badge ${sbadge}">${slabel}</span>`;
+      ? `<button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-check"></i> Confirmar</button>`
+      : isWin
+      ? `<span class="badge badge--open"><i class="fa-solid fa-trophy"></i> Ganhou!</span>`
+      : isLoss
+      ? `<span class="badge badge--closed"><i class="fa-solid fa-x"></i> Perdeu</span>`
+      : `<span class="badge">${b.status}</span>`;
 
     return `
       <div class="bet-card ${isWin ? 'bet-card--win' : ''} ${isLoss ? 'bet-card--loss' : ''}">
         <div class="bet-card__game">
-          <div class="bet-card__game-name">${b.time_casa} × ${b.time_fora}</div>
-          <div class="bet-card__palpite">Palpite: ${b.placar_casa} × ${b.placar_fora}</div>
+          ${flagsHtml}
+          <div class="bet-card__palpite"><i class="fa-solid fa-bullseye" style="font-size:.75em;opacity:.6"></i> Palpite: ${b.placar_casa} × ${b.placar_fora}</div>
+          ${betTimeline(b.status)}
         </div>
         <div class="bet-card__meta">
           <div class="bet-card__col">
@@ -488,30 +569,51 @@ const renderRanking = async () => {
   let data;
   try { data = await api('/api/ranking'); } catch { return; }
 
-  const spot    = document.getElementById('rankingWinnerSpot');
-  const winsEl  = document.getElementById('rankingWinners');
-  const nearEl  = document.getElementById('rankingNear');
+  const podiumEl = document.getElementById('rankingPodium');
+  const spot     = document.getElementById('rankingWinnerSpot');
+  const winsEl   = document.getElementById('rankingWinners');
+  const nearEl   = document.getElementById('rankingNear');
 
-  // Top winner highlight
+  const medals = [
+    '<i class="fa-solid fa-medal" style="color:#FFD700"></i>',
+    '<i class="fa-solid fa-medal" style="color:#C0C0C0"></i>',
+    '<i class="fa-solid fa-medal" style="color:#CD7F32"></i>',
+  ];
+
   if (data.vencedores && data.vencedores.length) {
-    const top = data.vencedores[0];
-    spot.classList.remove('hidden');
-    spot.innerHTML = `
-      <div class="ranking-winner">
-        <div class="ranking-winner__trophy">🏆</div>
-        <div class="ranking-winner__name">${maskName(top.nome)}</div>
-        <div class="ranking-winner__game">${top.jogo}</div>
-        <div class="ranking-winner__amount">${fmtMoney(top.ganho)}</div>
-      </div>`;
+    spot.classList.add('hidden');
+
+    // Pódio para os 3 primeiros
+    if (podiumEl) {
+      const top3 = data.vencedores.slice(0, 3);
+      // Ordena para exibição: 2º - 1º - 3º
+      const podiumOrder = top3.length >= 3
+        ? [top3[1], top3[0], top3[2]]
+        : top3.length === 2
+        ? [top3[1], top3[0]]
+        : [top3[0]];
+
+      podiumEl.innerHTML = podiumOrder.map((r, displayIdx) => {
+        const realPos = top3.indexOf(r); // posição real (0-indexed)
+        return `
+          <div class="podium-step podium-step--${realPos + 1}">
+            <div class="podium-step__medal">${medals[realPos] || ''}</div>
+            <div class="podium-step__name">${maskName(r.nome)}</div>
+            <div class="podium-step__game">${r.jogo}</div>
+            <div class="podium-step__val">${fmtMoney(r.ganho)}</div>
+          </div>`;
+      }).join('');
+    }
 
     winsEl.innerHTML = data.vencedores.map((r, i) => `
       <div class="ranking-row">
-        <span class="ranking-row__pos">${i + 1}</span>
+        <span class="ranking-row__pos">${medals[i] || i + 1}</span>
         <span class="ranking-row__name">${maskName(r.nome)}</span>
         <span class="ranking-row__val">${fmtMoney(r.ganho)}</span>
       </div>`).join('');
   } else {
     spot.classList.add('hidden');
+    if (podiumEl) podiumEl.innerHTML = '';
     winsEl.innerHTML = '<p class="text--muted">Nenhum ganhador ainda.</p>';
   }
 
@@ -659,7 +761,7 @@ const showResultado = (bet, won) => {
 
   if (won) {
     content.innerHTML = `
-      <span class="resultado-win__icon">🎉</span>
+      <span class="resultado-win__icon"><i class="fa-solid fa-trophy" style="color:var(--gold)"></i></span>
       <div class="resultado-win__title">Você Acertou!</div>
       <span class="resultado-win__amount">${fmtMoney(bet.possivel_ganho)}</span>
       <p class="resultado-win__info">O valor foi adicionado ao seu saldo.</p>
@@ -684,7 +786,7 @@ const showResultado = (bet, won) => {
       : `<button class="btn btn--primary btn--full btn--large" id="btnTentarNovamente">🎯 Ver Todos os Jogos</button>`;
 
     content.innerHTML = `
-      <span class="resultado-loss__icon">😔</span>
+      <span class="resultado-loss__icon"><i class="fa-regular fa-face-sad-tear"></i></span>
       <div class="resultado-loss__title">Não foi dessa vez!</div>
       <p class="resultado-loss__sub">Mas você está quase lá. Tente no próximo jogo!</p>
       ${nextHtml}`;
@@ -1112,12 +1214,17 @@ const loadUser = async () => {
 };
 
 const loadGames = async () => {
+  const skel = document.getElementById('gamesSkeletons');
+  const grid = document.getElementById('gamesGrid');
+  if (skel) skel.classList.remove('hidden');
+  if (grid) grid.innerHTML = '';
   try {
     const r = await api('/api/jogos');
     S.games = r.jogos;
   } catch {
     S.games = [];
   }
+  if (skel) skel.classList.add('hidden');
   renderGames();
 };
 
@@ -1134,6 +1241,14 @@ const loadBets = async () => {
 
 // ── Event binding ─────────────────────────────────────────────
 const bind = () => {
+  // Game filter tabs
+  document.getElementById('gamesFilters')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-filter]');
+    if (!btn) return;
+    S.activeFilter = btn.dataset.filter;
+    renderGames();
+  });
+
   // Nav buttons
   document.getElementById('mainNav').addEventListener('click', e => {
     const btn = e.target.closest('[data-nav]');

@@ -1292,3 +1292,211 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   font-size: .9em;
   line-height: 1;
 }
+
+
+/* ============================================================
+   §18  COPA HERO
+   ============================================================ */
+.copa-hero {
+  position: relative;
+  background: linear-gradient(135deg, #05091a 0%, #0a1a0d 45%, #05121a 100%);
+  border-radius: var(--radius-xl);
+  padding: 3rem 2.5rem 2.25rem;
+  margin-bottom: 1.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(0,200,83,.13);
+}
+.copa-hero::before {
+  content: '';
+  position: absolute; top: -80px; right: -80px;
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(0,200,83,.11) 0%, transparent 70%);
+  pointer-events: none;
+}
+.copa-hero::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,200,83,.28), transparent);
+}
+.copa-hero__content { position: relative; z-index: 1; }
+.copa-hero__eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .76rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--primary);
+  background: rgba(0,200,83,.12); border: 1px solid rgba(0,200,83,.22);
+  border-radius: 999px; padding: .28rem .75rem;
+  margin-bottom: 1rem;
+}
+.copa-hero__title {
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 900; line-height: 1.14;
+  margin-bottom: .6rem; color: #fff;
+}
+.copa-hero__title span { color: var(--primary); }
+.copa-hero__sub {
+  font-size: 1rem; color: rgba(255,255,255,.55);
+  max-width: 520px; margin-bottom: 1.6rem; line-height: 1.6;
+}
+.copa-hero__stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.copa-hero__stat  { display: flex; flex-direction: column; align-items: flex-start; gap: .12rem; }
+.copa-hero__stat strong {
+  font-size: 1.45rem; font-weight: 900; color: #fff; line-height: 1;
+}
+.copa-hero__stat span {
+  font-size: .7rem; text-transform: uppercase;
+  letter-spacing: .07em; color: rgba(255,255,255,.45);
+}
+.copa-hero__stat--live strong { color: var(--danger); }
+
+/* light mode: softer on white bg */
+.theme-light .copa-hero {
+  background: linear-gradient(135deg, #f0fff4 0%, #e8f4f0 45%, #eaf4f8 100%);
+  border-color: rgba(5,150,105,.18);
+}
+.theme-light .copa-hero::before {
+  background: radial-gradient(circle, rgba(5,150,105,.10) 0%, transparent 70%);
+}
+.theme-light .copa-hero__title { color: var(--text); }
+.theme-light .copa-hero__sub   { color: var(--text-muted); }
+.theme-light .copa-hero__stat strong { color: var(--text); }
+.theme-light .copa-hero__stat span   { color: var(--text-muted); }
+.theme-light .copa-hero__eyebrow     { background: var(--tint-primary); border-color: rgba(5,150,105,.25); }
+
+
+/* ============================================================
+   §19  GAME FILTER TABS
+   ============================================================ */
+.games-toolbar  { margin-bottom: 1.4rem; }
+.games-filters  { display: flex; flex-wrap: wrap; gap: .45rem; }
+.games-filter {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  padding: .42rem .95rem;
+  border-radius: 999px;
+  font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: .38rem;
+  line-height: 1;
+}
+.games-filter:hover        { border-color: var(--border-strong); color: var(--text); }
+.games-filter--active      { background: var(--tint-primary); border-color: var(--primary); color: var(--primary); }
+.games-filter--active:hover { background: var(--tint-primary); }
+
+
+/* ============================================================
+   §20  SKELETON LOADER
+   ============================================================ */
+@keyframes skelPulse {
+  0%, 100% { opacity: .45; }
+  50%       { opacity: .9;  }
+}
+.game-card-skel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  display: flex; flex-direction: column; gap: .85rem;
+  animation: skelPulse 1.7s ease-in-out infinite;
+}
+.skel { background: var(--surface-3); border-radius: var(--radius-sm); }
+.skel--line         { height: 13px; border-radius: 999px; }
+.skel--short        { width: 50%; }
+.skel--medium       { width: 75%; }
+.skel--emblem       { height: 90px; border-radius: var(--radius); }
+.skel--btn          { height: 42px; border-radius: var(--radius-sm); }
+
+
+/* ============================================================
+   §21  VIEW ENTER ANIMATION
+   ============================================================ */
+.view--entering { animation: viewEnter .28s cubic-bezier(.22,1,.36,1) both; }
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+
+
+/* ============================================================
+   §22  NAV LIVE DOT
+   ============================================================ */
+.nav-live-dot {
+  display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--danger);
+  margin-left: .35rem; vertical-align: middle;
+  animation: pulseBadge 1.5s infinite;
+}
+
+
+/* ============================================================
+   §23  RANKING PODIUM
+   ============================================================ */
+.ranking-podium {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: .5rem; margin-bottom: 1.75rem;
+}
+.podium-step {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 1.25rem .85rem 1rem;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--surface); border: 1px solid var(--border);
+  flex: 1; max-width: 200px; position: relative;
+  border-bottom: 0;
+}
+.podium-step--1 {
+  background: linear-gradient(180deg, rgba(255,215,0,.09) 0%, var(--surface) 100%);
+  border-color: rgba(255,215,0,.28); padding-top: 1.75rem; order: 2;
+  box-shadow: 0 -4px 28px rgba(255,215,0,.10);
+}
+.podium-step--2 { order: 1; opacity: .93; }
+.podium-step--3 { order: 3; opacity: .88; }
+.podium-step__medal { font-size: 1.6rem; margin-bottom: .35rem; line-height: 1; }
+.podium-step--1 .podium-step__medal { font-size: 2rem; }
+.podium-step__name {
+  font-size: .82rem; font-weight: 700;
+  text-align: center; margin-bottom: .2rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%;
+}
+.podium-step__game  { font-size: .69rem; color: var(--text-muted); text-align: center; margin-bottom: .3rem; }
+.podium-step__val   { font-size: 1rem; font-weight: 900; color: var(--primary); }
+.podium-step--1 .podium-step__val { color: var(--gold); font-size: 1.15rem; }
+/* base de altura para o pódio */
+.podium-step--2 { min-height: 130px; }
+.podium-step--1 { min-height: 160px; }
+.podium-step--3 { min-height: 110px; }
+
+
+/* ============================================================
+   §24  BET CARD — flags + status timeline
+   ============================================================ */
+.bet-card__game-flags {
+  display: flex; align-items: center; gap: .45rem; margin-bottom: .3rem;
+}
+.bet-card__game-flags img { width: 1.25rem; height: auto; border-radius: 2px; }
+.bet-card__game-flags .flag-sep { color: var(--text-muted); font-size: .75rem; font-weight: 700; }
+
+.bet-status-steps {
+  display: flex; align-items: center; gap: 0;
+  margin-top: .6rem; font-size: .68rem;
+  flex-wrap: nowrap; overflow-x: auto;
+}
+.bet-step {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .2rem; color: var(--text-muted); flex-shrink: 0;
+}
+.bet-step--done   { color: var(--primary); }
+.bet-step--active { color: var(--text); }
+.bet-step__dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0;
+  transition: background .2s;
+}
+.bet-step--done   .bet-step__dot { background: var(--primary); }
+.bet-step--active .bet-step__dot { background: var(--text); box-shadow: 0 0 0 3px rgba(249,250,251,.12); }
+.bet-step__label { font-weight: 600; white-space: nowrap; }
+.bet-step__line {
+  width: 22px; height: 2px; background: var(--border); flex-shrink: 0;
+  align-self: flex-start; margin-top: 3px;
+}
+.bet-step__line--done { background: var(--primary); }
