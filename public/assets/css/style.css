@@ -506,10 +506,12 @@ body.drawer-open { overflow: hidden; }
   font-size: .73rem; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase;
 }
-.badge--open   { background: var(--tint-primary); color: var(--primary); }
-.badge--closed { background: var(--tint-danger);  color: var(--danger); }
-.badge--final  { background: var(--tint-info);    color: var(--info); }
-.badge--live   { background: var(--danger); color: #fff; animation: pulseBadge 1.5s infinite; }
+.badge--open      { background: var(--tint-primary); color: var(--primary); }
+.badge--closed    { background: var(--tint-danger);  color: var(--danger); }
+.badge--final     { background: var(--surface-3);    color: var(--text-muted); }
+.badge--live      { background: var(--danger); color: #fff; animation: pulseBadge 1.5s infinite; }
+.badge--soon      { background: #f59e0b22; color: #f59e0b; }
+.badge--cancelled { background: var(--surface-2); color: var(--text-dim); }
 
 @keyframes pulseBadge {
   0%,100% { box-shadow: 0 0 0 0 var(--danger-glow); }

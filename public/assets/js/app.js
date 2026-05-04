@@ -188,6 +188,50 @@ const maskName = (name) => {
   ).join(' ');
 };
 
+// ── Game status badge ─────────────────────────────────────────
+const gameBadge = (g) => {
+  const api = (g.status_api || '').toUpperCase();
+  const s   = g.status;
+
+  // Ao vivo — mostra o minuto se disponível
+  const liveStatuses = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
+  if (liveStatuses.includes(api) || (s === 'encerrado' && api !== '' && api !== 'NS' && api !== 'TBD')) {
+    const label = api === 'HT'  ? 'Intervalo'
+                : api === 'ET'  ? 'Prorrogação'
+                : api === 'BT'  ? 'Intervalo PE'
+                : api === 'P'   ? 'Pênaltis'
+                : api === 'INT' ? 'Interrompido'
+                : 'Ao Vivo';
+    return `<span class="badge badge--live"><i class="fa-solid fa-circle fa-beat" style="font-size:.55em"></i> ${label}</span>`;
+  }
+
+  // Cancelado / Suspenso / Adiado
+  if (['SUSP','CANC','ABD','PST'].includes(api)) {
+    const label = api === 'PST' ? 'Adiado' : api === 'SUSP' ? 'Suspenso' : 'Cancelado';
+    return `<span class="badge badge--cancelled"><i class="fa-solid fa-ban"></i> ${label}</span>`;
+  }
+
+  // Finalizado
+  if (s === 'finalizado' || ['FT','AET','PEN','AWD','WO'].includes(api)) {
+    const label = api === 'AET' ? 'Terminado PE' : api === 'PEN' ? 'Terminado Pên.' : 'Encerrado';
+    return `<span class="badge badge--final"><i class="fa-solid fa-flag-checkered"></i> ${label}</span>`;
+  }
+
+  // Encerrado para apostas (mas não terminou)
+  if (s === 'encerrado') {
+    return `<span class="badge badge--closed"><i class="fa-solid fa-lock"></i> Fechado</span>`;
+  }
+
+  // Em breve — calcula se é hoje ou data futura
+  const diff = new Date(g.data_hora) - Date.now();
+  if (diff > 0 && diff < 3600000) { // menos de 1h
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em breve</span>`;
+  }
+
+  // Aberto para apostas
+  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> Apostas abertas</span>`;
+};
+
 // ── Navigation ────────────────────────────────────────────────
 const navigate = (view) => {
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
@@ -282,8 +326,8 @@ const renderGames = () => {
     const isClosed   = g.status !== 'aberto';
     const isFinal    = g.status === 'finalizado';
 
-    const badgeClass = isFinal ? 'badge--final' : isClosed ? 'badge--closed' : 'badge--open';
-    const badgeLabel = isFinal ? '✓ Finalizado' : isClosed ? '⏹ Encerrado' : '● Aberto';
+    const badgeClass = '';
+    const badgeLabel = gameBadge(g);
 
     const centerHtml = isFinal && g.placar_real
       ? `<div class="game-card__score-real">${g.placar_real.replace('x', ' × ')}</div>`
@@ -308,7 +352,7 @@ const renderGames = () => {
     return `
       <article class="game-card ${isClosed ? 'game-card--closed' : ''} ${isFinal ? 'game-card--final' : ''}">
         <div class="game-card__top">
-          <span class="badge ${badgeClass}">${badgeLabel}</span>
+          <span class="badge">${badgeLabel}</span>
           <span class="game-card__date">${fmtDate(g.data_hora)}</span>
         </div>
         ${ligaHtml}
@@ -742,10 +786,7 @@ const renderAdminGames = () => {
     return;
   }
 
-  const statusBadge = s => {
-    const map = { aberto: 'open', encerrado: 'closed', finalizado: 'final' };
-    return `<span class="badge badge--${map[s] || 'closed'}">${s}</span>`;
-  };
+  const statusBadge = g => gameBadge(g);
 
   const placar = g => {
     const casa = g.placar_casa != null ? g.placar_casa : 0;
@@ -773,7 +814,7 @@ const renderAdminGames = () => {
           <tr>
             <td><strong>${flagThumb(g.bandeira_casa)}${g.time_casa} × ${flagThumb(g.bandeira_fora)}${g.time_fora}</strong></td>
             <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
-            <td>${statusBadge(g.status)}</td>
+            <td>${statusBadge(g)}</td>
             <td>${placar(g)}</td>
             <td style="white-space:nowrap">
               <button class="btn btn--ghost btn--sm" data-action="editar-jogo" data-id="${g.id}"><i class="fa-solid fa-pen"></i> Editar</button>
