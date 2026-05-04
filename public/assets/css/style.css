@@ -961,9 +961,11 @@ select {
   padding: .65rem .85rem; border-radius: var(--radius-sm);
   cursor: pointer; font-size: .88rem; font-weight: 500;
   text-align: left; transition: all .15s; width: 100%;
+  border-left: 3px solid transparent;
+  padding-left: calc(.85rem - 3px);
 }
 .admin-nav__btn:hover  { background: var(--surface-2); color: var(--text); }
-.admin-nav__btn--active { background: var(--tint-primary); color: var(--primary); font-weight: 700; }
+.admin-nav__btn--active { background: var(--tint-primary); color: var(--primary); font-weight: 700; border-left-color: var(--primary); }
 
 .admin-sidebar__footer {
   margin-top: 1.5rem;
@@ -973,6 +975,36 @@ select {
 
 .admin-content { flex: 1; padding: 2rem; min-width: 0; }
 .admin-tab__title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem; }
+
+/* Page header consistente para cada aba */
+.admin-page-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+.admin-page-header--actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.admin-page-header__title { font-size: 1.35rem; font-weight: 800; margin: 0 0 .25rem; }
+.admin-page-header__sub   { font-size: .83rem; color: var(--text-muted); margin: 0; }
+
+/* Toolbar de filtros (apostas, usuários) */
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .7rem 1rem;
+  margin-bottom: 1.25rem;
+}
+.admin-toolbar select,
+.admin-toolbar input { flex: 1; min-width: 150px; max-width: 320px; margin-bottom: 0; }
 
 .admin-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
 .admin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
@@ -1001,7 +1033,12 @@ select {
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   box-shadow: var(--shadow-card);
+  border-top: 3px solid var(--border);
 }
+.dash-card--green  { border-top-color: var(--primary); }
+.dash-card--gold   { border-top-color: var(--gold); }
+.dash-card--danger { border-top-color: var(--danger); }
+.dash-card--info   { border-top-color: var(--info); }
 .dash-card__label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
 .dash-card__value { font-size: 1.6rem; font-weight: 900; }
 .dash-card__value--green  { color: var(--primary); }
@@ -1039,8 +1076,33 @@ select {
 .status-pill--bloqueado  { background: var(--tint-danger);  color: var(--danger); }
 
 
+/* ── Painel import API (details nativo) ── */
+details.admin-import-panel {
+  margin-top: 1.25rem;
+}
+details.admin-import-panel summary {
+  cursor: pointer;
+  font-size: .9rem; font-weight: 700;
+  list-style: none;
+  display: flex; align-items: center; justify-content: space-between;
+  user-select: none;
+  padding-bottom: 0;
+}
+details.admin-import-panel summary::-webkit-details-marker { display: none; }
+details.admin-import-panel summary::after {
+  content: '▸';
+  font-size: .8rem; color: var(--text-muted);
+  transition: transform .2s;
+  margin-left: .5rem; flex-shrink: 0;
+}
+details[open].admin-import-panel summary::after { transform: rotate(90deg); }
+details[open].admin-import-panel summary { margin-bottom: .25rem; }
+.admin-import-body { padding-top: .25rem; }
+.admin-import-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; }
+
+
 /* ============================================================
-   §16b FORMULÁRIO DE JOGO (admin)
+   §17b FORMULÁRIO DE JOGO (admin)
    ============================================================ */
 
 /* Preview ao vivo do confronto */
@@ -1143,7 +1205,7 @@ select {
 /* Layout 2 colunas: form + filtro */
 .admin-jogos-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
   align-items: start;
   margin-bottom: 1.25rem;

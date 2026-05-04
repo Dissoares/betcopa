@@ -1111,6 +1111,28 @@ const bind = () => {
 
   // Filtro de apostas
   document.getElementById('btnFilterBets')?.addEventListener('click', fetchAdminBets);
+  document.getElementById('btnClearBetFilter')?.addEventListener('click', () => {
+    const g = document.getElementById('filterBetGame');
+    const s = document.getElementById('filterBetStatus');
+    if (g) g.value = ''; if (s) s.value = '';
+    fetchAdminBets();
+  });
+
+  // Filtro de usuários (client-side)
+  const applyUserFilter = () => {
+    const term   = (document.getElementById('filterUser')?.value || '').toLowerCase();
+    const status = document.getElementById('filterUserStatus')?.value || '';
+    document.querySelectorAll('#adminUsersList .admin-table tbody tr').forEach(row => {
+      const matchText   = !term   || row.textContent.toLowerCase().includes(term);
+      const matchStatus = !status || (row.dataset.status || '') === status;
+      row.style.display = matchText && matchStatus ? '' : 'none';
+    });
+  };
+  document.getElementById('filterUser')?.addEventListener('input', applyUserFilter);
+  document.getElementById('filterUserStatus')?.addEventListener('change', applyUserFilter);
+
+  // Botão refresh dashboard
+  document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);
 
   // Config form
   document.getElementById('adminConfigForm')?.addEventListener('submit', submitAdminConfig);
@@ -1158,16 +1180,16 @@ const loadAdminDashboard = async () => {
     const { stats, recentes, por_jogo } = await api('/api/admin/dashboard');
 
     statsEl.innerHTML = [
-      { label: 'Usuários',        value: stats.total_usuarios,   cls: '' },
-      { label: 'Total apostas',   value: stats.total_apostas,    cls: '' },
+      { label: 'Usuários',        value: stats.total_usuarios,        cls: '' },
+      { label: 'Total apostas',   value: stats.total_apostas,         cls: '' },
       { label: 'Volume apostado', value: fmtR$(stats.volume_apostado), cls: 'info' },
       { label: 'Prêmios pagos',   value: fmtR$(stats.volume_pago),     cls: 'danger' },
       { label: 'Margem da casa',  value: fmtR$(stats.margem_casa),     cls: 'green' },
-      { label: 'Apostas ganhas',  value: stats.apostas_ganhas,   cls: 'green' },
-      { label: 'Pendentes pag.',  value: stats.apostas_pendentes, cls: 'gold' },
-      { label: 'Jogos abertos',   value: stats.jogos_abertos,    cls: '' },
+      { label: 'Apostas ganhas',  value: stats.apostas_ganhas,         cls: 'green' },
+      { label: 'Pendentes pag.',  value: stats.apostas_pendentes,      cls: 'gold' },
+      { label: 'Jogos abertos',   value: stats.jogos_abertos,          cls: '' },
     ].map(c => `
-      <div class="dash-card">
+      <div class="dash-card ${c.cls ? `dash-card--${c.cls}` : ''}">
         <div class="dash-card__label">${c.label}</div>
         <div class="dash-card__value ${c.cls ? `dash-card__value--${c.cls}` : ''}">${c.value}</div>
       </div>`).join('');
@@ -1213,6 +1235,8 @@ const loadAdminUsers = async () => {
   el.innerHTML = '<p class="text--muted">Carregando...</p>';
   try {
     const { usuarios } = await api('/api/admin/usuarios');
+    const countEl = document.getElementById('adminUsersCount');
+    if (countEl) countEl.textContent = `${usuarios.length} usuário${usuarios.length !== 1 ? 's' : ''}`;
     if (!usuarios.length) { el.innerHTML = '<p class="text--muted">Nenhum usuário.</p>'; return; }
 
     el.innerHTML = `
@@ -1222,7 +1246,7 @@ const loadAdminUsers = async () => {
         </thead>
         <tbody>
           ${usuarios.map(u => `
-            <tr>
+            <tr data-status="${u.bloqueado == 1 ? 'bloqueado' : 'ativo'}">
               <td>${u.id}</td>
               <td>${u.nome}</td>
               <td>${u.email}</td>
@@ -1278,6 +1302,8 @@ const fetchAdminBets = async () => {
 
   try {
     const { apostas } = await api(`/api/admin/apostas?${params}`);
+    const countEl = document.getElementById('adminBetsCount');
+    if (countEl) countEl.textContent = `${apostas.length} aposta${apostas.length !== 1 ? 's' : ''}`;
     if (!apostas.length) { el.innerHTML = '<p class="text--muted">Nenhuma aposta encontrada.</p>'; return; }
 
     el.innerHTML = `

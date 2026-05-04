@@ -165,15 +165,19 @@
 
         <!-- ── ABA: DASHBOARD ── -->
         <div class="admin-tab" id="atab-dashboard">
-          <h2 class="admin-tab__title">📊 Dashboard</h2>
-
-          <div class="dash-grid" id="dashStats">
-            <!-- preenchido pelo JS -->
+          <div class="admin-page-header admin-page-header--actions">
+            <div>
+              <h2 class="admin-page-header__title">📊 Dashboard</h2>
+              <p class="admin-page-header__sub">Visão geral da plataforma em tempo real</p>
+            </div>
+            <button class="btn btn--ghost btn--sm" id="btnRefreshDash">↻ Atualizar</button>
           </div>
+
+          <div class="dash-grid" id="dashStats"><!-- preenchido pelo JS --></div>
 
           <div class="admin-grid-2" style="margin-top:1.5rem">
             <div class="panel">
-              <h3 class="panel__title">🕐 Apostas Recentes</h3>
+              <h3 class="panel__title">🕐 Últimas Apostas</h3>
               <div id="dashRecentes"></div>
             </div>
             <div class="panel">
@@ -185,7 +189,10 @@
 
         <!-- ── ABA: JOGOS ── -->
         <div class="admin-tab hidden" id="atab-jogos">
-          <h2 class="admin-tab__title">⚽ Gerenciar Jogos</h2>
+          <div class="admin-page-header">
+            <h2 class="admin-page-header__title">⚽ Jogos</h2>
+            <p class="admin-page-header__sub">Cadastre, edite e gerencie os jogos disponíveis para apostas</p>
+          </div>
 
           <div class="admin-jogos-layout">
 
@@ -303,35 +310,59 @@
             <div id="adminGamesList"></div>
             <div class="admin-pagination" id="adminGamesPagination"></div>
           </div>
+
+          <details class="panel admin-import-panel">
+            <summary>📡 API Football — Importar e sincronizar jogos</summary>
+            <div class="admin-import-body">
+              <div class="form-row" style="margin-top:1rem">
+                <div class="form-group">
+                  <label>ID da Liga</label>
+                  <input id="importLeague" type="number" placeholder="Ex: 71 (Brasileirão)" value="71" />
+                </div>
+                <div class="form-group">
+                  <label>Temporada</label>
+                  <input id="importSeason" type="number" placeholder="Ex: 2025" value="2025" />
+                </div>
+                <div class="form-group">
+                  <label>Próximos jogos</label>
+                  <input id="importNext" type="number" placeholder="10" value="10" min="1" max="50" />
+                </div>
+              </div>
+              <div class="admin-import-actions">
+                <button class="btn btn--primary" id="btnImport">📡 Importar Jogos</button>
+                <button class="btn btn--ghost" id="btnSync">🔄 Sincronizar Resultados</button>
+              </div>
+              <div id="importStatus" style="margin-top:.75rem"></div>
+            </div>
+          </details>
         </div>
 
         <!-- ── ABA: APOSTAS ── -->
         <div class="admin-tab hidden" id="atab-apostas">
-          <h2 class="admin-tab__title">🎯 Gerenciar Apostas</h2>
-          <div class="panel" style="margin-bottom:1rem">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Filtrar por Jogo</label>
-                <select id="filterBetGame">
-                  <option value="">Todos os jogos</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Filtrar por Status</label>
-                <select id="filterBetStatus">
-                  <option value="">Todos</option>
-                  <option value="pendente">Pendente</option>
-                  <option value="pago">Pago</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="ganhou">Ganhou</option>
-                  <option value="perdido">Perdido</option>
-                </select>
-              </div>
-              <div class="form-group" style="align-self:flex-end">
-                <button class="btn btn--primary btn--full" id="btnFilterBets">Filtrar</button>
-              </div>
+          <div class="admin-page-header admin-page-header--actions">
+            <div>
+              <h2 class="admin-page-header__title">🎯 Apostas</h2>
+              <p class="admin-page-header__sub">Visualize e filtre todas as apostas da plataforma</p>
             </div>
+            <span class="text--muted" id="adminBetsCount"></span>
           </div>
+
+          <div class="admin-toolbar">
+            <select id="filterBetGame">
+              <option value="">Todos os jogos</option>
+            </select>
+            <select id="filterBetStatus">
+              <option value="">Todos os status</option>
+              <option value="pendente">Pendente</option>
+              <option value="pago">Pago</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="ganhou">Ganhou</option>
+              <option value="perdido">Perdido</option>
+            </select>
+            <button class="btn btn--primary btn--sm" id="btnFilterBets">Buscar</button>
+            <button class="btn btn--ghost btn--sm" id="btnClearBetFilter">Limpar</button>
+          </div>
+
           <div class="panel">
             <div id="adminBetsList"></div>
           </div>
@@ -339,7 +370,23 @@
 
         <!-- ── ABA: USUÁRIOS ── -->
         <div class="admin-tab hidden" id="atab-usuarios">
-          <h2 class="admin-tab__title">👥 Usuários</h2>
+          <div class="admin-page-header admin-page-header--actions">
+            <div>
+              <h2 class="admin-page-header__title">👥 Usuários</h2>
+              <p class="admin-page-header__sub">Gerenciar contas e permissões de usuários</p>
+            </div>
+            <span class="text--muted" id="adminUsersCount"></span>
+          </div>
+
+          <div class="admin-toolbar">
+            <input id="filterUser" type="search" placeholder="🔍 Buscar por nome ou e-mail…" />
+            <select id="filterUserStatus">
+              <option value="">Todos os status</option>
+              <option value="ativo">Ativos</option>
+              <option value="bloqueado">Bloqueados</option>
+            </select>
+          </div>
+
           <div class="panel">
             <div id="adminUsersList"></div>
           </div>
@@ -347,7 +394,10 @@
 
         <!-- ── ABA: CONFIGURAÇÕES ── -->
         <div class="admin-tab hidden" id="atab-config">
-          <h2 class="admin-tab__title">⚙️ Configurações da Plataforma</h2>
+          <div class="admin-page-header">
+            <h2 class="admin-page-header__title">⚙️ Configurações</h2>
+            <p class="admin-page-header__sub">Ajuste os parâmetros e integrações da plataforma</p>
+          </div>
           <div class="config-tabs" id="configTabs">
             <button type="button" class="config-tab config-tab--active" data-config-tab="system">Sistema</button>
             <button type="button" class="config-tab" data-config-tab="payment">Pagamento</button>
