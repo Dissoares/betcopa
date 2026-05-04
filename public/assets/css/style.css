@@ -572,55 +572,93 @@ body.drawer-open { overflow: hidden; }
   padding: .4rem .7rem;
 }
 
-.game-card__top {
+.game-card__top,
+.game-card__head {
   display: flex; justify-content: space-between; align-items: center;
 }
-.game-card__date { font-size: .76rem; color: var(--text-muted); }
+.game-card__date { font-size: .76rem; color: var(--text-muted); font-weight: 500; }
 
 .game-card__matchup {
-  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
 }
 .game-card__team {
-  display: flex; flex-direction: column; align-items: center; gap: .35rem;
-  flex: 1; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  flex: 1; text-align: center; min-width: 0;
 }
 .game-card__flag { font-size: 3rem; line-height: 1; }
 .game-card__name {
-  font-size: .75rem; font-weight: 700;
-  letter-spacing: .05em; text-transform: uppercase;
-  color: var(--text-dim);
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.game-card__center {
-  display: flex; flex-direction: column; align-items: center; gap: .35rem;
+/* Separador central: VS + countdown / placar / pip */
+.game-card__sep {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  flex-shrink: 0; width: 96px;
 }
 .game-card__vs {
-  font-size: .72rem; font-weight: 900;
+  font-size: .7rem; font-weight: 900;
   color: var(--text-muted); letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.game-card__dash { font-size: 1rem; color: var(--text-muted); }
+.game-card__info {
+  font-size: .73rem; color: var(--text-muted);
+  text-align: center; margin: 0;
+}
+
+/* Placar final */
+.game-card__score {
+  font-size: 1.6rem; font-weight: 900;
+  color: var(--info); letter-spacing: .06em;
+  text-shadow: var(--score-shadow);
+  line-height: 1;
+}
+.game-card__score--live { color: var(--danger); }
+
+/* Pip ao vivo (quando sem placar disponível) */
+.game-card__live-pip {
+  display: flex; align-items: center; justify-content: center;
+  height: 2rem;
+}
+
+/* Countdown — apenas o número, sem label */
+.game-card__countdown-time {
+  font-size: 1rem; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary); letter-spacing: .05em;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: .4rem .55rem;
+  white-space: nowrap;
+}
+.game-card__countdown-time--expired { color: var(--text-muted); }
+
+/* Legado — mantém compatibilidade com countdown antigo */
+.game-card__countdown { text-align: center; }
+.game-card__countdown-label {
+  font-size: .67rem; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: .18rem;
+}
+
+/* Live score legado */
+.game-card__live-score {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .82rem; font-weight: 800;
+  color: var(--danger); text-transform: uppercase; letter-spacing: .1em;
+  background: rgba(239,68,68,.1);
+  border-radius: var(--radius-sm);
+  padding: .4rem .7rem;
 }
 .game-card__score-real {
   font-size: 1.8rem; font-weight: 900;
   color: var(--info); letter-spacing: .04em;
   text-shadow: var(--score-shadow);
 }
-
-.game-card__countdown {
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
-  padding: .55rem .75rem;
-  text-align: center;
-}
-.game-card__countdown-label {
-  font-size: .67rem; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .06em;
-  margin-bottom: .18rem;
-}
-.game-card__countdown-time {
-  font-size: 1rem; font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--primary); letter-spacing: .06em;
-}
-.game-card__countdown-time--expired { color: var(--text-muted); }
 
 .game-card__emblem {
   width: 64px; height: 64px;

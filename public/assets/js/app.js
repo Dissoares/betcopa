@@ -214,6 +214,21 @@ const confirm = async (opts = {}) => {
 const fmtMoney = (n) => `R$ ${parseFloat(n).toFixed(2).replace('.', ',')}`;
 const fmtDate  = (v) => new Date(v).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
+// Data amigável para o card: "Hoje · 23:59", "Amanhã · 15:33" ou "06/05 · 15:33"
+const fmtGameDate = (v) => {
+  const d    = new Date(v);
+  const now  = new Date();
+  const same = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth()    &&
+    a.getDate()     === b.getDate();
+  const tom = new Date(now); tom.setDate(tom.getDate() + 1);
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  if (same(d, now))  return `Hoje · ${time}`;
+  if (same(d, tom))  return `Amanhã · ${time}`;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ` · ${time}`;
+};
+
 const maskName = (name) => {
   if (!name) return 'Usuário';
   return name.split(' ').map((part, i) =>
@@ -222,47 +237,54 @@ const maskName = (name) => {
 };
 
 // ── Game status badge ─────────────────────────────────────────
+// Critérios (por prioridade):
+//  1. Ao Vivo    → status_api ∈ {1H,2H,HT,ET,BT,P,INT,LIVE}  (jogo em andamento)
+//  2. Suspenso   → status_api ∈ {SUSP,CANC,ABD,PST}
+//  3. Finalizado → status='finalizado' OU status_api ∈ {FT,AET,PEN,AWD,WO}
+//  4. Fechado    → status='encerrado'  (apostas fechadas, jogo não registrado)
+//  5. Em Breve   → status='aberto' + menos de 1h para o pontapé
+//  6. Aberto     → status='aberto' + mais de 1h para o pontapé
 const gameBadge = (g) => {
-  const api = (g.status_api || '').toUpperCase();
-  const s   = g.status;
+  const api  = (g.status_api || '').toUpperCase();
+  const s    = g.status;
+  const diff = new Date(g.data_hora) - Date.now();
 
-  // Ao vivo — mostra o minuto se disponível
+  // 1. Ao Vivo — APENAS quando status_api indica jogo em andamento
   const liveStatuses = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
-  if (liveStatuses.includes(api) || (s === 'encerrado' && api !== '' && api !== 'NS' && api !== 'TBD')) {
+  if (liveStatuses.includes(api)) {
     const label = api === 'HT'  ? 'Intervalo'
                 : api === 'ET'  ? 'Prorrogação'
-                : api === 'BT'  ? 'Intervalo PE'
+                : api === 'BT'  ? 'Interv. PE'
                 : api === 'P'   ? 'Pênaltis'
                 : api === 'INT' ? 'Interrompido'
                 : 'Ao Vivo';
     return `<span class="badge badge--live"><i class="fa-solid fa-circle fa-beat" style="font-size:.55em"></i> ${label}</span>`;
   }
 
-  // Cancelado / Suspenso / Adiado
+  // 2. Suspenso / Cancelado / Adiado
   if (['SUSP','CANC','ABD','PST'].includes(api)) {
     const label = api === 'PST' ? 'Adiado' : api === 'SUSP' ? 'Suspenso' : 'Cancelado';
     return `<span class="badge badge--cancelled"><i class="fa-solid fa-ban"></i> ${label}</span>`;
   }
 
-  // Finalizado
+  // 3. Finalizado
   if (s === 'finalizado' || ['FT','AET','PEN','AWD','WO'].includes(api)) {
-    const label = api === 'AET' ? 'Terminado PE' : api === 'PEN' ? 'Terminado Pên.' : 'Encerrado';
+    const label = api === 'AET' ? 'Prorrogação' : api === 'PEN' ? 'Pênaltis' : 'Finalizado';
     return `<span class="badge badge--final"><i class="fa-solid fa-flag-checkered"></i> ${label}</span>`;
   }
 
-  // Encerrado para apostas (mas não terminou)
+  // 4. Fechado para apostas (apostas encerradas, jogo ainda não terminou)
   if (s === 'encerrado') {
     return `<span class="badge badge--closed"><i class="fa-solid fa-lock"></i> Fechado</span>`;
   }
 
-  // Em breve — calcula se é hoje ou data futura
-  const diff = new Date(g.data_hora) - Date.now();
-  if (diff > 0 && diff < 3600000) { // menos de 1h
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em breve</span>`;
+  // 5. Em Breve: aberto + menos de 1h para começar
+  if (s === 'aberto' && diff > 0 && diff <= 3600000) {
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em Breve</span>`;
   }
 
-  // Aberto para apostas
-  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> Apostas abertas</span>`;
+  // 6. Apostas abertas
+  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> Apostas Abertas</span>`;
 };
 
 // ── Navigation ────────────────────────────────────────────────
@@ -413,45 +435,39 @@ const renderGames = () => {
 
     const badgeLabel = gameBadge(g);
 
-    const centerHtml = isFinal && g.placar_real
-      ? `<div class="game-card__score-real">${g.placar_real.replace('x', ' × ')}</div>`
+    // Centro do card: placar, countdown ou ao vivo
+    const scoreStr = g.placar_real ? g.placar_real.replace('x', ' × ') : null;
+    const centerHtml = isFinal && scoreStr
+      ? `<div class="game-card__score">${scoreStr}</div>`
+      : isLive && scoreStr
+      ? `<div class="game-card__score game-card__score--live">${scoreStr}</div>`
       : isLive
-      ? `<div class="game-card__live-score">
-           <i class="fa-solid fa-circle fa-beat" style="color:var(--danger);font-size:.55em"></i>
-           <span>AO VIVO</span>
-         </div>`
-      : `<div class="game-card__countdown" id="cd-${g.id}">
-           <div class="game-card__countdown-label">Começa em</div>
-           <div class="game-card__countdown-time" id="cdtime-${g.id}">--:--:--</div>
-         </div>`;
+      ? `<div class="game-card__live-pip"><i class="fa-solid fa-circle fa-beat" style="color:var(--danger);font-size:.65em"></i></div>`
+      : isClosed
+      ? `<div class="game-card__vs">—</div>`
+      : `<div class="game-card__countdown-time" id="cdtime-${g.id}">--:--:--</div>`;
 
-    const ligaHtml = g.liga_nome
-      ? `<div class="game-card__league">
-           ${g.liga_logo ? `<img src="${g.liga_logo}" alt="${g.liga_nome}" class="league-logo" />` : ''}
-           <span>${g.liga_nome}${g.rodada ? ' · ' + g.rodada : ''}</span>
-         </div>`
-      : '';
-
-    const stadiumHtml = g.estadio
-      ? `<div class="game-card__stadium">📍 ${g.estadio}</div>`
-      : '';
-
-    const valorBase = parseFloat(g.valor_base || 1).toFixed(2).replace('.', ',');
+    // Botão
+    const btnLabel = !isClosed
+      ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite'
+      : isLive
+      ? '<i class="fa-solid fa-satellite-dish"></i> Ao Vivo'
+      : isFinal
+      ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
+      : '<i class="fa-solid fa-lock"></i> Encerrado';
 
     return `
-      <article class="game-card ${isClosed && !isLive ? 'game-card--closed' : ''} ${isFinal ? 'game-card--final' : ''} ${isLive ? 'game-card--live' : ''}">  
-        <div class="game-card__top">
+      <article class="game-card ${isClosed && !isLive ? 'game-card--closed' : ''} ${isFinal ? 'game-card--final' : ''} ${isLive ? 'game-card--live' : ''}">
+        <div class="game-card__head">
           ${badgeLabel}
-          <span class="game-card__date">${fmtDate(g.data_hora)}</span>
+          <span class="game-card__date">${fmtGameDate(g.data_hora)}</span>
         </div>
-        ${ligaHtml}
         <div class="game-card__matchup">
           <div class="game-card__team">
             <div class="game-card__emblem">${emblemHome}</div>
             <span class="game-card__name">${g.time_casa}</span>
           </div>
-          <div class="game-card__center">
-            <span class="game-card__vs">VS</span>
+          <div class="game-card__sep">
             ${centerHtml}
           </div>
           <div class="game-card__team">
@@ -459,24 +475,12 @@ const renderGames = () => {
             <span class="game-card__name">${g.time_fora}</span>
           </div>
         </div>
-        ${stadiumHtml}
-        <div class="game-card__btn">
-          <button
-            class="btn btn--primary btn--full"
-            data-action="bet" data-id="${g.id}"
-            ${isClosed ? 'disabled' : ''}>
-            ${!isClosed
-              ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite'
-              : isLive
-              ? '<i class="fa-solid fa-satellite-dish"></i> Jogo em andamento'
-              : isFinal
-              ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
-              : '<i class="fa-solid fa-lock"></i> Encerrado'}
-          </button>
-        </div>
-        <div class="text--muted" style="font-size:.75rem;text-align:center;margin-top:.25rem">
-          R$ ${valorBase}/palpite · ganhe até ${10 * 10}×
-        </div>
+        <button
+          class="btn btn--primary btn--full"
+          data-action="bet" data-id="${g.id}"
+          ${isClosed ? 'disabled' : ''}>
+          ${btnLabel}
+        </button>
       </article>`;
   }).join('');
 
@@ -484,6 +488,19 @@ const renderGames = () => {
 };
 
 // ── Countdown timers ──────────────────────────────────────────
+// > 1 dia  → "2d 05h 30m"  (atualiza por minuto visualmente, mas intervalo continua em 1s)
+// < 1 dia  → "HH:MM:SS"
+// expirado → "Em breve!"
+const fmtCountdown = (ms) => {
+  if (ms <= 0) return 'Em breve!';
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (d >= 1) return `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+};
+
 const startCountdowns = () => {
   S.games.forEach(g => {
     if (g.status !== 'aberto') return;
@@ -492,15 +509,9 @@ const startCountdowns = () => {
 
     const tick = () => {
       const diff = new Date(g.data_hora) - Date.now();
-      if (diff <= 0) {
-        el.textContent = 'Em breve!';
-        el.classList.add('game-card__countdown-time--expired');
-        return;
-      }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      const txt  = fmtCountdown(diff);
+      el.textContent = txt;
+      if (diff <= 0) el.classList.add('game-card__countdown-time--expired');
     };
     tick();
     S.timers.push(setInterval(tick, 1000));
