@@ -745,10 +745,17 @@ const renderAdminGames = () => {
     return `<span class="badge badge--${map[s] || 'closed'}">${s}</span>`;
   };
 
-  const placar = g =>
-    g.placar_casa != null && g.placar_fora != null
-      ? `<strong>${g.placar_casa} × ${g.placar_fora}</strong>`
-      : '<span class="text--dim">—</span>';
+  const placar = g => {
+    const casa = g.placar_casa != null ? g.placar_casa : 0;
+    const fora = g.placar_fora != null ? g.placar_fora : 0;
+    const isFinal = g.status === 'finalizado';
+    return `<strong${isFinal ? '' : ' class="text--muted"'}>${casa} × ${fora}</strong>`;
+  };
+
+  const flagThumb = code =>
+    code && /^[a-z]{2}(-[a-z]+)?$/i.test(code)
+      ? `<img src="${flagUrl(code)}" alt="" style="width:1.2rem;height:auto;border-radius:2px;vertical-align:middle;margin-right:.3rem" loading="lazy" />`
+      : '';
 
   listEl.innerHTML = `
     <table class="admin-table">
@@ -762,7 +769,7 @@ const renderAdminGames = () => {
       <tbody>
         ${page.map(g => `
           <tr>
-            <td><strong>${g.time_casa} × ${g.time_fora}</strong></td>
+            <td><strong>${flagThumb(g.bandeira_casa)}${g.time_casa} × ${flagThumb(g.bandeira_fora)}${g.time_fora}</strong></td>
             <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
             <td>${statusBadge(g.status)}</td>
             <td>${placar(g)}</td>
@@ -854,8 +861,9 @@ const editGame = (id) => {
 const cancelEditGame = () => {
   editingGameId = null;
   document.getElementById('adminGameForm').reset();
+  const flagReset = '<i class="fa-regular fa-flag" style="font-size:1.4rem;opacity:.4"></i>';
   ['prevFlagHome','prevFlagAway','gfFlagPreviewHome','gfFlagPreviewAway'].forEach(sid => {
-    const el = document.getElementById(sid); if (el) el.textContent = '\uD83C\uDFF3\uFE0F';
+    const el = document.getElementById(sid); if (el) el.innerHTML = flagReset;
   });
   const el = (sid) => document.getElementById(sid);
   if (el('prevNameHome')) el('prevNameHome').textContent = 'Casa';
@@ -930,6 +938,11 @@ const populateTeamSelects = () => {
   });
 };
 
+const flagImg = (code, size = '2rem') =>
+  code && /^[a-z]{2}(-[a-z]+)?$/i.test(code)
+    ? `<img src="${flagUrl(code)}" alt="" style="width:${size};height:auto;border-radius:3px;display:block" loading="lazy" />`
+    : '<span style="font-size:1.4rem">&#127937;</span>';
+
 const setupGameFormPreview = () => {
   const el = id => document.getElementById(id);
   const codeOf = id => {
@@ -943,16 +956,14 @@ const setupGameFormPreview = () => {
   const update = () => {
     const homeCode = codeOf('adminHome');
     const awayCode = codeOf('adminAway');
-    const fh = flagEmoji(homeCode);
-    const fa = flagEmoji(awayCode);
     const nh = nameOf('adminHome');
     const na = nameOf('adminAway');
-    if (el('prevFlagHome'))      el('prevFlagHome').textContent      = fh;
-    if (el('prevFlagAway'))      el('prevFlagAway').textContent      = fa;
+    if (el('prevFlagHome'))      el('prevFlagHome').innerHTML      = flagImg(homeCode, '1.6rem');
+    if (el('prevFlagAway'))      el('prevFlagAway').innerHTML      = flagImg(awayCode, '1.6rem');
     if (el('prevNameHome'))      el('prevNameHome').textContent      = nh;
     if (el('prevNameAway'))      el('prevNameAway').textContent      = na;
-    if (el('gfFlagPreviewHome')) el('gfFlagPreviewHome').textContent = fh;
-    if (el('gfFlagPreviewAway')) el('gfFlagPreviewAway').textContent = fa;
+    if (el('gfFlagPreviewHome')) el('gfFlagPreviewHome').innerHTML = flagImg(homeCode, '3rem');
+    if (el('gfFlagPreviewAway')) el('gfFlagPreviewAway').innerHTML = flagImg(awayCode, '3rem');
   };
   ['adminHome', 'adminAway'].forEach(id => el(id)?.addEventListener('change', update));
 };
