@@ -380,11 +380,11 @@ const renderBets = () => {
   empty && empty.classList.add('hidden');
 
   const statusLabel = {
-    pendente:   ['⏳ Pendente',  ''],
-    pago:       ['💳 Pago',      ''],
-    confirmado: ['✓ Confirmado', ''],
-    ganhou:     ['🏆 Ganhou!',   'badge--open'],
-    perdido:    ['✗ Perdeu',     'badge--closed'],
+    pendente:   ['<i class="fa-solid fa-clock"></i> Pendente',   ''],
+    pago:       ['<i class="fa-solid fa-credit-card"></i> Pago',   ''],
+    confirmado: ['<i class="fa-solid fa-check"></i> Confirmado',  ''],
+    ganhou:     ['<i class="fa-solid fa-trophy"></i> Ganhou!',    'badge--open'],
+    perdido:    ['<i class="fa-solid fa-x"></i> Perdeu',          'badge--closed'],
   };
 
   list.innerHTML = S.bets.map(b => {
@@ -570,12 +570,12 @@ const simulatePay = async () => {
   btn.disabled = true; btn.textContent = 'Processando PIX...';
   try {
     await api(`/api/apostas/${S.selectedBet.id}/pagar`, 'POST', {});
-    btn.textContent = '✓ PIX enviado!';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> PIX enviado!';
     showAlert('PIX enviado! Clique em "Confirmar Pagamento" para ativar sua aposta.', 'success');
     await loadBets();
   } catch (err) {
     showAlert(err.message, 'danger');
-    btn.disabled = false; btn.textContent = '💳 Pagar via PIX';
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pagar via PIX';
   }
 };
 
@@ -590,7 +590,7 @@ const confirmPay = async () => {
     await loadBets();
   } catch (err) {
     showAlert(err.message, 'danger');
-    btn.disabled = false; btn.textContent = '✓ Confirmar Pagamento';
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Pagamento';
   }
 };
 
@@ -606,8 +606,8 @@ const showResultado = (bet, won) => {
       <span class="resultado-win__amount">${fmtMoney(bet.possivel_ganho)}</span>
       <p class="resultado-win__info">O valor foi adicionado ao seu saldo.</p>
       <div class="resultado-win__btns">
-        <button class="btn btn--gold btn--full btn--large" id="btnSacar">💰 Sacar Saldo</button>
-        <button class="btn btn--ghost btn--full" id="btnApostarNov">⚽ Apostar Novamente</button>
+        <button class="btn btn--gold btn--full btn--large" id="btnSacar"><i class="fa-solid fa-money-bill-wave"></i> Sacar Saldo</button>
+        <button class="btn btn--ghost btn--full" id="btnApostarNov"><i class="fa-solid fa-futbol"></i> Apostar Novamente</button>
       </div>`;
     document.getElementById('btnSacar').addEventListener('click', () => {
       closeAllModals();
@@ -767,7 +767,7 @@ const renderAdminGames = () => {
             <td>${statusBadge(g.status)}</td>
             <td>${placar(g)}</td>
             <td style="white-space:nowrap">
-              <button class="btn btn--ghost btn--sm" data-action="editar-jogo" data-id="${g.id}">✏️ Editar</button>
+              <button class="btn btn--ghost btn--sm" data-action="editar-jogo" data-id="${g.id}"><i class="fa-solid fa-pen"></i> Editar</button>
               ${g.status !== 'finalizado'
                 ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}" style="margin-left:.25rem">Resultado</button>`
                 : ''}
@@ -863,8 +863,8 @@ const cancelEditGame = () => {
   const titleEl  = document.getElementById('adminGameFormTitle');
   const submitEl = document.getElementById('adminGameSubmitBtn');
   const cancelEl = document.getElementById('btnCancelEditGame');
-  if (titleEl)  titleEl.textContent  = 'Cadastrar Jogo';
-  if (submitEl) submitEl.textContent = 'Cadastrar Jogo';
+  if (titleEl)  titleEl.innerHTML  = '<i class="fa-solid fa-plus"></i> Cadastrar Jogo';
+  if (submitEl) submitEl.innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Jogo';
   if (cancelEl) cancelEl.classList.add('hidden');
 };
 
@@ -964,7 +964,7 @@ const importFromApi = async () => {
   const season   = Number(document.getElementById('importSeason').value);
   const next     = Number(document.getElementById('importNext').value);
 
-  btn.disabled = true; btn.textContent = '⏳ Importando...';
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
   statusEl.innerHTML = '';
 
   try {
@@ -975,7 +975,7 @@ const importFromApi = async () => {
   } catch (err) {
     statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
-    btn.disabled = false; btn.textContent = '📡 Importar Jogos';
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Importar Jogos';
   }
 };
 
@@ -983,7 +983,7 @@ const syncResults = async () => {
   const btn      = document.getElementById('btnSync');
   const statusEl = document.getElementById('importStatus');
 
-  btn.disabled = true; btn.textContent = '⏳ Sincronizando...';
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...';
   statusEl.innerHTML = '';
 
   try {
@@ -996,7 +996,7 @@ const syncResults = async () => {
   } catch (err) {
     statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
-    btn.disabled = false; btn.textContent = '🔄 Sincronizar Resultados';
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Sincronizar Resultados';
   }
 };
 
@@ -1234,7 +1234,7 @@ const fmtR$ = (n) => `R$ ${parseFloat(n || 0).toLocaleString('pt-BR', { minimumF
 const statusPill = (s) => {
   const labels = {
     pendente: 'Pendente', pago: 'Pago', confirmado: 'Confirmado',
-    ganhou: 'Ganhou ✓', perdido: 'Perdeu ✗',
+    ganhou: 'Ganhou <i class="fa-solid fa-check"></i>', perdido: 'Perdeu <i class="fa-solid fa-x"></i>',
     ativo: 'Ativo', bloqueado: 'Bloqueado',
   };
   return `<span class="status-pill status-pill--${s}">${labels[s] || s}</span>`;
@@ -1494,7 +1494,7 @@ const submitAdminConfig = async (e) => {
   } catch (err) {
     statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
-    btn.disabled = false; btn.textContent = '💾 Salvar Configurações';
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Configurações';
   }
 };
 

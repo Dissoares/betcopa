@@ -1265,3 +1265,10 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .score-value { font-size: 2rem; }
   .resultado-win__amount { font-size: 2.2rem; }
 }
+
+/* ── Font Awesome icon alignment ──────────────────────────── */
+.btn i, h2 i, h3 i, .admin-sidebar__title i, .admin-nav__btn i, summary i {
+  vertical-align: middle;
+  font-size: .9em;
+  line-height: 1;
+}

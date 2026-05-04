@@ -15,7 +15,7 @@
   <header class="header">
     <div class="container header__inner header__inner--split">
       <div class="header__center">
-        <a class="logo" href="#" data-nav="jogos">⚽ <span>Bet</span>Copa</a>
+        <a class="logo" href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> <span>Bet</span>Copa</a>
       </div>
       <div class="header__right">
         <nav class="nav" id="mainNav">
@@ -41,7 +41,7 @@
     <div class="drawer__backdrop" data-action="close-mobile-menu"></div>
     <div class="drawer__panel">
       <div class="drawer__top">
-        <a class="drawer__logo" href="#" data-nav="jogos">⚽ BetCopa</a>
+        <a class="drawer__logo" href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> BetCopa</a>
         <button class="drawer__close" data-action="close-mobile-menu" aria-label="Fechar menu">×</button>
       </div>
       <nav class="drawer__nav">
@@ -145,13 +145,13 @@
 
       <!-- Sidebar -->
       <aside class="admin-sidebar">
-        <div class="admin-sidebar__title">⚙️ Admin</div>
+        <div class="admin-sidebar__title"><i class="fa-solid fa-screwdriver-wrench"></i> Admin</div>
         <nav class="admin-nav">
-          <button class="admin-nav__btn admin-nav__btn--active" data-admin-tab="dashboard">📊 Dashboard</button>
-          <button class="admin-nav__btn" data-admin-tab="jogos">⚽ Jogos</button>
-          <button class="admin-nav__btn" data-admin-tab="apostas">🎯 Apostas</button>
-          <button class="admin-nav__btn" data-admin-tab="usuarios">👥 Usuários</button>
-          <button class="admin-nav__btn" data-admin-tab="config">⚙️ Configurações</button>
+          <button class="admin-nav__btn admin-nav__btn--active" data-admin-tab="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+          <button class="admin-nav__btn" data-admin-tab="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+          <button class="admin-nav__btn" data-admin-tab="apostas"><i class="fa-solid fa-bullseye"></i> Apostas</button>
+          <button class="admin-nav__btn" data-admin-tab="usuarios"><i class="fa-solid fa-users"></i> Usuários</button>
+          <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
         </nav>
         <div class="admin-sidebar__footer">
           <button class="btn btn--ghost btn--icon btn-theme-toggle" aria-label="Alternar tema">
@@ -167,10 +167,10 @@
         <div class="admin-tab" id="atab-dashboard">
           <div class="admin-page-header admin-page-header--actions">
             <div>
-              <h2 class="admin-page-header__title">📊 Dashboard</h2>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-gauge-high"></i> Dashboard</h2>
               <p class="admin-page-header__sub">Visão geral da plataforma em tempo real</p>
             </div>
-            <button class="btn btn--ghost btn--sm" id="btnRefreshDash">↻ Atualizar</button>
+            <button class="btn btn--ghost btn--sm" id="btnRefreshDash"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
           </div>
 
           <div class="dash-grid" id="dashStats"><!-- preenchido pelo JS --></div>
@@ -181,7 +181,7 @@
               <div id="dashRecentes"></div>
             </div>
             <div class="panel">
-              <h3 class="panel__title">⚽ Apostas por Jogo</h3>
+              <h3 class="panel__title"><i class="fa-solid fa-futbol"></i> Apostas por Jogo</h3>
               <div id="dashPorJogo"></div>
             </div>
           </div>
@@ -190,7 +190,7 @@
         <!-- ── ABA: JOGOS ── -->
         <div class="admin-tab hidden" id="atab-jogos">
           <div class="admin-page-header">
-            <h2 class="admin-page-header__title">⚽ Jogos</h2>
+            <h2 class="admin-page-header__title"><i class="fa-solid fa-futbol"></i> Jogos</h2>
             <p class="admin-page-header__sub">Cadastre, edite e gerencie os jogos disponíveis para apostas</p>
           </div>
 
@@ -198,7 +198,7 @@
 
           <!-- Coluna esquerda: formulário -->
           <div class="panel admin-jogos-form">
-            <h3 class="panel__title" id="adminGameFormTitle">Cadastrar Jogo</h3>
+            <h3 class="panel__title" id="adminGameFormTitle"><i class="fa-solid fa-plus"></i> Cadastrar Jogo</h3>
             <form id="adminGameForm">
 
                 <!-- Preview ao vivo do confronto -->
@@ -269,8 +269,8 @@
                   </div>
                 </div>
 
-                <button class="btn btn--primary btn--full" type="submit" id="adminGameSubmitBtn">Cadastrar Jogo</button>
-                <button class="btn btn--secondary btn--full hidden" type="button" id="btnCancelEditGame">✕ Cancelar edição</button>
+                <button class="btn btn--primary btn--full" type="submit" id="adminGameSubmitBtn"><i class="fa-solid fa-plus"></i> Cadastrar Jogo</button>
+                <button class="btn btn--secondary btn--full hidden" type="button" id="btnCancelEditGame"><i class="fa-solid fa-xmark"></i> Cancelar edição</button>
               </form>
           </div><!-- /admin-jogos-form -->
 
@@ -300,7 +300,7 @@
                 <input id="filterDateTo" type="date" />
               </div>
             </div>
-            <button class="btn btn--secondary btn--full" id="btnClearFilter" type="button">✕ Limpar filtros</button>
+            <button class="btn btn--secondary btn--full" id="btnClearFilter" type="button"><i class="fa-solid fa-xmark"></i> Limpar filtros</button>
           </div><!-- /admin-jogos-filter -->
 
           </div><!-- /admin-jogos-layout -->
@@ -315,7 +315,7 @@
           </div>
 
           <details class="panel admin-import-panel">
-            <summary>📡 API Football — Importar e sincronizar jogos</summary>
+            <summary><i class="fa-solid fa-satellite-dish"></i> API Football — Importar e sincronizar jogos</summary>
             <div class="admin-import-body">
               <div class="form-row" style="margin-top:1rem">
                 <div class="form-group">
@@ -332,8 +332,8 @@
                 </div>
               </div>
               <div class="admin-import-actions">
-                <button class="btn btn--primary" id="btnImport">📡 Importar Jogos</button>
-                <button class="btn btn--ghost" id="btnSync">🔄 Sincronizar Resultados</button>
+                <button class="btn btn--primary" id="btnImport"><i class="fa-solid fa-satellite-dish"></i> Importar Jogos</button>
+                <button class="btn btn--ghost" id="btnSync"><i class="fa-solid fa-rotate"></i> Sincronizar Resultados</button>
               </div>
               <div id="importStatus" style="margin-top:.75rem"></div>
             </div>
@@ -382,7 +382,7 @@
           </div>
 
           <div class="admin-toolbar">
-            <input id="filterUser" type="search" placeholder="🔍 Buscar por nome ou e-mail…" />
+            <input id="filterUser" type="search" placeholder="Buscar por nome ou e-mail…" />
             <select id="filterUserStatus">
               <option value="">Todos os status</option>
               <option value="ativo">Ativos</option>
@@ -398,7 +398,7 @@
         <!-- ── ABA: CONFIGURAÇÕES ── -->
         <div class="admin-tab hidden" id="atab-config">
           <div class="admin-page-header">
-            <h2 class="admin-page-header__title">⚙️ Configurações</h2>
+            <h2 class="admin-page-header__title"><i class="fa-solid fa-gear"></i> Configurações</h2>
             <p class="admin-page-header__sub">Ajuste os parâmetros e integrações da plataforma</p>
           </div>
           <div class="config-tabs" id="configTabs">
@@ -557,7 +557,7 @@
 
             <div style="margin-top:1.25rem">
               <button class="btn btn--primary btn--large" type="submit" style="min-width:220px">
-                💾 Salvar Configurações
+                <i class="fa-solid fa-floppy-disk"></i> Salvar Configurações
               </button>
             </div>
             <div id="configStatus" style="margin-top:.75rem"></div>
@@ -655,8 +655,8 @@
           <span class="ticket__val ticket__val--win" id="ticketPremio">—</span>
         </div>
         <hr class="ticket__divider ticket__divider--dashed" />
-        <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay">💳 Pagar via PIX</button>
-        <button class="btn btn--ghost btn--full" id="btnConfirmPay" style="margin-top:.75rem">✓ Confirmar Pagamento</button>
+        <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay"><i class="fa-solid fa-credit-card"></i> Pagar via PIX</button>
+        <button class="btn btn--ghost btn--full" id="btnConfirmPay" style="margin-top:.75rem"><i class="fa-solid fa-check"></i> Confirmar Pagamento</button>
       </div>
     </div>
   </div>
