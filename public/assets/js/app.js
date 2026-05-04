@@ -180,6 +180,36 @@ const showAlert = (msg, type = 'info', ms = 4500) => {
   setTimeout(() => div.remove(), ms);
 };
 
+// ── Toast (SweetAlert2) ───────────────────────────────────────
+const _iconMap = { success: 'success', danger: 'error', info: 'info', warning: 'warning' };
+const toast = (msg, type = 'success') => {
+  Swal.fire({
+    toast: true,
+    position: 'bottom-end',
+    icon: _iconMap[type] ?? 'info',
+    title: msg,
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+  });
+};
+
+// ── Confirm dialog (SweetAlert2) ─────────────────────────────
+const confirm = async (opts = {}) => {
+  const result = await Swal.fire({
+    icon:              opts.icon             ?? 'warning',
+    title:             opts.title            ?? 'Confirmar',
+    html:              opts.html             ?? opts.text ?? '',
+    showCancelButton:  true,
+    confirmButtonText: opts.confirmText      ?? 'Confirmar',
+    cancelButtonText:  opts.cancelText       ?? 'Cancelar',
+    confirmButtonColor: opts.confirmColor    ?? '#e63946',
+    reverseButtons:    true,
+    focusCancel:       true,
+  });
+  return result.isConfirmed;
+};
+
 // ── Format helpers ────────────────────────────────────────────
 const fmtMoney = (n) => `R$ ${parseFloat(n).toFixed(2).replace('.', ',')}`;
 const fmtDate  = (v) => new Date(v).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -1077,16 +1107,16 @@ const submitAdminGame = async (e) => {
     };
     if (isEditing) {
       await api(`/api/admin/jogos/${editingGameId}`, 'PUT', payload);
-      showAlert('Jogo atualizado!', 'success');
+      toast('Jogo atualizado com sucesso!', 'success');
     } else {
       await api('/api/admin/jogos', 'POST', payload);
-      showAlert('Jogo cadastrado!', 'success');
+      toast('Jogo cadastrado com sucesso!', 'success');
     }
     cancelEditGame();
     await loadGames();
     populateAdminSelect();
   } catch (err) {
-    showAlert(err.message, 'danger');
+    toast(err.message, 'danger');
   } finally {
     btn.disabled = false;
     btn.textContent = editingGameId !== null ? 'Salvar Alterações' : 'Cadastrar Jogo';
@@ -1163,13 +1193,13 @@ const syncResults = async () => {
 
   try {
     const res = await api('/api/admin/sync', 'POST', {});
-    statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+    toast(res.message ?? 'Sincronização concluída!', 'success');
     await loadGames();
     await loadBets();
     await renderRanking();
     populateAdminSelect();
   } catch (err) {
-    statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+    toast(err.message, 'danger');
   } finally {
     btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Sincronizar Resultados';
   }
@@ -1179,21 +1209,37 @@ const submitAdminResult = async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
   const id  = Number(document.getElementById('adminGameSelect').value);
-  if (!id) { showAlert('Selecione um jogo.', 'danger'); return; }
+  if (!id) { toast('Selecione um jogo.', 'warning'); return; }
+
+  const jogo    = (S.games || []).find(g => g.id === id);
+  const nomeCasa = jogo?.time_casa ?? 'Casa';
+  const nomeFora = jogo?.time_fora ?? 'Fora';
+  const placarCasa = document.getElementById('adminScoreHome').value;
+  const placarFora = document.getElementById('adminScoreAway').value;
+
+  const ok = await confirm({
+    icon:         'warning',
+    title:        'Registrar resultado?',
+    html:         `<strong>${nomeCasa} ${placarCasa} × ${placarFora} ${nomeFora}</strong><br><small style="color:#888">Esta ação processará todas as apostas e <b>não pode ser desfeita</b>.</small>`,
+    confirmText:  'Sim, registrar',
+    cancelText:   'Cancelar',
+    confirmColor: '#2ecc71',
+  });
+  if (!ok) return;
 
   btn.disabled = true; btn.textContent = 'Registrando...';
   try {
     await api(`/api/admin/jogos/${id}/resultado`, 'POST', {
-      placar_casa: Number(document.getElementById('adminScoreHome').value),
-      placar_fora: Number(document.getElementById('adminScoreAway').value),
+      placar_casa: Number(placarCasa),
+      placar_fora: Number(placarFora),
     });
-    showAlert('Resultado registrado e apostas processadas!', 'success');
+    toast('Resultado registrado e apostas processadas!', 'success');
     closeAdminResultado();
     await loadGames();
     await loadBets();
     await renderRanking();
   } catch (err) {
-    showAlert(err.message, 'danger');
+    toast(err.message, 'danger');
   } finally {
     btn.disabled = false; btn.textContent = 'Registrar Resultado';
   }
@@ -1546,12 +1592,24 @@ const loadAdminUsers = async () => {
 
 const handleBlockUser = async (uid, block) => {
   const action = block ? 'bloquear' : 'desbloquear';
+  const ok = await confirm({
+    icon:        block ? 'warning' : 'question',
+    title:       block ? 'Bloquear usuário?' : 'Desbloquear usuário?',
+    html:        block
+      ? 'O usuário <b>não conseguirá fazer login</b> enquanto estiver bloqueado.'
+      : 'O usuário voltará a ter acesso normalmente.',
+    confirmText:  block ? 'Bloquear' : 'Desbloquear',
+    cancelText:  'Cancelar',
+    confirmColor: block ? '#e63946' : '#2ecc71',
+  });
+  if (!ok) return;
+
   try {
     await api(`/api/admin/usuarios/${uid}/${action}`, 'POST', {});
-    showAlert(block ? 'Usuário bloqueado.' : 'Usuário desbloqueado.', 'success');
+    toast(block ? 'Usuário bloqueado.' : 'Usuário desbloqueado.', 'success');
     loadAdminUsers();
   } catch (err) {
-    showAlert(err.message, 'danger');
+    toast(err.message, 'danger');
   }
 };
 
@@ -1680,9 +1738,9 @@ const submitAdminConfig = async (e) => {
       max_ganho:                 get('cfg_max_ganho'),
       saques_ativos:             get('cfg_saques_ativos'),
     });
-    statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+    toast(res.message ?? 'Configurações salvas!', 'success');
   } catch (err) {
-    statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+    toast(err.message, 'danger');
   } finally {
     btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Configurações';
   }
