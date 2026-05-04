@@ -751,7 +751,7 @@ const submitBet = async () => {
     openModal('modalTicket');
     await loadBets();
   } catch (err) {
-    showAlert(err.message, 'danger');
+    toast(err.message || 'Erro ao registrar palpite.', 'danger');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Confirmar Palpite →';
@@ -774,10 +774,10 @@ const simulatePay = async () => {
   try {
     await api(`/api/apostas/${S.selectedBet.id}/pagar`, 'POST', {});
     btn.innerHTML = '<i class="fa-solid fa-check"></i> PIX enviado!';
-    showAlert('PIX enviado! Clique em "Confirmar Pagamento" para ativar sua aposta.', 'success');
+    toast('PIX enviado! Clique em "Confirmar Pagamento" para ativar sua aposta.', 'success');
     await loadBets();
   } catch (err) {
-    showAlert(err.message, 'danger');
+    toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pagar via PIX';
   }
 };
@@ -788,11 +788,11 @@ const confirmPay = async () => {
   try {
     await api(`/api/apostas/${S.selectedBet.id}/confirmar`, 'POST', {});
     closeModal('modalTicket');
-    showAlert('Aposta confirmada! Boa sorte!', 'success');
+    toast('Aposta confirmada! Boa sorte! 🍀', 'success');
     await loadUser();
     await loadBets();
   } catch (err) {
-    showAlert(err.message, 'danger');
+    toast(err.message || 'Erro ao confirmar pagamento.', 'danger');
     btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Pagamento';
   }
 };

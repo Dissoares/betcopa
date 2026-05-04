@@ -26,9 +26,13 @@ class BetService
             throw new InvalidArgumentException('Jogo inválido');
         }
 
+        if ($game['status'] !== 'aberto') {
+            throw new InvalidArgumentException('Apostas encerradas para este jogo');
+        }
+
         $gameDate = new DateTime($game['data_hora']);
         if ($gameDate <= new DateTime()) {
-            throw new InvalidArgumentException('Apostas encerradas para este jogo');
+            throw new InvalidArgumentException('Apostas encerradas: jogo já iniciou');
         }
 
         $multiplicador = max(2, min(10, $multiplicador));
