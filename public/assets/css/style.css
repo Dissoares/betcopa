@@ -553,6 +553,24 @@ body.drawer-open { overflow: hidden; }
 .game-card--closed { opacity: .65; }
 .game-card--closed:hover { transform: none; }
 .game-card--final { border-color: var(--tint-info); }
+.game-card--live {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(239,68,68,.18), var(--shadow-card);
+  animation: pulseCardLive 2s ease-in-out infinite;
+}
+.game-card--live:hover { transform: translateY(-3px); }
+@keyframes pulseCardLive {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(239,68,68,.18), var(--shadow-card); }
+  50%       { box-shadow: 0 0 0 5px rgba(239,68,68,.30), var(--shadow-card-hover); }
+}
+.game-card__live-score {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .82rem; font-weight: 800;
+  color: var(--danger); text-transform: uppercase; letter-spacing: .1em;
+  background: rgba(239,68,68,.1);
+  border-radius: var(--radius-sm);
+  padding: .4rem .7rem;
+}
 
 .game-card__top {
   display: flex; justify-content: space-between; align-items: center;

@@ -323,14 +323,20 @@ const renderGames = () => {
   grid.innerHTML = S.games.map(g => {
     const emblemHome = getEmblem(g, 'home');
     const emblemAway = getEmblem(g, 'away');
+    const LIVE_API   = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
+    const isLive     = LIVE_API.includes((g.status_api || '').toUpperCase());
     const isClosed   = g.status !== 'aberto';
     const isFinal    = g.status === 'finalizado';
 
-    const badgeClass = '';
     const badgeLabel = gameBadge(g);
 
     const centerHtml = isFinal && g.placar_real
       ? `<div class="game-card__score-real">${g.placar_real.replace('x', ' × ')}</div>`
+      : isLive
+      ? `<div class="game-card__live-score">
+           <i class="fa-solid fa-circle fa-beat" style="color:var(--danger);font-size:.55em"></i>
+           <span>AO VIVO</span>
+         </div>`
       : `<div class="game-card__countdown" id="cd-${g.id}">
            <div class="game-card__countdown-label">Começa em</div>
            <div class="game-card__countdown-time" id="cdtime-${g.id}">--:--:--</div>
@@ -350,9 +356,9 @@ const renderGames = () => {
     const valorBase = parseFloat(g.valor_base || 1).toFixed(2).replace('.', ',');
 
     return `
-      <article class="game-card ${isClosed ? 'game-card--closed' : ''} ${isFinal ? 'game-card--final' : ''}">
+      <article class="game-card ${isClosed && !isLive ? 'game-card--closed' : ''} ${isFinal ? 'game-card--final' : ''} ${isLive ? 'game-card--live' : ''}">  
         <div class="game-card__top">
-          <span class="badge">${badgeLabel}</span>
+          ${badgeLabel}
           <span class="game-card__date">${fmtDate(g.data_hora)}</span>
         </div>
         ${ligaHtml}
@@ -376,7 +382,13 @@ const renderGames = () => {
             class="btn btn--primary btn--full"
             data-action="bet" data-id="${g.id}"
             ${isClosed ? 'disabled' : ''}>
-            ${isClosed ? (isFinal ? '🏁 Finalizado' : '🔒 Encerrado') : '🎯 Fazer Palpite'}
+            ${!isClosed
+              ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite'
+              : isLive
+              ? '<i class="fa-solid fa-satellite-dish"></i> Jogo em andamento'
+              : isFinal
+              ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
+              : '<i class="fa-solid fa-lock"></i> Encerrado'}
           </button>
         </div>
         <div class="text--muted" style="font-size:.75rem;text-align:center;margin-top:.25rem">
