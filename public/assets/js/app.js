@@ -197,6 +197,8 @@ const navigate = (view) => {
   document.querySelectorAll('.nav__btn').forEach(btn => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
+
+  history.replaceState(null, '', `/#${view}`);
 };
 
 // ── Header user chip ──────────────────────────────────────────
@@ -1259,6 +1261,8 @@ const switchAdminTab = (tab) => {
   });
   document.getElementById(`atab-${tab}`)?.classList.remove('hidden');
 
+  history.replaceState(null, '', `/#admin/${tab}`);
+
   if (tab === 'dashboard') loadAdminDashboard();
   if (tab === 'usuarios')  loadAdminUsers();
   if (tab === 'apostas')   loadAdminBets();
@@ -1517,6 +1521,18 @@ const init = async () => {
   await loadUser();
   await loadGames();
   if (S.user) await loadBets();
+
+  // Restaura rota do hash após tudo carregado
+  const hash = location.hash.replace('#', '') || location.pathname.replace(/^\//, '');
+  if (hash.startsWith('admin/')) {
+    const tab = hash.replace('admin/', '') || 'dashboard';
+    const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config'];
+    navigate('admin');
+    switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
+  } else if (hash) {
+    const validViews = ['jogos', 'apostas', 'ranking', 'admin', 'auth', 'perfil'];
+    if (validViews.includes(hash)) navigate(hash);
+  }
 };
 
 document.addEventListener('DOMContentLoaded', init);
