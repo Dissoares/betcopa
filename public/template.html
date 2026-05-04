@@ -79,18 +79,6 @@
       </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="games-toolbar">
-      <div class="games-filters" id="gamesFilters">
-        <button class="games-filter games-filter--active" data-filter="todos">Todos</button>
-        <button class="games-filter" data-filter="live"><i class="fa-solid fa-circle fa-beat" style="color:var(--danger);font-size:.6em"></i> Ao Vivo</button>
-        <button class="games-filter" data-filter="breve"><i class="fa-solid fa-clock"></i> Em Breve</button>
-        <button class="games-filter" data-filter="aberto"><i class="fa-solid fa-unlock"></i> Abertos</button>
-        <button class="games-filter" data-filter="encerrado"><i class="fa-solid fa-lock"></i> Encerrados</button>
-        <button class="games-filter" data-filter="finalizado"><i class="fa-solid fa-flag-checkered"></i> Finalizados</button>
-      </div>
-    </div>
-
     <!-- Skeleton loader (visível enquanto carrega) -->
     <div class="games-grid games-grid--skeleton hidden" id="gamesSkeletons">
       <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
@@ -101,7 +89,7 @@
       <div class="game-card-skel"><div class="skel skel--line skel--short"></div><div class="skel skel--emblem"></div><div class="skel skel--line skel--medium"></div><div class="skel skel--btn"></div></div>
     </div>
 
-    <div class="games-grid" id="gamesGrid"></div>
+    <div class="games-container" id="gamesGrid"></div>
     <p class="empty-state hidden" id="gamesEmpty">
       <i class="fa-solid fa-futbol" style="display:block;font-size:2.5rem;margin-bottom:.6rem;opacity:.25"></i>
       Nenhum jogo encontrado para este filtro.

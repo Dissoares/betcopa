@@ -364,26 +364,10 @@ const loadTheme = () => {
   setTheme(stored === 'light' ? 'light' : 'dark');
 };
 
-// ── Game filter helper ────────────────────────────────────────
+// ── Game helpers ──────────────────────────────────────────────
 const LIVE_API_CODES = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
 
-const filterGames = (games, filter) => {
-  switch (filter) {
-    case 'live':
-      return games.filter(g => LIVE_API_CODES.includes((g.status_api || '').toUpperCase()));
-    case 'breve': {
-      const now = Date.now();
-      return games.filter(g => {
-        const diff = new Date(g.data_hora) - now;
-        return g.status === 'aberto' && diff > 0 && diff < 3600000;
-      });
-    }
-    case 'aberto':    return games.filter(g => g.status === 'aberto');
-    case 'encerrado': return games.filter(g => g.status === 'encerrado');
-    case 'finalizado': return games.filter(g => g.status === 'finalizado');
-    default:          return games;
-  }
-};
+const isGameLive = (g) => LIVE_API_CODES.includes((g.status_api || '').toUpperCase());
 
 const updateHeroStats = () => {
   const live = S.games.filter(g => LIVE_API_CODES.includes((g.status_api || '').toUpperCase())).length;
@@ -401,88 +385,137 @@ const updateHeroStats = () => {
   });
 };
 
-// ── Game cards ────────────────────────────────────────────────
+// ── Game card renderer ────────────────────────────────────────
+const renderCard = (g) => {
+  const emblemHome = getEmblem(g, 'home');
+  const emblemAway = getEmblem(g, 'away');
+  const isLive     = isGameLive(g);
+  const isClosed   = g.status !== 'aberto';
+  const isFinal    = g.status === 'finalizado';
+  const isSoon     = !isClosed && (new Date(g.data_hora) - Date.now()) <= 3600000;
+
+  const statusClass = isLive   ? 'live'
+                    : isFinal  ? 'final'
+                    : isClosed ? 'closed'
+                    : isSoon   ? 'soon'
+                    :            'open';
+
+  const badgeLabel = gameBadge(g);
+  const scoreStr   = g.placar_real ? g.placar_real.replace('x', ' × ') : null;
+  const valorBase  = parseFloat(g.valor_base || 1).toFixed(2).replace('.', ',');
+  const oddVal     = parseFloat(g.odd || 1).toFixed(1).replace('.', ',');
+
+  let midHtml;
+  if (isLive) {
+    midHtml = `
+        <div class="gc-vs">VS</div>
+        <div class="gc-score gc-score--live">
+          <span class="gc-score__dot"><i class="fa-solid fa-circle fa-beat"></i></span>
+          <span class="gc-score__val">${scoreStr ?? '— × —'}</span>
+        </div>`;
+  } else if (isFinal && scoreStr) {
+    midHtml = `
+        <div class="gc-vs">VS</div>
+        <div class="gc-score gc-score--final">
+          <span class="gc-score__label">PLACAR</span>
+          <span class="gc-score__val">${scoreStr}</span>
+        </div>`;
+  } else if (!isClosed) {
+    midHtml = `
+        <div class="gc-vs">VS</div>
+        <div class="gc-countdown">
+          <span class="gc-countdown__label">COMEÇA EM</span>
+          <span class="gc-countdown__time" id="cdtime-${g.id}">--:--:--</span>
+        </div>`;
+  } else {
+    midHtml = `<div class="gc-vs">VS</div><span class="gc-dash">—</span>`;
+  }
+
+  const btnLabel = !isClosed
+    ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite'
+    : isLive
+    ? '<i class="fa-solid fa-satellite-dish"></i> Ao Vivo'
+    : isFinal
+    ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
+    : '<i class="fa-solid fa-lock"></i> Encerrado';
+
+  const metaHtml = !isClosed
+    ? `<div class="gc-meta">
+         <span class="gc-meta__odd">${oddVal}<small>×</small></span>
+         <span class="gc-meta__price">R$ ${valorBase}/palpite</span>
+       </div>`
+    : '';
+
+  return `
+    <article class="game-card game-card--${statusClass}">
+      <div class="game-card__head">
+        ${badgeLabel}
+        <time class="game-card__date">${fmtGameDate(g.data_hora)}</time>
+      </div>
+      <div class="game-card__matchup">
+        <div class="game-card__team">
+          <div class="game-card__emblem">${emblemHome}</div>
+          <span class="game-card__name">${g.time_casa}</span>
+        </div>
+        <div class="game-card__mid">${midHtml}</div>
+        <div class="game-card__team">
+          <div class="game-card__emblem">${emblemAway}</div>
+          <span class="game-card__name">${g.time_fora}</span>
+        </div>
+      </div>
+      <div class="game-card__foot">
+        ${metaHtml}
+        <button class="btn ${!isClosed ? 'btn--primary' : 'btn--ghost'} btn--full"
+          data-action="bet" data-id="${g.id}" ${isClosed ? 'disabled' : ''}>
+          ${btnLabel}
+        </button>
+      </div>
+    </article>`;
+};
+
+const renderSection = (id, title, iconHtml, games, extraClass = '') => {
+  if (!games.length) return '';
+  const cls = ['games-section', extraClass].filter(Boolean).join(' ');
+  return `
+    <section class="${cls}" id="gs-${id}">
+      <div class="games-section__header">
+        <h3 class="games-section__title">${iconHtml}${title}</h3>
+        <span class="games-section__count">${games.length}</span>
+      </div>
+      <div class="games-grid">${games.map(renderCard).join('')}</div>
+    </section>`;
+};
+
+// ── Game sections ─────────────────────────────────────────────
 const renderGames = () => {
-  const grid   = document.getElementById('gamesGrid');
-  const empty  = document.getElementById('gamesEmpty');
-  if (!grid) return;
+  const container = document.getElementById('gamesGrid');
+  const empty     = document.getElementById('gamesEmpty');
+  if (!container) return;
 
   S.timers.forEach(clearInterval);
   S.timers = [];
 
   updateHeroStats();
 
-  // Sincroniza botões de filtro
-  document.querySelectorAll('.games-filter').forEach(btn => {
-    btn.classList.toggle('games-filter--active', btn.dataset.filter === S.activeFilter);
-  });
+  const live     = S.games.filter(isGameLive);
+  const upcoming = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g))
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+  const finished = S.games
+    .filter(g => g.status === 'finalizado' || g.status === 'encerrado')
+    .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
 
-  const visibleGames = filterGames(S.games, S.activeFilter);
-
-  if (!visibleGames.length) {
-    grid.innerHTML = '';
-    empty && empty.classList.remove('hidden');
+  if (!live.length && !upcoming.length && !finished.length) {
+    container.innerHTML = '';
+    empty?.classList.remove('hidden');
     return;
   }
-  empty && empty.classList.add('hidden');
+  empty?.classList.add('hidden');
 
-  grid.innerHTML = visibleGames.map(g => {
-    const emblemHome = getEmblem(g, 'home');
-    const emblemAway = getEmblem(g, 'away');
-    const isLive     = LIVE_API_CODES.includes((g.status_api || '').toUpperCase());
-    const isClosed   = g.status !== 'aberto';
-    const isFinal    = g.status === 'finalizado';
-
-    const badgeLabel = gameBadge(g);
-
-    // Centro do card: placar, countdown ou ao vivo
-    const scoreStr = g.placar_real ? g.placar_real.replace('x', ' × ') : null;
-    const centerHtml = isFinal && scoreStr
-      ? `<div class="game-card__score">${scoreStr}</div>`
-      : isLive && scoreStr
-      ? `<div class="game-card__score game-card__score--live">${scoreStr}</div>`
-      : isLive
-      ? `<div class="game-card__live-pip"><i class="fa-solid fa-circle fa-beat" style="color:var(--danger);font-size:.65em"></i></div>`
-      : isClosed
-      ? `<div class="game-card__vs">—</div>`
-      : `<div class="game-card__countdown-time" id="cdtime-${g.id}">--:--:--</div>`;
-
-    // Botão
-    const btnLabel = !isClosed
-      ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite'
-      : isLive
-      ? '<i class="fa-solid fa-satellite-dish"></i> Ao Vivo'
-      : isFinal
-      ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
-      : '<i class="fa-solid fa-lock"></i> Encerrado';
-
-    return `
-      <article class="game-card ${isClosed && !isLive ? 'game-card--closed' : ''} ${isFinal ? 'game-card--final' : ''} ${isLive ? 'game-card--live' : ''}">
-        <div class="game-card__head">
-          ${badgeLabel}
-          <span class="game-card__date">${fmtGameDate(g.data_hora)}</span>
-        </div>
-        <div class="game-card__matchup">
-          <div class="game-card__team">
-            <div class="game-card__emblem">${emblemHome}</div>
-            <span class="game-card__name">${g.time_casa}</span>
-          </div>
-          <div class="game-card__sep">
-            ${centerHtml}
-          </div>
-          <div class="game-card__team">
-            <div class="game-card__emblem">${emblemAway}</div>
-            <span class="game-card__name">${g.time_fora}</span>
-          </div>
-        </div>
-        <button
-          class="btn btn--primary btn--full"
-          data-action="bet" data-id="${g.id}"
-          ${isClosed ? 'disabled' : ''}>
-          ${btnLabel}
-        </button>
-      </article>`;
-  }).join('');
+  container.innerHTML =
+    renderSection('live',     'Ao Vivo',        '<i class="fa-solid fa-circle fa-beat"></i>', live,     'games-section--live') +
+    renderSection('upcoming', 'Próximos Jogos', '<i class="fa-solid fa-calendar-days"></i>',  upcoming, 'games-section--upcoming') +
+    renderSection('finished', 'Finalizados',    '<i class="fa-solid fa-flag-checkered"></i>', finished, 'games-section--finished');
 
   startCountdowns();
 };
@@ -1305,14 +1338,6 @@ const loadBets = async () => {
 
 // ── Event binding ─────────────────────────────────────────────
 const bind = () => {
-  // Game filter tabs
-  document.getElementById('gamesFilters')?.addEventListener('click', e => {
-    const btn = e.target.closest('[data-filter]');
-    if (!btn) return;
-    S.activeFilter = btn.dataset.filter;
-    renderGames();
-  });
-
   // Nav buttons
   document.getElementById('mainNav').addEventListener('click', e => {
     const btn = e.target.closest('[data-nav]');

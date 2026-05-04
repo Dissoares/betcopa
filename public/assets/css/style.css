@@ -520,7 +520,44 @@ body.drawer-open { overflow: hidden; }
 
 
 /* ============================================================
-   §11 GAME CARDS
+   §11 GAME SECTIONS
+   ============================================================ */
+
+.games-container {
+  display: flex; flex-direction: column;
+}
+
+.games-section { margin-bottom: 2.5rem; }
+.games-section:last-child { margin-bottom: 0; }
+
+.games-section__header {
+  display: flex; align-items: center; gap: .65rem;
+  margin-bottom: 1rem;
+  padding-bottom: .65rem;
+  border-bottom: 1px solid var(--border);
+}
+.games-section__title {
+  margin: 0;
+  font-size: .9rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-dim);
+  display: flex; align-items: center; gap: .45rem;
+}
+.games-section__count {
+  font-size: .72rem; font-weight: 700;
+  background: var(--surface-2); color: var(--text-muted);
+  border-radius: 999px; padding: .15rem .55rem;
+  line-height: 1.6; margin-left: auto;
+}
+.games-section--live .games-section__title     { color: var(--danger); }
+.games-section--live .games-section__count     { background: rgba(255,71,87,.12); color: var(--danger); }
+.games-section--upcoming .games-section__title { color: var(--primary); }
+.games-section--upcoming .games-section__count { background: var(--tint-primary); color: var(--primary); }
+.games-section--finished .games-section__title { color: var(--text-muted); }
+
+
+/* ============================================================
+   §11b GAME CARDS
    ============================================================ */
 .games-grid {
   display: grid;
