@@ -12,6 +12,8 @@ function input(string $key, $default = null)
 
 function jsonResponse($data, int $status = 200): void
 {
+    // Descarta qualquer output acidental (warnings, notices) antes do JSON
+    if (ob_get_level()) ob_clean();
     header('Content-Type: application/json; charset=utf-8');
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
