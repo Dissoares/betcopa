@@ -53,6 +53,27 @@ class GameController
         jsonResponse(['message' => 'Resultado inserido e apostas processadas']);
     }
 
+    /** DELETE /api/admin/jogos/:id */
+    public function delete(int $id): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $game = $this->repository->find($id);
+        if (!$game) {
+            jsonResponse(['error' => 'Jogo não encontrado.'], 404);
+            return;
+        }
+        if ($game['status'] === 'finalizado') {
+            jsonResponse(['error' => 'Não é possível excluir um jogo já finalizado.'], 422);
+            return;
+        }
+
+        $this->repository->delete($id);
+        Logger::info('Jogo excluído', ['id' => $id]);
+        jsonResponse(['message' => 'Jogo excluído com sucesso.']);
+    }
+
     /** POST /api/admin/import — importa partidas da football-data.org */
     public function import(): void
     {

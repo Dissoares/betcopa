@@ -179,4 +179,10 @@ class GameRepository
         );
         return $stmt->execute(['placar_real' => $placarReal, 'id' => $id]);
     }
+
+    public function delete(int $id): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM jogos WHERE id = :id');
+        return $stmt->execute(['id' => $id]);
+    }
 }

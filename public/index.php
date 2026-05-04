@@ -93,6 +93,8 @@ try {
             fn(int $id) => $gameCtrl->update($id));
         routePattern('/^\/api\/admin\/jogos\/(\d+)\/resultado$/', 'POST',
             fn(int $id) => $gameCtrl->result($id));
+        routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'DELETE',
+            fn(int $id) => $gameCtrl->delete($id));
 
         // ── Apostas ───────────────────────────────────────────
         route('/api/apostas', 'GET',  fn() => $betCtrl->list());

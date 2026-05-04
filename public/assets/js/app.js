@@ -1075,11 +1075,12 @@ const renderAdminGames = () => {
             <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
             <td>${statusBadge(g)}</td>
             <td>${placar(g)}</td>
-            <td style="white-space:nowrap">
+            <td style="white-space:nowrap;display:flex;gap:.25rem;align-items:center">
               <button class="btn btn--ghost btn--sm" data-action="editar-jogo" data-id="${g.id}"><i class="fa-solid fa-pen"></i> Editar</button>
               ${g.status !== 'finalizado'
-                ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}" style="margin-left:.25rem">Resultado</button>`
+                ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}">Resultado</button>`
                 : ''}
+              <button class="btn btn--danger btn--sm" data-action="excluir-jogo" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}" title="Excluir jogo"><i class="fa-solid fa-trash"></i></button>
             </td>
           </tr>`).join('')}
       </tbody>
@@ -1160,6 +1161,27 @@ const editGame = (id) => {
 
   // Scroll até o formulário
   document.getElementById('adminGameForm')?.closest('.panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+const deleteGame = async (id, label) => {
+  const result = await Swal.fire({
+    title: 'Excluir jogo?',
+    text: label,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Excluir',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#e53935',
+  });
+  if (!result.isConfirmed) return;
+  try {
+    await api(`/api/admin/jogos/${id}`, 'DELETE');
+    toast('Jogo excluído com sucesso.', 'success');
+    await loadGames();
+    renderAdminGames();
+  } catch (err) {
+    toast(err.message || 'Erro ao excluir jogo.', 'danger');
+  }
 };
 
 const cancelEditGame = () => {
@@ -1515,6 +1537,8 @@ const bind = () => {
     if (editBtn) { editGame(Number(editBtn.dataset.id)); return; }
     const btn = e.target.closest('[data-action="abrir-resultado"]');
     if (btn) openAdminResultado(Number(btn.dataset.id), btn.dataset.label);
+    const delBtn = e.target.closest('[data-action="excluir-jogo"]');
+    if (delBtn) { deleteGame(Number(delBtn.dataset.id), delBtn.dataset.label); return; }
   });
   document.getElementById('btnCancelEditGame')?.addEventListener('click', cancelEditGame);
   document.getElementById('adminGamesPagination')?.addEventListener('click', e => {
