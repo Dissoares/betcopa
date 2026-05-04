@@ -278,26 +278,28 @@
             <h3 class="panel__title">🔍 Filtrar Lista</h3>
             <div class="form-group">
               <label>Buscar time</label>
-              <input id="filterTeam" type="text" placeholder="Ex: Brasil, Argentina…" />
+              <input id="filterTeam" type="search" placeholder="Ex: Brasil, Argentina…" />
             </div>
             <div class="form-group">
               <label>Status</label>
               <select id="filterStatus">
-                <option value="">Todos</option>
+                <option value="">Todos os status</option>
                 <option value="aberto">Aberto</option>
                 <option value="encerrado">Encerrado</option>
                 <option value="finalizado">Finalizado</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Data (a partir de)</label>
-              <input id="filterDateFrom" type="date" />
+            <div class="form-row">
+              <div class="form-group">
+                <label>De</label>
+                <input id="filterDateFrom" type="date" />
+              </div>
+              <div class="form-group">
+                <label>Até</label>
+                <input id="filterDateTo" type="date" />
+              </div>
             </div>
-            <div class="form-group">
-              <label>Data (até)</label>
-              <input id="filterDateTo" type="date" />
-            </div>
-            <button class="btn btn--secondary btn--full" id="btnClearFilter" type="button">Limpar filtros</button>
+            <button class="btn btn--secondary btn--full" id="btnClearFilter" type="button">✕ Limpar filtros</button>
           </div><!-- /admin-jogos-filter -->
 
           </div><!-- /admin-jogos-layout -->

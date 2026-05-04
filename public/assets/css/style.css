@@ -422,7 +422,14 @@ body.drawer-open { overflow: hidden; }
 .btn--ghost:hover { color: var(--text); border-color: var(--border-strong); }
 
 .btn--danger { background: var(--danger); color: #fff; box-shadow: 0 0 18px var(--danger-glow); }
+.btn--danger:hover { opacity: .88; }
 .btn--gold   { background: var(--gold); color: #000; font-weight: 800; box-shadow: 0 0 22px var(--gold-glow); }
+.btn--secondary {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+}
+.btn--secondary:hover { background: var(--surface-3); color: var(--text); }
 
 .btn--full  { width: 100%; }
 .btn--large { padding: .95rem 1.4rem; font-size: 1rem; border-radius: var(--radius); }
@@ -733,6 +740,8 @@ input[type=email],
 input[type=password],
 input[type=number],
 input[type=datetime-local],
+input[type=date],
+input[type=search],
 select {
   width: 100%;
   background: var(--surface-2);
@@ -744,6 +753,10 @@ select {
   transition: border-color .15s, box-shadow .15s;
   appearance: none;
   -webkit-appearance: none;
+}
+input[type=date]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
 }
 input:focus, select:focus {
   outline: none;
@@ -1107,27 +1120,37 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 
 /* Preview ao vivo do confronto */
 .gf-preview {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  padding: .75rem 1rem;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
-  margin-bottom: 1rem;
+  gap: .6rem;
+  margin-bottom: 1.1rem;
+  position: relative;
+  overflow: hidden;
 }
-.gf-preview__flag { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
+.gf-preview::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, var(--primary-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+.gf-preview__flag { font-size: 2rem; line-height: 1; flex-shrink: 0; }
 .gf-preview__name {
-  font-size: .85rem; font-weight: 700;
-  max-width: 72px; overflow: hidden;
+  font-size: .92rem; font-weight: 800;
+  max-width: 90px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;
   color: var(--text);
 }
 .gf-preview__vs {
-  font-size: .65rem; font-weight: 900;
-  color: var(--text-muted); letter-spacing: .12em;
+  font-size: .7rem; font-weight: 900;
+  color: var(--text-muted); letter-spacing: .14em;
   flex-shrink: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  padding: .2rem .5rem; border-radius: 999px;
 }
 
 /* Times lado a lado com VS central */

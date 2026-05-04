@@ -746,7 +746,7 @@ const renderAdminGames = () => {
   };
 
   const placar = g =>
-    g.placar_casa !== null && g.placar_fora !== null
+    g.placar_casa != null && g.placar_fora != null
       ? `<strong>${g.placar_casa} × ${g.placar_fora}</strong>`
       : '<span class="text--dim">—</span>';
 
