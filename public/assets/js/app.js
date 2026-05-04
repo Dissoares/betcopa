@@ -18,6 +18,8 @@ const S = {
   activeFilter: 'todos',   // filtro ativo nos cards de jogos
 };
 
+let editingGameId = null;
+
 // ── Catálogo de seleções (nome canônico PT-BR + código ISO) ──
 const TEAMS = [
   { name: 'África do Sul',    code: 'za' },
@@ -986,6 +988,8 @@ const editGame = (id) => {
   // Status, valor_base, odd
   const statusEl = document.getElementById('adminCreateStatus');
   if (statusEl) statusEl.value = g.status || 'aberto';
+  const apiEl = document.getElementById('adminStatusApi');
+  if (apiEl) apiEl.value = g.status_api || '';
   const vbEl = document.getElementById('adminValorBase');
   if (vbEl) vbEl.value = g.valor_base || '1.00';
   const oddEl = document.getElementById('adminCreateOdd');
@@ -1018,6 +1022,8 @@ const editGame = (id) => {
 const cancelEditGame = () => {
   editingGameId = null;
   document.getElementById('adminGameForm').reset();
+  const apiEl = document.getElementById('adminStatusApi');
+  if (apiEl) apiEl.value = '';
   const flagReset = '<i class="fa-regular fa-flag" style="font-size:1.4rem;opacity:.4"></i>';
   ['prevFlagHome','prevFlagAway','gfFlagPreviewHome','gfFlagPreviewAway'].forEach(sid => {
     const el = document.getElementById(sid); if (el) el.innerHTML = flagReset;
@@ -1063,6 +1069,7 @@ const submitAdminGame = async (e) => {
       bandeira_fora: awayCode || 'br',
       data_hora:     document.getElementById('adminDate').value,
       status:        document.getElementById('adminCreateStatus').value,
+      status_api:    document.getElementById('adminStatusApi')?.value || '',
       placar_casa:   document.getElementById('adminCreateScoreHome').value !== '' ? parseInt(document.getElementById('adminCreateScoreHome').value, 10) : null,
       placar_fora:   document.getElementById('adminCreateScoreAway').value !== '' ? parseInt(document.getElementById('adminCreateScoreAway').value, 10) : null,
       valor_base:    parseFloat(document.getElementById('adminValorBase').value),

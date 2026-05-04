@@ -50,6 +50,7 @@ class GameService
         }
 
         $data['status']        = $data['status'] ?? $game['status'];
+        $data['status_api']    = strtoupper(trim($data['status_api'] ?? ''));
         $data['odd']           = max(1.00, (float) ($data['odd'] ?? 1.00));
         $data['valor_base']    = max(0.50, min(50.00, (float) ($data['valor_base'] ?? 1.00)));
         $data['bandeira_casa'] = mb_substr(trim($data['bandeira_casa'] ?? '⚽'), 0, 10);

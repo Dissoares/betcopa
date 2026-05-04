@@ -126,6 +126,7 @@ class GameRepository
                bandeira_fora = :bandeira_fora,
                data_hora     = :data_hora,
                status        = :status,
+               status_api    = :status_api,
                odd           = :odd,
                valor_base    = :valor_base,
                placar_real   = :placar_real
@@ -138,6 +139,7 @@ class GameRepository
             'bandeira_fora' => $data['bandeira_fora'],
             'data_hora'     => $data['data_hora'],
             'status'        => $data['status'],
+            'status_api'    => $data['status_api'] ?? '',
             'odd'           => $data['odd'],
             'valor_base'    => $data['valor_base'],
             'placar_real'   => $data['placar_real'] ?? null,
