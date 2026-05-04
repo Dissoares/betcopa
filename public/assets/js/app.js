@@ -15,6 +15,7 @@ const S = {
   scoreAway:    0,
   multiplier:   5,
   timers:       [],        // countdown interval refs
+  pollTimer:    null,      // intervalo de polling para jogos ao vivo
   adminEmail:   'admin@betcopa.local',
   activeFilter: 'todos',   // filtro ativo nos cards de jogos
 };
@@ -518,6 +519,10 @@ const renderGames = () => {
 
   startCountdowns();
   startLiveClocks();
+
+  // Polling automático só quando há jogos ao vivo
+  if (S.games.some(isGameLive)) startLivePoll();
+  else stopLivePoll();
 };
 
 // ── Countdown timers ──────────────────────────────────────────
@@ -1842,6 +1847,31 @@ const submitAdminConfig = async (e) => {
   } finally {
     btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Configurações';
   }
+};
+
+// ── Live polling ──────────────────────────────────────────────
+const POLL_INTERVAL = 60_000; // 60s
+
+const loadGamesSilent = async () => {
+  try {
+    const r = await api('/api/jogos');
+    S.games = r.jogos;
+    renderGames();
+    if (S.user) await loadBets();
+  } catch { /* ignora erros silenciosos */ }
+};
+
+const startLivePoll = () => {
+  if (S.pollTimer) return;
+  S.pollTimer = setInterval(async () => {
+    await loadGamesSilent();
+    if (!S.games.some(isGameLive)) stopLivePoll();
+  }, POLL_INTERVAL);
+};
+
+const stopLivePoll = () => {
+  clearInterval(S.pollTimer);
+  S.pollTimer = null;
 };
 
 // ── Init ──────────────────────────────────────────────────────

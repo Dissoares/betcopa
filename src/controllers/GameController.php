@@ -53,7 +53,7 @@ class GameController
         jsonResponse(['message' => 'Resultado inserido e apostas processadas']);
     }
 
-    /** POST /api/admin/import — importa fixtures da API-Football */
+    /** POST /api/admin/import — importa partidas da football-data.org */
     public function import(): void
     {
         Csrf::verify();
@@ -66,36 +66,35 @@ class GameController
             return;
         }
 
-        $body     = json_decode(file_get_contents('php://input'), true) ?: [];
-        $leagueId = (int) ($body['league_id'] ?? 71);
-        $season   = (int) ($body['season']    ?? 2024);
-        $next     = min(50, max(1, (int) ($body['next'] ?? 20)));
+        $body         = json_decode(file_get_contents('php://input'), true) ?: [];
+        $competitionId = (int) ($body['league_id'] ?? 2000); // 2000 = Copa do Mundo
+        $status        = $body['status'] ?? 'SCHEDULED,TIMED'; // SCHEDULED,TIMED,IN_PLAY,PAUSED,FINISHED
 
-        $api      = new ApiFootballService($apiKey, $timezone);
+        $api = new FootballDataService($apiKey, $timezone);
         try {
-            $fixtures = $api->fetchNextFixtures($leagueId, $season, $next);
+            $matches = $api->fetchMatches($competitionId, $status);
         } catch (RuntimeException $e) {
             jsonResponse(['error' => $e->getMessage()], 400);
             return;
         }
 
-        if (empty($fixtures)) {
-            jsonResponse(['message' => 'Nenhum jogo encontrado para essa liga/temporada.', 'importados' => 0]);
+        if (empty($matches)) {
+            jsonResponse(['message' => 'Nenhuma partida encontrada para esta competição/status.', 'importados' => 0]);
             return;
         }
 
         $count = 0;
-        foreach ($fixtures as $item) {
-            $normalized = $api->normalize($item);
+        foreach ($matches as $match) {
+            $normalized = $api->normalize($match);
             $this->repository->upsertByApiId($normalized);
             $count++;
         }
 
-        Logger::info('Import API-Football', ['league' => $leagueId, 'season' => $season, 'count' => $count]);
-        jsonResponse(['message' => "{$count} jogo(s) importado(s) com sucesso.", 'importados' => $count]);
+        Logger::info('Import football-data.org', ['competition' => $competitionId, 'count' => $count]);
+        jsonResponse(['message' => "{$count} partida(s) importada(s) com sucesso.", 'importados' => $count]);
     }
 
-    /** POST /api/admin/sync — sincroniza resultados de jogos finalizados */
+    /** POST /api/admin/sync — sincroniza placares e status via football-data.org */
     public function sync(): void
     {
         Csrf::verify();
@@ -108,7 +107,7 @@ class GameController
             return;
         }
 
-        $api          = new ApiFootballService($apiKey, $timezone);
+        $api          = new FootballDataService($apiKey, $timezone);
         $pendingGames = $this->repository->findPendingSync();
 
         if (empty($pendingGames)) {
@@ -119,28 +118,32 @@ class GameController
         $updated = 0;
         foreach ($pendingGames as $game) {
             try {
-                $item = $api->fetchFixtureById((int) $game['api_fixture_id']);
-                if (!$item) continue;
+                $match = $api->fetchMatchById((int) $game['api_fixture_id']);
+                if (!$match) continue;
 
-                $normalized  = $api->normalize($item);
+                $normalized  = $api->normalize($match);
                 $statusApi   = $normalized['status_api'];
                 $statusLocal = $normalized['status'];
 
                 if ($statusLocal === 'finalizado' && $normalized['placar_real']) {
-                    // Jogo terminou — atualiza placar e processa apostas
                     $this->repository->updateResult((int) $game['id'], $normalized['placar_real']);
                     $this->bets->processResult((int) $game['id']);
                     $updated++;
-                } elseif ($statusLocal === 'encerrado' && $game['status'] === 'aberto') {
-                    // Jogo iniciou — fecha para novas apostas
-                    $this->repository->updateStatus((int) $game['id'], 'encerrado', $statusApi);
+                } elseif ($statusLocal === 'encerrado') {
+                    // Ao vivo ou encerrado — atualiza status e placar parcial
+                    $this->repository->updateStatus((int) $game['id'], $statusLocal, $statusApi);
+                    if ($normalized['placar_real']) {
+                        $this->repository->updateLiveScore((int) $game['id'], $normalized['placar_real']);
+                    }
                 }
+
+                usleep(100_000); // 100ms entre req (limite: 10/min)
             } catch (Throwable $e) {
-                Logger::error('Sync falhou para fixture ' . $game['api_fixture_id'], ['error' => $e->getMessage()]);
+                Logger::error('Sync falhou para match ' . $game['api_fixture_id'], ['error' => $e->getMessage()]);
             }
         }
 
-        Logger::info('Sync API-Football', ['atualizados' => $updated]);
+        Logger::info('Sync football-data.org', ['atualizados' => $updated]);
         jsonResponse(['message' => "{$updated} resultado(s) sincronizado(s).", 'atualizados' => $updated]);
     }
 }

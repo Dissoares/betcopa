@@ -125,14 +125,14 @@ class ApiFootballService
         $statusShort = $fixture['status']['short'] ?? 'NS';
         $statusLocal = $this->mapStatus($statusShort);
 
-        // Placar real apenas se o jogo terminou
+        // Placar ao vivo e final
         $placarReal = null;
-        if (in_array($statusShort, self::STATUS_FINALIZADO, true)) {
+        if ($goals['home'] !== null && $goals['away'] !== null) {
+            $placarReal = $goals['home'] . 'x' . $goals['away'];
+        } elseif (in_array($statusShort, self::STATUS_FINALIZADO, true)) {
             $ft = $score['fulltime'];
             if ($ft['home'] !== null && $ft['away'] !== null) {
                 $placarReal = $ft['home'] . 'x' . $ft['away'];
-            } elseif ($goals['home'] !== null) {
-                $placarReal = $goals['home'] . 'x' . $goals['away'];
             }
         }
 

@@ -20,7 +20,7 @@ require_once __DIR__ . '/../src/repositories/AdminRepository.php';
 require_once __DIR__ . '/../src/services/AuthService.php';
 require_once __DIR__ . '/../src/services/GameService.php';
 require_once __DIR__ . '/../src/services/BetService.php';
-require_once __DIR__ . '/../src/services/ApiFootballService.php';
+require_once __DIR__ . '/../src/services/FootballDataService.php';
 require_once __DIR__ . '/../src/controllers/AuthController.php';
 require_once __DIR__ . '/../src/controllers/GameController.php';
 require_once __DIR__ . '/../src/controllers/BetController.php';

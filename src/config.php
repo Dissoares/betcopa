@@ -14,7 +14,7 @@ return [
     ],
     'admin_email'  => 'admin@betcopa.local',
     'api_football' => [
-        'key'      => 'e6070a9316973015abfba14883d19a0d',   // Cole aqui sua chave de api-sports.io
+        'key'      => '049407ce78214043b2e3b2307a493e68',   // football-data.org
         'timezone' => 'America/Sao_Paulo',
     ],
 ];

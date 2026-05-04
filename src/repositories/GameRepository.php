@@ -171,4 +171,12 @@ class GameRepository
             'id'         => $id,
         ]);
     }
+
+    public function updateLiveScore(int $id, string $placarReal): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE jogos SET placar_real = :placar_real WHERE id = :id'
+        );
+        return $stmt->execute(['placar_real' => $placarReal, 'id' => $id]);
+    }
 }
