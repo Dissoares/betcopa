@@ -250,16 +250,10 @@ const gameBadge = (g) => {
   const s    = g.status;
   const diff = new Date(g.data_hora) - Date.now();
 
-  // 1. Ao Vivo — APENAS quando status_api indica jogo em andamento
+  // 1. Ao Vivo — badge indica apostas fechadas; o "AO VIVO" fica no centro do card
   const liveStatuses = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
   if (liveStatuses.includes(api)) {
-    const label = api === 'HT'  ? 'Intervalo'
-                : api === 'ET'  ? 'Prorrogação'
-                : api === 'BT'  ? 'Interv. PE'
-                : api === 'P'   ? 'Pênaltis'
-                : api === 'INT' ? 'Interrompido'
-                : 'Ao Vivo';
-    return `<span class="badge badge--live"><i class="fa-solid fa-circle fa-beat" style="font-size:.55em"></i> ${label}</span>`;
+    return `<span class="badge badge--closed"><i class="fa-solid fa-lock"></i> Fechado</span>`;
   }
 
   // 2. Suspenso / Cancelado / Adiado
@@ -391,7 +385,7 @@ const renderCard = (g) => {
   const emblemHome = getEmblem(g, 'home');
   const emblemAway = getEmblem(g, 'away');
   const isLive     = isGameLive(g);
-  const isClosed   = g.status !== 'aberto';
+  const isClosed   = g.status !== 'aberto' || isLive;
   const isFinal    = g.status === 'finalizado';
   const isSoon     = !isClosed && (new Date(g.data_hora) - Date.now()) <= 3600000;
 
@@ -409,10 +403,12 @@ const renderCard = (g) => {
   let midHtml;
   if (isLive) {
     midHtml = `
-        <div class="gc-vs">VS</div>
         <div class="gc-score gc-score--live">
-          <span class="gc-score__dot"><i class="fa-solid fa-circle fa-beat"></i></span>
-          <span class="gc-score__val">${scoreStr ?? '— × —'}</span>
+          <span class="gc-score__label gc-score__label--live">
+            <i class="fa-solid fa-circle fa-beat"></i>
+            <span id="lvclock-${g.id}">Ao Vivo</span>
+          </span>
+          <span class="gc-score__val">${scoreStr ?? '0 × 0'}</span>
         </div>`;
   } else if (isFinal && scoreStr) {
     midHtml = `
@@ -432,11 +428,7 @@ const renderCard = (g) => {
     midHtml = `<div class="gc-vs">VS</div><span class="gc-dash">—</span>`;
   }
 
-  const btnLabel = !isClosed
-    ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite'
-    : isLive
-    ? '<i class="fa-solid fa-satellite-dish"></i> Ao Vivo'
-    : isFinal
+  const btnLabel = isFinal
     ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
@@ -446,6 +438,15 @@ const renderCard = (g) => {
          <span class="gc-meta__price">R$ ${valorBase}/palpite</span>
        </div>`
     : '';
+
+  const footHtml = isLive
+    ? `<button class="btn btn--danger btn--full" disabled>
+         <i class="fa-solid fa-satellite-dish fa-beat"></i> Ao Vivo
+       </button>`
+    : `<button class="btn ${!isClosed ? 'btn--primary' : 'btn--ghost'} btn--full"
+         data-action="bet" data-id="${g.id}" ${isClosed ? 'disabled' : ''}>
+         ${!isClosed ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
+       </button>`;
 
   return `
     <article class="game-card game-card--${statusClass}">
@@ -466,10 +467,7 @@ const renderCard = (g) => {
       </div>
       <div class="game-card__foot">
         ${metaHtml}
-        <button class="btn ${!isClosed ? 'btn--primary' : 'btn--ghost'} btn--full"
-          data-action="bet" data-id="${g.id}" ${isClosed ? 'disabled' : ''}>
-          ${btnLabel}
-        </button>
+        ${footHtml}
       </div>
     </article>`;
 };
@@ -519,6 +517,7 @@ const renderGames = () => {
     renderSection('finished', 'Finalizados',    '<i class="fa-solid fa-flag-checkered"></i>', finished, 'games-section--finished');
 
   startCountdowns();
+  startLiveClocks();
 };
 
 // ── Countdown timers ──────────────────────────────────────────
@@ -533,6 +532,35 @@ const fmtCountdown = (ms) => {
   const s = Math.floor((ms % 60000) / 1000);
   if (d >= 1) return `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+};
+
+const fmtLiveClock = (g) => {
+  const api     = (g.status_api || '').toUpperCase();
+  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(g.data_hora)) / 60000));
+
+  if (api === 'HT')  return { period: 'Intervalo',      min: null };
+  if (api === 'BT')  return { period: 'Interv. Prorr.', min: null };
+  if (api === 'P')   return { period: 'Pênaltis',       min: null };
+  if (api === 'INT') return { period: 'Interrompido',   min: null };
+
+  if (api === '1H')  return { period: '1º Tempo',    min: Math.min(elapsed, 45) };
+  if (api === '2H')  return { period: '2º Tempo',    min: Math.min(45 + Math.max(0, elapsed - 60), 90) };
+  if (api === 'ET')  return { period: 'Prorrogação', min: Math.min(90 + Math.max(0, elapsed - 110), 120) };
+
+  return { period: 'Ao Vivo', min: null };
+};
+
+const startLiveClocks = () => {
+  S.games.filter(isGameLive).forEach(g => {
+    const el = document.getElementById(`lvclock-${g.id}`);
+    if (!el) return;
+    const tick = () => {
+      const { period, min } = fmtLiveClock(g);
+      el.textContent = min !== null ? `${period} · ${min}'` : period;
+    };
+    tick();
+    S.timers.push(setInterval(tick, 30000));
+  });
 };
 
 const startCountdowns = () => {

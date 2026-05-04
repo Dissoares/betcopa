@@ -1646,8 +1646,10 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   letter-spacing: .04em;
   line-height: 1;
 }
-.gc-score--live  .gc-score__val { color: var(--danger); }
-.gc-score--final .gc-score__val { color: var(--info); text-shadow: var(--score-shadow); }
+.gc-score--live  .gc-score__val        { color: var(--text); }
+.gc-score__label--live                 { color: var(--danger); font-weight: 800; letter-spacing: .06em; display: inline-flex; align-items: center; gap: .3rem; }
+.gc-score__label--live i               { font-size: .55em; }
+.gc-score--final .gc-score__val   { color: var(--info); text-shadow: var(--score-shadow); }
 .gc-score__dot {
   font-size: .5rem;
   color: var(--danger);

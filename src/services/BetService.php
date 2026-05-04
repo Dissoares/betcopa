@@ -30,6 +30,11 @@ class BetService
             throw new InvalidArgumentException('Apostas encerradas para este jogo');
         }
 
+        $liveStatuses = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
+        if (in_array(strtoupper($game['status_api'] ?? ''), $liveStatuses, true)) {
+            throw new InvalidArgumentException('Apostas encerradas: jogo já está em andamento');
+        }
+
         $gameDate = new DateTime($game['data_hora']);
         if ($gameDate <= new DateTime()) {
             throw new InvalidArgumentException('Apostas encerradas: jogo já iniciou');
