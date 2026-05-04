@@ -1139,6 +1139,17 @@ select {
 /* ============================================================
    §17 RESPONSIVO
    ============================================================ */
+
+/* Layout 2 colunas: form + filtro */
+.admin-jogos-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.25rem;
+  align-items: start;
+  margin-bottom: 1.25rem;
+}
+.admin-jogos-filter .form-group { margin-bottom: .85rem; }
+.admin-jogos-filter .form-group:last-of-type { margin-bottom: 1rem; }
 @media (max-width: 900px) {
   .admin-layout  { flex-direction: column; }
   .admin-sidebar { width: 100%; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); padding: .75rem; }
@@ -1146,6 +1157,7 @@ select {
   .admin-nav__btn { width: auto; padding: .45rem .75rem; font-size: .82rem; }
   .admin-content  { padding: 1.25rem; }
   .admin-grid-2   { grid-template-columns: 1fr; }
+  .admin-jogos-layout { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
