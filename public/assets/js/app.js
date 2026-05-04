@@ -10,6 +10,7 @@ const S = {
   csrf:         null,
   selectedGame: null,
   selectedBet:  null,
+  pendingBet:   null,      // picks salvos para retomar após login
   scoreHome:    0,
   scoreAway:    0,
   multiplier:   5,
@@ -711,38 +712,25 @@ const closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
 const closeAllModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 
 // ── Bet modal ─────────────────────────────────────────────────
-const openBetModal = (gameId) => {
+const openBetModal = (gameId, pending = null) => {
   const game = S.games.find(g => g.id === Number(gameId));
   if (!game) return;
 
-  if (!S.user) {
-    openModal('modalPalpite'); // will be blocked by auth check below
-    closeModal('modalPalpite');
-    showAuthGate(game);
-    return;
-  }
-
   S.selectedGame = game;
-  S.scoreHome    = 0;
-  S.scoreAway    = 0;
-  S.multiplier   = 5;
+  S.scoreHome    = pending?.scoreHome  ?? 0;
+  S.scoreAway    = pending?.scoreAway  ?? 0;
+  S.multiplier   = pending?.multiplier ?? 5;
 
   document.getElementById('betFlagHome').innerHTML    = getEmblem(game, 'home');
   document.getElementById('betNameHome').textContent  = game.time_casa;
   document.getElementById('betFlagAway').innerHTML    = getEmblem(game, 'away');
   document.getElementById('betNameAway').textContent  = game.time_fora;
-  document.getElementById('scoreHome').textContent    = '0';
-  document.getElementById('scoreAway').textContent    = '0';
-  document.getElementById('multiplierSlider').value   = 5;
+  document.getElementById('scoreHome').textContent    = S.scoreHome;
+  document.getElementById('scoreAway').textContent    = S.scoreAway;
+  document.getElementById('multiplierSlider').value   = S.multiplier;
 
   updateBetPreview();
   openModal('modalPalpite');
-};
-
-const showAuthGate = (game) => {
-  // Redirect to auth view with a message
-  showAlert('Faça login ou cadastre-se para apostar.', 'info');
-  navigate('auth');
 };
 
 const updateBetPreview = () => {
@@ -766,6 +754,29 @@ const updateBetPreview = () => {
 };
 
 const submitBet = async () => {
+  if (!S.user) {
+    // Sem login: mostra ticket em pré-visualização (sem chamar a API)
+    const base  = parseFloat(S.selectedGame.valor_base || 1);
+    const valor = base * S.multiplier;
+    S.selectedBet = null;
+    S.pendingBet  = {
+      gameId:     S.selectedGame.id,
+      scoreHome:  S.scoreHome,
+      scoreAway:  S.scoreAway,
+      multiplier: S.multiplier,
+    };
+    closeModal('modalPalpite');
+    fillTicket({
+      id:             null,
+      placar_casa:    S.scoreHome,
+      placar_fora:    S.scoreAway,
+      valor,
+      possivel_ganho: valor * S.multiplier,
+    });
+    openModal('modalTicket');
+    return;
+  }
+
   const btn = document.getElementById('btnConfirmBet');
   btn.disabled = true;
   btn.textContent = 'Enviando...';
@@ -793,15 +804,28 @@ const submitBet = async () => {
 
 // ── Ticket modal ──────────────────────────────────────────────
 const fillTicket = (bet) => {
-  const game = S.selectedGame;
-  document.getElementById('ticketId').textContent     = `#${String(bet.id).padStart(6, '0')}`;
-  document.getElementById('ticketGame').textContent   = game ? `${game.time_casa} × ${game.time_fora}` : '—';
+  const game    = S.selectedGame;
+  const isGuest = !bet.id;
+  document.getElementById('ticketId').textContent      = isGuest ? 'Pré-visualização' : `#${String(bet.id).padStart(6, '0')}`;
+  document.getElementById('ticketGame').textContent    = game ? `${game.time_casa} × ${game.time_fora}` : '—';
   document.getElementById('ticketPalpite').textContent = `${bet.placar_casa} × ${bet.placar_fora}`;
-  document.getElementById('ticketValor').textContent  = fmtMoney(bet.valor);
-  document.getElementById('ticketPremio').textContent = fmtMoney(bet.possivel_ganho);
+  document.getElementById('ticketValor').textContent   = fmtMoney(bet.valor);
+  document.getElementById('ticketPremio').textContent  = fmtMoney(bet.possivel_ganho);
+
+  const payBtn = document.getElementById('btnSimulatePay');
+  payBtn.innerHTML = isGuest
+    ? '<i class="fa-solid fa-lock"></i> Entrar para Pagar via PIX'
+    : '<i class="fa-solid fa-credit-card"></i> Pagar via PIX';
 };
 
 const simulatePay = async () => {
+  if (!S.user) {
+    closeModal('modalTicket');
+    showAlert('Entre ou cadastre-se para pagar — seu palpite será retomado!', 'info');
+    navigate('auth');
+    return;
+  }
+
   const btn = document.getElementById('btnSimulatePay');
   btn.disabled = true; btn.textContent = 'Processando PIX...';
   try {
@@ -815,20 +839,6 @@ const simulatePay = async () => {
   }
 };
 
-const confirmPay = async () => {
-  const btn = document.getElementById('btnConfirmPay');
-  btn.disabled = true; btn.textContent = 'Confirmando...';
-  try {
-    await api(`/api/apostas/${S.selectedBet.id}/confirmar`, 'POST', {});
-    closeModal('modalTicket');
-    toast('Aposta confirmada! Boa sorte! 🍀', 'success');
-    await loadUser();
-    await loadBets();
-  } catch (err) {
-    toast(err.message || 'Erro ao confirmar pagamento.', 'danger');
-    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Pagamento';
-  }
-};
 
 // ── Resultado modal ───────────────────────────────────────────
 const showResultado = (bet, won) => {
@@ -889,9 +899,35 @@ const submitLogin = async (e) => {
     });
     await loadUser();
     await loadBets();
-    navigate('jogos');
-    showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}!`, 'success');
-    e.target.reset();
+
+    if (S.pendingBet) {
+      const pb = S.pendingBet;
+      S.pendingBet = null;
+      navigate('jogos');
+      showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}! Finalizando seu palpite…`, 'success');
+      e.target.reset();
+      setTimeout(async () => {
+        try {
+          const result = await api('/api/apostas', 'POST', {
+            jogo_id:       pb.gameId,
+            placar_casa:   pb.scoreHome,
+            placar_fora:   pb.scoreAway,
+            multiplicador: pb.multiplier,
+          });
+          S.selectedGame = S.games.find(g => g.id === pb.gameId) ?? S.selectedGame;
+          S.selectedBet  = result.aposta;
+          fillTicket(result.aposta);
+          openModal('modalTicket');
+          await loadBets();
+        } catch (err) {
+          toast(err.message || 'Erro ao registrar palpite.', 'danger');
+        }
+      }, 350);
+    } else {
+      navigate('jogos');
+      showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}!`, 'success');
+      e.target.reset();
+    }
   } catch (err) {
     showAlert(err.message, 'danger');
   } finally {
@@ -1358,7 +1394,6 @@ const bind = () => {
     const { action, id } = btn.dataset;
     if (action === 'bet')     openBetModal(id);
     if (action === 'pay')     { S.selectedBet = { id: Number(id) }; openModal('modalTicket'); }
-    if (action === 'confirm') { S.selectedBet = { id: Number(id) }; confirmPay(); }
   });
 
   // Modal close via backdrop or × button
@@ -1392,7 +1427,6 @@ const bind = () => {
 
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
-  document.getElementById('btnConfirmPay').addEventListener('click', confirmPay);
 
   // Mobile drawer
   document.querySelectorAll('.btn-theme-toggle').forEach(btn => btn.addEventListener('click', toggleTheme));
