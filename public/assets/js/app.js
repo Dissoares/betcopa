@@ -487,6 +487,64 @@ const renderSection = (id, title, iconHtml, games, extraClass = '') => {
 };
 
 // ── Game sections ─────────────────────────────────────────────
+const renderMatchBanner = () => {
+  const el = document.getElementById('matchBanner');
+  if (!el) return;
+
+  const live     = S.games.filter(isGameLive);
+  const upcoming = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g))
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+
+  if (live.length) {
+    const g = live[0];
+    const score = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
+    const clock = fmtLiveClock(g);
+    const logoH = g.logo_casa  ? `<img src="${g.logo_casa}"  class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagImg(g.bandeira_casa || '', '2rem')}</span>`;
+    const logoA = g.logo_fora  ? `<img src="${g.logo_fora}"  class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagImg(g.bandeira_fora || '', '2rem')}</span>`;
+    el.className = 'match-banner match-banner--live';
+    el.innerHTML = `
+      <div class="mb-pill mb-pill--live"><i class="fa-solid fa-circle fa-beat"></i> AO VIVO</div>
+      <div class="mb-match">
+        <div class="mb-team">${logoH}<span>${g.time_casa}</span></div>
+        <div class="mb-center">
+          <div class="mb-score">${score}</div>
+          <div class="mb-clock">${clock.period} · ${clock.min}'</div>
+        </div>
+        <div class="mb-team">${logoA}<span>${g.time_fora}</span></div>
+      </div>`;
+  } else if (upcoming.length) {
+    const g = upcoming[0];
+    const ms = new Date(g.data_hora) - Date.now();
+    const logoH = g.logo_casa ? `<img src="${g.logo_casa}" class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagImg(g.bandeira_casa || '', '2rem')}</span>`;
+    const logoA = g.logo_fora ? `<img src="${g.logo_fora}" class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagImg(g.bandeira_fora || '', '2rem')}</span>`;
+    el.className = 'match-banner match-banner--soon';
+    el.innerHTML = `
+      <div class="mb-pill mb-pill--soon"><i class="fa-solid fa-clock"></i> PRÓXIMO JOGO</div>
+      <div class="mb-match">
+        <div class="mb-team">${logoH}<span>${g.time_casa}</span></div>
+        <div class="mb-center">
+          <div class="mb-label">COMEÇA EM</div>
+          <div class="mb-countdown" id="bannerCountdown">${fmtCountdown(ms)}</div>
+        </div>
+        <div class="mb-team">${logoA}<span>${g.time_fora}</span></div>
+      </div>`;
+    // Atualiza o countdown do banner a cada segundo
+    const t = setInterval(() => {
+      const el2 = document.getElementById('bannerCountdown');
+      if (!el2) { clearInterval(t); return; }
+      const rem = new Date(g.data_hora) - Date.now();
+      el2.textContent = fmtCountdown(rem);
+    }, 1000);
+    S.timers.push(t);
+  } else {
+    el.className = 'match-banner hidden';
+    el.innerHTML = '';
+    return;
+  }
+  el.classList.remove('hidden');
+};
+
 const renderGames = () => {
   const container = document.getElementById('gamesGrid');
   const empty     = document.getElementById('gamesEmpty');
@@ -517,6 +575,7 @@ const renderGames = () => {
     renderSection('upcoming', 'Próximos Jogos', '<i class="fa-solid fa-calendar-days"></i>',  upcoming, 'games-section--upcoming') +
     renderSection('finished', 'Finalizados',    '<i class="fa-solid fa-flag-checkered"></i>', finished, 'games-section--finished');
 
+  renderMatchBanner();
   startCountdowns();
   startLiveClocks();
 
