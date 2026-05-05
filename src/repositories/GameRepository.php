@@ -97,7 +97,24 @@ class GameRepository
                 :logo_casa, :logo_fora, :data_hora, :status, :liga_nome, :liga_logo,
                 :estadio, :rodada, :odd, :valor_base, :status_api)'
         );
-        $stmt->execute($data);
+        $stmt->execute([
+            'api_fixture_id' => $data['api_fixture_id'],
+            'time_casa'      => $data['time_casa'],
+            'time_fora'      => $data['time_fora'],
+            'bandeira_casa'  => $data['bandeira_casa'] ?? '',
+            'bandeira_fora'  => $data['bandeira_fora'] ?? '',
+            'logo_casa'      => $data['logo_casa']     ?? '',
+            'logo_fora'      => $data['logo_fora']     ?? '',
+            'data_hora'      => $data['data_hora'],
+            'status'         => $data['status'],
+            'liga_nome'      => $data['liga_nome']     ?? '',
+            'liga_logo'      => $data['liga_logo']     ?? '',
+            'estadio'        => $data['estadio']       ?? '',
+            'rodada'         => $data['rodada']        ?? '',
+            'odd'            => $data['odd']           ?? 1.00,
+            'valor_base'     => $data['valor_base']    ?? 1.00,
+            'status_api'     => $data['status_api'],
+        ]);
         return (int) $this->db->lastInsertId();
     }
 
