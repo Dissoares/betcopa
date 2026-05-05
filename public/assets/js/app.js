@@ -1299,21 +1299,20 @@ const setupGameFormPreview = () => {
 
 const importFromApi = async () => {
   const btn      = document.getElementById('btnImport');
-  const statusEl = document.getElementById('importStatus');
+  const resultEl = document.getElementById('importResult');
   const leagueId = Number(document.getElementById('importLeague').value);
-  const season   = Number(document.getElementById('importSeason').value);
-  const next     = Number(document.getElementById('importNext').value);
+  const status   = document.getElementById('importStatus').value;
 
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
-  statusEl.innerHTML = '';
+  resultEl.innerHTML = '';
 
   try {
-    const res = await api('/api/admin/import', 'POST', { league_id: leagueId, season, next });
-    statusEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+    const res = await api('/api/admin/import', 'POST', { league_id: leagueId, status });
+    resultEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
     await loadGames();
     populateAdminSelect();
   } catch (err) {
-    statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+    resultEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
     btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Importar Jogos';
   }
@@ -1321,10 +1320,10 @@ const importFromApi = async () => {
 
 const syncResults = async () => {
   const btn      = document.getElementById('btnSync');
-  const statusEl = document.getElementById('importStatus');
+  const resultEl = document.getElementById('importResult');
 
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...';
-  statusEl.innerHTML = '';
+  if (resultEl) resultEl.innerHTML = '';
 
   try {
     const res = await api('/api/admin/sync', 'POST', {});

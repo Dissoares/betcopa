@@ -366,27 +366,40 @@
           </div>
 
           <details class="panel admin-import-panel">
-            <summary><i class="fa-solid fa-satellite-dish"></i> API Football — Importar e sincronizar jogos</summary>
+            <summary><i class="fa-solid fa-satellite-dish"></i> football-data.org — Importar e sincronizar jogos</summary>
             <div class="admin-import-body">
               <div class="form-row" style="margin-top:1rem">
                 <div class="form-group">
-                  <label>ID da Liga</label>
-                  <input id="importLeague" type="number" placeholder="Ex: 71 (Brasileirão)" value="71" />
+                  <label>Competição</label>
+                  <select id="importLeague">
+                    <option value="2000">Copa do Mundo FIFA</option>
+                    <option value="2013" selected>Brasileirão Série A</option>
+                    <option value="2001">UEFA Champions League</option>
+                    <option value="2021">Premier League</option>
+                    <option value="2014">La Liga</option>
+                    <option value="2019">Serie A (Itália)</option>
+                    <option value="2002">Bundesliga</option>
+                    <option value="2015">Ligue 1</option>
+                    <option value="2003">Eredivisie</option>
+                    <option value="2017">Primeira Liga</option>
+                    <option value="2152">Copa América</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label>Temporada</label>
-                  <input id="importSeason" type="number" placeholder="Ex: 2025" value="2025" />
-                </div>
-                <div class="form-group">
-                  <label>Próximos jogos</label>
-                  <input id="importNext" type="number" placeholder="10" value="10" min="1" max="50" />
+                  <label>Status a importar</label>
+                  <select id="importStatus">
+                    <option value="SCHEDULED,TIMED" selected>Agendados (próximos)</option>
+                    <option value="IN_PLAY,PAUSED">Ao vivo agora</option>
+                    <option value="FINISHED">Finalizados</option>
+                    <option value="">Todos</option>
+                  </select>
                 </div>
               </div>
               <div class="admin-import-actions">
                 <button class="btn btn--primary" id="btnImport"><i class="fa-solid fa-satellite-dish"></i> Importar Jogos</button>
                 <button class="btn btn--ghost" id="btnSync"><i class="fa-solid fa-rotate"></i> Sincronizar Resultados</button>
               </div>
-              <div id="importStatus" style="margin-top:.75rem"></div>
+              <div id="importResult" style="margin-top:.75rem"></div>
             </div>
           </details>
         </div>
