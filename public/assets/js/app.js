@@ -473,16 +473,32 @@ const renderCard = (g) => {
     </article>`;
 };
 
+// Stores all games per section so "Ver mais" can render the hidden remainder
+const _sectionReg = {};
+const SECTION_LIMIT = 6;
+
 const renderSection = (id, title, iconHtml, games, extraClass = '') => {
   if (!games.length) return '';
-  const cls = ['games-section', extraClass].filter(Boolean).join(' ');
+  _sectionReg[id] = games;
+  const cls   = ['games-section', extraClass].filter(Boolean).join(' ');
+  const shown = games.slice(0, SECTION_LIMIT);
+  const more  = games.length - SECTION_LIMIT;
+
+  const moreBtn = more > 0
+    ? `<button class="btn-show-more" data-sid="${id}">
+         <i class="fa-solid fa-chevron-down"></i>
+         Ver mais ${more} jogo${more !== 1 ? 's' : ''}
+       </button>`
+    : '';
+
   return `
     <section class="${cls}" id="gs-${id}">
       <div class="games-section__header">
         <h3 class="games-section__title">${iconHtml}${title}</h3>
         <span class="games-section__count">${games.length}</span>
       </div>
-      <div class="games-grid">${games.map(renderCard).join('')}</div>
+      <div class="games-grid" id="gs-grid-${id}">${shown.map(renderCard).join('')}</div>
+      ${moreBtn}
     </section>`;
 };
 
@@ -555,25 +571,66 @@ const renderGames = () => {
 
   updateHeroStats();
 
-  const live     = S.games.filter(isGameLive);
-  const upcoming = S.games
+  const now     = new Date();
+  const sameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth()    &&
+    a.getDate()     === b.getDate();
+  const dayOffset = (n) => { const d = new Date(now); d.setDate(d.getDate() + n); return d; };
+
+  const live = S.games.filter(isGameLive);
+
+  const openSorted = S.games
     .filter(g => g.status === 'aberto' && !isGameLive(g))
     .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+
+  const soon     = openSorted.filter(g => { const ms = new Date(g.data_hora) - now; return ms > 0 && ms <= 3_600_000; });
+  const today    = openSorted.filter(g => { const ms = new Date(g.data_hora) - now; return sameDay(new Date(g.data_hora), now) && ms > 3_600_000; });
+  const tomorrow = openSorted.filter(g => sameDay(new Date(g.data_hora), dayOffset(1)));
+
+  // Days 2–6 ahead: one section per day
+  const weekSections = [];
+  for (let i = 2; i <= 6; i++) {
+    const d     = dayOffset(i);
+    const games = openSorted.filter(g => sameDay(new Date(g.data_hora), d));
+    if (!games.length) continue;
+    const wday = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+    const cap  = wday.charAt(0).toUpperCase() + wday.slice(1).replace('.', '');
+    const date = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    weekSections.push({
+      sid:   `week${d.toISOString().slice(0, 10).replace(/-/g, '')}`,
+      title: `${cap} · ${date}`,
+      games,
+    });
+  }
+
+  // Games beyond 7 days
+  const beyond = openSorted.filter(g => new Date(g.data_hora) >= dayOffset(7));
+
   const finished = S.games
     .filter(g => g.status === 'finalizado' || g.status === 'encerrado')
     .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
 
-  if (!live.length && !upcoming.length && !finished.length) {
+  if (!live.length && !openSorted.length && !finished.length) {
     container.innerHTML = '';
     empty?.classList.remove('hidden');
     return;
   }
   empty?.classList.add('hidden');
 
-  container.innerHTML =
-    renderSection('live',     'Ao Vivo',        '<i class="fa-solid fa-circle fa-beat"></i>', live,     'games-section--live') +
-    renderSection('upcoming', 'Próximos Jogos', '<i class="fa-solid fa-calendar-days"></i>',  upcoming, 'games-section--upcoming') +
-    renderSection('finished', 'Finalizados',    '<i class="fa-solid fa-flag-checkered"></i>', finished, 'games-section--finished');
+  let html = '';
+  html += renderSection('live',     'Ao Vivo',     '<i class="fa-solid fa-circle fa-beat"></i>',  live,     'games-section--live');
+  html += renderSection('soon',     'Em Breve',    '<i class="fa-solid fa-bolt"></i>',             soon,     'games-section--soon');
+  html += renderSection('today',    'Hoje',        '<i class="fa-solid fa-sun"></i>',              today,    'games-section--today');
+  html += renderSection('tomorrow', 'Amanhã',      '<i class="fa-solid fa-calendar-day"></i>',    tomorrow, 'games-section--tomorrow');
+  weekSections.forEach(ws => {
+    html += renderSection(ws.sid, ws.title, '<i class="fa-solid fa-calendar-week"></i>', ws.games, 'games-section--week');
+  });
+  if (beyond.length)
+    html += renderSection('beyond', 'Próximos', '<i class="fa-solid fa-calendar-plus"></i>', beyond, 'games-section--beyond');
+  html += renderSection('finished', 'Finalizados', '<i class="fa-solid fa-flag-checkered"></i>',  finished, 'games-section--finished');
+
+  container.innerHTML = html;
 
   renderMatchBanner();
   startCountdowns();
@@ -617,7 +674,8 @@ const fmtLiveClock = (g) => {
 const startLiveClocks = () => {
   S.games.filter(isGameLive).forEach(g => {
     const el = document.getElementById(`lvclock-${g.id}`);
-    if (!el) return;
+    if (!el || el.dataset.t) return;
+    el.dataset.t = '1';
     const tick = () => {
       const { period, min } = fmtLiveClock(g);
       el.textContent = min !== null ? `${period} · ${min}'` : period;
@@ -631,7 +689,8 @@ const startCountdowns = () => {
   S.games.forEach(g => {
     if (g.status !== 'aberto') return;
     const el = document.getElementById(`cdtime-${g.id}`);
-    if (!el) return;
+    if (!el || el.dataset.t) return;
+    el.dataset.t = '1';
 
     const tick = () => {
       const diff = new Date(g.data_hora) - Date.now();
@@ -1519,6 +1578,21 @@ const bind = () => {
     const { action, id } = btn.dataset;
     if (action === 'bet')     openBetModal(id);
     if (action === 'pay')     { S.selectedBet = { id: Number(id) }; openModal('modalTicket'); }
+  });
+
+  // "Ver mais" section expansion
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-show-more');
+    if (!btn) return;
+    const sid   = btn.dataset.sid;
+    const games = _sectionReg[sid];
+    const grid  = document.getElementById(`gs-grid-${sid}`);
+    if (!grid || !games) return;
+    const shown = grid.querySelectorAll('.game-card').length;
+    grid.insertAdjacentHTML('beforeend', games.slice(shown).map(renderCard).join(''));
+    btn.remove();
+    startCountdowns();
+    startLiveClocks();
   });
 
   // Modal close via backdrop or × button

@@ -1930,3 +1930,59 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .mb-name  { font-size: .7rem; }
   .mb-league { display: none; }
 }
+
+/* ============================================================
+   §  TEMPORAL SECTIONS — color modifiers
+   ============================================================ */
+
+/* Em Breve — amber/gold (urgência: apostas fecham logo) */
+.games-section--soon .games-section__title           { color: var(--gold); }
+.games-section--soon .games-section__count           { background: var(--tint-gold); color: var(--gold); }
+.games-section--soon .games-section__header::before  { background: var(--gold); opacity: 1; }
+
+/* Hoje — azul info */
+.games-section--today .games-section__title          { color: var(--info); }
+.games-section--today .games-section__count          { background: var(--tint-info); color: var(--info); }
+.games-section--today .games-section__header::before { background: var(--info); opacity: 1; }
+
+/* Amanhã — verde primário (como "próximo" planejado) */
+.games-section--tomorrow .games-section__title           { color: var(--primary); }
+.games-section--tomorrow .games-section__count           { background: var(--tint-primary); color: var(--primary); }
+.games-section--tomorrow .games-section__header::before  { background: var(--primary); opacity: 1; }
+
+/* Dias da semana — neutro */
+.games-section--week .games-section__title           { color: var(--text-dim); }
+.games-section--week .games-section__header::before  { background: var(--text-dim); opacity: .6; }
+
+/* Próximos (além de 7 dias) — esmaecido */
+.games-section--beyond .games-section__title          { color: var(--text-muted); }
+.games-section--beyond .games-section__header::before { background: var(--text-muted); opacity: .4; }
+
+/* ── "Ver mais" button ──────────────────────────────────────── */
+.btn-show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  width: 100%;
+  margin-top: .9rem;
+  padding: .65rem 1.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btn-show-more:hover {
+  background: var(--surface-3);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn-show-more i {
+  font-size: .75rem;
+  transition: transform .2s;
+}
+.btn-show-more:hover i { transform: translateY(2px); }
