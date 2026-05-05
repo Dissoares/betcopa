@@ -121,8 +121,10 @@ try {
         route('/api/config/bets',  'GET',  fn() => $adminCtrl->betConfig());
 
         // ── Admin: Configurações ──────────────────────────────
-        route('/api/admin/config', 'GET',  fn() => $adminCtrl->getConfig());
-        route('/api/admin/config', 'POST', fn() => $adminCtrl->updateConfig());
+        route('/api/admin/config',       'GET',  fn() => $adminCtrl->getConfig());
+        route('/api/admin/config',       'POST', fn() => $adminCtrl->updateConfig());
+        route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
+        route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
 
         jsonResponse(['error' => 'Rota não encontrada'], 404);
     }

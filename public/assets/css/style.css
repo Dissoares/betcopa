@@ -2321,3 +2321,151 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
     align-items: flex-start;
   }
 }
+
+/* ── Logo de imagem (header / drawer / footer) ─────────────── */
+.brand-logo-img {
+  display: block;
+  max-height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+/* Header: alinha verticalmente ao centro do link */
+.logo .brand-logo-img {
+  max-height: 30px;
+}
+/* Drawer sidebar: um pouco maior */
+.drawer__logo .brand-logo-img {
+  max-height: 36px;
+}
+/* Footer */
+.site-footer__logo .brand-logo-img {
+  max-height: 36px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Preview do logo no painel admin */
+.brand-logo-preview {
+  margin-top: .6rem;
+  padding: .6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  min-height: 52px;
+}
+.brand-logo-preview img {
+  max-height: 44px;
+  max-width: 220px;
+  object-fit: contain;
+}
+
+/* Dica de texto abaixo de input */
+.form-hint {
+  display: block;
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin-top: .3rem;
+  line-height: 1.45;
+}
+
+/* ── Media Picker (seletor de logo estilo WordPress) ────────── */
+.media-picker {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  overflow: hidden;
+  transition: border-color .2s, background .2s;
+}
+.media-picker--drag {
+  border-color: var(--primary);
+  background: var(--tint-primary);
+}
+.media-picker--loading {
+  opacity: .6;
+  pointer-events: none;
+}
+
+/* Área vazia */
+.media-picker__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  padding: 2rem 1.5rem;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: default;
+}
+.media-picker__empty i {
+  font-size: 2rem;
+  color: var(--text-dim);
+  margin-bottom: .25rem;
+}
+.media-picker__empty span {
+  font-size: .88rem;
+  font-weight: 600;
+}
+.media-picker__empty small {
+  font-size: .72rem;
+  color: var(--text-dim);
+}
+
+/* Preview da imagem */
+.media-picker__preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: repeating-conic-gradient(var(--surface-3) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px;
+}
+.media-picker__preview img {
+  max-height: 80px;
+  max-width: 240px;
+  object-fit: contain;
+  border-radius: 4px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.35));
+}
+.media-picker__remove {
+  position: absolute;
+  top: .5rem; right: .5rem;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(255,71,87,.85);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem;
+  transition: background .15s, transform .15s;
+}
+.media-picker__remove:hover {
+  background: var(--danger);
+  transform: scale(1.1);
+}
+
+/* Barra de ações */
+.media-picker__actions {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.media-picker__select {
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center;
+  gap: .4rem;
+  white-space: nowrap;
+}
+.media-picker__status {
+  font-size: .78rem;
+  color: var(--text-muted);
+}
+.media-picker__status--error {
+  color: var(--danger);
+}

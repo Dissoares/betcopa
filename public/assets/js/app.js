@@ -1865,6 +1865,29 @@ const bind = () => {
     tab.addEventListener('click', () => switchConfigTab(tab.dataset.configTab));
   });
 
+  // Media picker: upload de logo
+  document.getElementById('logoFileInput')?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) uploadLogo(file);
+    e.target.value = ''; // permite selecionar o mesmo arquivo novamente
+  });
+
+  // Media picker: botão remover
+  document.getElementById('logoPickerRemove')?.addEventListener('click', () => removeLogo());
+
+  // Arrastar & soltar no picker
+  const picker = document.getElementById('logoPicker');
+  if (picker) {
+    picker.addEventListener('dragover', (e) => { e.preventDefault(); picker.classList.add('media-picker--drag'); });
+    picker.addEventListener('dragleave', () => picker.classList.remove('media-picker--drag'));
+    picker.addEventListener('drop', (e) => {
+      e.preventDefault();
+      picker.classList.remove('media-picker--drag');
+      const file = e.dataTransfer.files?.[0];
+      if (file) uploadLogo(file);
+    });
+  }
+
   // Admin forms
   document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
@@ -2162,6 +2185,9 @@ const loadAdminConfig = async () => {
     };
     set('cfg_site_nome',                 'site_nome');
     set('cfg_site_emoji',                'site_emoji');
+    // Atualizar media picker com o logo atual
+    const currentLogo = config['site_logo']?.valor || '';
+    setLogoPickerState(currentLogo);
     set('cfg_site_title',                'site_title');
     set('cfg_site_description',          'site_description');
     set('cfg_site_keywords',             'site_keywords');
@@ -2228,6 +2254,7 @@ const submitAdminConfig = async (e) => {
       saques_ativos:             get('cfg_saques_ativos'),
     });
     toast(res.message ?? 'Configurações salvas!', 'success');
+    // O logo já foi aplicado no momento do upload — não precisa refazer aqui
   } catch (err) {
     toast(err.message, 'danger');
   } finally {
@@ -2260,7 +2287,105 @@ const stopLivePoll = () => {
   S.pollTimer = null;
 };
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Media Picker: Logo ────────────────────────────────────────
+
+// Sincroniza o estado visual do picker com uma URL (ou vazio)
+const setLogoPickerState = (url) => {
+  const empty   = document.getElementById('logoPickerEmpty');
+  const preview = document.getElementById('logoPickerPreview');
+  const img     = document.getElementById('logoPickerImg');
+  const btnLbl  = document.getElementById('logoPickerBtnLabel');
+  if (!empty || !preview) return;
+
+  if (url) {
+    img.src = url;
+    empty.classList.add('hidden');
+    preview.classList.remove('hidden');
+    if (btnLbl) btnLbl.textContent = 'Trocar imagem';
+  } else {
+    img.src = '';
+    preview.classList.add('hidden');
+    empty.classList.remove('hidden');
+    if (btnLbl) btnLbl.textContent = 'Enviar imagem';
+  }
+};
+
+const setLogoPickerStatus = (msg, isError = false) => {
+  const el = document.getElementById('logoPickerStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'media-picker__status' + (isError ? ' media-picker__status--error' : '');
+  if (msg) setTimeout(() => { el.textContent = ''; el.className = 'media-picker__status'; }, 4000);
+};
+
+const uploadLogo = async (file) => {
+  const picker = document.getElementById('logoPicker');
+  picker?.classList.add('media-picker--loading');
+  setLogoPickerStatus('Enviando...');
+
+  try {
+    const formData = new FormData();
+    formData.append('logo', file);
+    formData.append('csrf_token', S.csrf || '');
+
+    const res = await fetch('/api/admin/upload-logo', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao enviar logo');
+
+    setLogoPickerState(data.url);
+    applyBrandLogo(data.url);
+    setLogoPickerStatus('Logo salvo!');
+    toast('Logo atualizado com sucesso.', 'success');
+  } catch (err) {
+    setLogoPickerStatus(err.message, true);
+    toast(err.message, 'danger');
+  } finally {
+    picker?.classList.remove('media-picker--loading');
+  }
+};
+
+const removeLogo = async () => {
+  if (!await confirm('Remover o logo?', 'O ícone padrão será exibido no lugar.')) return;
+  const picker = document.getElementById('logoPicker');
+  picker?.classList.add('media-picker--loading');
+
+  try {
+    const res  = await api('/api/admin/delete-logo', 'POST', {});
+    setLogoPickerState('');
+    applyBrandLogo('');
+    toast(res.message || 'Logo removido.', 'success');
+  } catch (err) {
+    toast(err.message, 'danger');
+  } finally {
+    picker?.classList.remove('media-picker--loading');
+  }
+};
+
+// ── Init (continuação) ────────────────────────────────────────
+
+// Aplica (ou remove) o logo de imagem nos 3 pontos de marca
+const applyBrandLogo = (url) => {
+  const ids = ['brandLogoHeader', 'brandLogoDrawer', 'brandLogoFooter'];
+  ids.forEach(id => {
+    const img  = document.getElementById(id);
+    if (!img) return;
+    const text = img.nextElementSibling; // .brand-logo-text
+    if (url) {
+      img.src = url;
+      img.classList.remove('hidden');
+      text?.classList.add('hidden');
+    } else {
+      img.classList.add('hidden');
+      img.src = '';
+      text?.classList.remove('hidden');
+    }
+  });
+};
+
 const loadBetConfig = async () => {
   try {
     const cfg = await api('/api/config/bets');
@@ -2269,6 +2394,7 @@ const loadBetConfig = async () => {
     S.betPercent = cfg.bet_percent || 10;
     if (S.multiplier < S.multMin) S.multiplier = S.multMin;
     if (S.multiplier > S.multMax) S.multiplier = S.multMax;
+    applyBrandLogo(cfg.site_logo || '');
   } catch (_) { /* usa defaults */ }
 };
 

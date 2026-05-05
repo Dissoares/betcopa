@@ -16,7 +16,10 @@
   <header class="header">
     <div class="container header__inner header__inner--split">
       <div class="header__center">
-        <a class="logo" href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> <span>Bet</span>Copa</a>
+        <a class="logo" href="#" data-nav="jogos">
+          <img id="brandLogoHeader" class="brand-logo-img hidden" src="" alt="Logo" />
+          <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> <span>Bet</span>Copa</span>
+        </a>
       </div>
       <div class="header__right">
         <nav class="nav" id="mainNav">
@@ -39,7 +42,10 @@
     <div class="drawer__backdrop" data-action="close-mobile-menu"></div>
     <div class="drawer__panel">
       <div class="drawer__top">
-        <a class="drawer__logo" href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> BetCopa</a>
+        <a class="drawer__logo" href="#" data-nav="jogos">
+          <img id="brandLogoDrawer" class="brand-logo-img hidden" src="" alt="Logo" />
+          <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> BetCopa</span>
+        </a>
         <button class="drawer__close" data-action="close-mobile-menu" aria-label="Fechar menu">×</button>
       </div>
       <div class="drawer__body" id="drawerBody"></div>
@@ -476,6 +482,34 @@
                       <input id="cfg_site_nome" type="text" placeholder="BetCopa" />
                     </div>
                     <div class="form-group">
+                      <label>Logotipo do site</label>
+                      <!-- Media picker estilo WordPress -->
+                      <div class="media-picker" id="logoPicker">
+                        <!-- Estado: sem logo -->
+                        <div class="media-picker__empty" id="logoPickerEmpty">
+                          <i class="fa-solid fa-image"></i>
+                          <span>Nenhum logo definido</span>
+                          <small>PNG, JPG, SVG ou WEBP · máx 2 MB</small>
+                        </div>
+                        <!-- Estado: com logo -->
+                        <div class="media-picker__preview hidden" id="logoPickerPreview">
+                          <img id="logoPickerImg" src="" alt="Logo atual" />
+                          <button type="button" class="media-picker__remove" id="logoPickerRemove" title="Remover logo">
+                            <i class="fa-solid fa-xmark"></i>
+                          </button>
+                        </div>
+                        <!-- Botões -->
+                        <div class="media-picker__actions">
+                          <label class="btn btn--ghost btn--sm media-picker__select" for="logoFileInput">
+                            <i class="fa-solid fa-upload"></i>
+                            <span id="logoPickerBtnLabel">Enviar imagem</span>
+                          </label>
+                          <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" class="hidden" />
+                          <span class="media-picker__status" id="logoPickerStatus"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
                       <label>Emoji / ícone</label>
                       <input id="cfg_site_emoji" type="text" placeholder="⚽" maxlength="4" />
                     </div>
@@ -757,7 +791,10 @@
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <div class="site-footer__brand">
-        <span class="site-footer__logo"><i class="fa-solid fa-futbol"></i> BetCopa</span>
+        <span class="site-footer__logo">
+          <img id="brandLogoFooter" class="brand-logo-img hidden" src="" alt="Logo" />
+          <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> BetCopa</span>
+        </span>
         <p class="site-footer__tagline">Palpites esportivos com seus amigos.<br>Copa do Mundo 2026.</p>
       </div>
       <nav class="site-footer__links">

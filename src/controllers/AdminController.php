@@ -81,6 +81,8 @@ class AdminController
             'mult_min'    => (int)   $this->config->get('mult_min',    1),
             'mult_max'    => (int)   $this->config->get('mult_max',    100),
             'bet_percent' => (float) $this->config->get('bet_percent', 10),
+            'site_logo'   =>         $this->config->get('site_logo',   ''),
+            'site_nome'   =>         $this->config->get('site_nome',   'BetCopa'),
         ]);
     }
 
@@ -99,6 +101,7 @@ class AdminController
             'mult_min', 'mult_max', 'bet_percent',
             'max_aposta', 'max_ganho',
             'saques_ativos',
+            'site_logo',
         ];
 
         $saved = [];
@@ -111,5 +114,79 @@ class AdminController
 
         Logger::info('Configurações atualizadas', ['chaves' => $saved]);
         jsonResponse(['message' => count($saved) . ' configuração(ões) salva(s).']);
+    }
+
+    public function uploadLogo(): void
+    {
+        ensureAdmin($this->adminEmail);
+
+        if (empty($_FILES['logo'])) {
+            jsonResponse(['error' => 'Nenhum arquivo enviado.'], 400);
+        }
+
+        $file    = $_FILES['logo'];
+        $maxSize = 2 * 1024 * 1024; // 2 MB
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            jsonResponse(['error' => 'Erro no upload: código ' . $file['error']], 400);
+        }
+
+        if ($file['size'] > $maxSize) {
+            jsonResponse(['error' => 'Arquivo muito grande. Máximo 2 MB.'], 400);
+        }
+
+        // Validar tipo real pelo conteúdo (não pelo nome)
+        $mime = mime_content_type($file['tmp_name']);
+        $allowed = ['image/png' => 'png', 'image/jpeg' => 'jpg',
+                    'image/gif' => 'gif', 'image/webp' => 'webp',
+                    'image/svg+xml' => 'svg'];
+
+        if (!isset($allowed[$mime])) {
+            jsonResponse(['error' => 'Tipo de arquivo não permitido. Use PNG, JPG, GIF, WEBP ou SVG.'], 400);
+        }
+
+        $ext      = $allowed[$mime];
+        $filename = 'logo_' . bin2hex(random_bytes(8)) . '.' . $ext;
+        $uploadDir = __DIR__ . '/../../public/assets/uploads/';
+        $destPath  = $uploadDir . $filename;
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Apagar logo anterior (se existir e for da pasta de uploads)
+        $oldLogo = $this->config->get('site_logo', '');
+        if ($oldLogo && str_starts_with($oldLogo, '/assets/uploads/')) {
+            $oldFile = __DIR__ . '/../../public' . $oldLogo;
+            if (is_file($oldFile)) {
+                @unlink($oldFile);
+            }
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            jsonResponse(['error' => 'Falha ao salvar o arquivo no servidor.'], 500);
+        }
+
+        $url = '/assets/uploads/' . $filename;
+        $this->config->set('site_logo', $url);
+
+        jsonResponse(['url' => $url, 'message' => 'Logo enviado com sucesso.']);
+    }
+
+    public function deleteLogo(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $current = $this->config->get('site_logo', '');
+        if ($current && str_starts_with($current, '/assets/uploads/')) {
+            $path = __DIR__ . '/../../public' . $current;
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        $this->config->set('site_logo', '');
+        jsonResponse(['message' => 'Logo removido.']);
     }
 }
