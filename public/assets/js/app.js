@@ -502,63 +502,133 @@ const renderSection = (id, title, iconHtml, games, extraClass = '') => {
     </section>`;
 };
 
-// ── Game sections ─────────────────────────────────────────────
+// ── Match Banner carousel ─────────────────────────────────────
+// Auto-advance timer lives outside S.timers so it can be paused on hover
+// and re-created without polluting S.timers on each mouse event.
+let _mbAutoTimer = null;
+
 const renderMatchBanner = () => {
-  const el = document.getElementById('matchBanner');
+  let el = document.getElementById('matchBanner');
   if (!el) return;
 
-  const live     = S.games.filter(isGameLive);
-  const upcoming = S.games
-    .filter(g => g.status === 'aberto' && !isGameLive(g))
-    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+  // Clear previous auto-advance and strip old listeners via clone
+  clearInterval(_mbAutoTimer);
+  _mbAutoTimer = null;
+  const fresh = el.cloneNode(false);
+  el.replaceWith(fresh);
+  el = fresh;
 
-  if (live.length) {
-    const g = live[0];
-    const score = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
-    const clock = fmtLiveClock(g);
-    const logoH = g.logo_casa  ? `<img src="${g.logo_casa}"  class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagImg(g.bandeira_casa || '', '2rem')}</span>`;
-    const logoA = g.logo_fora  ? `<img src="${g.logo_fora}"  class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagImg(g.bandeira_fora || '', '2rem')}</span>`;
-    el.className = 'match-banner match-banner--live';
-    el.innerHTML = `
-      <div class="mb-pill mb-pill--live"><i class="fa-solid fa-circle fa-beat"></i> AO VIVO</div>
-      <div class="mb-match">
-        <div class="mb-team">${logoH}<span>${g.time_casa}</span></div>
-        <div class="mb-center">
-          <div class="mb-score">${score}</div>
-          <div class="mb-clock">${clock.period} · ${clock.min}'</div>
-        </div>
-        <div class="mb-team">${logoA}<span>${g.time_fora}</span></div>
-      </div>`;
-  } else if (upcoming.length) {
-    const g = upcoming[0];
-    const ms = new Date(g.data_hora) - Date.now();
-    const logoH = g.logo_casa ? `<img src="${g.logo_casa}" class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagImg(g.bandeira_casa || '', '2rem')}</span>`;
-    const logoA = g.logo_fora ? `<img src="${g.logo_fora}" class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagImg(g.bandeira_fora || '', '2rem')}</span>`;
-    el.className = 'match-banner match-banner--soon';
-    el.innerHTML = `
-      <div class="mb-pill mb-pill--soon"><i class="fa-solid fa-clock"></i> PRÓXIMO JOGO</div>
-      <div class="mb-match">
-        <div class="mb-team">${logoH}<span>${g.time_casa}</span></div>
-        <div class="mb-center">
-          <div class="mb-label">COMEÇA EM</div>
-          <div class="mb-countdown" id="bannerCountdown">${fmtCountdown(ms)}</div>
-        </div>
-        <div class="mb-team">${logoA}<span>${g.time_fora}</span></div>
-      </div>`;
-    // Atualiza o countdown do banner a cada segundo
-    const t = setInterval(() => {
-      const el2 = document.getElementById('bannerCountdown');
-      if (!el2) { clearInterval(t); return; }
-      const rem = new Date(g.data_hora) - Date.now();
-      el2.textContent = fmtCountdown(rem);
-    }, 1000);
-    S.timers.push(t);
-  } else {
+  // Slide priority: live games → soon (<1h) → next upcoming
+  const live = S.games.filter(isGameLive);
+  const soon = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g))
+    .filter(g => { const ms = new Date(g.data_hora) - Date.now(); return ms > 0 && ms <= 3_600_000; })
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+  const next = (!live.length && !soon.length)
+    ? S.games.filter(g => g.status === 'aberto' && !isGameLive(g))
+        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
+        .slice(0, 1)
+    : [];
+
+  const slides = [...live, ...soon, ...next];
+
+  if (!slides.length) {
     el.className = 'match-banner hidden';
     el.innerHTML = '';
     return;
   }
-  el.classList.remove('hidden');
+
+  const buildSlide = (g, idx) => {
+    const gLive = isGameLive(g);
+    const logoH = g.logo_casa ? `<img src="${g.logo_casa}" class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagImg(g.bandeira_casa || '', '2rem')}</span>`;
+    const logoA = g.logo_fora ? `<img src="${g.logo_fora}" class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagImg(g.bandeira_fora || '', '2rem')}</span>`;
+    let pill, center, cta;
+
+    if (gLive) {
+      const score = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
+      const { period, min } = fmtLiveClock(g);
+      pill   = `<div class="mb-pill mb-pill--live"><i class="fa-solid fa-circle fa-beat"></i> AO VIVO</div>`;
+      center = `<div class="mb-score">${score}</div>
+                <div class="mb-clock" id="mbc-clk-${g.id}">${min !== null ? `${period} · ${min}'` : period}</div>`;
+      cta    = `<button class="btn btn--danger btn--sm mb-cta-btn" disabled>
+                  <i class="fa-solid fa-satellite-dish fa-beat"></i> Ao Vivo
+                </button>`;
+    } else {
+      const ms     = new Date(g.data_hora) - Date.now();
+      const isSoon = ms <= 3_600_000;
+      pill   = isSoon
+        ? `<div class="mb-pill mb-pill--soon"><i class="fa-solid fa-bolt"></i> EM BREVE</div>`
+        : `<div class="mb-pill mb-pill--next"><i class="fa-solid fa-clock"></i> PRÓXIMO JOGO</div>`;
+      center = `<div class="mb-label">COMEÇA EM</div>
+                <div class="mb-countdown" id="mbc-cd-${g.id}">${fmtCountdown(ms)}</div>`;
+      cta    = `<button class="btn btn--primary btn--sm mb-cta-btn" data-action="bet" data-id="${g.id}">
+                  <i class="fa-solid fa-bullseye"></i> Fazer Palpite
+                </button>`;
+    }
+
+    return `
+      <div class="mb-slide${idx === 0 ? ' mb-slide--active' : ''}" data-slide="${idx}">
+        ${pill}
+        <div class="mb-match">
+          <div class="mb-team">${logoH}<span class="mb-name">${g.time_casa}</span></div>
+          <div class="mb-center">${center}</div>
+          <div class="mb-team">${logoA}<span class="mb-name">${g.time_fora}</span></div>
+        </div>
+        ${cta}
+      </div>`;
+  };
+
+  const dotsHtml = slides.length > 1
+    ? `<div class="mb-dots">${slides.map((_, i) =>
+        `<button class="mb-dot${i === 0 ? ' mb-dot--active' : ''}" data-dot="${i}"></button>`
+      ).join('')}</div>`
+    : '';
+
+  el.className = `match-banner ${isGameLive(slides[0]) ? 'match-banner--live' : 'match-banner--soon'}`;
+  el.innerHTML = slides.map(buildSlide).join('') + dotsHtml;
+
+  // Countdown timers for non-live slides
+  slides.filter(g => !isGameLive(g)).forEach(g => {
+    const cdEl = document.getElementById(`mbc-cd-${g.id}`);
+    if (!cdEl) return;
+    S.timers.push(setInterval(() => {
+      cdEl.textContent = fmtCountdown(new Date(g.data_hora) - Date.now());
+    }, 1000));
+  });
+
+  // Live clock updates
+  slides.filter(isGameLive).forEach(g => {
+    const clkEl = document.getElementById(`mbc-clk-${g.id}`);
+    if (!clkEl) return;
+    S.timers.push(setInterval(() => {
+      const { period, min } = fmtLiveClock(g);
+      clkEl.textContent = min !== null ? `${period} · ${min}'` : period;
+    }, 30_000));
+  });
+
+  if (slides.length <= 1) return;
+
+  let current = 0;
+  const goTo = (idx) => {
+    el.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === idx));
+    el.querySelectorAll('.mb-dot').forEach((d, i)   => d.classList.toggle('mb-dot--active',   i === idx));
+    el.className = `match-banner ${isGameLive(slides[idx]) ? 'match-banner--live' : 'match-banner--soon'}`;
+    current = idx;
+  };
+
+  const advance    = () => goTo((current + 1) % slides.length);
+  const startAuto  = () => { clearInterval(_mbAutoTimer); _mbAutoTimer = setInterval(advance, 6_000); };
+
+  el.addEventListener('click', e => {
+    const dot = e.target.closest('.mb-dot');
+    if (!dot) return;
+    goTo(Number(dot.dataset.dot));
+    startAuto();
+  });
+  el.addEventListener('mouseenter', () => clearInterval(_mbAutoTimer));
+  el.addEventListener('mouseleave', startAuto);
+
+  startAuto();
 };
 
 const renderGames = () => {
