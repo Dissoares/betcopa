@@ -1944,305 +1944,225 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .gc-meta__price { display: none; }
 }
 
-/* ── Match Banner (carousel) ─────────────────────────────────── */
+/* ============================================================
+   MATCH BANNER — redesign v2
+   ============================================================ */
+
+/* Wrapper full-width (border + bg) */
+.match-banner-wrap {
+  border-top: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: border-top-color .4s ease, background .4s ease;
+}
+.match-banner-wrap.match-banner--live {
+  border-top-color: var(--danger);
+  background: linear-gradient(180deg, rgba(255,71,87,.04) 0%, transparent 60%);
+}
+.match-banner-wrap.match-banner--soon {
+  border-top-color: var(--primary);
+  background: linear-gradient(180deg, rgba(0,200,83,.03) 0%, transparent 60%);
+}
+
+/* Banner container (usa .container para alinhar ao corpo da página) */
 .match-banner {
-  width: 100%;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Strip: stacks slides on mobile, horizontal row on desktop ── */
+/* Strip mobile: empilha slides */
 .mb-strip {
   display: grid;
   grid-template-columns: 1fr;
 }
-
-/* Mobile: all slides in same grid cell (stacked), active one shows */
 .mb-slide {
   grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.4rem 1rem 1rem;
-  gap: .9rem;
+  padding: 1.15rem 1rem .85rem;
+  gap: .7rem;
   text-align: center;
   opacity: 0;
-  transition: opacity .3s ease;
+  transition: opacity .35s ease;
   pointer-events: none;
 }
-.mb-slide--active {
-  opacity: 1;
-  pointer-events: auto;
-}
+.mb-slide--active { opacity: 1; pointer-events: auto; }
 
-/* Pill label (live / em breve / próximo) */
+/* Pill */
 .mb-pill {
   display: inline-flex;
   align-items: center;
-  gap: .35rem;
-  font-size: .7rem;
+  gap: .3rem;
+  font-size: .62rem;
   font-weight: 800;
   letter-spacing: .1em;
-  padding: .28rem .75rem;
+  padding: .2rem .6rem;
   border-radius: 99px;
   text-transform: uppercase;
   z-index: 1;
 }
 .mb-pill--live {
-  background: #dc2626;
-  color: #fff;
-  box-shadow: 0 0 12px rgba(220,38,38,.6);
+  background: rgba(255,71,87,.15);
+  color: var(--danger);
+  border: 1px solid rgba(255,71,87,.32);
+  animation: liveGlow 2s ease-in-out infinite;
 }
 .mb-pill--soon {
-  background: var(--gold);
-  color: #000;
-  box-shadow: 0 0 10px rgba(255,215,0,.4);
+  background: rgba(245,158,11,.14);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,.28);
 }
 .mb-pill--next {
-  background: rgba(61,142,255,.2);
+  background: var(--tint-info);
   color: var(--info);
-  border: 1px solid rgba(61,142,255,.3);
+  border: 1px solid rgba(61,142,255,.2);
 }
 
-/* CTA button inside slide */
-.mb-cta-btn {
-  font-size: .8rem;
-  padding: .5rem 1.4rem;
-  box-shadow: 0 4px 14px rgba(0,0,0,.3);
-  position: relative;
-  z-index: 1;
-}
-
-/* Nav bar: arrows + dots */
-.mb-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .65rem;
-  padding: .3rem 0 .6rem;
-}
-
-/* Arrow buttons */
-.mb-arrow {
-  display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px;
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 50%;
-  background: rgba(255,255,255,.07);
-  color: rgba(255,255,255,.65);
-  font-size: .7rem;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-  flex-shrink: 0;
-}
-.mb-arrow:hover { background: rgba(255,255,255,.18); color: #fff; }
-
-/* Dots */
-.mb-dots {
-  display: flex; align-items: center;
-  gap: .4rem;
-}
-.mb-dot {
-  width: 6px; height: 6px;
-  border-radius: 999px; border: none;
-  background: rgba(255,255,255,.25);
-  cursor: pointer; padding: 0;
-  transition: background .2s, width .2s;
-}
-.mb-dot--active { width: 18px; background: rgba(255,255,255,.8); }
-
-/* ── Desktop: cards lado a lado ─────────────────────────────── */
-@media (min-width: 768px) {
-  .mb-strip {
-    display: flex;                /* override grid */
-    flex-direction: row;
-    gap: .85rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    padding: 1rem 1.25rem;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .mb-strip::-webkit-scrollbar { display: none; }
-
-  .mb-slide {
-    grid-area: unset;             /* remove stacking */
-    flex: 0 0 clamp(220px, 26vw, 290px);
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    scroll-snap-align: start;
-    transition: border-color .2s, background .2s;
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(255,255,255,.09);
-    border-radius: var(--radius);
-    padding: .9rem .8rem .85rem;
-    gap: .55rem;
-    min-height: 0;
-  }
-  .mb-slide--active {
-    border-color: rgba(255,255,255,.28);
-    background: rgba(255,255,255,.1);
-  }
-
-  /* Smaller elements inside each card */
-  .mb-logo    { width: 2.2rem; height: 2.2rem; }
-  .mb-name    { font-size: .68rem; max-width: 5.5rem; }
-  .mb-score   { font-size: 1.35rem; }
-  .mb-countdown { font-size: 1.05rem; }
-  .mb-clock   { font-size: .62rem; }
-  .mb-label   { font-size: .58rem; }
-  .mb-match   { max-width: none; gap: .6rem; }
-  .mb-center  { min-width: 4rem; }
-  .mb-cta-btn { font-size: .73rem; padding: .38rem .85rem; width: 100%; }
-  .mb-pill    { font-size: .6rem; padding: .18rem .5rem; }
-
-  /* dots hidden on desktop — strip is scrollable, arrows suffice */
-  .mb-dots { display: none; }
-  .mb-arrow { width: 30px; height: 30px; font-size: .8rem; }
-  .mb-nav   { padding: .2rem 0 .5rem; }
-}
-
-.match-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  pointer-events: none;
-}
-.match-banner--live {
-  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 40%, #1a1a2e 100%);
-  border-bottom: 2px solid rgba(239,68,68,.5);
-}
-.match-banner--soon {
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #1a1a2e 100%);
-  border-bottom: 2px solid rgba(16,185,129,.4);
-}
-
-/* Status row */
-.mb-status {
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-  z-index: 1;
-}
-.mb-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: .35rem;
-  font-size: .7rem;
-  font-weight: 800;
-  letter-spacing: .1em;
-  padding: .28rem .75rem;
-  border-radius: 99px;
-  text-transform: uppercase;
-}
-.mb-badge--live  { background: #dc2626; color: #fff; box-shadow: 0 0 12px rgba(220,38,38,.6); }
-.mb-badge--soon  { background: var(--primary); color: #fff; box-shadow: 0 0 12px rgba(16,185,129,.4); }
-.mb-league {
-  font-size: .72rem;
-  color: rgba(255,255,255,.55);
-  font-weight: 600;
-}
-
-/* Teams row */
+/* Times */
 .mb-match {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: .85rem;
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   z-index: 1;
 }
 .mb-team {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .45rem;
-  flex: 1;
-  min-width: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .3rem; flex: 1; min-width: 0;
 }
 .mb-logo {
-  width: 3.2rem;
-  height: 3.2rem;
+  width: 2.9rem; height: 2.9rem;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
 }
 .mb-name {
-  font-size: .78rem;
-  font-weight: 800;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 7rem;
+  font-size: .72rem; font-weight: 800;
+  color: var(--text);
+  text-transform: uppercase; letter-spacing: .04em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 6.5rem;
 }
 
-/* Center: score or countdown */
+/* Centro */
 .mb-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .2rem;
-  flex-shrink: 0;
-  min-width: 5rem;
+  display: flex; flex-direction: column;
+  align-items: center; gap: .16rem;
+  flex-shrink: 0; min-width: 5rem;
 }
 .mb-score {
-  font-size: 2rem;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: .06em;
-  line-height: 1;
+  font-size: 1.7rem; font-weight: 900;
+  color: var(--text); letter-spacing: .06em; line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .mb-clock {
-  font-size: .68rem;
-  color: rgba(239,68,68,.9);
-  font-weight: 700;
-  letter-spacing: .05em;
+  font-size: .6rem; color: var(--danger);
+  font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
 }
-.mb-vs {
-  font-size: .9rem;
-  font-weight: 900;
-  color: rgba(255,255,255,.35);
-}
-.mb-label {
-  font-size: .62rem;
-  color: rgba(255,255,255,.5);
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
+.mb-vs     { font-size: .72rem; font-weight: 900; color: var(--text-muted); }
+.mb-label  { font-size: .57rem; color: var(--text-muted); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .mb-countdown {
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: .04em;
-  line-height: 1;
+  font-size: 1.1rem; font-weight: 900;
+  color: var(--primary); letter-spacing: .04em; line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 /* CTA */
-.mb-cta {
-  z-index: 1;
+.mb-cta-btn {
+  font-size: .78rem; padding: .42rem 1.2rem;
+  box-shadow: none; position: relative; z-index: 1;
 }
-.mb-cta .btn {
-  font-size: .8rem;
-  padding: .5rem 1.4rem;
-  box-shadow: 0 4px 14px rgba(0,0,0,.3);
+
+/* Nav */
+.mb-nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: .5rem; padding: .18rem 0 .5rem;
+}
+.mb-arrow {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: .62rem; cursor: pointer; flex-shrink: 0;
+}
+.mb-arrow:hover { background: var(--surface-3); color: var(--text); }
+.mb-dots { display: flex; align-items: center; gap: .32rem; }
+.mb-dot {
+  width: 5px; height: 5px; border-radius: 999px; border: none;
+  background: var(--border-strong); cursor: pointer; padding: 0;
+  transition: background .2s, width .2s;
+}
+.mb-dot--active { width: 15px; background: var(--primary); }
+
+/* Desktop: row de cards */
+@media (min-width: 768px) {
+  .mb-strip {
+    display: flex; flex-direction: row;
+    gap: .6rem; overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: .8rem 1.25rem .7rem;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .mb-strip::-webkit-scrollbar { display: none; }
+
+  .mb-slide {
+    grid-area: unset;
+    opacity: 1;
+    pointer-events: auto;
+    flex: 0 0 clamp(185px, 21vw, 240px);
+    scroll-snap-align: start;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: .7rem .7rem .65rem;
+    gap: .45rem; min-height: 0;
+    transition: border-color .2s, background .2s,
+                transform .2s cubic-bezier(.22,1,.36,1);
+  }
+  .mb-slide--active {
+    background: var(--surface-3);
+    border-color: var(--border-strong);
+  }
+  .mb-slide:hover:not(.mb-slide--active) {
+    background: var(--surface-3);
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+
+  .mb-logo      { width: 1.9rem; height: 1.9rem; }
+  .mb-name      { font-size: .61rem; max-width: 4.8rem; }
+  .mb-score     { font-size: 1.15rem; }
+  .mb-countdown { font-size: .88rem; }
+  .mb-clock     { font-size: .55rem; }
+  .mb-label     { font-size: .52rem; }
+  .mb-match     { max-width: none; gap: .45rem; }
+  .mb-center    { min-width: 3.2rem; }
+  .mb-cta-btn   { font-size: .65rem; padding: .3rem .7rem; width: 100%; }
+  .mb-pill      { font-size: .55rem; padding: .15rem .42rem; }
+  .mb-dots      { display: none; }
+  .mb-arrow     { width: 26px; height: 26px; font-size: .7rem; }
+  .mb-nav       { padding: .12rem 0 .38rem; }
 }
 
 @media (max-width: 480px) {
-  .mb-slide { padding: 1rem .65rem .8rem; }
-  .mb-logo  { width: 2.6rem; height: 2.6rem; }
-  .mb-score { font-size: 1.6rem; }
-  .mb-countdown { font-size: 1.2rem; }
-  .mb-name  { font-size: .7rem; }
-  .mb-league { display: none; }
+  .mb-slide     { padding: .9rem .7rem .7rem; }
+  .mb-logo      { width: 2.4rem; height: 2.4rem; }
+  .mb-score     { font-size: 1.4rem; }
+  .mb-countdown { font-size: 1rem; }
+  .mb-name      { font-size: .67rem; }
 }
+
+/* Legacy selectors — mantidos para o JS não quebrar */
+.mb-status, .mb-badge, .mb-badge--live, .mb-badge--soon,
+.mb-league, .mb-vs, .mb-cta { display: contents; }
+
 
 /* ============================================================
    §  TEMPORAL SECTIONS — color modifiers

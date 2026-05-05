@@ -607,8 +607,9 @@ const renderSection = (id, title, iconHtml, games, extraClass = '') => {
 let _mbAutoTimer = null;
 
 const renderMatchBanner = () => {
-  let el = document.getElementById('matchBanner');
-  if (!el) return;
+  let el   = document.getElementById('matchBanner');
+  const wrap = document.getElementById('matchBannerWrap');
+  if (!el || !wrap) return;
 
   // Clear previous auto-advance and strip old listeners via clone
   clearInterval(_mbAutoTimer);
@@ -630,10 +631,16 @@ const renderMatchBanner = () => {
   const slides = [...live, ...soon, ...next];
 
   if (!slides.length) {
-    el.className = 'match-banner hidden';
+    wrap.className = 'match-banner-wrap hidden';
     el.innerHTML = '';
     return;
   }
+
+  const setThemeClass = (g) => {
+    wrap.classList.remove('match-banner--live', 'match-banner--soon');
+    wrap.classList.add(isGameLive(g) ? 'match-banner--live' : 'match-banner--soon');
+    wrap.classList.remove('hidden');
+  };
 
   const buildSlide = (g, idx) => {
     const gLive = isGameLive(g);
@@ -684,7 +691,8 @@ const renderMatchBanner = () => {
       <button class="mb-arrow" id="mbNext"><i class="fa-solid fa-chevron-right"></i></button>
     </div>` : '';
 
-  el.className = `match-banner ${isGameLive(slides[0]) ? 'match-banner--live' : 'match-banner--soon'}`;
+  setThemeClass(slides[0]);
+  el.className = 'match-banner container';
   el.innerHTML = `<div class="mb-strip" id="mbStrip">${slides.map(buildSlide).join('')}</div>${navHtml}`;
 
   // Countdown timers for non-live slides
@@ -714,7 +722,7 @@ const renderMatchBanner = () => {
   const goTo = (idx) => {
     current = Math.max(0, Math.min(idx, slides.length - 1));
     el.querySelectorAll('.mb-dot').forEach((d, i) => d.classList.toggle('mb-dot--active', i === current));
-    el.className = `match-banner ${isGameLive(slides[current]) ? 'match-banner--live' : 'match-banner--soon'}`;
+    setThemeClass(slides[current]);
 
     const strip = document.getElementById('mbStrip');
     if (isDesktop()) {
