@@ -117,6 +117,9 @@ try {
         // ── Admin: Apostas ────────────────────────────────────
         route('/api/admin/apostas', 'GET', fn() => $adminCtrl->listBets());
 
+        // ── Config pública (mult range) ───────────────────────────
+        route('/api/config/bets',  'GET',  fn() => $adminCtrl->betConfig());
+
         // ── Admin: Configurações ──────────────────────────────
         route('/api/admin/config', 'GET',  fn() => $adminCtrl->getConfig());
         route('/api/admin/config', 'POST', fn() => $adminCtrl->updateConfig());

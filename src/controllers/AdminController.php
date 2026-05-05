@@ -74,6 +74,15 @@ class AdminController
         jsonResponse(['config' => $this->config->all()]);
     }
 
+    /** Endpoint público — só expõe mult_min e mult_max para o frontend */
+    public function betConfig(): void
+    {
+        jsonResponse([
+            'mult_min' => (int) $this->config->get('mult_min', 1),
+            'mult_max' => (int) $this->config->get('mult_max', 100),
+        ]);
+    }
+
     public function updateConfig(): void
     {
         Csrf::verify();

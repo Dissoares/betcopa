@@ -14,6 +14,8 @@ const S = {
   scoreHome:    0,
   scoreAway:    0,
   multiplier:   5,
+  multMin:      1,
+  multMax:      100,
   timers:       [],        // countdown interval refs
   pollTimer:    null,      // intervalo de polling para jogos ao vivo
   adminEmail:   'admin@betcopa.local',
@@ -434,7 +436,7 @@ const renderCard = (g) => {
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
   const ctaHtml = !isClosed
-    ? `<p class="gc-cta">🔥 Acerte e ganhe <strong>${oddFmt}×</strong> o valor!</p>`
+    ? `<p class="gc-cta">🔥 Acerte e ganhe de <strong>${S.multMin}×</strong> a <strong>${S.multMax}×</strong> o valor!</p>`
     : '';
 
   const footHtml = isLive
@@ -749,7 +751,12 @@ const openBetModal = (gameId, pending = null) => {
   S.selectedGame = game;
   S.scoreHome    = pending?.scoreHome  ?? 0;
   S.scoreAway    = pending?.scoreAway  ?? 0;
-  S.multiplier   = pending?.multiplier ?? 5;
+  S.multiplier   = Math.min(S.multMax, Math.max(S.multMin, pending?.multiplier ?? Math.round((S.multMin + S.multMax) / 2)));
+
+  const slider = document.getElementById('multiplierSlider');
+  slider.min   = S.multMin;
+  slider.max   = S.multMax;
+  slider.value = S.multiplier;
 
   document.getElementById('betFlagHome').innerHTML    = getEmblem(game, 'home');
   document.getElementById('betNameHome').textContent  = game.time_casa;
@@ -757,7 +764,6 @@ const openBetModal = (gameId, pending = null) => {
   document.getElementById('betNameAway').textContent  = game.time_fora;
   document.getElementById('scoreHome').textContent    = S.scoreHome;
   document.getElementById('scoreAway').textContent    = S.scoreAway;
-  document.getElementById('multiplierSlider').value   = S.multiplier;
 
   updateBetPreview();
   openModal('modalPalpite');
@@ -779,7 +785,8 @@ const updateBetPreview = () => {
 
   // Update slider track fill
   const slider = document.getElementById('multiplierSlider');
-  const pct = ((mult - 2) / 8) * 100;
+  const range  = (S.multMax - S.multMin) || 1;
+  const pct    = ((mult - S.multMin) / range) * 100;
   slider.style.background = `linear-gradient(to right, var(--primary) ${pct}%, var(--surface-3) ${pct}%)`;
 };
 
@@ -1895,11 +1902,21 @@ const stopLivePoll = () => {
 };
 
 // ── Init ──────────────────────────────────────────────────────
+const loadBetConfig = async () => {
+  try {
+    const cfg = await api('/api/config/bets');
+    S.multMin = cfg.mult_min || 1;
+    S.multMax = cfg.mult_max || 100;
+    if (S.multiplier < S.multMin) S.multiplier = S.multMin;
+    if (S.multiplier > S.multMax) S.multiplier = S.multMax;
+  } catch (_) { /* usa defaults */ }
+};
+
 const init = async () => {
   loadTheme();
   bind();
   await loadCsrf();
-  await loadUser();
+  await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
 
