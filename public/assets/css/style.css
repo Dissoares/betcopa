@@ -440,18 +440,60 @@ body.drawer-open { overflow: hidden; }
   font-size: 1.8rem; cursor: pointer;
 }
 
-.drawer__nav { display: flex; flex-direction: column; gap: .65rem; }
-
-.drawer__nav .nav__btn {
-  width: 100%;
-  justify-content: flex-start;
-  padding: .85rem 1rem;
-  border-radius: 16px;
-  background: rgba(255,255,255,.03);
-  color: var(--text);
+/* Scrollable body that fills remaining height */
+.drawer__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  gap: .1rem;
 }
 
-.drawer__footer { margin-top: auto; }
+/* ── User info block ─────────────────────────────────────────── */
+.dr-user {
+  display: flex; align-items: center; gap: .85rem;
+  padding: .4rem 0 .8rem;
+}
+.dr-user__info { min-width: 0; }
+.dr-user__name {
+  font-size: .95rem; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dr-user__balance { font-size: .8rem; font-weight: 700; color: var(--primary); margin-top: .15rem; }
+
+/* ── Separador ───────────────────────────────────────────────── */
+.dr-sep { height: 1px; background: rgba(255,255,255,.07); margin: .45rem 0; }
+
+/* ── Section label ───────────────────────────────────────────── */
+.dr-section-label {
+  font-size: .63rem; font-weight: 800; letter-spacing: .12em;
+  color: rgba(255,255,255,.3); text-transform: uppercase;
+  padding: .35rem .5rem .1rem; margin: 0;
+}
+
+/* ── Section group ───────────────────────────────────────────── */
+.dr-section { display: flex; flex-direction: column; gap: .1rem; }
+
+/* ── Nav item ────────────────────────────────────────────────── */
+.dr-item {
+  display: flex; align-items: center; gap: .8rem;
+  width: 100%; padding: .72rem .85rem;
+  border: none; background: none;
+  border-radius: 12px;
+  color: rgba(255,255,255,.65); font-size: .9rem; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: background .13s, color .13s;
+}
+.dr-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.dr-item i, .dr-item .theme-icon {
+  width: 1.2rem; text-align: center; font-size: .85rem;
+  opacity: .7; flex-shrink: 0;
+}
+.dr-item--danger { color: rgba(255,71,87,.8); }
+.dr-item--danger:hover { background: rgba(255,71,87,.1); color: var(--danger); }
+
+/* Pushes tema section to the bottom */
+.dr-bottom { margin-top: auto; padding-top: .25rem; }
 
 
 /* ============================================================

@@ -305,6 +305,74 @@ const navigate = (view) => {
 };
 
 // ── Header user chip ──────────────────────────────────────────
+const renderDrawer = () => {
+  const body = document.getElementById('drawerBody');
+  if (!body) return;
+
+  if (S.user) {
+    const initials = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const saldo    = parseFloat(S.user.saldo || 0);
+    const isAdmin  = S.user.email === S.adminEmail;
+
+    body.innerHTML = `
+      <div class="dr-user">
+        <div class="user-chip__avatar user-chip__avatar--lg">${initials}</div>
+        <div class="dr-user__info">
+          <div class="dr-user__name">${S.user.nome}</div>
+          <div class="dr-user__balance">${fmtMoney(saldo)}</div>
+        </div>
+      </div>
+      <div class="dr-sep"></div>
+      <div class="dr-section">
+        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+        <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
+        <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
+      </div>
+      ${isAdmin ? `
+      <div class="dr-sep"></div>
+      <p class="dr-section-label">ADMINISTRAÇÃO</p>
+      <div class="dr-section">
+        <button class="dr-item" data-nav="admin"><i class="fa-solid fa-shield-halved"></i> Painel Admin</button>
+      </div>` : ''}
+      <div class="dr-sep"></div>
+      <div class="dr-section">
+        <button class="dr-item dr-item--danger" id="drawerLogout">
+          <i class="fa-solid fa-right-from-bracket"></i> Sair
+        </button>
+      </div>
+      <div class="dr-bottom">
+        <div class="dr-sep"></div>
+        <p class="dr-section-label">TEMA</p>
+        <div class="dr-section">
+          <button class="dr-item btn-theme-toggle">
+            <span class="theme-icon">🌙</span> Alternar Modo
+          </button>
+        </div>
+      </div>`;
+
+    document.getElementById('drawerLogout')?.addEventListener('click', () => { closeMobileMenu(); logout(); });
+  } else {
+    body.innerHTML = `
+      <div class="dr-section">
+        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+        <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
+      </div>
+      <div class="dr-sep"></div>
+      <button class="btn btn--primary btn--full" data-nav="auth">
+        <i class="fa-solid fa-right-to-bracket"></i> Entrar
+      </button>
+      <div class="dr-bottom">
+        <div class="dr-sep"></div>
+        <p class="dr-section-label">TEMA</p>
+        <div class="dr-section">
+          <button class="dr-item btn-theme-toggle">
+            <span class="theme-icon">🌙</span> Alternar Modo
+          </button>
+        </div>
+      </div>`;
+  }
+};
+
 const renderHeader = () => {
   const wrap = document.getElementById('headerUser');
   if (S.user) {
@@ -359,6 +427,7 @@ const renderHeader = () => {
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = 'none');
   }
+  renderDrawer();
 };
 
 const openMobileMenu = () => {
@@ -1652,14 +1721,16 @@ const loadBets = async () => {
 
 // ── Event binding ─────────────────────────────────────────────
 const bind = () => {
-  // Nav buttons
-  document.getElementById('mainNav').addEventListener('click', e => {
+  // Nav — cobre header, drawer e qualquer outro elemento com data-nav
+  document.addEventListener('click', e => {
     const btn = e.target.closest('[data-nav]');
     if (!btn) return;
     navigate(btn.dataset.nav);
-    if (btn.dataset.nav === 'palpites') loadBets();
+    if (btn.dataset.nav === 'palpites')   loadBets();
     if (btn.dataset.nav === 'ganhadores') renderRanking();
-    if (btn.dataset.nav === 'admin') populateAdminSelect();
+    if (btn.dataset.nav === 'admin')      populateAdminSelect();
+    closeMobileMenu();
+    document.getElementById('userDropdown')?.classList.remove('udrop--open');
   });
 
   // Logo
