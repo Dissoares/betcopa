@@ -15,9 +15,9 @@ class BetService
     }
 
     /**
-     * Cria uma aposta com base no multiplicador escolhido pelo usuário (2–10×).
-     * valor_pago   = valor_base do jogo × multiplicador
-     * possivel_ganho = valor_pago × multiplicador
+     * Cria uma aposta.
+     * possivel_ganho = valor_base × multiplicador
+     * valor_pago     = possivel_ganho × 10%  (aposta é sempre 10% do prêmio)
      */
     public function createBet(int $userId, int $jogoId, int $placarCasa, int $placarFora, int $multiplicador): array
     {
@@ -40,10 +40,10 @@ class BetService
             throw new InvalidArgumentException('Apostas encerradas: jogo já iniciou');
         }
 
-        $multiplicador = max(2, min(10, $multiplicador));
+        $multiplicador = max(1, min(1000, $multiplicador));
         $valorBase     = (float) ($game['valor_base'] ?? 1.00);
-        $valor         = round($valorBase * $multiplicador, 2);
-        $possivelGanho = round($valor * $multiplicador, 2);
+        $possivelGanho = round($valorBase * $multiplicador, 2);
+        $valor         = round($possivelGanho * 0.10, 2);
 
         if ($valor <= 0 || $valor > $this->config['limits']['max_bet_value']) {
             throw new InvalidArgumentException('Valor da aposta fora do limite permitido');

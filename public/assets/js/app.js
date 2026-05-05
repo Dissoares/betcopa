@@ -757,6 +757,10 @@ const openBetModal = (gameId, pending = null) => {
   slider.min   = S.multMin;
   slider.max   = S.multMax;
   slider.value = S.multiplier;
+  const lblMin = document.getElementById('sliderLabelMin');
+  const lblMax = document.getElementById('sliderLabelMax');
+  if (lblMin) lblMin.textContent = `${S.multMin}×`;
+  if (lblMax) lblMax.textContent = `${S.multMax}×`;
 
   document.getElementById('betFlagHome').innerHTML    = getEmblem(game, 'home');
   document.getElementById('betNameHome').textContent  = game.time_casa;
@@ -774,8 +778,8 @@ const updateBetPreview = () => {
   if (!game) return;
   const mult      = S.multiplier;
   const base      = parseFloat(game.valor_base || 1);
-  const valor     = base * mult;
-  const premio    = valor * mult;
+  const premio    = base * mult;
+  const valor     = +(premio * 0.10).toFixed(2);
 
   document.getElementById('multiplierDisplay').textContent = `${mult}×`;
   document.getElementById('betPayAmount').textContent      = fmtMoney(valor);
@@ -793,8 +797,9 @@ const updateBetPreview = () => {
 const submitBet = async () => {
   if (!S.user) {
     // Sem login: mostra ticket em pré-visualização (sem chamar a API)
-    const base  = parseFloat(S.selectedGame.valor_base || 1);
-    const valor = base * S.multiplier;
+    const base   = parseFloat(S.selectedGame.valor_base || 1);
+    const premio = base * S.multiplier;
+    const valor  = +(premio * 0.10).toFixed(2);
     S.selectedBet = null;
     S.pendingBet  = {
       gameId:     S.selectedGame.id,
@@ -808,7 +813,7 @@ const submitBet = async () => {
       placar_casa:    S.scoreHome,
       placar_fora:    S.scoreAway,
       valor,
-      possivel_ganho: valor * S.multiplier,
+      possivel_ganho: premio,
     });
     openModal('modalTicket');
     return;
