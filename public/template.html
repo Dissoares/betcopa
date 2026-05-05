@@ -570,6 +570,10 @@
                       </div>
                     </div>
                     <div class="form-group">
+                      <label>% do prêmio que o usuário paga <small style="color:var(--text-muted)">(ex: 10 = aposta R$10 para concorrer R$100)</small></label>
+                      <input id="cfg_bet_percent" type="number" min="1" max="99" step="1" placeholder="10" />
+                    </div>
+                    <div class="form-group">
                       <label>Valor máximo por aposta (R$)</label>
                       <input id="cfg_max_aposta" type="number" min="1" placeholder="500.00" />
                     </div>
@@ -676,11 +680,11 @@
       </div>
       <div class="bet-summary">
         <div class="bet-summary__row">
-          <span class="text--muted">Você aposta (10% do prêmio)</span>
+          <span class="text--muted" id="betPayLabel">Você aposta (10% do prêmio)</span>
           <span class="bet-summary__amount" id="betPayAmount">R$ 5,00</span>
         </div>
         <div class="bet-summary__row bet-summary__row--win">
-          <span>🏆 Se acertar</span>
+          <span>🏆 Você ganha</span>
           <span class="bet-summary__win" id="betWinAmount">R$ 25,00</span>
         </div>
       </div>

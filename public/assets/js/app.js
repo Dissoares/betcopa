@@ -16,6 +16,7 @@ const S = {
   multiplier:   5,
   multMin:      1,
   multMax:      100,
+  betPercent:   10,
   timers:       [],        // countdown interval refs
   pollTimer:    null,      // intervalo de polling para jogos ao vivo
   adminEmail:   'admin@betcopa.local',
@@ -761,6 +762,8 @@ const openBetModal = (gameId, pending = null) => {
   const lblMax = document.getElementById('sliderLabelMax');
   if (lblMin) lblMin.textContent = `${S.multMin}×`;
   if (lblMax) lblMax.textContent = `${S.multMax}×`;
+  const payLbl = document.getElementById('betPayLabel');
+  if (payLbl) payLbl.textContent = `Você aposta (${S.betPercent}% do prêmio)`;
 
   document.getElementById('betFlagHome').innerHTML    = getEmblem(game, 'home');
   document.getElementById('betNameHome').textContent  = game.time_casa;
@@ -779,7 +782,7 @@ const updateBetPreview = () => {
   const mult      = S.multiplier;
   const base      = parseFloat(game.valor_base || 1);
   const premio    = base * mult;
-  const valor     = +(premio * 0.10).toFixed(2);
+  const valor     = +(premio * S.betPercent / 100).toFixed(2);
 
   document.getElementById('multiplierDisplay').textContent = `${mult}×`;
   document.getElementById('betPayAmount').textContent      = fmtMoney(valor);
@@ -799,7 +802,7 @@ const submitBet = async () => {
     // Sem login: mostra ticket em pré-visualização (sem chamar a API)
     const base   = parseFloat(S.selectedGame.valor_base || 1);
     const premio = base * S.multiplier;
-    const valor  = +(premio * 0.10).toFixed(2);
+    const valor  = +(premio * S.betPercent / 100).toFixed(2);
     S.selectedBet = null;
     S.pendingBet  = {
       gameId:     S.selectedGame.id,
@@ -1825,6 +1828,7 @@ const loadAdminConfig = async () => {
     set('cfg_valor_base_padrao',         'valor_base_padrao');
     set('cfg_mult_min',                  'mult_min');
     set('cfg_mult_max',                  'mult_max');
+    set('cfg_bet_percent',               'bet_percent');
     set('cfg_max_aposta',                'max_aposta');
     set('cfg_max_ganho',                 'max_ganho');
     set('cfg_saques_ativos',             'saques_ativos');
@@ -1869,6 +1873,7 @@ const submitAdminConfig = async (e) => {
       valor_base_padrao:         get('cfg_valor_base_padrao'),
       mult_min:                  get('cfg_mult_min'),
       mult_max:                  get('cfg_mult_max'),
+      bet_percent:               get('cfg_bet_percent'),
       max_aposta:                get('cfg_max_aposta'),
       max_ganho:                 get('cfg_max_ganho'),
       saques_ativos:             get('cfg_saques_ativos'),
@@ -1910,8 +1915,9 @@ const stopLivePoll = () => {
 const loadBetConfig = async () => {
   try {
     const cfg = await api('/api/config/bets');
-    S.multMin = cfg.mult_min || 1;
-    S.multMax = cfg.mult_max || 100;
+    S.multMin    = cfg.mult_min    || 1;
+    S.multMax    = cfg.mult_max    || 100;
+    S.betPercent = cfg.bet_percent || 10;
     if (S.multiplier < S.multMin) S.multiplier = S.multMin;
     if (S.multiplier > S.multMax) S.multiplier = S.multMax;
   } catch (_) { /* usa defaults */ }

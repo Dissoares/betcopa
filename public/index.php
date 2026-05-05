@@ -70,7 +70,7 @@ try {
 
         $authService = new AuthService($users, $transactions);
         $gameService = new GameService($games);
-        $betService  = new BetService($bets, $games, $transactions, $config);
+        $betService  = new BetService($bets, $games, $transactions, $config, $configRepo);
 
         $authCtrl    = new AuthController($authService);
         $gameCtrl    = new GameController($gameService, $games, $betService, $configRepo, $config);

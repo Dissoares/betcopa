@@ -5,13 +5,15 @@ class BetService
     private GameRepository $games;
     private TransactionRepository $transactions;
     private array $config;
+    private ConfigRepository $configRepo;
 
-    public function __construct(BetRepository $bets, GameRepository $games, TransactionRepository $transactions, array $config)
+    public function __construct(BetRepository $bets, GameRepository $games, TransactionRepository $transactions, array $config, ConfigRepository $configRepo)
     {
         $this->bets         = $bets;
         $this->games        = $games;
         $this->transactions = $transactions;
         $this->config       = $config;
+        $this->configRepo   = $configRepo;
     }
 
     /**
@@ -42,8 +44,9 @@ class BetService
 
         $multiplicador = max(1, min(1000, $multiplicador));
         $valorBase     = (float) ($game['valor_base'] ?? 1.00);
+        $betPercent    = (float) $this->configRepo->get('bet_percent', 10) / 100;
         $possivelGanho = round($valorBase * $multiplicador, 2);
-        $valor         = round($possivelGanho * 0.10, 2);
+        $valor         = round($possivelGanho * $betPercent, 2);
 
         if ($valor <= 0 || $valor > $this->config['limits']['max_bet_value']) {
             throw new InvalidArgumentException('Valor da aposta fora do limite permitido');

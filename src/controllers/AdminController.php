@@ -74,12 +74,13 @@ class AdminController
         jsonResponse(['config' => $this->config->all()]);
     }
 
-    /** Endpoint público — só expõe mult_min e mult_max para o frontend */
+    /** Endpoint público — expõe parâmetros de aposta para o frontend */
     public function betConfig(): void
     {
         jsonResponse([
-            'mult_min' => (int) $this->config->get('mult_min', 1),
-            'mult_max' => (int) $this->config->get('mult_max', 100),
+            'mult_min'    => (int)   $this->config->get('mult_min',    1),
+            'mult_max'    => (int)   $this->config->get('mult_max',    100),
+            'bet_percent' => (float) $this->config->get('bet_percent', 10),
         ]);
     }
 
@@ -95,7 +96,7 @@ class AdminController
             'api_football_key', 'api_football_timezone',
             'pix_tipo', 'pix_chave', 'pix_nome',
             'bonus_cadastro', 'valor_base_padrao',
-            'mult_min', 'mult_max',
+            'mult_min', 'mult_max', 'bet_percent',
             'max_aposta', 'max_ganho',
             'saques_ativos',
         ];
