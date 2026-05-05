@@ -301,6 +301,10 @@ const navigate = (view) => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
 
+  // Banner só aparece na view de jogos
+  const banner = document.getElementById('matchBanner');
+  if (banner) banner.classList.toggle('hidden', view !== 'jogos');
+
   history.replaceState(null, '', `/#${view}`);
 };
 
@@ -324,7 +328,7 @@ const renderDrawer = () => {
       </div>
       <div class="dr-sep"></div>
       <div class="dr-section">
-        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
       </div>
@@ -398,7 +402,7 @@ const renderHeader = () => {
           </div>
           <div class="udrop__sep"></div>
           <button class="udrop__item" data-udrop-nav="jogos">
-            <i class="fa-solid fa-futbol"></i> Jogos
+            <i class="fa-solid fa-house"></i> Início
           </button>
           <button class="udrop__item" data-udrop-nav="palpites">
             <i class="fa-solid fa-ticket"></i> Meus Palpites
