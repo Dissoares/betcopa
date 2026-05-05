@@ -254,10 +254,10 @@ const gameBadge = (g) => {
   const s    = g.status;
   const diff = new Date(g.data_hora) - Date.now();
 
-  // 1. Ao Vivo — badge indica apostas fechadas; o "AO VIVO" fica no centro do card
+  // 1. Ao Vivo — badge AO VIVO no header do card
   const liveStatuses = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
   if (liveStatuses.includes(api)) {
-    return `<span class="badge badge--closed"><i class="fa-solid fa-lock"></i> Fechado</span>`;
+    return `<span class="badge badge--live"><i class="fa-solid fa-circle"></i> AO VIVO</span>`;
   }
 
   // 2. Suspenso / Cancelado / Adiado
@@ -508,8 +508,8 @@ const renderCard = (g) => {
     midHtml = `
         <div class="gc-score gc-score--live">
           <span class="gc-score__label gc-score__label--live">
-            <i class="fa-solid fa-circle fa-beat"></i>
-            <span id="lvclock-${g.id}">Ao Vivo</span>
+            <i class="fa-solid fa-circle"></i>
+            <span id="lvclock-${g.id}">AO VIVO</span>
           </span>
           <span class="gc-score__val">${scoreStr ?? '0 × 0'}</span>
         </div>`;

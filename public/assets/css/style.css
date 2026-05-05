@@ -611,13 +611,37 @@ body.drawer-open { overflow: hidden; }
 .badge--open      { background: var(--tint-primary); color: var(--primary); }
 .badge--closed    { background: var(--tint-danger);  color: var(--danger); }
 .badge--final     { background: var(--surface-3);    color: var(--text-muted); }
-.badge--live      { background: var(--danger); color: #fff; animation: pulseBadge 1.5s infinite; }
+.badge--live {
+  background: var(--danger);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .06em;
+  box-shadow: 0 2px 14px var(--danger-glow);
+  animation: liveGlow 2s ease-in-out infinite;
+}
+/* Dot piscando dentro do badge */
+.badge--live i {
+  font-size: .5em;
+  display: inline-flex;
+  animation: liveDot 1s ease-in-out infinite;
+}
 .badge--soon      { background: #f59e0b22; color: #f59e0b; }
 .badge--cancelled { background: var(--surface-2); color: var(--text-dim); }
 
+/* pulseBadge: mantido para .nav-live-dot */
 @keyframes pulseBadge {
   0%,100% { box-shadow: 0 0 0 0 var(--danger-glow); }
   50%      { box-shadow: 0 0 0 5px transparent; }
+}
+/* Dot piscando — recording indicator */
+@keyframes liveDot {
+  0%, 100% { opacity: 1;  transform: scale(1); }
+  50%      { opacity: .2; transform: scale(.6); }
+}
+/* Badge breathing glow */
+@keyframes liveGlow {
+  0%, 100% { box-shadow: 0 2px 14px var(--danger-glow); }
+  50%      { box-shadow: 0 2px 28px rgba(255,71,87,.65), 0 0 0 3px rgba(255,71,87,.14); }
 }
 
 
@@ -1766,8 +1790,29 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   line-height: 1;
 }
 .gc-score--live  .gc-score__val        { color: var(--text); }
-.gc-score__label--live                 { color: var(--danger); font-weight: 800; letter-spacing: .06em; display: inline-flex; align-items: center; gap: .3rem; }
-.gc-score__label--live i               { font-size: .55em; }
+.gc-score__label--live {
+  color: var(--danger);
+  font-weight: 800;
+  letter-spacing: .06em;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  background: rgba(255,71,87,.12);
+  border: 1px solid rgba(255,71,87,.28);
+  border-radius: 999px;
+  padding: .22rem .65rem .22rem .5rem;
+  font-size: .58rem !important;
+  animation: liveChipGlow 2.5s ease-in-out infinite;
+}
+.gc-score__label--live i {
+  font-size: .72em;
+  /* sobrescreve fa-beat com nossa animação */
+  animation: liveDot 1s ease-in-out infinite !important;
+}
+@keyframes liveChipGlow {
+  0%, 100% { border-color: rgba(255,71,87,.28); box-shadow: none; }
+  50%      { border-color: rgba(255,71,87,.6);  box-shadow: 0 0 14px rgba(255,71,87,.22); }
+}
 .gc-score--final .gc-score__val   { color: var(--info); text-shadow: var(--score-shadow); }
 .gc-score__dot {
   font-size: .5rem;
@@ -2789,15 +2834,7 @@ input:focus, select:focus {
   transform: translateY(-1px);
 }
 
-/* ── 23. Badge live — pulso mais dramático ───────────────── */
-.badge--live {
-  animation: badgeLivePulse 1.8s cubic-bezier(.4,0,.6,1) infinite;
-}
-@keyframes badgeLivePulse {
-  0%,100% { box-shadow: 0 0 0 0 var(--danger-glow); opacity: 1; }
-  40%     { box-shadow: 0 0 0 6px transparent; }
-  50%     { opacity: .8; }
-}
+/* ── 23. Badge live — consolidado em §10 (liveGlow + liveDot) ── */
 
 /* ── 24. Drawer close button ─────────────────────────────── */
 .drawer__close {
