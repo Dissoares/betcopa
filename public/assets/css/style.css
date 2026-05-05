@@ -306,23 +306,83 @@ body::before {
 }
 .mobile-toggle i { font-size: 1.25rem; }
 
-.user-chip {
-  display: flex; align-items: center; gap: .55rem;
+/* ── User chip avatar (reused in dropdown trigger + info block) ── */
+.user-chip__avatar {
+  width: 28px; height: 28px;
+  background: var(--primary); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .72rem; color: #000;
+  flex-shrink: 0;
+}
+.user-chip__avatar--lg { width: 40px; height: 40px; font-size: .9rem; }
+
+/* ── User dropdown ────────────────────────────────────────────── */
+.udrop { position: relative; }
+
+.udrop__trigger {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .3rem .65rem .3rem .35rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: .35rem .9rem .35rem .4rem;
-  cursor: default;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
 }
-.user-chip__avatar {
-  width: 26px; height: 26px;
-  background: var(--primary); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: .7rem; color: #000;
+.udrop__trigger:hover,
+.udrop--open .udrop__trigger {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
 }
-.user-chip__name    { font-size: .82rem; font-weight: 600; }
-.user-chip__sep     { color: var(--text-muted); font-size: .75rem; }
-.user-chip__balance { font-size: .82rem; color: var(--primary); font-weight: 700; }
+.udrop__name    { font-size: .84rem; font-weight: 600; color: var(--text); }
+.udrop__chevron { font-size: .68rem; color: var(--text-muted); transition: transform .2s ease; }
+.udrop--open .udrop__chevron { transform: rotate(180deg); }
+
+/* Dropdown panel */
+.udrop__menu {
+  position: absolute;
+  top: calc(100% + .55rem);
+  right: 0;
+  min-width: 230px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 48px rgba(0,0,0,.45);
+  padding: .4rem;
+  opacity: 0;
+  transform: translateY(-8px) scale(.97);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 300;
+}
+.udrop--open .udrop__menu { opacity: 1; transform: none; pointer-events: auto; }
+
+/* Info block (avatar + name + balance) */
+.udrop__info { display: flex; align-items: center; gap: .75rem; padding: .6rem .65rem .7rem; }
+.udrop__info-text { min-width: 0; }
+.udrop__fullname {
+  font-size: .88rem; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.udrop__balance { font-size: .78rem; font-weight: 700; color: var(--primary); margin-top: .1rem; }
+
+/* Divider */
+.udrop__sep { height: 1px; background: var(--border); margin: .3rem 0; }
+
+/* Menu items */
+.udrop__item {
+  display: flex; align-items: center; gap: .65rem;
+  width: 100%; padding: .58rem .65rem;
+  border: none; background: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim); font-size: .85rem; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: background .12s, color .12s;
+}
+.udrop__item:hover { background: var(--surface-2); color: var(--text); }
+.udrop__item i { width: 1rem; text-align: center; font-size: .8rem; opacity: .75; }
+.udrop__item--danger { color: var(--danger); }
+.udrop__item--danger:hover { background: var(--tint-danger); color: var(--danger); }
 
 
 /* ============================================================

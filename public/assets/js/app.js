@@ -308,29 +308,53 @@ const navigate = (view) => {
 const renderHeader = () => {
   const wrap = document.getElementById('headerUser');
   if (S.user) {
-    const initials = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const saldo    = parseFloat(S.user.saldo || 0);
+    const initials  = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const saldo     = parseFloat(S.user.saldo || 0);
+    const isAdmin   = S.user.email === S.adminEmail;
+    const firstName = S.user.nome.split(' ')[0];
+
     wrap.innerHTML = `
-      <div class="user-chip">
-        <div class="user-chip__avatar">${initials}</div>
-        <span class="user-chip__name">${S.user.nome.split(' ')[0]}</span>
-        <span class="user-chip__sep">·</span>
-        <span class="user-chip__balance">${fmtMoney(saldo)}</span>
-      </div>
-      <button class="btn btn--ghost btn--sm" id="btnLogout">Sair</button>
-    `;
-    document.getElementById('btnLogout').addEventListener('click', logout);
+      <div class="udrop" id="userDropdown">
+        <button class="udrop__trigger" id="userDropdownBtn">
+          <div class="user-chip__avatar">${initials}</div>
+          <span class="udrop__name">${firstName}</span>
+          <i class="fa-solid fa-chevron-down udrop__chevron"></i>
+        </button>
+        <div class="udrop__menu">
+          <div class="udrop__info">
+            <div class="user-chip__avatar user-chip__avatar--lg">${initials}</div>
+            <div class="udrop__info-text">
+              <div class="udrop__fullname">${S.user.nome}</div>
+              <div class="udrop__balance">${fmtMoney(saldo)}</div>
+            </div>
+          </div>
+          <div class="udrop__sep"></div>
+          <button class="udrop__item" data-udrop-nav="jogos">
+            <i class="fa-solid fa-futbol"></i> Jogos
+          </button>
+          <button class="udrop__item" data-udrop-nav="palpites">
+            <i class="fa-solid fa-ticket"></i> Meus Palpites
+          </button>
+          <button class="udrop__item" data-udrop-nav="ganhadores">
+            <i class="fa-solid fa-trophy"></i> Ganhadores
+          </button>
+          ${isAdmin ? `
+          <div class="udrop__sep"></div>
+          <button class="udrop__item" data-udrop-nav="admin">
+            <i class="fa-solid fa-shield-halved"></i> Painel Admin
+          </button>` : ''}
+          <div class="udrop__sep"></div>
+          <button class="udrop__item udrop__item--danger" id="dropdownLogout">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+          </button>
+        </div>
+      </div>`;
 
-    // show auth-only nav items
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = '');
-    document.getElementById('btnNavLogin') && document.getElementById('btnNavLogin').remove();
-
-    // show admin nav if email matches
-    if (S.user.email === S.adminEmail) {
-      document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = '');
-    }
+    document.getElementById('btnNavLogin')?.remove();
+    if (isAdmin) document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = '');
   } else {
-    wrap.innerHTML = `<button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>`;
+    wrap.innerHTML = `<button class="btn btn--primary btn--sm" id="btnNavLogin">Entrar</button>`;
     document.getElementById('btnNavLogin').addEventListener('click', () => navigate('auth'));
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = 'none');
@@ -1640,6 +1664,33 @@ const bind = () => {
 
   // Logo
   document.querySelector('.logo')?.addEventListener('click', e => { e.preventDefault(); navigate('jogos'); });
+
+  // User dropdown — toggle, outside-click close, nav items, logout
+  document.addEventListener('click', e => {
+    const dropdown = document.getElementById('userDropdown');
+    if (!dropdown) return;
+    if (e.target.closest('#userDropdownBtn')) {
+      e.stopPropagation();
+      dropdown.classList.toggle('udrop--open');
+      return;
+    }
+    if (!e.target.closest('#userDropdown')) dropdown.classList.remove('udrop--open');
+  });
+
+  document.addEventListener('click', e => {
+    const item = e.target.closest('[data-udrop-nav]');
+    if (!item) return;
+    const view = item.dataset.udropNav;
+    navigate(view);
+    document.getElementById('userDropdown')?.classList.remove('udrop--open');
+    if (view === 'palpites')   loadBets();
+    if (view === 'ganhadores') renderRanking();
+    if (view === 'admin')      populateAdminSelect();
+  });
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('#dropdownLogout')) logout();
+  });
 
   // Game grid actions (bet / pay / confirm) via delegation
   document.addEventListener('click', e => {
