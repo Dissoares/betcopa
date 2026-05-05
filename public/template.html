@@ -174,7 +174,7 @@
         </nav>
         <div class="admin-sidebar__footer">
           <button class="btn btn--ghost btn--icon btn-theme-toggle" aria-label="Alternar tema">
-            <span class="theme-icon">🌙</span>
+            <i class="fa-solid fa-moon theme-icon"></i>
           </button>
         </div>
       </aside>
@@ -196,7 +196,7 @@
 
           <div class="admin-grid-2" style="margin-top:1.5rem">
             <div class="panel">
-              <h3 class="panel__title">🕐 Últimas Apostas</h3>
+              <h3 class="panel__title"><i class="fa-solid fa-clock"></i> Últimas Apostas</h3>
               <div id="dashRecentes"></div>
             </div>
             <div class="panel">
@@ -323,7 +323,7 @@
 
           <!-- Coluna direita: filtros -->
           <div class="panel admin-jogos-filter">
-            <h3 class="panel__title">🔍 Filtrar Lista</h3>
+            <h3 class="panel__title"><i class="fa-solid fa-magnifying-glass"></i> Filtrar Lista</h3>
             <div class="form-group">
               <label>Buscar time</label>
               <input id="filterTeam" type="search" placeholder="Ex: Brasil, Argentina…" />
@@ -404,7 +404,7 @@
         <div class="admin-tab hidden" id="atab-apostas">
           <div class="admin-page-header admin-page-header--actions">
             <div>
-              <h2 class="admin-page-header__title">🎯 Apostas</h2>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-bullseye"></i> Apostas</h2>
               <p class="admin-page-header__sub">Visualize e filtre todas as apostas da plataforma</p>
             </div>
             <span class="text--muted" id="adminBetsCount"></span>
@@ -435,7 +435,7 @@
         <div class="admin-tab hidden" id="atab-usuarios">
           <div class="admin-page-header admin-page-header--actions">
             <div>
-              <h2 class="admin-page-header__title">👥 Usuários</h2>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-users"></i> Usuários</h2>
               <p class="admin-page-header__sub">Gerenciar contas e permissões de usuários</p>
             </div>
             <span class="text--muted" id="adminUsersCount"></span>
@@ -476,7 +476,7 @@
               <div class="config-panel config-panel--active" data-config-panel="system">
                 <div class="admin-grid-2">
                   <div class="panel">
-                    <h3 class="panel__title">🎨 Sistema</h3>
+                    <h3 class="panel__title"><i class="fa-solid fa-palette"></i> Sistema</h3>
                     <div class="form-group">
                       <label>Nome da plataforma</label>
                       <input id="cfg_site_nome" type="text" placeholder="BetCopa" />
@@ -516,14 +516,14 @@
                     <div class="form-group">
                       <label>Modo manutenção</label>
                       <select id="cfg_maintenance_mode">
-                        <option value="0">❌ Desativado</option>
-                        <option value="1">✅ Ativado</option>
+                        <option value="0">Desativado</option>
+                        <option value="1">Ativado</option>
                       </select>
                     </div>
                   </div>
 
                   <div class="panel">
-                    <h3 class="panel__title">👤 Usuários</h3>
+                    <h3 class="panel__title"><i class="fa-solid fa-user"></i> Usuários</h3>
                     <div class="form-group">
                       <label>Email do administrador</label>
                       <input id="cfg_admin_email" type="email" placeholder="admin@betcopa.local" />
@@ -531,8 +531,8 @@
                     <div class="form-group">
                       <label>Cadastro de usuários</label>
                       <select id="cfg_user_registration_enabled">
-                        <option value="1">✅ Permitido</option>
-                        <option value="0">❌ Bloqueado</option>
+                        <option value="1">Permitido</option>
+                        <option value="0">Bloqueado</option>
                       </select>
                     </div>
                   </div>
@@ -542,7 +542,7 @@
               <div class="config-panel" data-config-panel="payment">
                 <div class="admin-grid-2">
                   <div class="panel">
-                    <h3 class="panel__title">💳 Pagamentos</h3>
+                    <h3 class="panel__title"><i class="fa-solid fa-credit-card"></i> Pagamentos</h3>
                     <div class="form-group">
                       <label>Tipo da chave PIX</label>
                       <select id="cfg_pix_tipo">
@@ -563,8 +563,8 @@
                     <div class="form-group">
                       <label>Saques habilitados</label>
                       <select id="cfg_saques_ativos">
-                        <option value="1">✅ Sim</option>
-                        <option value="0">❌ Não</option>
+                        <option value="1">Sim</option>
+                        <option value="0">Não</option>
                       </select>
                     </div>
                   </div>
@@ -574,7 +574,7 @@
               <div class="config-panel" data-config-panel="bets">
                 <div class="admin-grid-2">
                   <div class="panel">
-                    <h3 class="panel__title">🎲 Apostas</h3>
+                    <h3 class="panel__title"><i class="fa-solid fa-dice"></i> Apostas</h3>
                     <div class="form-group">
                       <label>Bônus de cadastro (R$)</label>
                       <input id="cfg_bonus_cadastro" type="number" min="0" step="0.50" placeholder="100.00" />
@@ -612,7 +612,7 @@
               <div class="config-panel" data-config-panel="api">
                 <div class="admin-grid-2">
                   <div class="panel">
-                    <h3 class="panel__title">🌐 API de jogos</h3>
+                    <h3 class="panel__title"><i class="fa-solid fa-globe"></i> API de jogos</h3>
                     <div class="form-group">
                       <label>Chave da API Football</label>
                       <input id="cfg_api_football_key" type="text" placeholder="Chave API Football" />
@@ -628,7 +628,7 @@
               <div class="config-panel" data-config-panel="seo">
                 <div class="admin-grid-2">
                   <div class="panel">
-                    <h3 class="panel__title">🔎 SEO</h3>
+                    <h3 class="panel__title"><i class="fa-solid fa-magnifying-glass"></i> SEO</h3>
                     <div class="form-group">
                       <label>Título SEO</label>
                       <input id="cfg_site_title" type="text" placeholder="BetCopa | Acerte o Placar" />
@@ -708,7 +708,7 @@
           <span class="bet-summary__amount" id="betPayAmount">R$ 5,00</span>
         </div>
         <div class="bet-summary__row bet-summary__row--win">
-          <span>🏆 Você ganha:</span>
+          <span><i class="fa-solid fa-trophy"></i> Você ganha:</span>
           <span class="bet-summary__win" id="betWinAmount">R$ 25,00</span>
         </div>
       </div>
@@ -766,7 +766,7 @@
     <div class="modal__box modal__box--sm">
       <button class="modal__close" data-close="modalAdminResultado">×</button>
       <div class="modal__header">
-        <span class="modal__icon">🎯</span>
+        <span class="modal__icon"><i class="fa-solid fa-bullseye"></i></span>
         <h3>Registrar Resultado</h3>
         <p class="text--muted" id="adminResultadoJogo" style="margin-top:.3rem;font-size:.88rem"></p>
       </div>

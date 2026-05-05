@@ -349,7 +349,7 @@ const renderDrawer = () => {
         <p class="dr-section-label">TEMA</p>
         <div class="dr-section">
           <button class="dr-item btn-theme-toggle">
-            <span class="theme-icon">🌙</span> Alternar Modo
+            <i class="fa-solid fa-moon theme-icon"></i> Alternar Modo
           </button>
         </div>
       </div>`;
@@ -370,7 +370,7 @@ const renderDrawer = () => {
         <p class="dr-section-label">TEMA</p>
         <div class="dr-section">
           <button class="dr-item btn-theme-toggle">
-            <span class="theme-icon">🌙</span> Alternar Modo
+            <i class="fa-solid fa-moon theme-icon"></i> Alternar Modo
           </button>
         </div>
       </div>`;
@@ -447,7 +447,9 @@ const closeMobileMenu = () => {
 const setTheme = (theme) => {
   const isLight = theme === 'light';
   document.body.classList.toggle('theme-light', isLight);
-  document.querySelectorAll('.theme-icon').forEach(el => el.textContent = isLight ? '☀️' : '🌙');
+  document.querySelectorAll('.theme-icon').forEach(el => {
+    el.className = (isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon') + ' theme-icon';
+  });
   localStorage.setItem('betcopaTheme', theme);
 };
 
@@ -534,7 +536,7 @@ const renderCard = (g) => {
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
   const ctaHtml = !isClosed
-    ? `<p class="gc-cta">🔥 Acerte e ganhe de <strong>${S.multMin}×</strong> a <strong>${S.multMax}×</strong> o valor!</p>`
+    ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte e ganhe de <strong>${S.multMin}×</strong> a <strong>${S.multMax}×</strong> o valor!</p>`
     : '';
 
   const footHtml = isLive
@@ -1218,8 +1220,8 @@ const showResultado = (bet, won) => {
            <div class="resultado-loss__next-label">Próximo jogo</div>
            <div class="resultado-loss__next-game">${nextGame.time_casa} × ${nextGame.time_fora} — ${fmtDate(nextGame.data_hora)}</div>
          </div>
-         <button class="btn btn--primary btn--full btn--large" id="btnTentarNovamente">🎯 Palpitar no Próximo</button>`
-      : `<button class="btn btn--primary btn--full btn--large" id="btnTentarNovamente">🎯 Ver Todos os Jogos</button>`;
+         <button class="btn btn--primary btn--full btn--large" id="btnTentarNovamente"><i class="fa-solid fa-bullseye"></i> Palpitar no Próximo</button>`
+      : `<button class="btn btn--primary btn--full btn--large" id="btnTentarNovamente"><i class="fa-solid fa-futbol"></i> Ver Todos os Jogos</button>`;
 
     content.innerHTML = `
       <span class="resultado-loss__icon"><i class="fa-regular fa-face-sad-tear"></i></span>
