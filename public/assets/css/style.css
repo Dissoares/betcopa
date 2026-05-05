@@ -1896,11 +1896,17 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   width: 100%;
   position: relative;
   overflow: hidden;
-  display: grid;
-  grid-template-rows: 1fr auto; /* slides row + dots row */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Each slide occupies the same cell; active one defines the height */
+/* ── Strip: stacks slides on mobile, horizontal row on desktop ── */
+.mb-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+/* Mobile: all slides in same grid cell (stacked), active one shows */
 .mb-slide {
   grid-area: 1 / 1;
   display: flex;
@@ -1910,7 +1916,7 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   gap: .9rem;
   text-align: center;
   opacity: 0;
-  transition: opacity .35s ease;
+  transition: opacity .3s ease;
   pointer-events: none;
 }
 .mb-slide--active {
@@ -1956,28 +1962,96 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   z-index: 1;
 }
 
-/* Navigation dots */
-.mb-dots {
-  grid-area: 2 / 1;
+/* Nav bar: arrows + dots */
+.mb-nav {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  padding: .3rem 0 .6rem;
+}
+
+/* Arrow buttons */
+.mb-arrow {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50%;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.65);
+  font-size: .7rem;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.mb-arrow:hover { background: rgba(255,255,255,.18); color: #fff; }
+
+/* Dots */
+.mb-dots {
+  display: flex; align-items: center;
   gap: .4rem;
-  padding: .35rem 0 .65rem;
 }
 .mb-dot {
   width: 6px; height: 6px;
-  border-radius: 999px;
-  border: none;
+  border-radius: 999px; border: none;
   background: rgba(255,255,255,.25);
-  cursor: pointer;
-  padding: 0;
+  cursor: pointer; padding: 0;
   transition: background .2s, width .2s;
 }
-.mb-dot--active {
-  width: 18px;
-  background: rgba(255,255,255,.8);
+.mb-dot--active { width: 18px; background: rgba(255,255,255,.8); }
+
+/* ── Desktop: cards lado a lado ─────────────────────────────── */
+@media (min-width: 768px) {
+  .mb-strip {
+    display: flex;                /* override grid */
+    flex-direction: row;
+    gap: .85rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 1rem 1.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .mb-strip::-webkit-scrollbar { display: none; }
+
+  .mb-slide {
+    grid-area: unset;             /* remove stacking */
+    flex: 0 0 clamp(220px, 26vw, 290px);
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    scroll-snap-align: start;
+    transition: border-color .2s, background .2s;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: var(--radius);
+    padding: .9rem .8rem .85rem;
+    gap: .55rem;
+    min-height: 0;
+  }
+  .mb-slide--active {
+    border-color: rgba(255,255,255,.28);
+    background: rgba(255,255,255,.1);
+  }
+
+  /* Smaller elements inside each card */
+  .mb-logo    { width: 2.2rem; height: 2.2rem; }
+  .mb-name    { font-size: .68rem; max-width: 5.5rem; }
+  .mb-score   { font-size: 1.35rem; }
+  .mb-countdown { font-size: 1.05rem; }
+  .mb-clock   { font-size: .62rem; }
+  .mb-label   { font-size: .58rem; }
+  .mb-match   { max-width: none; gap: .6rem; }
+  .mb-center  { min-width: 4rem; }
+  .mb-cta-btn { font-size: .73rem; padding: .38rem .85rem; width: 100%; }
+  .mb-pill    { font-size: .6rem; padding: .18rem .5rem; }
+
+  /* dots hidden on desktop — strip is scrollable, arrows suffice */
+  .mb-dots { display: none; }
+  .mb-arrow { width: 30px; height: 30px; font-size: .8rem; }
+  .mb-nav   { padding: .2rem 0 .5rem; }
 }
+
 .match-banner::before {
   content: '';
   position: absolute;
@@ -2109,7 +2183,7 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 }
 
 @media (max-width: 480px) {
-  .mb-slide { padding: 1.1rem .75rem .85rem; }
+  .mb-slide { padding: 1rem .65rem .8rem; }
   .mb-logo  { width: 2.6rem; height: 2.6rem; }
   .mb-score { font-size: 1.6rem; }
   .mb-countdown { font-size: 1.2rem; }

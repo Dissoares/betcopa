@@ -621,11 +621,9 @@ const renderMatchBanner = () => {
     .filter(g => g.status === 'aberto' && !isGameLive(g))
     .filter(g => { const ms = new Date(g.data_hora) - Date.now(); return ms > 0 && ms <= 3_600_000; })
     .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-  const next = (!live.length && !soon.length)
-    ? S.games.filter(g => g.status === 'aberto' && !isGameLive(g))
-        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
-        .slice(0, 1)
-    : [];
+  const next = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g) && !soon.includes(g))
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
   const slides = [...live, ...soon, ...next];
 
@@ -675,14 +673,17 @@ const renderMatchBanner = () => {
       </div>`;
   };
 
-  const dotsHtml = slides.length > 1
-    ? `<div class="mb-dots">${slides.map((_, i) =>
+  const navHtml = slides.length > 1 ? `
+    <div class="mb-nav">
+      <button class="mb-arrow" id="mbPrev"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="mb-dots">${slides.map((_, i) =>
         `<button class="mb-dot${i === 0 ? ' mb-dot--active' : ''}" data-dot="${i}"></button>`
-      ).join('')}</div>`
-    : '';
+      ).join('')}</div>
+      <button class="mb-arrow" id="mbNext"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>` : '';
 
   el.className = `match-banner ${isGameLive(slides[0]) ? 'match-banner--live' : 'match-banner--soon'}`;
-  el.innerHTML = slides.map(buildSlide).join('') + dotsHtml;
+  el.innerHTML = `<div class="mb-strip" id="mbStrip">${slides.map(buildSlide).join('')}</div>${navHtml}`;
 
   // Countdown timers for non-live slides
   slides.filter(g => !isGameLive(g)).forEach(g => {
@@ -705,27 +706,46 @@ const renderMatchBanner = () => {
 
   if (slides.length <= 1) return;
 
+  const isDesktop = () => window.innerWidth >= 768;
   let current = 0;
+
   const goTo = (idx) => {
-    el.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === idx));
-    el.querySelectorAll('.mb-dot').forEach((d, i)   => d.classList.toggle('mb-dot--active',   i === idx));
-    el.className = `match-banner ${isGameLive(slides[idx]) ? 'match-banner--live' : 'match-banner--soon'}`;
-    current = idx;
+    current = Math.max(0, Math.min(idx, slides.length - 1));
+    el.querySelectorAll('.mb-dot').forEach((d, i) => d.classList.toggle('mb-dot--active', i === current));
+    el.className = `match-banner ${isGameLive(slides[current]) ? 'match-banner--live' : 'match-banner--soon'}`;
+
+    const strip = document.getElementById('mbStrip');
+    if (isDesktop()) {
+      const card = strip.children[current];
+      if (card) strip.scrollTo({ left: card.offsetLeft - strip.offsetLeft, behavior: 'smooth' });
+      strip.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === current));
+    } else {
+      strip.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === current));
+    }
   };
 
-  const advance    = () => goTo((current + 1) % slides.length);
-  const startAuto  = () => { clearInterval(_mbAutoTimer); _mbAutoTimer = setInterval(advance, 6_000); };
+  const advance   = () => goTo((current + 1) % slides.length);
+  const startAuto = () => { clearInterval(_mbAutoTimer); _mbAutoTimer = setInterval(advance, 5_000); };
 
   el.addEventListener('click', e => {
     const dot = e.target.closest('.mb-dot');
-    if (!dot) return;
-    goTo(Number(dot.dataset.dot));
-    startAuto();
+    if (dot) { goTo(Number(dot.dataset.dot)); if (!isDesktop()) startAuto(); }
   });
-  el.addEventListener('mouseenter', () => clearInterval(_mbAutoTimer));
-  el.addEventListener('mouseleave', startAuto);
 
-  startAuto();
+  document.getElementById('mbPrev')?.addEventListener('click', () => {
+    goTo(current <= 0 ? slides.length - 1 : current - 1);
+    if (!isDesktop()) startAuto();
+  });
+  document.getElementById('mbNext')?.addEventListener('click', () => {
+    goTo((current + 1) % slides.length);
+    if (!isDesktop()) startAuto();
+  });
+
+  if (!isDesktop()) {
+    el.addEventListener('mouseenter', () => clearInterval(_mbAutoTimer));
+    el.addEventListener('mouseleave', startAuto);
+    startAuto();
+  }
 };
 
 const renderGames = () => {
