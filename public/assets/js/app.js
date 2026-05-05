@@ -398,8 +398,8 @@ const renderCard = (g) => {
 
   const badgeLabel = gameBadge(g);
   const scoreStr   = g.placar_real ? g.placar_real.replace('x', ' × ') : null;
-  const valorBase  = parseFloat(g.valor_base || 1).toFixed(2).replace('.', ',');
-  const oddVal     = parseFloat(g.odd || 1).toFixed(1).replace('.', ',');
+  const oddNum     = parseFloat(g.odd || 1);
+  const oddFmt     = oddNum % 1 === 0 ? oddNum.toFixed(0) : oddNum.toFixed(1).replace('.', ',');
 
   let midHtml;
   if (isLive) {
@@ -433,11 +433,8 @@ const renderCard = (g) => {
     ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
-  const metaHtml = !isClosed
-    ? `<div class="gc-meta">
-         <span class="gc-meta__odd">${oddVal}<small>×</small></span>
-         <span class="gc-meta__price">R$ ${valorBase}/palpite</span>
-       </div>`
+  const ctaHtml = !isClosed
+    ? `<p class="gc-cta">🔥 Acerte e ganhe <strong>${oddFmt}×</strong> o valor!</p>`
     : '';
 
   const footHtml = isLive
@@ -447,7 +444,8 @@ const renderCard = (g) => {
     : `<button class="btn ${!isClosed ? 'btn--primary' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${isClosed ? 'disabled' : ''}>
          ${!isClosed ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
-       </button>`;
+       </button>
+       ${ctaHtml}`;
 
   return `
     <article class="game-card game-card--${statusClass}">
@@ -467,7 +465,6 @@ const renderCard = (g) => {
         </div>
       </div>
       <div class="game-card__foot">
-        ${metaHtml}
         ${footHtml}
       </div>
     </article>`;

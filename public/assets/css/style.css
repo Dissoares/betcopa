@@ -1690,31 +1690,18 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 .gc-dash { font-size: 1.1rem; color: var(--text-muted); }
 
 /* ── Meta row (multiplier × price) ──────────────────────────── */
-.gc-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: .36rem .7rem;
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-}
-.gc-meta__odd {
-  font-size: .9rem;
-  font-weight: 800;
-  color: var(--primary);
-  display: inline-flex;
-  align-items: baseline;
-  gap: .06rem;
-}
-.gc-meta__odd small {
-  font-size: .62rem;
-  font-weight: 700;
-  opacity: .7;
-}
-.gc-meta__price {
-  font-size: .76rem;
+.gc-meta { display: none; } /* removido — substituído por .gc-cta */
+
+.gc-cta {
+  margin: .45rem 0 0;
+  text-align: center;
+  font-size: .78rem;
   color: var(--text-muted);
+  letter-spacing: .01em;
+}
+.gc-cta strong {
+  color: var(--primary);
+  font-weight: 800;
 }
 
 /* ── Soon card: warm amber accent ─────────────────────────── */
