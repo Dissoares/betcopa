@@ -1845,8 +1845,10 @@ const bind = () => {
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
 
-  // Mobile drawer
-  document.querySelectorAll('.btn-theme-toggle').forEach(btn => btn.addEventListener('click', toggleTheme));
+  // Mobile drawer — delegado para cobrir botões gerados dinamicamente
+  document.addEventListener('click', e => {
+    if (e.target.closest('.btn-theme-toggle')) toggleTheme();
+  });
   document.getElementById('btnMobileMenu')?.addEventListener('click', openMobileMenu);
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="close-mobile-menu"]');
