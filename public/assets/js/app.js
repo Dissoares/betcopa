@@ -2126,8 +2126,134 @@ const loadBetConfig = async () => {
   } catch (_) { /* usa defaults */ }
 };
 
+// Draws a soccer ball: white sphere + classic black pentagonal patches
+const drawBall = (ctx, x, y, r) => {
+  // Base sphere: white fill + subtle shadow
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#f5f5f5';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)';
+  ctx.lineWidth = r * 0.08;
+  ctx.stroke();
+
+  // Classic 5-patch pentagon pattern (simplified as one center + 5 triangular wedges)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.clip(); // keep patches inside the ball
+
+  ctx.fillStyle = 'rgba(15,15,15,.82)';
+
+  // Central pentagon
+  const penta = (cx, cy, rad, rot = 0) => {
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = rot + (i * Math.PI * 2) / 5 - Math.PI / 2;
+      i === 0 ? ctx.moveTo(cx + rad * Math.cos(a), cy + rad * Math.sin(a))
+              : ctx.lineTo(cx + rad * Math.cos(a), cy + rad * Math.sin(a));
+    }
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  penta(x, y, r * 0.35);
+
+  // 5 outer pentagons (classic ball positions)
+  for (let i = 0; i < 5; i++) {
+    const a   = (i * Math.PI * 2) / 5 - Math.PI / 2;
+    const d   = r * 0.68;
+    penta(x + d * Math.cos(a), y + d * Math.sin(a), r * 0.28, a + Math.PI / 5);
+  }
+
+  ctx.restore();
+};
+
+// Draws a 5-pointed star
+const drawStar = (ctx, x, y, r) => {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a    = (i * Math.PI) / 5 - Math.PI / 2;
+    const dist = i % 2 === 0 ? r : r * 0.42;
+    i === 0 ? ctx.moveTo(x + dist * Math.cos(a), y + dist * Math.sin(a))
+            : ctx.lineTo(x + dist * Math.cos(a), y + dist * Math.sin(a));
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#FFD700';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(180,120,0,.5)';
+  ctx.lineWidth = r * 0.1;
+  ctx.stroke();
+};
+
+const initHeroParticles = () => {
+  const canvas = document.getElementById('heroCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const resize = () => {
+    canvas.width  = canvas.offsetWidth  || canvas.parentElement.offsetWidth;
+    canvas.height = canvas.offsetHeight || canvas.parentElement.offsetHeight;
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 70% bolas, 30% estrelas
+  const mkParticle = () => {
+    const isBall = Math.random() < 0.70;
+    return {
+      x:    Math.random() * canvas.width,
+      y:    Math.random() * canvas.height,
+      r:    isBall ? Math.random() * 8 + 5        // bola: 5–13 px
+                   : Math.random() * 5 + 4,        // estrela: 4–9 px
+      vx:   (Math.random() - .5) * 0.3,
+      vy:   -(Math.random() * 0.45 + 0.12),
+      rot:  Math.random() * Math.PI * 2,
+      vrot: (Math.random() - .5) * 0.018,
+      alpha: Math.random() * 0.5,
+      kind: isBall ? 'ball' : 'star',
+    };
+  };
+
+  const particles = Array.from({ length: 28 }, mkParticle);
+
+  const tick = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+      p.x     += p.vx;
+      p.y     += p.vy;
+      p.rot   += p.vrot;
+      p.alpha += 0.003;
+
+      if (p.y < -(p.r * 2)) {
+        Object.assign(p, mkParticle(), { y: canvas.height + p.r * 2, alpha: 0 });
+      }
+      if (p.x < -(p.r * 2))                p.x = canvas.width  + p.r * 2;
+      if (p.x >  canvas.width  + p.r * 2)  p.x = -(p.r * 2);
+
+      const fadeTop = Math.min(1, p.y / (canvas.height * 0.2));
+      const opacity = Math.min(p.alpha, 0.65) * fadeTop;
+      if (opacity <= 0.01) return;
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      if (p.kind === 'ball') drawBall(ctx, 0, 0, p.r);
+      else                   drawStar(ctx, 0, 0, p.r);
+      ctx.restore();
+    });
+
+    requestAnimationFrame(tick);
+  };
+
+  tick();
+};
+
 const init = async () => {
   loadTheme();
+  initHeroParticles();
   bind();
   await loadCsrf();
   await Promise.all([loadUser(), loadBetConfig()]);

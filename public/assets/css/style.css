@@ -1393,6 +1393,15 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(0,200,83,.28), transparent);
 }
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  opacity: .55;
+}
+.theme-light .hero-canvas { opacity: .2; }
+
 .copa-hero__content { position: relative; z-index: 1; }
 .copa-hero__eyebrow {
   display: inline-flex; align-items: center; gap: .45rem;
