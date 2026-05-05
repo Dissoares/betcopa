@@ -282,8 +282,8 @@ const gameBadge = (g) => {
     return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em Breve</span>`;
   }
 
-  // 6. Apostas abertas
-  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> Apostas Abertas</span>`;
+  // 6. aberto
+  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> aberto</span>`;
 };
 
 // ── Navigation ────────────────────────────────────────────────
