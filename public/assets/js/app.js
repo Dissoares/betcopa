@@ -282,8 +282,13 @@ const gameBadge = (g) => {
     return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em Breve</span>`;
   }
 
-  // 6. aberto
-  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> aberto</span>`;
+  // 6. Apostas em breve: aberto + mais de 7 dias para começar
+  if (s === 'aberto' && diff > 7 * 24 * 3600_000) {
+    return `<span class="badge badge--far"><i class="fa-solid fa-calendar"></i> Apostas em breve</span>`;
+  }
+
+  // 7. aberto
+  return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> Aberto</span>`;
 };
 
 // ── Navigation ────────────────────────────────────────────────
@@ -490,6 +495,7 @@ const renderCard = (g) => {
   const isLive     = isGameLive(g);
   const isClosed   = g.status !== 'aberto' || isLive;
   const isFinal    = g.status === 'finalizado';
+  const isTooFar   = !isClosed && (new Date(g.data_hora) - Date.now()) > 7 * 24 * 3600_000;
   const isSoon     = !isClosed && (new Date(g.data_hora) - Date.now()) <= 3600000;
 
   const statusClass = isLive   ? 'live'
@@ -533,19 +539,22 @@ const renderCard = (g) => {
 
   const btnLabel = isFinal
     ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
+    : isTooFar
+    ? '<i class="fa-solid fa-calendar-xmark"></i> Apostas em breve'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
   const ctaHtml = !isClosed
     ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte e ganhe de <strong>${S.multMin}×</strong> a <strong>${S.multMax}×</strong> o valor!</p>`
     : '';
 
+  const betBlocked = isClosed || isTooFar;
   const footHtml = isLive
     ? `<button class="btn btn--danger btn--full" disabled>
          <i class="fa-solid fa-satellite-dish fa-beat"></i> Ao Vivo
        </button>`
-    : `<button class="btn ${!isClosed ? 'btn--primary' : 'btn--ghost'} btn--full"
-         data-action="bet" data-id="${g.id}" ${isClosed ? 'disabled' : ''}>
-         ${!isClosed ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
+    : `<button class="btn ${!betBlocked ? 'btn--primary' : 'btn--ghost'} btn--full"
+         data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
+         ${!betBlocked ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
        </button>
        ${ctaHtml}`;
 

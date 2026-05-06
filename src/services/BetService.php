@@ -42,6 +42,11 @@ class BetService
             throw new InvalidArgumentException('Apostas encerradas: jogo já iniciou');
         }
 
+        $maxAnticipation = new DateTime('+7 days');
+        if ($gameDate > $maxAnticipation) {
+            throw new InvalidArgumentException('Apostas só são permitidas até 7 dias antes do jogo');
+        }
+
         $multiplicador = max(1, min(1000, $multiplicador));
         $valorBase     = (float) ($game['valor_base'] ?? 1.00);
         $betPercent    = (float) $this->configRepo->get('bet_percent', 10) / 100;

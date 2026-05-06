@@ -611,6 +611,7 @@ body.drawer-open { overflow: hidden; }
 .badge--open      { background: var(--tint-primary); color: var(--primary); }
 .badge--closed    { background: var(--tint-danger);  color: var(--danger); }
 .badge--final     { background: var(--surface-3);    color: var(--text-muted); }
+.badge--far       { background: rgba(100,116,139,.15); color: var(--text-dim); }
 .badge--live {
   background: var(--danger);
   color: #fff;
