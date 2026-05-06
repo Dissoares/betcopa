@@ -659,7 +659,10 @@ const renderMatchBanner = () => {
   const setThemeClass = (g) => {
     wrap.classList.remove('match-banner--live', 'match-banner--soon');
     wrap.classList.add(isGameLive(g) ? 'match-banner--live' : 'match-banner--soon');
-    wrap.classList.remove('hidden');
+    const jogosView = document.getElementById('view-jogos');
+    if (jogosView && !jogosView.classList.contains('hidden')) {
+      wrap.classList.remove('hidden');
+    }
   };
 
   const buildSlide = (g, idx) => {
