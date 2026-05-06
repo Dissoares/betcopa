@@ -42,7 +42,14 @@ class AdminController
     public function listUsers(): void
     {
         ensureAdmin($this->adminEmail);
-        jsonResponse(['usuarios' => $this->admin->listUsers()]);
+        $page  = max(1, (int) ($_GET['page']  ?? 1));
+        $limit = max(10, min(200, (int) ($_GET['limit'] ?? 50)));
+        jsonResponse([
+            'usuarios' => $this->admin->listUsers($page, $limit),
+            'total'    => $this->admin->countUsers(),
+            'page'     => $page,
+            'limit'    => $limit,
+        ]);
     }
 
     public function blockUser(int $id): void
@@ -67,10 +74,16 @@ class AdminController
     public function listBets(): void
     {
         ensureAdmin($this->adminEmail);
-        $jogoId = (int) ($_GET['jogo_id'] ?? 0);
-        $status = $_GET['status'] ?? '';
-        $bets   = $this->admin->listBets($jogoId, $status);
-        jsonResponse(['apostas' => $bets]);
+        $jogoId = (int)    ($_GET['jogo_id'] ?? 0);
+        $status = (string) ($_GET['status']  ?? '');
+        $page   = max(1, (int) ($_GET['page']  ?? 1));
+        $limit  = max(10, min(200, (int) ($_GET['limit'] ?? 50)));
+        jsonResponse([
+            'apostas' => $this->admin->listBets($jogoId, $status, $page, $limit),
+            'total'   => $this->admin->countBets($jogoId, $status),
+            'page'    => $page,
+            'limit'   => $limit,
+        ]);
     }
 
     // ── Configurações ─────────────────────────────────────────

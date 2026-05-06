@@ -3,11 +3,13 @@ class AuthService
 {
     private UserRepository $users;
     private TransactionRepository $transactions;
+    private ConfigRepository $config;
 
-    public function __construct(UserRepository $users, TransactionRepository $transactions)
+    public function __construct(UserRepository $users, TransactionRepository $transactions, ConfigRepository $config)
     {
-        $this->users = $users;
+        $this->users        = $users;
         $this->transactions = $transactions;
+        $this->config       = $config;
     }
 
     public function register(string $nome, string $email, string $senha): array
@@ -25,9 +27,14 @@ class AuthService
             throw new InvalidArgumentException('Email já cadastrado');
         }
 
-        $hash = password_hash($senha, PASSWORD_DEFAULT);
+        $hash   = password_hash($senha, PASSWORD_DEFAULT);
         $userId = $this->users->create($nome, $email, $hash);
-        $this->transactions->create($userId, 'credito', 100.00, 'Bônus inicial');
+
+        $bonus = (float) $this->config->get('bonus_cadastro', '0');
+        if ($bonus > 0) {
+            $this->transactions->create($userId, 'credito', $bonus, 'Bônus de cadastro');
+        }
+
         Logger::info('Novo usuário', ['id' => $userId, 'email' => $email]);
 
         return ['id' => $userId, 'nome' => $nome, 'email' => $email];

@@ -667,8 +667,8 @@ const renderMatchBanner = () => {
 
   const buildSlide = (g, idx) => {
     const gLive = isGameLive(g);
-    const logoH = g.logo_casa ? `<img src="${g.logo_casa}" class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagImg(g.bandeira_casa || '', '2rem')}</span>`;
-    const logoA = g.logo_fora ? `<img src="${g.logo_fora}" class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagImg(g.bandeira_fora || '', '2rem')}</span>`;
+    const logoH = g.logo_casa ? `<img src="${g.logo_casa}" class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
+    const logoA = g.logo_fora ? `<img src="${g.logo_fora}" class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
     let pill, center, cta;
 
     if (gLive) {
@@ -855,28 +855,32 @@ const renderGames = () => {
     .filter(g => g.status === 'aberto' && !isGameLive(g))
     .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
-  const soon     = openSorted.filter(g => { const ms = new Date(g.data_hora) - now; return ms > 0 && ms <= 3_600_000; });
-  const today    = openSorted.filter(g => { const ms = new Date(g.data_hora) - now; return sameDay(new Date(g.data_hora), now) && ms > 3_600_000; });
-  const tomorrow = openSorted.filter(g => sameDay(new Date(g.data_hora), dayOffset(1)));
-
-  // Days 2–6 ahead: one section per day
-  const weekSections = [];
-  for (let i = 2; i <= 6; i++) {
-    const d     = dayOffset(i);
-    const games = openSorted.filter(g => sameDay(new Date(g.data_hora), d));
-    if (!games.length) continue;
-    const wday = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const cap  = wday.charAt(0).toUpperCase() + wday.slice(1).replace('.', '');
-    const date = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    weekSections.push({
-      sid:   `week${d.toISOString().slice(0, 10).replace(/-/g, '')}`,
-      title: `${cap} · ${date}`,
-      games,
-    });
+  // Single pass: bucket openSorted into time sections
+  const soon = [], today = [], tomorrow = [], beyond = [];
+  const weekMap = {};
+  const d1 = dayOffset(1), d7 = dayOffset(7);
+  for (const g of openSorted) {
+    const dt = new Date(g.data_hora);
+    const ms = dt - now;
+    if (ms > 0 && ms <= 3_600_000)          { soon.push(g);     continue; }
+    if (sameDay(dt, now) && ms > 3_600_000) { today.push(g);    continue; }
+    if (sameDay(dt, d1))                    { tomorrow.push(g); continue; }
+    if (dt >= d7)                            { beyond.push(g);   continue; }
+    const key = dt.toISOString().slice(0, 10);
+    if (!weekMap[key]) weekMap[key] = { dt, games: [] };
+    weekMap[key].games.push(g);
   }
 
-  // Games beyond 7 days
-  const beyond = openSorted.filter(g => new Date(g.data_hora) >= dayOffset(7));
+  const weekSections = Object.values(weekMap).map(({ dt, games }) => {
+    const wday = dt.toLocaleDateString('pt-BR', { weekday: 'short' });
+    const cap  = wday.charAt(0).toUpperCase() + wday.slice(1).replace('.', '');
+    const date = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    return {
+      sid:   `week${dt.toISOString().slice(0, 10).replace(/-/g, '')}`,
+      title: `${cap} · ${date}`,
+      games,
+    };
+  });
 
   const finished = S.games
     .filter(g => g.status === 'finalizado' || g.status === 'encerrado')
@@ -1013,7 +1017,7 @@ const renderBets = () => {
     const isLoss = b.status === 'perdido';
 
     // Bandeiras: busca o jogo correspondente em S.games
-    const game = S.games.find(g => g.time_casa === b.time_casa && g.time_fora === b.time_fora);
+    const game = S.games.find(g => g.id === b.jogo_id);
     const fHome = game?.bandeira_casa;
     const fAway = game?.bandeira_fora;
     const flagsHtml = (fHome || fAway)
@@ -2193,20 +2197,30 @@ const bind = () => {
     if (e.target.closest('[data-close="modalAdminResultado"]')) closeAdminResultado();
   });
 
-  // Block / unblock user via event delegation
+  // Block / unblock user + pagination via event delegation
   document.getElementById('adminUsersList')?.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action][data-uid]');
+    const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
+    if (btn.dataset.action === 'users-prev') { loadAdminUsers(_adminUsersPage - 1); return; }
+    if (btn.dataset.action === 'users-next') { loadAdminUsers(_adminUsersPage + 1); return; }
+    if (btn.dataset.uid) handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
   });
 
   // Filtro de apostas
-  document.getElementById('btnFilterBets')?.addEventListener('click', fetchAdminBets);
+  document.getElementById('btnFilterBets')?.addEventListener('click', () => { _adminBetsPage = 1; fetchAdminBets(); });
   document.getElementById('btnClearBetFilter')?.addEventListener('click', () => {
     const g = document.getElementById('filterBetGame');
     const s = document.getElementById('filterBetStatus');
     if (g) g.value = ''; if (s) s.value = '';
-    fetchAdminBets();
+    _adminBetsPage = 1; fetchAdminBets();
+  });
+
+  // Paginação de apostas via event delegation
+  document.getElementById('adminBetsList')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'bets-prev') fetchAdminBets(_adminBetsPage - 1);
+    if (btn.dataset.action === 'bets-next') fetchAdminBets(_adminBetsPage + 1);
   });
 
   // Filtro de usuários (client-side)
@@ -2323,13 +2337,29 @@ const loadAdminDashboard = async () => {
 };
 
 // ── Usuários ──────────────────────────────────────────────────
-const loadAdminUsers = async () => {
+let _adminUsersPage = 1;
+const ADMIN_PAGE_LIMIT = 50;
+
+const _pager = (page, total, limit, action) => {
+  if (total <= limit) return '';
+  const pages = Math.ceil(total / limit);
+  const from  = (page - 1) * limit + 1;
+  const to    = Math.min(page * limit, total);
+  return `<div class="admin-pagination">
+    <button class="btn btn--ghost btn--sm" data-action="${action}-prev" ${page <= 1 ? 'disabled' : ''}>← Anterior</button>
+    <span class="text--muted">${from}–${to} de ${total}</span>
+    <button class="btn btn--ghost btn--sm" data-action="${action}-next" ${page >= pages ? 'disabled' : ''}>Próxima →</button>
+  </div>`;
+};
+
+const loadAdminUsers = async (page = _adminUsersPage) => {
+  _adminUsersPage = page;
   const el = document.getElementById('adminUsersList');
   el.innerHTML = '<p class="text--muted">Carregando...</p>';
   try {
-    const { usuarios } = await api('/api/admin/usuarios');
+    const { usuarios, total, limit } = await api(`/api/admin/usuarios?page=${page}&limit=${ADMIN_PAGE_LIMIT}`);
     const countEl = document.getElementById('adminUsersCount');
-    if (countEl) countEl.textContent = `${usuarios.length} usuário${usuarios.length !== 1 ? 's' : ''}`;
+    if (countEl) countEl.textContent = `${total} usuário${total !== 1 ? 's' : ''}`;
     if (!usuarios.length) { el.innerHTML = '<p class="text--muted">Nenhum usuário.</p>'; return; }
 
     el.innerHTML = `
@@ -2355,7 +2385,8 @@ const loadAdminUsers = async () => {
               </td>
             </tr>`).join('')}
         </tbody>
-      </table>`;
+      </table>
+      ${_pager(page, total, limit, 'users')}`;
   } catch (err) {
     el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   }
@@ -2385,17 +2416,20 @@ const handleBlockUser = async (uid, block) => {
 };
 
 // ── Admin Apostas ─────────────────────────────────────────────
+let _adminBetsPage = 1;
+
 const loadAdminBets = async () => {
-  // popular filtro de jogos
   const sel = document.getElementById('filterBetGame');
   if (sel && S.games.length) {
     sel.innerHTML = '<option value="">Todos os jogos</option>' +
       S.games.map(g => `<option value="${g.id}">${g.time_casa} × ${g.time_fora}</option>`).join('');
   }
+  _adminBetsPage = 1;
   await fetchAdminBets();
 };
 
-const fetchAdminBets = async () => {
+const fetchAdminBets = async (page = _adminBetsPage) => {
+  _adminBetsPage   = page;
   const el     = document.getElementById('adminBetsList');
   const jogoId = document.getElementById('filterBetGame')?.value || '';
   const status = document.getElementById('filterBetStatus')?.value || '';
@@ -2404,11 +2438,13 @@ const fetchAdminBets = async () => {
   const params = new URLSearchParams();
   if (jogoId) params.set('jogo_id', jogoId);
   if (status) params.set('status', status);
+  params.set('page',  page);
+  params.set('limit', ADMIN_PAGE_LIMIT);
 
   try {
-    const { apostas } = await api(`/api/admin/apostas?${params}`);
+    const { apostas, total, limit } = await api(`/api/admin/apostas?${params}`);
     const countEl = document.getElementById('adminBetsCount');
-    if (countEl) countEl.textContent = `${apostas.length} aposta${apostas.length !== 1 ? 's' : ''}`;
+    if (countEl) countEl.textContent = `${total} aposta${total !== 1 ? 's' : ''}`;
     if (!apostas.length) { el.innerHTML = '<p class="text--muted">Nenhuma aposta encontrada.</p>'; return; }
 
     el.innerHTML = `
@@ -2429,7 +2465,8 @@ const fetchAdminBets = async () => {
               <td>${statusPill(b.status)}</td>
             </tr>`).join('')}
         </tbody>
-      </table>`;
+      </table>
+      ${_pager(page, total, limit, 'bets')}`;
   } catch (err) {
     el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   }

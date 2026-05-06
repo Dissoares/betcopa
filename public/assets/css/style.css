@@ -1332,6 +1332,11 @@ select {
 .admin-table tr:last-child td { border-bottom: 0; }
 .admin-table tr:hover td { background: var(--surface-2); }
 
+.admin-pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1rem; padding: .75rem 0 .25rem;
+}
+
 /* Status pills */
 .status-pill {
   display: inline-flex; align-items: center;

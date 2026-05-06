@@ -78,7 +78,7 @@ try {
 
         $adminEmail = $configRepo->get('admin_email', $config['admin_email']);
 
-        $authService = new AuthService($users, $transactions);
+        $authService = new AuthService($users, $transactions, $configRepo);
         $gameService = new GameService($games);
         $betService  = new BetService($bets, $games, $transactions, $config, $configRepo);
         $betService->setPaymentRepository($payments);

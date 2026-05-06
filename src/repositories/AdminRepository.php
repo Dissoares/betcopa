@@ -29,9 +29,10 @@ class AdminRepository
         return $stats;
     }
 
-    public function listUsers(): array
+    public function listUsers(int $page = 1, int $limit = 50): array
     {
-        return $this->db->query("
+        $offset = ($page - 1) * $limit;
+        $stmt   = $this->db->prepare("
             SELECT
               u.id, u.nome, u.email, u.bloqueado, u.criado_em,
               COUNT(a.id)                                   AS total_apostas,
@@ -44,22 +45,28 @@ class AdminRepository
             LEFT JOIN apostas a ON a.user_id = u.id
             GROUP BY u.id
             ORDER BY u.criado_em DESC
-        ")->fetchAll();
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 
-    public function listBets(int $jogoId = 0, string $status = ''): array
+    public function countUsers(): int
     {
-        $where = [];
+        return (int) $this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    }
+
+    public function listBets(int $jogoId = 0, string $status = '', int $page = 1, int $limit = 50): array
+    {
+        $where  = [];
         $params = [];
 
-        if ($jogoId) {
-            $where[] = 'a.jogo_id = :jogo_id';
-            $params['jogo_id'] = $jogoId;
-        }
-        if ($status) {
-            $where[] = 'a.status = :status';
-            $params['status'] = $status;
-        }
+        if ($jogoId) { $where[] = 'a.jogo_id = :jogo_id'; $params['jogo_id'] = $jogoId; }
+        if ($status) { $where[] = 'a.status  = :status';  $params['status']  = $status; }
+
+        $offset = ($page - 1) * $limit;
 
         $sql = "
             SELECT
@@ -72,12 +79,31 @@ class AdminRepository
             JOIN jogos  j ON j.id = a.jogo_id
             " . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . "
             ORDER BY a.criado_em DESC
-            LIMIT 200
+            LIMIT :limit OFFSET :offset
         ";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    public function countBets(int $jogoId = 0, string $status = ''): int
+    {
+        $where  = [];
+        $params = [];
+
+        if ($jogoId) { $where[] = 'a.jogo_id = :jogo_id'; $params['jogo_id'] = $jogoId; }
+        if ($status) { $where[] = 'a.status  = :status';  $params['status']  = $status; }
+
+        $sql  = "SELECT COUNT(*) FROM apostas a " . ($where ? 'WHERE ' . implode(' AND ', $where) : '');
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
     }
 
     public function betStatsByGame(): array
