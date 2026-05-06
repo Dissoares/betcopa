@@ -476,7 +476,7 @@ const updateHeroStats = () => {
   if (el('heroStatLive'))  el('heroStatLive').textContent  = live;
   el('heroStatLiveWrap')?.classList.toggle('hidden', live === 0);
   // Indicador ao vivo no nav
-  document.querySelectorAll('[data-nav="jogos"]').forEach(btn => {
+  document.querySelectorAll('.nav__btn[data-nav="jogos"], .dr-item[data-nav="jogos"]').forEach(btn => {
     const dot = btn.querySelector('.nav-live-dot');
     if (live > 0) { if (!dot) btn.insertAdjacentHTML('beforeend', '<span class="nav-live-dot"></span>'); }
     else            { dot?.remove(); }
