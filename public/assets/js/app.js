@@ -756,6 +756,57 @@ const renderMatchBanner = () => {
     el.addEventListener('mouseleave', startAuto);
     startAuto();
   }
+
+  // ── Drag-to-scroll (desktop) ──────────────────────────────
+  const strip = document.getElementById('mbStrip');
+  if (strip) {
+    let dragStartX = 0, dragScrollLeft = 0, isDragging = false;
+
+    strip.addEventListener('mousedown', e => {
+      isDragging = true;
+      dragStartX    = e.pageX - strip.offsetLeft;
+      dragScrollLeft = strip.scrollLeft;
+      strip.style.cursor = 'grabbing';
+      strip.style.userSelect = 'none';
+    });
+    strip.addEventListener('mouseleave', () => {
+      isDragging = false;
+      strip.style.cursor = '';
+      strip.style.userSelect = '';
+    });
+    strip.addEventListener('mouseup', () => {
+      isDragging = false;
+      strip.style.cursor = '';
+      strip.style.userSelect = '';
+    });
+    strip.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x    = e.pageX - strip.offsetLeft;
+      const walk = (x - dragStartX) * 1.2;
+      strip.scrollLeft = dragScrollLeft - walk;
+    });
+    // previne clique em botões quando apenas arrastando
+    strip.addEventListener('click', e => {
+      if (Math.abs(strip.scrollLeft - dragScrollLeft) > 4) e.stopPropagation();
+    }, true);
+  }
+
+  // ── Swipe touch (mobile) ──────────────────────────────────
+  let touchStartX = 0, touchStartY = 0;
+  el.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (!e.changedTouches.length) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 30 || Math.abs(dx) < Math.abs(dy)) return; // ignore tap ou scroll vertical
+    if (dx < 0) goTo((current + 1) % slides.length);
+    else         goTo(current <= 0 ? slides.length - 1 : current - 1);
+    startAuto();
+  }, { passive: true });
 };
 
 const renderGames = () => {

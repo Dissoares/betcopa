@@ -2107,7 +2107,9 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
     scroll-behavior: smooth;
     padding: .8rem 3rem .7rem;
     scrollbar-width: none; -ms-overflow-style: none;
+    cursor: grab;
   }
+  .mb-strip:active { cursor: grabbing; }
   .mb-strip::-webkit-scrollbar { display: none; }
 
   .mb-slide {
