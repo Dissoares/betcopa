@@ -791,33 +791,96 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="site-footer">
-    <div class="container site-footer__inner">
+
+    <!-- Faixa de selos de confiança -->
+    <div class="site-footer__trust">
+      <div class="container site-footer__trust-inner">
+        <div class="ft-badge">
+          <i class="fa-solid fa-lock"></i>
+          <span>SSL Seguro</span>
+        </div>
+        <div class="ft-badge">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Dados Protegidos</span>
+        </div>
+        <div class="ft-badge">
+          <i class="fa-solid fa-user-shield"></i>
+          <span>Privacidade LGPD</span>
+        </div>
+        <div class="ft-badge">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Plataforma Verificada</span>
+        </div>
+        <div class="ft-badge">
+          <i class="fa-brands fa-pix"></i>
+          <span>Pix</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Corpo principal -->
+    <div class="container site-footer__main">
+
+      <!-- Coluna brand -->
       <div class="site-footer__brand">
         <span class="site-footer__logo">
           <img id="brandLogoFooter" class="brand-logo-img hidden" src="" alt="Logo" />
           <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> BetCopa</span>
         </span>
-        <p class="site-footer__tagline">Palpites esportivos com seus amigos.<br>Copa do Mundo 2026.</p>
+        <p class="site-footer__tagline">
+          A plataforma de palpites esportivos entre amigos.<br>
+          Copa do Mundo 2026 — sem apostas de dinheiro real.
+        </p>
+        <div class="site-footer__social">
+          <a href="#" class="ft-social" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="ft-social" aria-label="Twitter/X"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" class="ft-social" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+        </div>
       </div>
+
+      <!-- Links -->
       <nav class="site-footer__links">
         <div class="site-footer__col">
-          <h4>Navegar</h4>
-          <a href="#" data-nav="jogos">Jogos</a>
-          <a href="#" data-nav="palpites">Meus Palpites</a>
-          <a href="#" data-nav="ganhadores">Ranking</a>
+          <h4>Plataforma</h4>
+          <a href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</a>
+          <a href="#" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</a>
+          <a href="#" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ranking</a>
         </div>
         <div class="site-footer__col">
           <h4>Conta</h4>
-          <a href="#" data-nav="auth">Entrar / Cadastrar</a>
+          <a href="#" data-nav="auth"><i class="fa-solid fa-right-to-bracket"></i> Entrar</a>
+          <a href="#" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Cadastrar</a>
+        </div>
+        <div class="site-footer__col">
+          <h4>Segurança</h4>
+          <a href="#"><i class="fa-solid fa-file-shield"></i> Privacidade</a>
+          <a href="#"><i class="fa-solid fa-scale-balanced"></i> Termos de Uso</a>
+          <a href="#"><i class="fa-solid fa-headset"></i> Suporte</a>
         </div>
       </nav>
+
     </div>
-    <div class="site-footer__bottom">
-      <div class="container">
-        <span>© 2026 BetCopa &mdash; Apenas para diversão entre amigos.</span>
-        <span class="site-footer__disclaimer"><i class="fa-solid fa-shield-halved"></i> Plataforma sem apostas de dinheiro real</span>
+
+    <!-- Aviso responsável -->
+    <div class="site-footer__responsible">
+      <div class="container site-footer__responsible-inner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Esta plataforma é <strong>exclusivamente para diversão</strong> entre amigos. Nenhuma aposta em dinheiro real é realizada. Proibido para menores de 18 anos.</span>
       </div>
     </div>
+
+    <!-- Rodapé final -->
+    <div class="site-footer__bottom">
+      <div class="container site-footer__bottom-inner">
+        <span class="site-footer__copy">© 2026 BetCopa. Todos os direitos reservados.</span>
+        <div class="site-footer__badges">
+          <span class="ft-mini-badge"><i class="fa-solid fa-lock"></i> SSL</span>
+          <span class="ft-mini-badge"><i class="fa-brands fa-pix"></i> PIX</span>
+          <span class="ft-mini-badge"><i class="fa-solid fa-shield-halved"></i> LGPD</span>
+        </div>
+      </div>
+    </div>
+
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
