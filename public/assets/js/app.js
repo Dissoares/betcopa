@@ -548,8 +548,8 @@ const renderCard = (g) => {
 
   const betBlocked = isClosed || isTooFar;
   const footHtml = isLive
-    ? `<button class="btn btn--danger btn--full" disabled>
-         <i class="fa-solid fa-satellite-dish fa-beat"></i> Ao Vivo
+    ? `<button class="btn btn--ghost btn--full" disabled>
+         <i class="fa-solid fa-lock"></i> Apostas encerradas
        </button>`
     : `<button class="btn ${!betBlocked ? 'btn--primary' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>

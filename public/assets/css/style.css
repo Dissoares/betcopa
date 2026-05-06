@@ -232,57 +232,82 @@ body::before {
    ============================================================ */
 .header {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(10,15,30,0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(10,15,30,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
-  padding: .85rem 0;
 }
 
 .header__inner {
-  display: flex; align-items: center; 
+  display: flex;
+  align-items: stretch;
+  height: 62px;
+  gap: 0;
 }
 
-.header__inner--split {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-}
-
-.header__left,
-.header__center,
-.header__right {
-  display: flex; align-items: center;
-}
-
+/* ── Legado (mantido para não quebrar referências) ──────── */
+.header__inner--split { display: flex; align-items: stretch; }
+.header__left, .header__center, .header__right { display: flex; align-items: center; }
 .header__center { justify-content: center; }
+.header__right  { justify-content: flex-end; gap: .75rem; }
 
-.header__right {
-  justify-content: flex-end;
+.header__user { display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
+
+/* ── Ações lado direito ─────────────────────────────────── */
+.header__actions {
+  display: flex;
+  align-items: center;
   gap: .75rem;
+  flex-shrink: 0;
+  padding-left: 1.25rem;
 }
 
-.header__user { margin-left: auto; display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
-
+/* ── Logo ───────────────────────────────────────────────── */
 .logo {
-  font-size: 1.35rem; font-weight: 900;
+  font-size: 1.42rem; font-weight: 900;
   color: var(--text); text-decoration: none;
-  letter-spacing: -.03em; flex-shrink: 0;
+  letter-spacing: -.04em; flex-shrink: 0;
+  display: flex; align-items: center;
+  padding-right: 2rem;
 }
 .logo span { color: var(--primary); }
 
-.nav { display: flex; gap: .35rem; flex: 1; }
+/* ── Nav ────────────────────────────────────────────────── */
+.nav {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  justify-content: center;
+  gap: 0;
+}
 
 .nav__btn {
-  border: 0; background: transparent;
+  display: inline-flex; align-items: center; gap: .45rem;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
   color: var(--text-dim);
-  padding: .45rem .9rem;
-  border-radius: 999px;
-  cursor: pointer; font-size: .88rem; font-weight: 500;
-  transition: color .15s, background .15s;
+  padding: 0 1.2rem;
+  height: 100%;
+  cursor: pointer;
+  font-size: .875rem; font-weight: 600;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  transition: color .15s, background .15s, border-color .2s;
 }
-.nav__btn:hover { color: var(--text); background: var(--surface-2); }
-.nav__btn--active { color: var(--primary) !important; background: var(--tint-primary) !important; }
+.nav__btn i { font-size: .8em; opacity: .8; }
+.nav__btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,.04);
+  border-bottom-color: rgba(0,200,83,.4);
+}
+.nav__btn--active {
+  color: var(--text) !important;
+  background: rgba(0,200,83,.06) !important;
+  border-bottom-color: var(--primary) !important;
+}
+.nav__btn--active i { opacity: 1; color: var(--primary); }
 
 .btn--icon {
   width: 42px; height: 42px;
@@ -299,7 +324,6 @@ body::before {
   color: var(--text);
   width: 42px; height: 42px;
   padding: 0;
-  margin-right: .5rem;
   cursor: pointer;
   align-items: center;
   justify-content: center;
@@ -1483,7 +1507,8 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .nav           { display: none; }
   .mobile-toggle { display: inline-flex; }
   .header__user  { display: none; }
-  .nav__btn      { padding: .4rem .65rem; font-size: .82rem; }
+  .header__actions { margin-left: auto; }
+  .nav__btn      { padding: 0 .75rem; font-size: .82rem; }
   .games-grid    { grid-template-columns: 1fr; }
   .ranking-grid  { grid-template-columns: 1fr; }
   .form-row      { grid-template-columns: 1fr; }
@@ -2636,23 +2661,9 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   box-shadow: 0 4px 14px rgba(0,0,0,.12);
 }
 
-/* ── 5. Nav buttons — underline deslizante ────────────────── */
+/* ── 5. Nav buttons — sem override necessário (border-bottom já no base) ── */
 .nav__btn {
   position: relative;
-  overflow: hidden;
-}
-.nav__btn::after {
-  content: '';
-  position: absolute;
-  bottom: 4px; left: 50%; right: 50%;
-  height: 2px; border-radius: 999px;
-  background: var(--primary);
-  transition: left .22s cubic-bezier(.22,1,.36,1),
-              right .22s cubic-bezier(.22,1,.36,1);
-}
-.nav__btn:hover::after,
-.nav__btn--active::after {
-  left: 14px; right: 14px;
 }
 
 /* ── 6. Game cards — lift + glow da cor accent ─────────────── */

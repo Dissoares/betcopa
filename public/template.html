@@ -14,20 +14,21 @@
 
   <!-- HEADER -->
   <header class="header">
-    <div class="container header__inner header__inner--split">
-      <div class="header__center">
-        <a class="logo" href="#" data-nav="jogos">
-          <img id="brandLogoHeader" class="brand-logo-img hidden" src="" alt="Logo" />
-          <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> <span>Bet</span>Copa</span>
-        </a>
-      </div>
-      <div class="header__right">
-        <nav class="nav" id="mainNav">
-          <button class="nav__btn nav__btn--active" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
-          <button class="nav__btn" data-nav="ganhadores">Ganhadores</button>
-          <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none">Meus Palpites</button>
-          <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none">Admin</button>
-        </nav>
+    <div class="container header__inner">
+      <!-- Logo -->
+      <a class="logo" href="#" data-nav="jogos">
+        <img id="brandLogoHeader" class="brand-logo-img hidden" src="" alt="Logo" />
+        <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> <span>Bet</span>Copa</span>
+      </a>
+      <!-- Nav central -->
+      <nav class="nav" id="mainNav">
+        <button class="nav__btn nav__btn--active" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
+        <button class="nav__btn" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
+        <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none"><i class="fa-solid fa-list-check"></i> Meus Palpites</button>
+        <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none"><i class="fa-solid fa-sliders"></i> Admin</button>
+      </nav>
+      <!-- Ações direita -->
+      <div class="header__actions">
         <div class="header__user" id="headerUser">
           <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
         </div>
