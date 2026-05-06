@@ -107,6 +107,7 @@ class AdminController
             'mult_min', 'mult_max', 'bet_percent',
             'max_aposta', 'max_ganho',
             'gateway_ativo', 'mp_access_token', 'mp_webhook_secret',
+            'expay_merchant_key',
             'saques_ativos',
             'site_logo',
         ];

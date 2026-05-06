@@ -147,18 +147,29 @@ class BetService
             throw new InvalidArgumentException('Pagamento ainda não processado');
         }
 
-        // Verifica status real no gateway antes de confirmar
+        // Verifica status do pagamento antes de confirmar
         if ($this->paymentsRepo !== null) {
             $payment = $this->paymentsRepo->findByBetId($betId);
-            if ($payment && $payment['gateway_payment_id'] !== '') {
-                $status = $gateway->getPaymentStatus($payment['gateway_payment_id']);
-                if ($status === 'rejected' || $status === 'cancelled') {
-                    throw new InvalidArgumentException('Pagamento recusado pelo gateway');
+            if ($payment) {
+                // Se já aprovado localmente (pelo webhook), confirma direto
+                if (($payment['status'] ?? '') === 'approved') {
+                    $this->bets->updateStatus($betId, 'confirmado');
+                    $this->transactions->create($userId, 'debito', (float) $bet['valor'], 'Aposta confirmada #' . $betId);
+                    Logger::info('Pagamento confirmado (webhook)', ['bet_id' => $betId, 'gateway' => $gateway->getName()]);
+                    return;
                 }
-                if ($status === 'pending') {
-                    throw new InvalidArgumentException('Pagamento ainda não confirmado. Aguarde ou tente novamente.');
+
+                // Caso contrário, consulta o gateway
+                if ($payment['gateway_payment_id'] !== '') {
+                    $status = $gateway->getPaymentStatus($payment['gateway_payment_id']);
+                    if ($status === 'rejected' || $status === 'cancelled') {
+                        throw new InvalidArgumentException('Pagamento recusado pelo gateway');
+                    }
+                    if ($status === 'pending') {
+                        throw new InvalidArgumentException('Pagamento ainda não confirmado. Aguarde ou tente novamente.');
+                    }
+                    $this->paymentsRepo->updateStatus((int) $payment['id'], 'approved');
                 }
-                $this->paymentsRepo->updateStatus((int) $payment['id'], 'approved');
             }
         }
 

@@ -21,6 +21,7 @@ require_once __DIR__ . '/../src/repositories/PaymentRepository.php';
 require_once __DIR__ . '/../src/repositories/WithdrawalRepository.php';
 require_once __DIR__ . '/../src/payments/PaymentGatewayInterface.php';
 require_once __DIR__ . '/../src/payments/MercadoPagoGateway.php';
+require_once __DIR__ . '/../src/payments/ExpayBrasilGateway.php';
 require_once __DIR__ . '/../src/payments/PaymentGatewayFactory.php';
 require_once __DIR__ . '/../src/services/AuthService.php';
 require_once __DIR__ . '/../src/services/GameService.php';
@@ -149,6 +150,7 @@ try {
 
         // ── Webhooks ─────────────────────────────────────────────────────
         route('/api/webhooks/mercadopago', 'POST', fn() => $webhookCtrl->mercadopago());
+        route('/api/webhooks/expay',         'POST', fn() => $webhookCtrl->expay());
         jsonResponse(['error' => 'Rota não encontrada'], 404);
     }
 

@@ -2464,12 +2464,31 @@ const loadAdminConfig = async () => {
     set('cfg_saques_ativos',             'saques_ativos');
     set('cfg_mp_access_token',           'mp_access_token');
     set('cfg_mp_webhook_secret',         'mp_webhook_secret');
+    set('cfg_gateway_ativo',             'gateway_ativo');
+    set('cfg_expay_merchant_key',        'expay_merchant_key');
 
-    // Exibe URL do webhook no painel
-    const whEl = document.getElementById('webhookUrl');
-    if (whEl) whEl.textContent = `${location.origin}/api/webhooks/mercadopago`;
+    // Exibe URLs dos webhooks
+    const whEl    = document.getElementById('webhookUrl');
+    const whExpay = document.getElementById('webhookUrlExpay');
+    if (whEl)    whEl.textContent    = `${location.origin}/api/webhooks/mercadopago`;
+    if (whExpay) whExpay.textContent = `${location.origin}/api/webhooks/expay`;
+
+    // Mostra os campos do gateway selecionado
+    toggleGatewayFields();
   } catch (err) {
     statusEl && (statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`);
+  }
+};
+
+const toggleGatewayFields = () => {
+  const gw = document.getElementById('cfg_gateway_ativo')?.value ?? '';
+  document.querySelectorAll('.gateway-fields').forEach(el => (el.style.display = 'none'));
+  if (gw === 'mercadopago') {
+    const el = document.getElementById('fields_mercadopago');
+    if (el) el.style.display = '';
+  } else if (gw === 'expay') {
+    const el = document.getElementById('fields_expay');
+    if (el) el.style.display = '';
   }
 };
 
@@ -2510,8 +2529,10 @@ const submitAdminConfig = async (e) => {
       max_aposta:                get('cfg_max_aposta'),
       max_ganho:                 get('cfg_max_ganho'),
       saques_ativos:             get('cfg_saques_ativos'),
+      gateway_ativo:             get('cfg_gateway_ativo'),
       mp_access_token:           get('cfg_mp_access_token'),
       mp_webhook_secret:         get('cfg_mp_webhook_secret'),
+      expay_merchant_key:        get('cfg_expay_merchant_key'),
     });
     toast(res.message ?? 'Configurações salvas!', 'success');
     // O logo já foi aplicado no momento do upload — não precisa refazer aqui

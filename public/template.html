@@ -544,20 +544,55 @@
 
               <div class="config-panel" data-config-panel="payment">
                 <div class="panel">
-                  <h3 class="panel__title"><i class="fa-brands fa-pix"></i> Mercado Pago</h3>
+                  <h3 class="panel__title"><i class="fa-brands fa-pix"></i> Gateway de Pagamento</h3>
                   <div class="admin-grid-2">
-                    <div class="form-group">
-                      <label>Access Token</label>
-                      <input id="cfg_mp_access_token" type="password" autocomplete="off"
-                             placeholder="APP_USR-..." />
-                      <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Credenciais de produ&ccedil;&atilde;o.</small>
+                    <div class="form-group" style="grid-column:1/-1">
+                      <label>Gateway ativo</label>
+                      <select id="cfg_gateway_ativo" onchange="toggleGatewayFields()">
+                        <option value="">— Selecione —</option>
+                        <option value="mercadopago">Mercado Pago</option>
+                        <option value="expay">ExPay Brasil</option>
+                      </select>
                     </div>
-                    <div class="form-group">
-                      <label>Webhook Secret</label>
-                      <input id="cfg_mp_webhook_secret" type="password" autocomplete="off"
-                             placeholder="Chave secreta do webhook" />
-                      <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Webhooks &rarr; Chave secreta.</small>
+
+                    <!-- Campos Mercado Pago -->
+                    <div id="fields_mercadopago" class="gateway-fields" style="display:none;grid-column:1/-1">
+                      <div class="admin-grid-2">
+                        <div class="form-group">
+                          <label>Access Token</label>
+                          <input id="cfg_mp_access_token" type="password" autocomplete="off"
+                                 placeholder="APP_USR-..." />
+                          <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Credenciais de produ&ccedil;&atilde;o.</small>
+                        </div>
+                        <div class="form-group">
+                          <label>Webhook Secret</label>
+                          <input id="cfg_mp_webhook_secret" type="password" autocomplete="off"
+                                 placeholder="Chave secreta do webhook" />
+                          <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Webhooks &rarr; Chave secreta.</small>
+                        </div>
+                      </div>
+                      <div class="alert alert--info" style="font-size:.78rem;margin-top:.75rem">
+                        <i class="fa-solid fa-circle-info"></i>
+                        URL do webhook MP: <code id="webhookUrl"></code>
+                      </div>
                     </div>
+
+                    <!-- Campos ExPay Brasil -->
+                    <div id="fields_expay" class="gateway-fields" style="display:none;grid-column:1/-1">
+                      <div class="admin-grid-2">
+                        <div class="form-group">
+                          <label>Merchant Key</label>
+                          <input id="cfg_expay_merchant_key" type="password" autocomplete="off"
+                                 placeholder="$2y$10$..." />
+                          <small class="form-hint">ExPay &rarr; <a href="https://expaybrasil.com/pt/mymerchants" target="_blank">Meus Merchants</a> &rarr; Chave do comerciante.</small>
+                        </div>
+                      </div>
+                      <div class="alert alert--info" style="font-size:.78rem;margin-top:.75rem">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Informe esta URL como <code>notification_url</code> no painel ExPay: <code id="webhookUrlExpay"></code>
+                      </div>
+                    </div>
+
                     <div class="form-group">
                       <label>Saques habilitados</label>
                       <select id="cfg_saques_ativos">
@@ -565,10 +600,6 @@
                         <option value="0">N&atilde;o</option>
                       </select>
                     </div>
-                  </div>
-                  <div class="alert alert--info" style="font-size:.78rem;margin-top:.75rem">
-                    <i class="fa-solid fa-circle-info"></i>
-                    URL do webhook para configurar no painel MP: <code id="webhookUrl"></code>
                   </div>
                 </div>
               </div>

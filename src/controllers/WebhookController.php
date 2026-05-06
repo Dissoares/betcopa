@@ -89,4 +89,90 @@ class WebhookController
         }
         return [$ts, $hash];
     }
+
+    /**
+     * Processa notificações da ExPay Brasil (dois passos).
+     *
+     * Passo 1 — ExPay envia POST à nossa notification_url:
+     *   { date_notification, invoice_id, token }
+     *
+     * Passo 2 — Nós consultamos o status real em /en/request/status
+     *   com { merchant_key, token }.
+     *
+     * Se status === 'approved', confirma a aposta.
+     */
+    public function expay(): void
+    {
+        $body = file_get_contents('php://input');
+        $data = json_decode($body, true) ?? [];
+
+        // Aceita também form-urlencoded
+        if (empty($data)) {
+            parse_str($body, $data);
+        }
+
+        $token     = (string) ($data['token']      ?? '');
+        $invoiceId = (string) ($data['invoice_id'] ?? '');
+
+        if ($token === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'token ausente']);
+            return;
+        }
+
+        $merchantKey = $this->config->get('expay_merchant_key', '');
+        if ($merchantKey === '') {
+            http_response_code(500);
+            echo json_encode(['error' => 'expay_merchant_key não configurada']);
+            return;
+        }
+
+        // Passo 2: consulta status real usando o token
+        $scheme  = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host    = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $notifUrl = "{$scheme}://{$host}/api/webhooks/expay";
+
+        $gateway = new ExpayBrasilGateway($merchantKey, $notifUrl);
+        $result  = $gateway->fetchStatusByToken($token);
+
+        $status    = $result['status'];
+        $invoiceId = $invoiceId ?: $result['invoice_id'];
+
+        // Extrai betId do invoice_id (formato: bet-{betId}-{userId})
+        if (!preg_match('/^bet-(\d+)-\d+$/', $invoiceId, $m)) {
+            http_response_code(200);
+            echo json_encode(['ok' => true, 'skip' => 'invoice_id_format']);
+            return;
+        }
+
+        $betId   = (int) $m[1];
+        $payment = $this->payments->findByBetId($betId);
+
+        if (!$payment) {
+            http_response_code(200);
+            echo json_encode(['ok' => true, 'skip' => 'payment_not_found']);
+            return;
+        }
+
+        if ($status === 'approved' && ($payment['status'] ?? '') !== 'approved') {
+            $this->payments->updateStatus((int) $payment['id'], 'approved');
+
+            $bet = $this->bets->find($betId);
+            if ($bet && $bet['status'] === 'pago') {
+                $this->bets->updateStatus($betId, 'confirmado');
+                $this->transactions->create(
+                    (int) $bet['user_id'],
+                    'debito',
+                    (float) $bet['valor'],
+                    'Aposta confirmada via webhook ExPay #' . $betId
+                );
+                Logger::info('Aposta confirmada via webhook ExPay', ['bet_id' => $betId]);
+            }
+        } elseif ($status === 'rejected') {
+            $this->payments->updateStatus((int) $payment['id'], 'rejected');
+        }
+
+        http_response_code(200);
+        echo json_encode(['ok' => true]);
+    }
 }
