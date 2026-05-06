@@ -2389,6 +2389,7 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 }
 .ft-mini-badge .fa-pix  { color: #32BCAD; }
 .ft-mini-badge .fa-lock { color: var(--primary); }
+.ft-mini-badge--18 { border-color: var(--danger); color: var(--danger); }
 
 /* ── Mobile ─────────────────────────────────────────────── */
 @media (max-width: 640px) {
