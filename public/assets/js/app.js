@@ -293,6 +293,9 @@ const gameBadge = (g) => {
 
 // ── Navigation ────────────────────────────────────────────────
 const navigate = (view) => {
+  if (view === 'admin' && (!S.user || S.user.email !== S.adminEmail)) {
+    view = S.user ? 'jogos' : 'auth';
+  }
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   const target = document.getElementById(`view-${view}`);
   if (target) {
@@ -2892,6 +2895,7 @@ const loadBetConfig = async () => {
     S.betPercent = cfg.bet_percent || 10;
     if (S.multiplier < S.multMin) S.multiplier = S.multMin;
     if (S.multiplier > S.multMax) S.multiplier = S.multMax;
+    if (cfg.admin_email) S.adminEmail = cfg.admin_email;
     applyBrandLogo(cfg.site_logo || '');
   } catch (_) { /* usa defaults */ }
 };
@@ -3041,11 +3045,15 @@ const init = async () => {
 
   // Restaura rota do hash após tudo carregado
   const hash = location.hash.replace('#', '') || location.pathname.replace(/^\//, '');
-  if (hash.startsWith('admin/')) {
-    const tab = hash.replace('admin/', '') || 'dashboard';
-    const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config'];
-    navigate('admin');
-    switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
+  if (hash.startsWith('admin/') || hash === 'admin') {
+    if (!S.user || S.user.email !== S.adminEmail) {
+      navigate(S.user ? 'jogos' : 'auth');
+    } else {
+      const tab = hash.replace('admin/', '') || 'dashboard';
+      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config'];
+      navigate('admin');
+      switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
+    }
   } else if (hash) {
     const validViews = ['jogos', 'apostas', 'ranking', 'admin', 'auth', 'perfil'];
     if (validViews.includes(hash)) navigate(hash);

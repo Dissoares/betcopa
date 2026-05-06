@@ -102,6 +102,7 @@ class AdminController
             'bet_percent' => (float) $this->config->get('bet_percent', 10),
             'site_logo'   =>         $this->config->get('site_logo',   ''),
             'site_nome'   =>         $this->config->get('site_nome',   'BetCopa'),
+            'admin_email' =>         $this->adminEmail,
         ]);
     }
 
