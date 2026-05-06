@@ -131,8 +131,6 @@ class BetService
             'qr_code'        => $charge['qr_code'],
             'qr_code_base64' => $charge['qr_code_base64'],
             'expires_at'     => $charge['expires_at'],
-            'pix_chave'      => $this->configRepo->get('pix_chave', ''),
-            'pix_nome'       => $this->configRepo->get('pix_nome', 'BetCopa'),
         ];
     }
 

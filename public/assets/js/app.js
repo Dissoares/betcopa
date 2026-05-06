@@ -2454,9 +2454,6 @@ const loadAdminConfig = async () => {
     set('cfg_user_registration_enabled', 'user_registration_enabled');
     set('cfg_api_football_key',          'api_football_key');
     set('cfg_api_football_timezone',     'api_football_timezone');
-    set('cfg_pix_tipo',                  'pix_tipo');
-    set('cfg_pix_chave',                 'pix_chave');
-    set('cfg_pix_nome',                  'pix_nome');
     set('cfg_bonus_cadastro',            'bonus_cadastro');
     set('cfg_valor_base_padrao',         'valor_base_padrao');
     set('cfg_mult_min',                  'mult_min');
@@ -2505,9 +2502,6 @@ const submitAdminConfig = async (e) => {
       user_registration_enabled: get('cfg_user_registration_enabled'),
       api_football_key:          get('cfg_api_football_key'),
       api_football_timezone:     get('cfg_api_football_timezone'),
-      pix_tipo:                  get('cfg_pix_tipo'),
-      pix_chave:                 get('cfg_pix_chave'),
-      pix_nome:                  get('cfg_pix_nome'),
       bonus_cadastro:            get('cfg_bonus_cadastro'),
       valor_base_padrao:         get('cfg_valor_base_padrao'),
       mult_min:                  get('cfg_mult_min'),

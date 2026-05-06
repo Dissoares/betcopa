@@ -543,54 +543,32 @@
               </div>
 
               <div class="config-panel" data-config-panel="payment">
-                <div class="admin-grid-2">
-                  <div class="panel">
-                    <h3 class="panel__title"><i class="fa-solid fa-credit-card"></i> Pagamentos</h3>
+                <div class="panel">
+                  <h3 class="panel__title"><i class="fa-brands fa-pix"></i> Mercado Pago</h3>
+                  <div class="admin-grid-2">
                     <div class="form-group">
-                      <label>Tipo da chave PIX</label>
-                      <select id="cfg_pix_tipo">
-                        <option value="email">Email</option>
-                        <option value="cpf">CPF</option>
-                        <option value="telefone">Telefone</option>
-                        <option value="aleatoria">Chave aleatória</option>
-                      </select>
+                      <label>Access Token</label>
+                      <input id="cfg_mp_access_token" type="password" autocomplete="off"
+                             placeholder="APP_USR-..." />
+                      <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Credenciais de produ&ccedil;&atilde;o.</small>
                     </div>
                     <div class="form-group">
-                      <label>Chave PIX</label>
-                      <input id="cfg_pix_chave" type="text" placeholder="pagamentos@betcopa.com" />
-                    </div>
-                    <div class="form-group">
-                      <label>Nome do beneficiário</label>
-                      <input id="cfg_pix_nome" type="text" placeholder="BetCopa Ltda" />
+                      <label>Webhook Secret</label>
+                      <input id="cfg_mp_webhook_secret" type="password" autocomplete="off"
+                             placeholder="Chave secreta do webhook" />
+                      <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Webhooks &rarr; Chave secreta.</small>
                     </div>
                     <div class="form-group">
                       <label>Saques habilitados</label>
                       <select id="cfg_saques_ativos">
                         <option value="1">Sim</option>
-                        <option value="0">Não</option>
+                        <option value="0">N&atilde;o</option>
                       </select>
                     </div>
                   </div>
-
-                  <div class="panel">
-                    <h3 class="panel__title"><i class="fa-solid fa-gear"></i> Gateway de Pagamento</h3>
-
-                    <div class="form-group">
-                      <label>Mercado Pago — Access Token</label>
-                      <input id="cfg_mp_access_token" type="password" autocomplete="off"
-                             placeholder="APP_USR-..." />
-                      <small class="form-hint">Encontre em: MP → Suas integrações → Credenciais de produção.</small>
-                    </div>
-                    <div class="form-group">
-                      <label>Mercado Pago — Webhook Secret</label>
-                      <input id="cfg_mp_webhook_secret" type="password" autocomplete="off"
-                             placeholder="Chave secreta do webhook" />
-                      <small class="form-hint">Configure em: MP → Suas integrações → Webhooks → Chave secreta.</small>
-                    </div>
-                    <div class="alert alert--info" style="font-size:.78rem;margin-top:.5rem">
-                      <i class="fa-solid fa-circle-info"></i>
-                      URL do webhook: <code id="webhookUrl"></code>
-                    </div>
+                  <div class="alert alert--info" style="font-size:.78rem;margin-top:.75rem">
+                    <i class="fa-solid fa-circle-info"></i>
+                    URL do webhook para configurar no painel MP: <code id="webhookUrl"></code>
                   </div>
                 </div>
               </div>
