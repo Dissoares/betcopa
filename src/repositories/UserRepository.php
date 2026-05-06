@@ -46,4 +46,10 @@ class UserRepository
         $row = $stmt->fetch();
         return $row && (bool) $row['bloqueado'];
     }
+
+    public function updatePassword(int $id, string $hash): void
+    {
+        $this->db->prepare('UPDATE users SET senha = :senha WHERE id = :id')
+                 ->execute(['senha' => $hash, 'id' => $id]);
+    }
 }

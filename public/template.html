@@ -140,7 +140,49 @@
           </div>
           <button class="btn btn--primary btn--full btn--large" type="submit">Entrar →</button>
         </form>
+        <p style="text-align:center;margin-top:.75rem">
+          <button class="btn-link" id="btnForgotPassword">Esqueci minha senha</button>
+        </p>
       </div>
+
+      <!-- ── Recuperar senha ── -->
+      <div id="authForgot" class="hidden">
+        <h3 style="margin-top:0;margin-bottom:.25rem">Recuperar senha</h3>
+        <p class="text--muted" style="margin-top:0;margin-bottom:1rem;font-size:.9rem">
+          Informe seu e-mail e enviaremos as instruções.
+        </p>
+        <form id="forgotForm">
+          <div class="form-group">
+            <label>E-mail cadastrado</label>
+            <input id="forgotEmail" type="email" placeholder="seu@email.com" required />
+          </div>
+          <button class="btn btn--primary btn--full" type="submit">Enviar instruções</button>
+        </form>
+        <p style="text-align:center;margin-top:.75rem">
+          <button class="btn-link" id="btnBackToLogin">← Voltar ao login</button>
+        </p>
+      </div>
+
+      <!-- ── Nova senha (via link de reset) ── -->
+      <div id="authReset" class="hidden">
+        <h3 style="margin-top:0;margin-bottom:.25rem">Nova senha</h3>
+        <p class="text--muted" style="margin-top:0;margin-bottom:1rem;font-size:.9rem">
+          Escolha uma senha com no mínimo 6 caracteres.
+        </p>
+        <form id="resetForm">
+          <input type="hidden" id="resetToken" />
+          <div class="form-group">
+            <label>Nova senha</label>
+            <input id="resetPassword" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+          </div>
+          <div class="form-group">
+            <label>Confirmar senha</label>
+            <input id="resetPasswordConfirm" type="password" placeholder="Repita a senha" required minlength="6" />
+          </div>
+          <button class="btn btn--primary btn--full btn--large" type="submit">Redefinir senha →</button>
+        </form>
+      </div>
+
       <div id="authRegister" class="hidden">
         <form id="registerForm">
           <div class="form-group">

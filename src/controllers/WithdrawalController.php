@@ -5,12 +5,16 @@ class WithdrawalController
 {
     private const VALOR_MINIMO = 10.00;
 
+    private ?Mailer $mailer = null;
+
     public function __construct(
         private readonly WithdrawalRepository  $withdrawals,
         private readonly TransactionRepository $transactions,
         private readonly ConfigRepository      $config,
         private readonly string                $adminEmail
     ) {}
+
+    public function setMailer(Mailer $mailer): void { $this->mailer = $mailer; }
 
     /** POST /api/user/saques */
     public function request(): void
@@ -70,6 +74,12 @@ class WithdrawalController
 
         $this->withdrawals->updateStatus($id, 'aprovado');
         Logger::info('Saque aprovado pelo admin', ['id' => $id]);
+
+        if ($this->mailer && !empty($saque['user_email'])) {
+            try { $this->mailer->withdrawalApproved($saque['user_email'], $saque['user_nome'], (float) $saque['valor']); }
+            catch (\Throwable $e) { Logger::info('Mail falhou (withdrawalApproved)', ['err' => $e->getMessage()]); }
+        }
+
         jsonResponse(['message' => 'Saque aprovado.']);
     }
 
@@ -95,6 +105,12 @@ class WithdrawalController
         );
         $this->withdrawals->updateStatus($id, 'rejeitado', $obs);
         Logger::info('Saque rejeitado', ['id' => $id, 'obs' => $obs]);
+
+        if ($this->mailer && !empty($saque['user_email'])) {
+            try { $this->mailer->withdrawalRejected($saque['user_email'], $saque['user_nome'], (float) $saque['valor'], $obs); }
+            catch (\Throwable $e) { Logger::info('Mail falhou (withdrawalRejected)', ['err' => $e->getMessage()]); }
+        }
+
         jsonResponse(['message' => 'Saque rejeitado e saldo estornado.']);
     }
 }

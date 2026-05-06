@@ -37,7 +37,7 @@ class BetRepository
 
     public function confirmedByGame(int $jogoId): array
     {
-        $stmt = $this->db->prepare('SELECT a.*, u.nome FROM apostas a JOIN users u ON a.user_id = u.id WHERE a.jogo_id = :jogo_id AND a.status = :status');
+        $stmt = $this->db->prepare('SELECT a.*, u.nome, u.email FROM apostas a JOIN users u ON a.user_id = u.id WHERE a.jogo_id = :jogo_id AND a.status = :status');
         $stmt->execute(['jogo_id' => $jogoId, 'status' => 'confirmado']);
         return $stmt->fetchAll();
     }

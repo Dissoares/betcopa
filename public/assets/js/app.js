@@ -1497,11 +1497,56 @@ const logout = async () => {
 };
 
 const switchAuthTab = (tab) => {
-  document.getElementById('authLogin').classList.toggle('hidden', tab !== 'login');
-  document.getElementById('authRegister').classList.toggle('hidden', tab !== 'register');
+  ['login', 'register', 'forgot', 'reset'].forEach(t => {
+    document.getElementById(`auth${t.charAt(0).toUpperCase() + t.slice(1)}`)?.classList.toggle('hidden', t !== tab);
+  });
+  document.querySelector('.auth-tabs')?.classList.toggle('hidden', tab === 'forgot' || tab === 'reset');
   document.querySelectorAll('.auth-tab').forEach(btn => {
     btn.classList.toggle('auth-tab--active', btn.dataset.authTab === tab);
   });
+};
+
+const submitForgotPassword = async (e) => {
+  e.preventDefault();
+  const btn   = e.target.querySelector('button[type=submit]');
+  const email = document.getElementById('forgotEmail').value.trim();
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const res = await api('/api/auth/forgot', 'POST', { email });
+    showAlert(res.message, 'success');
+    e.target.reset();
+    // Em dev, exibe o link de reset diretamente
+    if (res.reset_url) {
+      showAlert(`Link de reset (dev): <a href="${res.reset_url}" style="color:var(--primary)">${res.reset_url}</a>`, 'info');
+    }
+  } catch (err) {
+    showAlert(err.message, 'danger');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enviar instruções';
+  }
+};
+
+const submitResetPassword = async (e) => {
+  e.preventDefault();
+  const btn      = e.target.querySelector('button[type=submit]');
+  const token    = document.getElementById('resetToken').value;
+  const nova     = document.getElementById('resetPassword').value;
+  const confirm  = document.getElementById('resetPasswordConfirm').value;
+
+  if (nova !== confirm) { showAlert('As senhas não coincidem.', 'danger'); return; }
+
+  btn.disabled = true; btn.textContent = 'Redefinindo...';
+  try {
+    const res = await api('/api/auth/reset', 'POST', { token, nova_senha: nova });
+    showAlert(res.message, 'success');
+    // Remove token da URL e vai para o login
+    history.replaceState(null, '', '/#auth');
+    switchAuthTab('login');
+  } catch (err) {
+    showAlert(err.message, 'danger');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Redefinir senha →';
+  }
 };
 
 // ── Admin ─────────────────────────────────────────────────────
@@ -2220,6 +2265,10 @@ const bind = () => {
   // Auth forms
   document.getElementById('loginForm').addEventListener('submit', submitLogin);
   document.getElementById('registerForm').addEventListener('submit', submitRegister);
+  document.getElementById('forgotForm')?.addEventListener('submit', submitForgotPassword);
+  document.getElementById('resetForm')?.addEventListener('submit', submitResetPassword);
+  document.getElementById('btnForgotPassword')?.addEventListener('click', () => switchAuthTab('forgot'));
+  document.getElementById('btnBackToLogin')?.addEventListener('click', () => switchAuthTab('login'));
 
   // Auth tab switcher
   document.querySelectorAll('.auth-tab').forEach(tab => {
@@ -2980,6 +3029,15 @@ const init = async () => {
   await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
+
+  // Detecção de link de reset de senha (?reset=TOKEN na query string)
+  const resetToken = new URLSearchParams(location.search).get('reset');
+  if (resetToken) {
+    document.getElementById('resetToken').value = resetToken;
+    navigate('auth');
+    switchAuthTab('reset');
+    return; // não restaura hash neste caso
+  }
 
   // Restaura rota do hash após tudo carregado
   const hash = location.hash.replace('#', '') || location.pathname.replace(/^\//, '');

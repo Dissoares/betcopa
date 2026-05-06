@@ -31,7 +31,11 @@ class WithdrawalRepository
 
     public function find(int $id): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM saques WHERE id = :id LIMIT 1');
+        $stmt = $this->db->prepare(
+            'SELECT s.*, u.nome AS user_nome, u.email AS user_email
+             FROM saques s JOIN users u ON u.id = s.user_id
+             WHERE s.id = :id LIMIT 1'
+        );
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }

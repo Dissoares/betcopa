@@ -986,6 +986,13 @@ body.drawer-open { overflow: hidden; }
 }
 .auth-tab--active { background: var(--surface-3); color: var(--text); }
 
+.btn-link {
+  background: none; border: none; padding: 0;
+  color: var(--primary); cursor: pointer; font-size: .875rem;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.btn-link:hover { opacity: .8; }
+
 .form-group { margin-bottom: .9rem; }
 .form-group label {
   display: block; font-size: .82rem; color: var(--text-dim);

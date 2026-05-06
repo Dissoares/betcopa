@@ -7,6 +7,7 @@ class BetService
     private array $config;
     private ConfigRepository $configRepo;
     private ?PaymentRepository $paymentsRepo = null;
+    private ?Mailer             $mailer       = null;
 
     public function __construct(BetRepository $bets, GameRepository $games, TransactionRepository $transactions, array $config, ConfigRepository $configRepo)
     {
@@ -20,6 +21,11 @@ class BetService
     public function setPaymentRepository(PaymentRepository $repo): void
     {
         $this->paymentsRepo = $repo;
+    }
+
+    public function setMailer(Mailer $mailer): void
+    {
+        $this->mailer = $mailer;
     }
 
     /**
@@ -188,11 +194,19 @@ class BetService
         [$realCasa, $realFora] = array_map('intval', explode('x', $game['placar_real']));
         $bets = $this->bets->confirmedByGame($gameId);
 
+        $jogo    = $game['time_casa'] . ' × ' . $game['time_fora'];
+        $placar  = $game['placar_real'];
+
         foreach ($bets as $bet) {
             $acertou = (int) $bet['placar_casa'] === $realCasa && (int) $bet['placar_fora'] === $realFora;
             $status  = $acertou ? 'ganhou' : 'perdido';
             if ($acertou) {
                 $this->transactions->create((int) $bet['user_id'], 'credito', (float) $bet['possivel_ganho'], 'Prêmio aposta #' . $bet['id']);
+                if ($this->mailer && !empty($bet['email'])) {
+                    $palpite = $bet['placar_casa'] . ' × ' . $bet['placar_fora'];
+                    try { $this->mailer->betWon($bet['email'], $bet['nome'], $jogo, $palpite, $placar, (float) $bet['possivel_ganho']); }
+                    catch (\Throwable $e) { Logger::info('Mail falhou (betWon)', ['err' => $e->getMessage()]); }
+                }
             }
             $this->bets->updateStatus((int) $bet['id'], $status);
             Logger::info('Aposta processada', ['bet_id' => $bet['id'], 'status' => $status]);

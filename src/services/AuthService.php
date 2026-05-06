@@ -40,6 +40,35 @@ class AuthService
         return ['id' => $userId, 'nome' => $nome, 'email' => $email];
     }
 
+    public function forgotPassword(string $email, PasswordResetRepository $resets, Mailer $mailer, string $baseUrl): ?string
+    {
+        $user = $this->users->findByEmail($email);
+        if (!$user) return null; // não revela se e-mail existe
+
+        $token    = bin2hex(random_bytes(32));
+        $resets->create((int) $user['id'], $token);
+
+        $resetUrl = rtrim($baseUrl, '/') . '/?reset=' . $token;
+        $mailer->passwordReset($user['email'], $user['nome'], $resetUrl);
+        Logger::info('Reset de senha solicitado', ['user_id' => $user['id']]);
+
+        return $token;
+    }
+
+    public function resetPassword(string $token, string $novaSenha, PasswordResetRepository $resets): void
+    {
+        if (strlen($novaSenha) < 6) {
+            throw new InvalidArgumentException('Senha muito curta (mínimo 6 caracteres)');
+        }
+        $reset = $resets->findValid($token);
+        if (!$reset) {
+            throw new InvalidArgumentException('Link inválido ou expirado');
+        }
+        $this->users->updatePassword((int) $reset['user_id'], password_hash($novaSenha, PASSWORD_DEFAULT));
+        $resets->markUsed($token);
+        Logger::info('Senha redefinida', ['user_id' => $reset['user_id']]);
+    }
+
     public function login(string $email, string $senha): array
     {
         $user = $this->users->findByEmail($email);
