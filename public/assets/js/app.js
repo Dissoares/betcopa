@@ -618,7 +618,7 @@ const renderMatchBanner = () => {
   el.replaceWith(fresh);
   el = fresh;
 
-  // Slide priority: live games → soon (<1h) → next upcoming
+  // Slide priority: live games → soon (<1h) → next upcoming (max 8 total)
   const live = S.games.filter(isGameLive);
   const soon = S.games
     .filter(g => g.status === 'aberto' && !isGameLive(g))
@@ -628,7 +628,8 @@ const renderMatchBanner = () => {
     .filter(g => g.status === 'aberto' && !isGameLive(g) && !soon.includes(g))
     .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
-  const slides = [...live, ...soon, ...next];
+  const MAX_SLIDES = 8;
+  const slides = [...live, ...soon, ...next].slice(0, MAX_SLIDES);
 
   if (!slides.length) {
     wrap.className = 'match-banner-wrap hidden';
