@@ -511,13 +511,12 @@ const renderCard = (g) => {
 
   let midHtml;
   if (isLive) {
+    const { period, min } = fmtLiveClock(g);
+    const clockTxt = min !== null ? `${period} · ${min}'` : period;
     midHtml = `
         <div class="gc-score gc-score--live">
-          <span class="gc-score__label gc-score__label--live">
-            <i class="fa-solid fa-circle"></i>
-            <span id="lvclock-${g.id}">AO VIVO</span>
-          </span>
           <span class="gc-score__val">${scoreStr ?? '0 × 0'}</span>
+          <span class="gc-score__period" id="lvclock-${g.id}">${clockTxt}</span>
         </div>`;
   } else if (isFinal && scoreStr) {
     midHtml = `
@@ -562,7 +561,10 @@ const renderCard = (g) => {
     <article class="game-card game-card--${statusClass}">
       <div class="game-card__head">
         ${badgeLabel}
-        <time class="game-card__date">${fmtGameDate(g.data_hora)}</time>
+        ${isLive
+          ? `<span class="game-card__date game-card__date--live"><i class="fa-solid fa-circle fa-beat" style="font-size:.5em;color:var(--danger)"></i> Ao Vivo</span>`
+          : `<time class="game-card__date">${fmtGameDate(g.data_hora)}</time>`
+        }
       </div>
       <div class="game-card__matchup">
         <div class="game-card__team">
@@ -916,15 +918,17 @@ const fmtCountdown = (ms) => {
 const fmtLiveClock = (g) => {
   const api     = (g.status_api || '').toUpperCase();
   const elapsed = Math.max(0, Math.floor((Date.now() - new Date(g.data_hora)) / 60000));
+  // elapsed=0 significa data_hora no futuro (dados inconsistentes) — não exibe minuto
+  const hasMin  = elapsed > 0;
 
   if (api === 'HT')  return { period: 'Intervalo',      min: null };
   if (api === 'BT')  return { period: 'Interv. Prorr.', min: null };
   if (api === 'P')   return { period: 'Pênaltis',       min: null };
   if (api === 'INT') return { period: 'Interrompido',   min: null };
 
-  if (api === '1H')  return { period: '1º Tempo',    min: Math.min(elapsed, 45) };
-  if (api === '2H')  return { period: '2º Tempo',    min: Math.min(45 + Math.max(0, elapsed - 60), 90) };
-  if (api === 'ET')  return { period: 'Prorrogação', min: Math.min(90 + Math.max(0, elapsed - 110), 120) };
+  if (api === '1H')  return { period: '1º Tempo',    min: hasMin ? Math.min(elapsed, 45) : null };
+  if (api === '2H')  return { period: '2º Tempo',    min: hasMin ? Math.min(45 + Math.max(0, elapsed - 60), 90) : null };
+  if (api === 'ET')  return { period: 'Prorrogação', min: hasMin ? Math.min(90 + Math.max(0, elapsed - 110), 120) : null };
 
   return { period: 'Ao Vivo', min: null };
 };
@@ -937,8 +941,7 @@ const startLiveClocks = () => {
     const tick = () => {
       const { period, min } = fmtLiveClock(g);
       el.textContent = min !== null ? `${period} · ${min}'` : period;
-    };
-    tick();
+    };    tick();
     S.timers.push(setInterval(tick, 30000));
   });
 };

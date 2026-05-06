@@ -737,6 +737,11 @@ body.drawer-open { overflow: hidden; }
   font-size: .7rem; font-weight: 500;
   color: var(--text-muted); white-space: nowrap;
 }
+.game-card__date--live {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .7rem; font-weight: 700;
+  color: var(--danger);
+}
 
 /* ─ Matchup row ---------------------------------------------- */
 .game-card__matchup {
@@ -1789,30 +1794,19 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   letter-spacing: .04em;
   line-height: 1;
 }
-.gc-score--live  .gc-score__val        { color: var(--text); }
-.gc-score__label--live {
+.gc-score--live  .gc-score__val        { color: var(--text); font-size: 1.55rem; }
+.gc-score__period {
+  font-size: .58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
   color: var(--danger);
-  font-weight: 800;
-  letter-spacing: .06em;
-  display: inline-flex;
-  align-items: center;
-  gap: .35rem;
-  background: rgba(255,71,87,.12);
-  border: 1px solid rgba(255,71,87,.28);
-  border-radius: 999px;
-  padding: .22rem .65rem .22rem .5rem;
-  font-size: .58rem !important;
-  animation: liveChipGlow 2.5s ease-in-out infinite;
+  opacity: .8;
+  font-variant-numeric: tabular-nums;
 }
-.gc-score__label--live i {
-  font-size: .72em;
-  /* sobrescreve fa-beat com nossa animação */
-  animation: liveDot 1s ease-in-out infinite !important;
-}
-@keyframes liveChipGlow {
-  0%, 100% { border-color: rgba(255,71,87,.28); box-shadow: none; }
-  50%      { border-color: rgba(255,71,87,.6);  box-shadow: 0 0 14px rgba(255,71,87,.22); }
-}
+/* Chip pulsante removido — período vai abaixo do placar */
+.gc-score__label--live { display: none; }
+.gc-score__label--live i { display: none; }
 .gc-score--final .gc-score__val   { color: var(--info); text-shadow: var(--score-shadow); }
 .gc-score__dot {
   font-size: .5rem;
