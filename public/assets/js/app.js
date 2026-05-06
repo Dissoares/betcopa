@@ -2470,6 +2470,13 @@ const loadAdminConfig = async () => {
     set('cfg_max_aposta',                'max_aposta');
     set('cfg_max_ganho',                 'max_ganho');
     set('cfg_saques_ativos',             'saques_ativos');
+    set('cfg_gateway_ativo',             'gateway_ativo');
+    set('cfg_mp_access_token',           'mp_access_token');
+    set('cfg_mp_webhook_secret',         'mp_webhook_secret');
+
+    // Exibe URL do webhook no painel
+    const whEl = document.getElementById('webhookUrl');
+    if (whEl) whEl.textContent = `${location.origin}/api/webhooks/mercadopago`;
   } catch (err) {
     statusEl && (statusEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`);
   }
@@ -2515,6 +2522,9 @@ const submitAdminConfig = async (e) => {
       max_aposta:                get('cfg_max_aposta'),
       max_ganho:                 get('cfg_max_ganho'),
       saques_ativos:             get('cfg_saques_ativos'),
+      gateway_ativo:             get('cfg_gateway_ativo'),
+      mp_access_token:           get('cfg_mp_access_token'),
+      mp_webhook_secret:         get('cfg_mp_webhook_secret'),
     });
     toast(res.message ?? 'Configurações salvas!', 'success');
     // O logo já foi aplicado no momento do upload — não precisa refazer aqui

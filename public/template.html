@@ -571,6 +571,34 @@
                       </select>
                     </div>
                   </div>
+
+                  <div class="panel">
+                    <h3 class="panel__title"><i class="fa-solid fa-gear"></i> Gateway de Pagamento</h3>
+                    <div class="form-group">
+                      <label>Gateway ativo</label>
+                      <select id="cfg_gateway_ativo">
+                        <option value="simulado">Simulado (dev/testes)</option>
+                        <option value="mercadopago">Mercado Pago</option>
+                      </select>
+                      <small class="form-hint">Use "Simulado" para testes locais sem credenciais reais.</small>
+                    </div>
+                    <div class="form-group">
+                      <label>Mercado Pago — Access Token</label>
+                      <input id="cfg_mp_access_token" type="password" autocomplete="off"
+                             placeholder="APP_USR-..." />
+                      <small class="form-hint">Encontre em: MP → Suas integrações → Credenciais de produção.</small>
+                    </div>
+                    <div class="form-group">
+                      <label>Mercado Pago — Webhook Secret</label>
+                      <input id="cfg_mp_webhook_secret" type="password" autocomplete="off"
+                             placeholder="Chave secreta do webhook" />
+                      <small class="form-hint">Configure em: MP → Suas integrações → Webhooks → Chave secreta.</small>
+                    </div>
+                    <div class="alert alert--info" style="font-size:.78rem;margin-top:.5rem">
+                      <i class="fa-solid fa-circle-info"></i>
+                      URL do webhook: <code id="webhookUrl"></code>
+                    </div>
+                  </div>
                 </div>
               </div>
 
