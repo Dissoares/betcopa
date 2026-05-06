@@ -23,7 +23,9 @@ require_once __DIR__ . '/../src/payments/PaymentGatewayInterface.php';
 require_once __DIR__ . '/../src/payments/MercadoPagoGateway.php';
 require_once __DIR__ . '/../src/payments/ExpayBrasilGateway.php';
 require_once __DIR__ . '/../src/payments/PaymentGatewayFactory.php';
+require_once __DIR__ . '/../src/repositories/PasswordResetRepository.php';
 require_once __DIR__ . '/../src/services/AuthService.php';
+require_once __DIR__ . '/../src/services/Mailer.php';
 require_once __DIR__ . '/../src/services/GameService.php';
 require_once __DIR__ . '/../src/services/BetService.php';
 require_once __DIR__ . '/../src/services/FootballDataService.php';
@@ -63,8 +65,9 @@ function deps(): array
     $adminRepo    = new AdminRepository($db);
     $payments     = new PaymentRepository($db);
     $withdrawals  = new WithdrawalRepository($db);
+    $resets       = new PasswordResetRepository($db);
     $config       = require __DIR__ . '/../src/config.php';
-    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals];
+    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets];
 }
 
 try {
@@ -74,16 +77,19 @@ try {
             jsonResponse(['token' => Csrf::token()]);
         }
 
-        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals] = deps();
+        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets] = deps();
 
         $adminEmail = $configRepo->get('admin_email', $config['admin_email']);
 
         $authService = new AuthService($users, $transactions, $configRepo);
+        $mailer      = new Mailer($configRepo);
         $gameService = new GameService($games);
         $betService  = new BetService($bets, $games, $transactions, $config, $configRepo);
         $betService->setPaymentRepository($payments);
+        $betService->setMailer($mailer);
 
         $authCtrl    = new AuthController($authService);
+        $authCtrl->setPasswordReset($resets, $mailer);
         $gameCtrl    = new GameController($gameService, $games, $betService, $configRepo, $config);
         $betCtrl     = new BetController($betService, $bets, $configRepo);
         $userCtrl    = new UserController($users, $transactions);
@@ -91,12 +97,15 @@ try {
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
         $adminCtrl->setWithdrawalRepository($withdrawals);
         $withdrawCtrl = new WithdrawalController($withdrawals, $transactions, $configRepo, $adminEmail);
+        $withdrawCtrl->setMailer($mailer);
         $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo);
 
         // ── Auth ──────────────────────────────────────────────
-        route('/api/register', 'POST', fn() => $authCtrl->register());
-        route('/api/login',    'POST', fn() => $authCtrl->login());
-        route('/api/logout',   'POST', fn() => $authCtrl->logout());
+        route('/api/register',        'POST', fn() => $authCtrl->register());
+        route('/api/login',           'POST', fn() => $authCtrl->login());
+        route('/api/logout',          'POST', fn() => $authCtrl->logout());
+        route('/api/auth/forgot',     'POST', fn() => $authCtrl->forgotPassword());
+        route('/api/auth/reset',      'POST', fn() => $authCtrl->resetPassword());
 
         // ── Jogos ─────────────────────────────────────────────
         route('/api/jogos',        'GET',  fn() => $gameCtrl->list());
