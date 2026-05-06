@@ -337,6 +337,7 @@ const renderDrawer = () => {
       <div class="dr-sep"></div>
       <div class="dr-section">
         <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
+        <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
       </div>
@@ -367,6 +368,7 @@ const renderDrawer = () => {
     body.innerHTML = `
       <div class="dr-section">
         <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+        <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
       </div>
       <div class="dr-sep"></div>
@@ -1069,6 +1071,51 @@ const renderBets = () => {
         <div class="bet-card__actions">${actionHtml}</div>
       </div>`;
   }).join('');
+};
+
+// ── Resultados ────────────────────────────────────────────────
+let _resSearch = '';
+
+const renderResultCard = (g) => {
+  const scoreStr = g.placar_real ? g.placar_real.replace('x', ' × ') : '—';
+
+  const emblemH = g.logo_casa
+    ? `<img src="${g.logo_casa}" class="res-emblem" alt="${g.time_casa}">`
+    : `<span class="res-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
+  const emblemA = g.logo_fora
+    ? `<img src="${g.logo_fora}" class="res-emblem" alt="${g.time_fora}">`
+    : `<span class="res-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
+
+  return `
+    <div class="res-row res-row--final">
+      <time class="res-date">${fmtGameDate(g.data_hora)}</time>
+      <div class="res-teams">
+        <div class="res-team res-team--home">${emblemH}<span>${g.time_casa}</span></div>
+        <div class="res-score res-score--final">${scoreStr}</div>
+        <div class="res-team res-team--away">${emblemA}<span>${g.time_fora}</span></div>
+      </div>
+      <div class="res-meta">${gameBadge(g)}</div>
+    </div>`;
+};
+
+const renderResultados = () => {
+  let games = S.games.filter(g => g.status === 'finalizado');
+
+  const q = _resSearch.trim().toLowerCase();
+  if (q) games = games.filter(g =>
+    g.time_casa.toLowerCase().includes(q) || g.time_fora.toLowerCase().includes(q)
+  );
+
+  // Most recent first
+  games.sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+
+  const list  = document.getElementById('resultsList');
+  const empty = document.getElementById('resultsEmpty');
+  if (!list || !empty) return;
+
+  if (!games.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.innerHTML = games.map(renderResultCard).join('');
 };
 
 // ── Ranking ───────────────────────────────────────────────────
@@ -2060,6 +2107,7 @@ const loadGames = async () => {
   }
   if (skel) skel.classList.add('hidden');
   renderGames();
+  if (!document.getElementById('view-resultados')?.classList.contains('hidden')) renderResultados();
 };
 
 const loadBets = async () => {
@@ -2138,9 +2186,10 @@ const bind = () => {
     const btn = e.target.closest('[data-nav]');
     if (!btn) return;
     navigate(btn.dataset.nav);
-    if (btn.dataset.nav === 'palpites')   loadBets();
-    if (btn.dataset.nav === 'ganhadores') renderRanking();
-    if (btn.dataset.nav === 'admin')      populateAdminSelect();
+    if (btn.dataset.nav === 'palpites')    loadBets();
+    if (btn.dataset.nav === 'ganhadores')  renderRanking();
+    if (btn.dataset.nav === 'resultados')  renderResultados();
+    if (btn.dataset.nav === 'admin')       populateAdminSelect();
     closeMobileMenu();
     document.getElementById('userDropdown')?.classList.remove('udrop--open');
   });
@@ -2166,9 +2215,10 @@ const bind = () => {
     const view = item.dataset.udropNav;
     navigate(view);
     document.getElementById('userDropdown')?.classList.remove('udrop--open');
-    if (view === 'palpites')   loadBets();
-    if (view === 'ganhadores') renderRanking();
-    if (view === 'admin')      populateAdminSelect();
+    if (view === 'palpites')    loadBets();
+    if (view === 'ganhadores')  renderRanking();
+    if (view === 'resultados')  renderResultados();
+    if (view === 'admin')       populateAdminSelect();
   });
 
   document.addEventListener('click', e => {
@@ -2324,6 +2374,13 @@ const bind = () => {
     });
     adminGamesPage = 0;
     renderAdminGames();
+  });
+
+  // Resultados: search with debounce
+  let _resSearchTimer;
+  document.getElementById('resSearch')?.addEventListener('input', e => {
+    clearTimeout(_resSearchTimer);
+    _resSearchTimer = setTimeout(() => { _resSearch = e.target.value; renderResultados(); }, 250);
   });
 
   // Admin sidebar tabs
@@ -3055,8 +3112,12 @@ const init = async () => {
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
   } else if (hash) {
-    const validViews = ['jogos', 'apostas', 'ranking', 'admin', 'auth', 'perfil'];
-    if (validViews.includes(hash)) navigate(hash);
+    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'admin', 'auth'];
+    if (validViews.includes(hash)) {
+      navigate(hash);
+      if (hash === 'ganhadores')  renderRanking();
+      if (hash === 'resultados')  renderResultados();
+    }
   }
 };
 

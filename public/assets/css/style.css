@@ -3259,3 +3259,167 @@ input:focus, select:focus {
   flex: 1;
 }
 .input-prefix-input:focus { box-shadow: none !important; }
+
+/* ════════════════════════════════════════════════════════════
+   §37. VIEW RESULTADOS
+   ════════════════════════════════════════════════════════════ */
+.res-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.res-filters__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  flex: 1;
+}
+.res-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .35rem .85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.res-pill:hover { border-color: var(--primary); color: var(--primary); }
+.res-pill--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.res-filters__search {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .4rem .85rem;
+  min-width: 180px;
+  transition: border-color .2s;
+}
+.res-filters__search:focus-within { border-color: var(--primary); }
+.res-filters__search i { color: var(--text-muted); font-size: .85rem; }
+.res-filters__search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text);
+  font-size: .88rem;
+  width: 100%;
+}
+
+/* Result row */
+.res-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 1.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: .55rem;
+  transition: border-color .15s;
+}
+.res-row:hover { border-color: var(--border-strong); }
+.res-row--live  { border-left: 3px solid var(--danger); }
+.res-row--final { border-left: 3px solid var(--text-muted); }
+.res-row--open  { border-left: 3px solid var(--primary); }
+.res-row--closed { border-left: 3px solid rgba(100,116,139,.4); }
+
+.res-date {
+  font-size: .78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.res-teams {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+}
+.res-team {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex: 1;
+  min-width: 0;
+}
+.res-team span {
+  font-size: .9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.res-team--home { justify-content: flex-end; flex-direction: row-reverse; }
+.res-team--away { justify-content: flex-start; }
+.res-flag  { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+.res-emblem { width: 1.6rem; height: 1.6rem; object-fit: contain; flex-shrink: 0; }
+
+.res-score {
+  padding: .25rem .65rem;
+  border-radius: 8px;
+  font-size: .95rem;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.res-score--final {
+  background: var(--surface-3, rgba(255,255,255,.06));
+  color: var(--text);
+}
+.res-score--live {
+  background: rgba(239,68,68,.15);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.res-live-dot {
+  width: 6px; height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .4; transform: scale(.7); }
+}
+.res-vs {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  padding: 0 .25rem;
+}
+.res-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .4rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .res-row {
+    grid-template-columns: 1fr;
+    gap: .5rem;
+  }
+  .res-date { font-size: .74rem; }
+  .res-team--home { flex-direction: row; justify-content: flex-start; }
+  .res-meta { flex-direction: row; align-items: center; flex-wrap: wrap; }
+}

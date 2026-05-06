@@ -23,6 +23,7 @@
       <!-- Nav central -->
       <nav class="nav" id="mainNav">
         <button class="nav__btn nav__btn--active" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
+        <button class="nav__btn" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="nav__btn" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none"><i class="fa-solid fa-list-check"></i> Meus Palpites</button>
         <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none"><i class="fa-solid fa-sliders"></i> Admin</button>
@@ -119,6 +120,24 @@
         <div id="rankingNear"><p class="text--muted">Nenhum palpite registrado ainda.</p></div>
       </div>
     </div>
+  </main>
+
+  <!-- ===== VIEW: RESULTADOS ===== -->
+  <main class="container view hidden" id="view-resultados">
+    <div class="section-header">
+      <h2><i class="fa-solid fa-chart-simple"></i> Resultados</h2>
+    </div>
+    <div class="res-filters">
+      <div class="res-filters__search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="resSearch" placeholder="Buscar time…" autocomplete="off">
+      </div>
+    </div>
+    <div id="resultsList"></div>
+    <p class="empty-state hidden" id="resultsEmpty">
+      <i class="fa-solid fa-magnifying-glass" style="display:block;font-size:2.5rem;margin-bottom:.6rem;opacity:.25"></i>
+      Nenhum resultado encontrado.
+    </p>
   </main>
 
   <!-- ===== VIEW: AUTH ===== -->
@@ -931,6 +950,7 @@
         <div class="site-footer__col">
           <h4>Plataforma</h4>
           <a href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</a>
+          <a href="#" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</a>
           <a href="#" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</a>
           <a href="#" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ranking</a>
         </div>
