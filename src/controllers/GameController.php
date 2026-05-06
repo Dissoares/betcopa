@@ -53,6 +53,42 @@ class GameController
         jsonResponse(['message' => 'Resultado inserido e apostas processadas']);
     }
 
+    public function bulkResult(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $body       = json_decode(file_get_contents('php://input'), true) ?: [];
+        $resultados = $body['resultados'] ?? [];
+
+        if (!is_array($resultados) || empty($resultados)) {
+            jsonResponse(['error' => 'Nenhum resultado fornecido.'], 400);
+            return;
+        }
+
+        $processados = 0;
+        $erros       = [];
+
+        foreach ($resultados as $item) {
+            $id   = (int) ($item['id']          ?? 0);
+            $casa = (int) ($item['placar_casa'] ?? 0);
+            $fora = (int) ($item['placar_fora'] ?? 0);
+
+            if (!$id) { $erros[] = ['id' => $id, 'msg' => 'ID inválido']; continue; }
+
+            try {
+                $this->service->setResult($id, $casa, $fora);
+                $this->bets->processResult($id);
+                $processados++;
+            } catch (Exception $e) {
+                $erros[] = ['id' => $id, 'msg' => $e->getMessage()];
+            }
+        }
+
+        Logger::info('Resultado em lote', ['processados' => $processados, 'erros' => count($erros)]);
+        jsonResponse(['processados' => $processados, 'erros' => $erros]);
+    }
+
     /** DELETE /api/admin/jogos/:id */
     public function delete(int $id): void
     {

@@ -102,7 +102,8 @@ try {
         route('/api/jogos',        'GET',  fn() => $gameCtrl->list());
         route('/api/admin/jogos',  'POST', fn() => $gameCtrl->create());
         route('/api/admin/import', 'POST', fn() => $gameCtrl->import());
-        route('/api/admin/sync',   'POST', fn() => $gameCtrl->sync());
+        route('/api/admin/sync',                     'POST', fn() => $gameCtrl->sync());
+        route('/api/admin/jogos/resultado/lote',     'POST', fn() => $gameCtrl->bulkResult());
         routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'PUT',
             fn(int $id) => $gameCtrl->update($id));
         routePattern('/^\/api\/admin\/jogos\/(\d+)\/resultado$/', 'POST',

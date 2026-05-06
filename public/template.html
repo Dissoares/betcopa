@@ -364,6 +364,21 @@
             <div class="admin-pagination" id="adminGamesPagination"></div>
           </div>
 
+          <details class="panel admin-import-panel" id="bulkResultPanel">
+            <summary><i class="fa-solid fa-list-check"></i> Lançamento de resultado em lote</summary>
+            <div class="admin-import-body">
+              <div class="bulk-result-toolbar">
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.9rem;cursor:pointer">
+                  <input type="checkbox" id="checkAllBulk"> Selecionar todos
+                </label>
+                <button class="btn btn--primary btn--sm" id="btnBulkResult" disabled>
+                  <i class="fa-solid fa-check-double"></i> Registrar selecionados (<span id="bulkResultCount">0</span>)
+                </button>
+              </div>
+              <div id="bulkResultList"></div>
+            </div>
+          </details>
+
           <details class="panel admin-import-panel">
             <summary><i class="fa-solid fa-satellite-dish"></i> football-data.org — Importar e sincronizar jogos</summary>
             <div class="admin-import-body">

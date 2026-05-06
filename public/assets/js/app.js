@@ -1702,6 +1702,107 @@ const cancelEditGame = () => {
   if (cancelEl) cancelEl.classList.add('hidden');
 };
 
+// ── Resultado em lote ─────────────────────────────────────────
+const _flagThumbBulk = code =>
+  code && /^[a-z]{2}(-[a-z]+)?$/i.test(code)
+    ? `<img src="${flagUrl(code)}" alt="" style="width:1.1rem;height:auto;border-radius:2px;vertical-align:middle;margin-right:.25rem" loading="lazy">`
+    : '';
+
+const updateBulkCount = () => {
+  const count = document.querySelectorAll('#bulkResultList .bulk-chk:checked').length;
+  const countEl = document.getElementById('bulkResultCount');
+  const btn     = document.getElementById('btnBulkResult');
+  if (countEl) countEl.textContent = count;
+  if (btn)     btn.disabled = count === 0;
+};
+
+const renderBulkResultList = () => {
+  const el = document.getElementById('bulkResultList');
+  if (!el) return;
+
+  const pending = (S.games || []).filter(g => g.status !== 'finalizado' && g.status !== 'encerrado');
+  if (!pending.length) {
+    el.innerHTML = '<p class="text--muted" style="padding:.5rem 0">Nenhum jogo aguardando resultado.</p>';
+    return;
+  }
+
+  el.innerHTML = `
+    <table class="admin-table" style="margin-top:.5rem">
+      <thead><tr>
+        <th style="width:2rem"></th>
+        <th>Jogo</th>
+        <th>Data</th>
+        <th>Placar</th>
+      </tr></thead>
+      <tbody>
+        ${pending.map(g => `
+          <tr>
+            <td><input type="checkbox" class="bulk-chk" data-id="${g.id}"></td>
+            <td><strong>${_flagThumbBulk(g.bandeira_casa)}${g.time_casa} × ${_flagThumbBulk(g.bandeira_fora)}${g.time_fora}</strong></td>
+            <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
+            <td>
+              <div class="bulk-score-row">
+                <input type="number" class="bulk-score" id="bsc-${g.id}" min="0" max="99" placeholder="0" disabled>
+                <span>×</span>
+                <input type="number" class="bulk-score" id="bsf-${g.id}" min="0" max="99" placeholder="0" disabled>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  updateBulkCount();
+};
+
+const submitBulkResult = async () => {
+  const checked = [...document.querySelectorAll('#bulkResultList .bulk-chk:checked')];
+  if (!checked.length) { toast('Selecione ao menos um jogo.', 'warning'); return; }
+
+  const resultados = checked.map(chk => ({
+    id:          Number(chk.dataset.id),
+    placar_casa: Number(document.getElementById(`bsc-${chk.dataset.id}`)?.value ?? 0),
+    placar_fora: Number(document.getElementById(`bsf-${chk.dataset.id}`)?.value ?? 0),
+  }));
+
+  const ok = await confirm({
+    icon:         'warning',
+    title:        `Registrar ${resultados.length} resultado${resultados.length !== 1 ? 's' : ''}?`,
+    html:         `<small style="color:#888">Esta ação processará todas as apostas e <b>não pode ser desfeita</b>.</small>`,
+    confirmText:  'Sim, registrar',
+    cancelText:   'Cancelar',
+    confirmColor: '#2ecc71',
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btnBulkResult');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registrando...';
+
+  try {
+    const { processados, erros } = await api('/api/admin/jogos/resultado/lote', 'POST', { resultados });
+
+    if (erros.length) {
+      toast(`${processados} registrado(s). ${erros.length} com erro.`, 'warning');
+    } else {
+      toast(`${processados} resultado(s) registrado(s) com sucesso!`, 'success');
+    }
+
+    await loadGames();
+    await loadBets();
+    await renderRanking();
+    renderAdminGames();
+    renderBulkResultList();
+    const allChk = document.getElementById('checkAllBulk');
+    if (allChk) allChk.checked = false;
+  } catch (err) {
+    toast(err.message, 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Registrar selecionados (<span id="bulkResultCount">0</span>)';
+    updateBulkCount();
+  }
+};
+
 const openAdminResultado = (id, label) => {
   document.getElementById('adminGameSelect').value  = id;
   document.getElementById('adminResultadoJogo').textContent = label;
@@ -2189,6 +2290,33 @@ const bind = () => {
     if (delBtn) { deleteGame(Number(delBtn.dataset.id), delBtn.dataset.label); return; }
   });
   document.getElementById('btnCancelEditGame')?.addEventListener('click', cancelEditGame);
+
+  // Lote de resultados
+  const bulkPanel = document.getElementById('bulkResultPanel');
+  if (bulkPanel) {
+    bulkPanel.addEventListener('toggle', () => { if (bulkPanel.open) renderBulkResultList(); });
+    bulkPanel.addEventListener('change', e => {
+      if (e.target.id === 'checkAllBulk') {
+        document.querySelectorAll('#bulkResultList .bulk-chk').forEach(chk => {
+          chk.checked = e.target.checked;
+          const id = chk.dataset.id;
+          const c = document.getElementById(`bsc-${id}`);
+          const f = document.getElementById(`bsf-${id}`);
+          if (c) c.disabled = !e.target.checked;
+          if (f) f.disabled = !e.target.checked;
+        });
+        updateBulkCount();
+      } else if (e.target.classList.contains('bulk-chk')) {
+        const id = e.target.dataset.id;
+        const c = document.getElementById(`bsc-${id}`);
+        const f = document.getElementById(`bsf-${id}`);
+        if (c) c.disabled = !e.target.checked;
+        if (f) f.disabled = !e.target.checked;
+        updateBulkCount();
+      }
+    });
+    document.getElementById('btnBulkResult')?.addEventListener('click', submitBulkResult);
+  }
   document.getElementById('adminGamesPagination')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="admin-page"]');
     if (btn && !btn.disabled) { adminGamesPage = Number(btn.dataset.page); renderAdminGames(); }

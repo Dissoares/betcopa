@@ -1337,6 +1337,20 @@ select {
   gap: 1rem; padding: .75rem 0 .25rem;
 }
 
+.bulk-result-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .5rem; margin: .75rem 0 .25rem;
+}
+.bulk-score-row { display: flex; align-items: center; gap: .3rem; }
+.bulk-score {
+  width: 3.5rem; text-align: center; padding: .28rem .35rem;
+  font-size: .85rem; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: .375rem;
+  color: var(--text);
+}
+.bulk-score:disabled { opacity: .3; pointer-events: none; }
+.bulk-score:not(:disabled):focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+
 /* Status pills */
 .status-pill {
   display: inline-flex; align-items: center;
