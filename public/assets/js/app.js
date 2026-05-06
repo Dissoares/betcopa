@@ -307,8 +307,8 @@ const navigate = (view) => {
   });
 
   // Banner só aparece na view de jogos
-  const banner = document.getElementById('matchBanner');
-  if (banner) banner.classList.toggle('hidden', view !== 'jogos');
+  const bannerWrap = document.getElementById('matchBannerWrap');
+  if (bannerWrap) bannerWrap.classList.toggle('hidden', view !== 'jogos');
 
   history.replaceState(null, '', `/#${view}`);
 };
