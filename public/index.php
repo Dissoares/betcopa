@@ -20,7 +20,6 @@ require_once __DIR__ . '/../src/repositories/AdminRepository.php';
 require_once __DIR__ . '/../src/repositories/PaymentRepository.php';
 require_once __DIR__ . '/../src/repositories/WithdrawalRepository.php';
 require_once __DIR__ . '/../src/payments/PaymentGatewayInterface.php';
-require_once __DIR__ . '/../src/payments/SimulatedGateway.php';
 require_once __DIR__ . '/../src/payments/MercadoPagoGateway.php';
 require_once __DIR__ . '/../src/payments/PaymentGatewayFactory.php';
 require_once __DIR__ . '/../src/services/AuthService.php';

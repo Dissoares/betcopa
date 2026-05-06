@@ -149,8 +149,8 @@ class BetService
             throw new InvalidArgumentException('Pagamento ainda não processado');
         }
 
-        // Para gateway real: verifica status antes de confirmar
-        if ($gateway->getName() !== 'simulado' && $this->paymentsRepo !== null) {
+        // Verifica status real no gateway antes de confirmar
+        if ($this->paymentsRepo !== null) {
             $payment = $this->paymentsRepo->findByBetId($betId);
             if ($payment && $payment['gateway_payment_id'] !== '') {
                 $status = $gateway->getPaymentStatus($payment['gateway_payment_id']);

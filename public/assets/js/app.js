@@ -1350,12 +1350,7 @@ const simulatePay = async () => {
     S.selectedBet.valor = S.selectedBet.valor || data.valor;
     btn.innerHTML = '<i class="fa-solid fa-check"></i> PIX gerado!';
     closeModal('modalTicket');
-
-    if (data.gateway === 'simulado') {
-      toast('Pagamento simulado! Confirme a aposta em "Meus Palpites".', 'success');
-    } else {
-      openPixModal(data);
-    }
+    openPixModal(data);
     await loadBets();
   } catch (err) {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
@@ -2470,7 +2465,6 @@ const loadAdminConfig = async () => {
     set('cfg_max_aposta',                'max_aposta');
     set('cfg_max_ganho',                 'max_ganho');
     set('cfg_saques_ativos',             'saques_ativos');
-    set('cfg_gateway_ativo',             'gateway_ativo');
     set('cfg_mp_access_token',           'mp_access_token');
     set('cfg_mp_webhook_secret',         'mp_webhook_secret');
 
@@ -2522,7 +2516,6 @@ const submitAdminConfig = async (e) => {
       max_aposta:                get('cfg_max_aposta'),
       max_ganho:                 get('cfg_max_ganho'),
       saques_ativos:             get('cfg_saques_ativos'),
-      gateway_ativo:             get('cfg_gateway_ativo'),
       mp_access_token:           get('cfg_mp_access_token'),
       mp_webhook_secret:         get('cfg_mp_webhook_secret'),
     });
