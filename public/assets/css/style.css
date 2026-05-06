@@ -2075,22 +2075,26 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   box-shadow: none; position: relative; z-index: 1;
 }
 
-/* Nav */
+/* Nav — mobile: setas nas laterais do slide */
 .mb-nav {
-  display: flex; align-items: center; justify-content: center;
-  gap: .5rem; padding: .4rem 0 .6rem;
+  display: flex; align-items: stretch;
+  gap: 0;
 }
 .mb-arrow {
   display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px;
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-  background: var(--surface-2);
+  width: 36px; height: auto; min-height: 44px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--text-muted);
-  font-size: .7rem; cursor: pointer; flex-shrink: 0;
+  font-size: .8rem; cursor: pointer; flex-shrink: 0;
+  transition: color .15s, background .15s;
 }
-.mb-arrow:hover { background: var(--surface-3); color: var(--text); }
-.mb-dots { display: flex; align-items: center; gap: .32rem; }
+.mb-arrow:hover { background: rgba(255,255,255,.05); color: var(--text); }
+.mb-dots {
+  display: flex; align-items: center; justify-content: center;
+  gap: .32rem; flex: 1; padding: .6rem 0;
+}
 .mb-dot {
   width: 5px; height: 5px; border-radius: 999px; border: none;
   background: var(--border-strong); cursor: pointer; padding: 0;
@@ -2105,9 +2109,10 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
     gap: .6rem; overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    padding: .8rem 3rem .7rem;
+    padding: .8rem .5rem .7rem;
     scrollbar-width: none; -ms-overflow-style: none;
     cursor: grab;
+    flex: 1; min-width: 0;
   }
   .mb-strip:active { cursor: grabbing; }
   .mb-strip::-webkit-scrollbar { display: none; }
@@ -2148,17 +2153,19 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .mb-cta-btn   { font-size: .65rem; padding: .3rem .7rem; width: 100%; }
   .mb-pill      { font-size: .55rem; padding: .15rem .42rem; }
   .mb-dots      { display: none; }
-  .mb-arrow     { width: 34px; height: 34px; font-size: .75rem; }
-  .mb-nav {
-    position: absolute;
-    top: 0; bottom: 0;
-    left: 0; right: 0;
-    padding: 0 .55rem;
-    pointer-events: none;
-    justify-content: space-between;
-    align-items: center;
+  .mb-arrow {
+    width: 34px; height: 34px; min-height: 34px;
+    font-size: .75rem; flex-shrink: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-2);
   }
-  .mb-nav .mb-arrow { pointer-events: auto; }
+
+  /* Banner vira row: [←] [strip] [→] */
+  .match-banner { flex-direction: row; align-items: center; gap: .4rem; padding: 0 .6rem; }
+  .mb-nav       { display: contents; } /* setas viram filhos diretos do flex */
+  #mbPrev       { order: -1; }
+  #mbNext       { order: 99; }
 }
 
 @media (max-width: 480px) {
