@@ -5,6 +5,7 @@ class AdminController
     private ConfigRepository $config;
     private UserRepository   $users;
     private string           $adminEmail;
+    private ?WithdrawalRepository $withdrawals = null;
 
     public function __construct(
         AdminRepository  $admin,
@@ -16,6 +17,11 @@ class AdminController
         $this->config     = $config;
         $this->users      = $users;
         $this->adminEmail = $adminEmail;
+    }
+
+    public function setWithdrawalRepository(WithdrawalRepository $repo): void
+    {
+        $this->withdrawals = $repo;
     }
 
     // ── Dashboard ─────────────────────────────────────────────
@@ -100,6 +106,7 @@ class AdminController
             'bonus_cadastro', 'valor_base_padrao',
             'mult_min', 'mult_max', 'bet_percent',
             'max_aposta', 'max_ganho',
+            'gateway_ativo', 'mp_access_token', 'mp_webhook_secret',
             'saques_ativos',
             'site_logo',
         ];
@@ -114,6 +121,14 @@ class AdminController
 
         Logger::info('Configurações atualizadas', ['chaves' => $saved]);
         jsonResponse(['message' => count($saved) . ' configuração(ões) salva(s).']);
+    }
+
+    // ── Saques ─────────────────────────────────────────────────────────────────────────
+    public function listWithdrawals(): void
+    {
+        ensureAdmin($this->adminEmail);
+        $saques = $this->withdrawals ? $this->withdrawals->listAll() : [];
+        jsonResponse(['saques' => $saques]);
     }
 
     public function uploadLogo(): void

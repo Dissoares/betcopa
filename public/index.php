@@ -17,6 +17,12 @@ require_once __DIR__ . '/../src/repositories/BetRepository.php';
 require_once __DIR__ . '/../src/repositories/TransactionRepository.php';
 require_once __DIR__ . '/../src/repositories/ConfigRepository.php';
 require_once __DIR__ . '/../src/repositories/AdminRepository.php';
+require_once __DIR__ . '/../src/repositories/PaymentRepository.php';
+require_once __DIR__ . '/../src/repositories/WithdrawalRepository.php';
+require_once __DIR__ . '/../src/payments/PaymentGatewayInterface.php';
+require_once __DIR__ . '/../src/payments/SimulatedGateway.php';
+require_once __DIR__ . '/../src/payments/MercadoPagoGateway.php';
+require_once __DIR__ . '/../src/payments/PaymentGatewayFactory.php';
 require_once __DIR__ . '/../src/services/AuthService.php';
 require_once __DIR__ . '/../src/services/GameService.php';
 require_once __DIR__ . '/../src/services/BetService.php';
@@ -27,6 +33,8 @@ require_once __DIR__ . '/../src/controllers/BetController.php';
 require_once __DIR__ . '/../src/controllers/UserController.php';
 require_once __DIR__ . '/../src/controllers/RankingController.php';
 require_once __DIR__ . '/../src/controllers/AdminController.php';
+require_once __DIR__ . '/../src/controllers/WithdrawalController.php';
+require_once __DIR__ . '/../src/controllers/WebhookController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -53,8 +61,10 @@ function deps(): array
     $transactions = new TransactionRepository($db);
     $configRepo   = new ConfigRepository($db);
     $adminRepo    = new AdminRepository($db);
+    $payments     = new PaymentRepository($db);
+    $withdrawals  = new WithdrawalRepository($db);
     $config       = require __DIR__ . '/../src/config.php';
-    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo];
+    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals];
 }
 
 try {
@@ -64,20 +74,24 @@ try {
             jsonResponse(['token' => Csrf::token()]);
         }
 
-        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo] = deps();
+        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals] = deps();
 
         $adminEmail = $configRepo->get('admin_email', $config['admin_email']);
 
         $authService = new AuthService($users, $transactions);
         $gameService = new GameService($games);
         $betService  = new BetService($bets, $games, $transactions, $config, $configRepo);
+        $betService->setPaymentRepository($payments);
 
         $authCtrl    = new AuthController($authService);
         $gameCtrl    = new GameController($gameService, $games, $betService, $configRepo, $config);
-        $betCtrl     = new BetController($betService, $bets);
+        $betCtrl     = new BetController($betService, $bets, $configRepo);
         $userCtrl    = new UserController($users, $transactions);
         $rankCtrl    = new RankingController($bets);
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
+        $adminCtrl->setWithdrawalRepository($withdrawals);
+        $withdrawCtrl = new WithdrawalController($withdrawals, $transactions, $configRepo, $adminEmail);
+        $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo);
 
         // ── Auth ──────────────────────────────────────────────
         route('/api/register', 'POST', fn() => $authCtrl->register());
@@ -125,7 +139,17 @@ try {
         route('/api/admin/config',       'POST', fn() => $adminCtrl->updateConfig());
         route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
         route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
+        // ── Admin: Saques ──────────────────────────────────────────────────
+        route('/api/admin/saques', 'GET', fn() => $adminCtrl->listWithdrawals());
+        routePattern('/^\/api\/admin\/saques\/(\d+)\/aprovar$/', 'POST',  fn(int $id) => $withdrawCtrl->approve($id));
+        routePattern('/^\/api\/admin\/saques\/(\d+)\/rejeitar$/', 'POST', fn(int $id) => $withdrawCtrl->reject($id));
 
+        // ── User: Saques ───────────────────────────────────────────────────
+        route('/api/user/saques', 'GET',  fn() => $withdrawCtrl->list());
+        route('/api/user/saques', 'POST', fn() => $withdrawCtrl->request());
+
+        // ── Webhooks ─────────────────────────────────────────────────────
+        route('/api/webhooks/mercadopago', 'POST', fn() => $webhookCtrl->mercadopago());
         jsonResponse(['error' => 'Rota não encontrada'], 404);
     }
 

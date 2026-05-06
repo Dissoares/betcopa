@@ -886,6 +886,113 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- ╔══════════════════════════════════════════════════════════╗ -->
+  <!-- ║  Modal PIX — Pagamento de aposta                        ║ -->
+  <!-- ╚══════════════════════════════════════════════════════════╝ -->
+  <div class="modal-overlay hidden" id="modalPixOverlay" role="dialog" aria-modal="true" aria-labelledby="modalPixTitle">
+    <div class="modal-box pix-modal">
+      <button class="modal-close" id="btnPixClose" aria-label="Fechar">&times;</button>
+      <div class="pix-modal__header">
+        <i class="fa-brands fa-pix pix-modal__icon"></i>
+        <h2 class="pix-modal__title" id="modalPixTitle">Pagar com PIX</h2>
+        <p class="pix-modal__subtitle">Escaneie o QR code ou copie a chave</p>
+      </div>
+
+      <div class="pix-modal__body">
+        <!-- QR Code (gateway real) -->
+        <div class="pix-modal__qr-wrap" id="pixQrWrap">
+          <img class="pix-modal__qr" id="pixQrImg" src="" alt="QR Code PIX" />
+        </div>
+
+        <!-- Linha de cópia — chave estática (simulado ou key de config) -->
+        <div class="pix-modal__key-row" id="pixKeyRow">
+          <span class="pix-modal__key-label">Chave PIX</span>
+          <div class="pix-modal__key-box">
+            <code class="pix-modal__key-val" id="pixKeyVal">—</code>
+            <button class="pix-modal__key-copy btn-icon" id="btnPixCopy" title="Copiar chave">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Valor -->
+        <div class="pix-modal__amount-row">
+          <span class="pix-modal__amount-label">Valor</span>
+          <strong class="pix-modal__amount" id="pixAmount">R$ 0,00</strong>
+        </div>
+
+        <!-- Contador regressivo -->
+        <div class="pix-timer" id="pixTimer">
+          <i class="fa-regular fa-clock"></i>
+          Expira em <span id="pixTimerCount">10:00</span>
+        </div>
+
+        <!-- Status de polling -->
+        <div class="pix-status" id="pixStatus">
+          <span class="pix-status__dot"></span>
+          <span id="pixStatusText">Aguardando pagamento…</span>
+        </div>
+      </div>
+
+      <div class="pix-modal__footer">
+        <button class="btn btn--ghost btn--sm" id="btnPixCopyFull">
+          <i class="fa-regular fa-copy"></i> Copiar código PIX
+        </button>
+        <p class="pix-modal__hint">Após pagar, clique em <strong>Confirmar Pagamento</strong> na aba Meus Palpites.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════════╗ -->
+  <!-- ║  Modal Saque — Solicitar retirada                       ║ -->
+  <!-- ╚══════════════════════════════════════════════════════════╝ -->
+  <div class="modal-overlay hidden" id="modalSaqueOverlay" role="dialog" aria-modal="true" aria-labelledby="modalSaqueTitle">
+    <div class="modal-box saque-modal">
+      <button class="modal-close" id="btnSaqueClose" aria-label="Fechar">&times;</button>
+      <div class="saque-modal__header">
+        <i class="fa-solid fa-money-bill-transfer saque-modal__icon"></i>
+        <h2 class="saque-modal__title" id="modalSaqueTitle">Solicitar Saque</h2>
+      </div>
+
+      <form class="saque-modal__form" id="formSaque" novalidate>
+        <div class="saque-modal__saldo-info">
+          Saldo disponível: <strong id="saqueDispSaldo">R$ 0,00</strong>
+        </div>
+
+        <label class="form-label" for="saqueValor">Valor (mín. R$ 10,00)</label>
+        <div class="input-prefix-wrap">
+          <span class="input-prefix">R$</span>
+          <input class="form-input input-prefix-input" type="number" id="saqueValor" name="valor"
+                 min="10" step="0.01" placeholder="0,00" required />
+        </div>
+
+        <label class="form-label" for="saqueTipo">Tipo de chave PIX</label>
+        <select class="form-input" id="saqueTipo" name="tipo_pix" required>
+          <option value="">Selecione…</option>
+          <option value="cpf">CPF</option>
+          <option value="email">E-mail</option>
+          <option value="telefone">Telefone</option>
+          <option value="aleatoria">Chave aleatória</option>
+        </select>
+
+        <label class="form-label" for="saqueChave">Chave PIX</label>
+        <input class="form-input" type="text" id="saqueChave" name="chave_pix"
+               placeholder="Sua chave PIX" required />
+
+        <p class="saque-modal__hint">
+          <i class="fa-solid fa-circle-info"></i>
+          Saques são processados em até 48 horas úteis.
+        </p>
+
+        <button class="btn btn--primary btn--full" type="submit" id="btnSaqueSubmit">
+          <i class="fa-solid fa-paper-plane"></i> Solicitar saque
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script src="/assets/js/app.js?v=2"></script>
 </body>
 </html>

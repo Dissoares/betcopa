@@ -412,6 +412,9 @@ const renderHeader = () => {
           <button class="udrop__item" data-udrop-nav="palpites">
             <i class="fa-solid fa-ticket"></i> Meus Palpites
           </button>
+          <button class="udrop__item" id="udropBtnSaque">
+            <i class="fa-solid fa-money-bill-transfer"></i> Solicitar Saque
+          </button>
           <button class="udrop__item" data-udrop-nav="ganhadores">
             <i class="fa-solid fa-trophy"></i> Ganhadores
           </button>
@@ -546,6 +549,10 @@ const renderCard = (g) => {
     ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte e ganhe de <strong>${S.multMin}×</strong> a <strong>${S.multMax}×</strong> o valor!</p>`
     : '';
 
+  const urgencyHtml = isSoon
+    ? `<span class="gc-urgency"><i class="fa-solid fa-bolt"></i> Encerra em breve!</span>`
+    : '';
+
   const betBlocked = isClosed || isTooFar;
   const footHtml = isLive
     ? `<button class="btn btn--ghost btn--full" disabled>
@@ -578,6 +585,7 @@ const renderCard = (g) => {
         </div>
       </div>
       <div class="game-card__foot">
+        ${urgencyHtml}
         ${footHtml}
       </div>
     </article>`;
@@ -1242,6 +1250,91 @@ const fillTicket = (bet) => {
     : '<i class="fa-solid fa-credit-card"></i> Pagar via PIX';
 };
 
+// ── PIX modal state ───────────────────────────────────────────
+let _pixTimerInterval  = null;
+let _pixPollingInterval = null;
+
+const openPixModal = (data) => {
+  // QR Code imagem
+  const qrWrap = document.getElementById('pixQrWrap');
+  const qrImg  = document.getElementById('pixQrImg');
+  if (data.qr_code_base64) {
+    qrImg.src = `data:image/png;base64,${data.qr_code_base64}`;
+    qrWrap.classList.remove('hidden');
+  } else {
+    qrWrap.classList.add('hidden');
+  }
+
+  // Chave PIX
+  const keyVal = document.getElementById('pixKeyVal');
+  const keyRow = document.getElementById('pixKeyRow');
+  const pixKey = data.qr_code || data.pix_chave || '';
+  keyVal.textContent = pixKey || '—';
+  keyRow.classList.toggle('hidden', !pixKey);
+
+  // Valor (pego do selectedBet que foi preenchido)
+  document.getElementById('pixAmount').textContent = fmtMoney(S.selectedBet?.valor || 0);
+
+  // Status
+  document.getElementById('pixStatusText').textContent = 'Aguardando pagamento…';
+
+  // Botão copiar código completo
+  document.getElementById('btnPixCopyFull').onclick = () => {
+    navigator.clipboard.writeText(pixKey).then(() => toast('Código copiado!', 'success'));
+  };
+  document.getElementById('btnPixCopy').onclick = () => {
+    navigator.clipboard.writeText(pixKey).then(() => toast('Chave copiada!', 'success'));
+  };
+
+  // Countdown: expires_at ou 10 min padrão
+  let deadline = data.expires_at ? new Date(data.expires_at).getTime() : (Date.now() + 10 * 60 * 1000);
+  clearInterval(_pixTimerInterval);
+  const timerEl  = document.getElementById('pixTimerCount');
+  const timerWrap = document.getElementById('pixTimer');
+  _pixTimerInterval = setInterval(() => {
+    const left = deadline - Date.now();
+    if (left <= 0) {
+      clearInterval(_pixTimerInterval);
+      timerEl.textContent = '00:00';
+      timerWrap.classList.add('pix-timer--expired');
+      clearInterval(_pixPollingInterval);
+      return;
+    }
+    const m = String(Math.floor(left / 60000)).padStart(2, '0');
+    const s = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+    timerWrap.classList.toggle('pix-timer--urgent', left < 2 * 60 * 1000);
+  }, 1000);
+
+  // Polling de status: a cada 5 s verifica se aposta mudou para 'confirmado'
+  clearInterval(_pixPollingInterval);
+  if (S.selectedBet?.id) {
+    _pixPollingInterval = setInterval(async () => {
+      try {
+        const r = await api('/api/apostas');
+        const updated = (r.apostas || []).find(b => b.id === S.selectedBet.id);
+        if (updated && updated.status === 'confirmado') {
+          clearInterval(_pixPollingInterval);
+          clearInterval(_pixTimerInterval);
+          document.getElementById('pixStatusText').textContent = '✓ Pagamento confirmado!';
+          S.bets = r.apostas;
+          await loadUser();
+          renderBets();
+          setTimeout(() => closePixModal(), 2000);
+        }
+      } catch { /* silencioso */ }
+    }, 5000);
+  }
+
+  document.getElementById('modalPixOverlay').classList.remove('hidden');
+};
+
+const closePixModal = () => {
+  clearInterval(_pixTimerInterval);
+  clearInterval(_pixPollingInterval);
+  document.getElementById('modalPixOverlay').classList.add('hidden');
+};
+
 const simulatePay = async () => {
   if (!S.user) {
     closeModal('modalTicket');
@@ -1253,9 +1346,16 @@ const simulatePay = async () => {
   const btn = document.getElementById('btnSimulatePay');
   btn.disabled = true; btn.textContent = 'Processando PIX...';
   try {
-    await api(`/api/apostas/${S.selectedBet.id}/pagar`, 'POST', {});
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> PIX enviado!';
-    toast('PIX enviado! Clique em "Confirmar Pagamento" para ativar sua aposta.', 'success');
+    const data = await api(`/api/apostas/${S.selectedBet.id}/pagar`, 'POST', {});
+    S.selectedBet.valor = S.selectedBet.valor || data.valor;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> PIX gerado!';
+    closeModal('modalTicket');
+
+    if (data.gateway === 'simulado') {
+      toast('Pagamento simulado! Confirme a aposta em "Meus Palpites".', 'success');
+    } else {
+      openPixModal(data);
+    }
     await loadBets();
   } catch (err) {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
@@ -1270,6 +1370,11 @@ const showResultado = (bet, won) => {
   const nextGame = S.games.find(g => g.status === 'aberto' && g.id !== (S.selectedGame?.id));
 
   if (won) {
+    // Confetti comemorativo
+    if (typeof confetti === 'function') {
+      confetti({ particleCount: 150, spread: 80, colors: ['#00C853', '#FFD700', '#ffffff'], origin: { y: 0.6 } });
+    }
+
     content.innerHTML = `
       <span class="resultado-win__icon"><i class="fa-solid fa-trophy" style="color:var(--gold)"></i></span>
       <div class="resultado-win__title">Você Acertou!</div>
@@ -1281,7 +1386,7 @@ const showResultado = (bet, won) => {
       </div>`;
     document.getElementById('btnSacar').addEventListener('click', () => {
       closeAllModals();
-      showAlert('Função de saque em breve!', 'info');
+      openSaqueModal();
     });
     document.getElementById('btnApostarNov').addEventListener('click', () => {
       closeAllModals(); navigate('jogos');
@@ -1810,11 +1915,69 @@ const loadBets = async () => {
   if (!S.user) { S.bets = []; renderBets(); return; }
   try {
     const r = await api('/api/apostas');
+    const prev = S.bets || [];
     S.bets = r.apostas;
+
+    // Detecta mudanças para 'ganhou' ou 'perdido' e mostra resultado
+    S.bets.forEach(b => {
+      const old = prev.find(p => p.id === b.id);
+      if (old && old.status !== b.status && (b.status === 'ganhou' || b.status === 'perdido')) {
+        showResultado(b, b.status === 'ganhou');
+      }
+    });
   } catch {
     S.bets = [];
   }
   renderBets();
+};
+
+// ── Saque ─────────────────────────────────────────────────────
+const openSaqueModal = async () => {
+  const saldo = parseFloat(S.user?.saldo || 0);
+  document.getElementById('saqueDispSaldo').textContent = fmtMoney(saldo);
+  document.getElementById('saqueValor').value = '';
+  document.getElementById('saqueChave').value = '';
+  document.getElementById('saqueTipo').value  = '';
+  document.getElementById('modalSaqueOverlay').classList.remove('hidden');
+  await loadSaques();
+};
+
+const closeSaqueModal = () => {
+  document.getElementById('modalSaqueOverlay').classList.add('hidden');
+};
+
+const loadSaques = async () => {
+  if (!S.user) return;
+  try {
+    const r = await api('/api/user/saques');
+    S.saques = r.saques || [];
+  } catch {
+    S.saques = [];
+  }
+};
+
+const submitSaque = async (e) => {
+  e.preventDefault();
+  const btn   = document.getElementById('btnSaqueSubmit');
+  const valor = parseFloat(document.getElementById('saqueValor').value);
+  const tipo  = document.getElementById('saqueTipo').value;
+  const chave = document.getElementById('saqueChave').value.trim();
+
+  if (!valor || valor < 10) { toast('Valor mínimo de saque é R$ 10,00.', 'warning'); return; }
+  if (!tipo)                 { toast('Selecione o tipo de chave PIX.', 'warning'); return; }
+  if (!chave)                { toast('Informe a chave PIX.', 'warning'); return; }
+
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await api('/api/user/saques', 'POST', { valor, tipo_pix: tipo, chave_pix: chave });
+    toast(r.message || 'Solicitação enviada!', 'success');
+    closeSaqueModal();
+    await loadUser();
+  } catch (err) {
+    toast(err.message || 'Erro ao solicitar saque.', 'danger');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Solicitar saque';
+  }
 };
 
 // ── Event binding ─────────────────────────────────────────────
@@ -1859,6 +2022,7 @@ const bind = () => {
 
   document.addEventListener('click', e => {
     if (e.target.closest('#dropdownLogout')) logout();
+    if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
   });
 
   // Game grid actions (bet / pay / confirm) via delegation
@@ -1868,6 +2032,16 @@ const bind = () => {
     const { action, id } = btn.dataset;
     if (action === 'bet')     openBetModal(id);
     if (action === 'pay')     { S.selectedBet = { id: Number(id) }; openModal('modalTicket'); }
+    if (action === 'confirm') {
+      const betId = Number(id);
+      api(`/api/apostas/${betId}/confirmar`, 'POST', {})
+        .then(async () => {
+          toast('Aposta confirmada!', 'success');
+          await loadUser();
+          await loadBets();
+        })
+        .catch(err => toast(err.message || 'Erro ao confirmar.', 'danger'));
+    }
   });
 
   // "Ver mais" section expansion
@@ -1916,6 +2090,19 @@ const bind = () => {
 
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
+
+  // PIX modal
+  document.getElementById('btnPixClose')?.addEventListener('click', closePixModal);
+  document.getElementById('modalPixOverlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalPixOverlay')) closePixModal();
+  });
+
+  // Saque modal
+  document.getElementById('btnSaqueClose')?.addEventListener('click', closeSaqueModal);
+  document.getElementById('modalSaqueOverlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalSaqueOverlay')) closeSaqueModal();
+  });
+  document.getElementById('formSaque')?.addEventListener('submit', submitSaque);
 
   // Mobile drawer — delegado para cobrir botões gerados dinamicamente
   document.addEventListener('click', e => {

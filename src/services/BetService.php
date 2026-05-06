@@ -6,6 +6,7 @@ class BetService
     private TransactionRepository $transactions;
     private array $config;
     private ConfigRepository $configRepo;
+    private ?PaymentRepository $paymentsRepo = null;
 
     public function __construct(BetRepository $bets, GameRepository $games, TransactionRepository $transactions, array $config, ConfigRepository $configRepo)
     {
@@ -14,6 +15,11 @@ class BetService
         $this->transactions = $transactions;
         $this->config       = $config;
         $this->configRepo   = $configRepo;
+    }
+
+    public function setPaymentRepository(PaymentRepository $repo): void
+    {
+        $this->paymentsRepo = $repo;
     }
 
     /**
@@ -84,7 +90,11 @@ class BetService
         ];
     }
 
-    public function payBet(int $userId, int $betId): void
+    /**
+     * Inicia o pagamento de uma aposta via gateway.
+     * Retorna dados da cobrança PIX para o frontend.
+     */
+    public function payBet(int $userId, int $betId, PaymentGatewayInterface $gateway): array
     {
         $bet = $this->bets->find($betId);
         if (!$bet || (int) $bet['user_id'] !== $userId) {
@@ -93,11 +103,43 @@ class BetService
         if ($bet['status'] !== 'pendente') {
             throw new InvalidArgumentException('Aposta não está pendente');
         }
+
+        $charge = $gateway->createPixCharge(
+            (float) $bet['valor'],
+            'BetCopa — Aposta #' . $betId,
+            'bet-' . $betId . '-' . $userId
+        );
+
+        // Persiste cobrança se o repositório estiver disponível
+        if ($this->paymentsRepo !== null) {
+            $this->paymentsRepo->create(
+                $betId,
+                $gateway->getName(),
+                $charge['payment_id'],
+                $charge['qr_code'],
+                $charge['qr_code_base64'],
+                (float) $bet['valor'],
+                $charge['expires_at']
+            );
+        }
+
         $this->bets->updateStatus($betId, 'pago');
-        Logger::info('Pagamento simulado', ['bet_id' => $betId]);
+        Logger::info('Cobrança PIX criada', ['bet_id' => $betId, 'gateway' => $gateway->getName()]);
+
+        return [
+            'gateway'        => $gateway->getName(),
+            'qr_code'        => $charge['qr_code'],
+            'qr_code_base64' => $charge['qr_code_base64'],
+            'expires_at'     => $charge['expires_at'],
+            'pix_chave'      => $this->configRepo->get('pix_chave', ''),
+            'pix_nome'       => $this->configRepo->get('pix_nome', 'BetCopa'),
+        ];
     }
 
-    public function confirmPayment(int $userId, int $betId): void
+    /**
+     * Confirma o pagamento verificando o status real no gateway.
+     */
+    public function confirmPayment(int $userId, int $betId, PaymentGatewayInterface $gateway): void
     {
         $bet = $this->bets->find($betId);
         if (!$bet || (int) $bet['user_id'] !== $userId) {
@@ -106,9 +148,25 @@ class BetService
         if ($bet['status'] !== 'pago') {
             throw new InvalidArgumentException('Pagamento ainda não processado');
         }
+
+        // Para gateway real: verifica status antes de confirmar
+        if ($gateway->getName() !== 'simulado' && $this->paymentsRepo !== null) {
+            $payment = $this->paymentsRepo->findByBetId($betId);
+            if ($payment && $payment['gateway_payment_id'] !== '') {
+                $status = $gateway->getPaymentStatus($payment['gateway_payment_id']);
+                if ($status === 'rejected' || $status === 'cancelled') {
+                    throw new InvalidArgumentException('Pagamento recusado pelo gateway');
+                }
+                if ($status === 'pending') {
+                    throw new InvalidArgumentException('Pagamento ainda não confirmado. Aguarde ou tente novamente.');
+                }
+                $this->paymentsRepo->updateStatus((int) $payment['id'], 'approved');
+            }
+        }
+
         $this->bets->updateStatus($betId, 'confirmado');
         $this->transactions->create($userId, 'debito', (float) $bet['valor'], 'Aposta confirmada #' . $betId);
-        Logger::info('Pagamento confirmado', ['bet_id' => $betId]);
+        Logger::info('Pagamento confirmado', ['bet_id' => $betId, 'gateway' => $gateway->getName()]);
     }
 
     public function processResult(int $gameId): void

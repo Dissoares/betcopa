@@ -2958,3 +2958,278 @@ input:focus, select:focus {
   opacity: .85;
   transform: scale(1.03);
 }
+
+/* ════════════════════════════════════════════════════════════
+   §31. URGENCY BADGE — "Encerra em breve"
+   ════════════════════════════════════════════════════════════ */
+.gc-urgency {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .72rem;
+  font-weight: 700;
+  color: #FF6B00;
+  background: rgba(255,107,0,.12);
+  border: 1px solid rgba(255,107,0,.25);
+  border-radius: 6px;
+  padding: .2rem .55rem;
+  margin-bottom: .35rem;
+  animation: pulse-urgency 1.8s ease-in-out infinite;
+}
+@keyframes pulse-urgency {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .6; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   §32. MODAL OVERLAY genérico (PIX + Saque)
+   ════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-overlay.hidden { display: none !important; }
+
+.modal-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  animation: modal-in .22s cubic-bezier(.34,1.56,.64,1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@keyframes modal-in {
+  from { transform: translateY(24px) scale(.97); opacity: 0; }
+  to   { transform: translateY(0) scale(1);      opacity: 1; }
+}
+.modal-close {
+  position: absolute;
+  top: .85rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: color .15s;
+  z-index: 1;
+}
+.modal-close:hover { color: var(--text); }
+
+/* ════════════════════════════════════════════════════════════
+   §33. PIX MODAL
+   ════════════════════════════════════════════════════════════ */
+.pix-modal { padding: 1.75rem 1.5rem 1.5rem; }
+
+.pix-modal__header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+.pix-modal__icon {
+  font-size: 2.2rem;
+  color: #00BCFF;   /* azul-pix oficial */
+  display: block;
+  margin-bottom: .4rem;
+}
+.pix-modal__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 .2rem;
+}
+.pix-modal__subtitle {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pix-modal__body { display: flex; flex-direction: column; gap: .9rem; }
+
+/* QR Code */
+.pix-modal__qr-wrap {
+  display: flex;
+  justify-content: center;
+}
+.pix-modal__qr {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  border: 3px solid var(--border);
+  background: #fff;
+  object-fit: contain;
+}
+
+/* Chave copy row */
+.pix-modal__key-row { display: flex; flex-direction: column; gap: .35rem; }
+.pix-modal__key-label { font-size: .72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.pix-modal__key-box {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .45rem .75rem;
+}
+.pix-modal__key-val {
+  font-family: 'Courier New', monospace;
+  font-size: .8rem;
+  color: var(--text);
+  flex: 1;
+  word-break: break-all;
+}
+.pix-modal__key-copy {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: .9rem;
+  padding: .1rem .25rem;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+.pix-modal__key-copy:hover { color: var(--primary); }
+
+/* Valor */
+.pix-modal__amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-3);
+  border-radius: 8px;
+  padding: .5rem .75rem;
+}
+.pix-modal__amount-label { font-size: .8rem; color: var(--text-muted); }
+.pix-modal__amount       { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+
+/* Timer */
+.pix-timer {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .82rem;
+  color: var(--text-muted);
+  justify-content: center;
+}
+.pix-timer--urgent { color: #FF6B00; font-weight: 700; }
+.pix-timer--expired{ color: var(--danger); font-weight: 700; }
+
+/* Status polling dot */
+.pix-status {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .8rem;
+  color: var(--text-dim);
+  justify-content: center;
+}
+.pix-status__dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: .5; }
+}
+
+/* Footer */
+.pix-modal__footer {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  align-items: center;
+}
+.pix-modal__hint {
+  font-size: .75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   §34. SAQUE MODAL
+   ════════════════════════════════════════════════════════════ */
+.saque-modal { padding: 1.75rem 1.5rem 1.5rem; }
+
+.saque-modal__header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+.saque-modal__icon {
+  font-size: 2rem;
+  color: var(--primary);
+  display: block;
+  margin-bottom: .4rem;
+}
+.saque-modal__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.saque-modal__form { display: flex; flex-direction: column; gap: .85rem; }
+
+.saque-modal__saldo-info {
+  background: var(--surface-3);
+  border-radius: 8px;
+  padding: .6rem .9rem;
+  font-size: .85rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+.saque-modal__saldo-info strong { color: var(--primary); }
+
+.saque-modal__hint {
+  font-size: .75rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: .4rem;
+  align-items: flex-start;
+  margin: 0;
+}
+.saque-modal__hint i { flex-shrink: 0; margin-top: .1rem; color: var(--info); }
+
+/* input prefix wrapper (R$) */
+.input-prefix-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.input-prefix-wrap:focus-within { border-color: var(--primary); }
+.input-prefix {
+  padding: 0 .75rem;
+  font-size: .85rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,.04);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  line-height: 2.6rem;
+}
+.input-prefix-input {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  flex: 1;
+}
+.input-prefix-input:focus { box-shadow: none !important; }
