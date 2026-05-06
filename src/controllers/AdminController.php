@@ -101,8 +101,9 @@ class AdminController
             'mult_max'    => (int)   $this->config->get('mult_max',    100),
             'bet_percent' => (float) $this->config->get('bet_percent', 10),
             'site_logo'   =>         $this->config->get('site_logo',   ''),
-            'site_nome'   =>         $this->config->get('site_nome',   'BetCopa'),
-            'admin_email' =>         $this->adminEmail,
+            'site_nome'      =>         $this->config->get('site_nome',   'BetCopa'),
+            'admin_email'    =>         $this->adminEmail,
+            'bonus_cadastro' => (float) $this->config->get('bonus_cadastro', 0),
         ]);
     }
 

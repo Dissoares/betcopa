@@ -76,7 +76,18 @@
           <div class="copa-hero__stat hidden" id="heroStatLiveWrap"><strong id="heroStatLive">0</strong><span>Ao Vivo</span></div>
           <div class="copa-hero__stat"><strong id="heroStatOpen">—</strong><span>aberto</span></div>
         </div>
+        <div id="heroBonusBadge" class="hero-bonus hidden">
+          <i class="fa-solid fa-gift"></i>
+          <span>Ganhe <strong id="heroBonusAmt">R$50</strong> de bônus ao criar sua conta!</span>
+          <button class="btn btn--primary btn--sm" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+        </div>
       </div>
+    </div>
+
+    <!-- Activity ticker -->
+    <div id="activityTicker" class="activity-ticker hidden" aria-hidden="true">
+      <span class="activity-ticker__label"><i class="fa-solid fa-bolt"></i> Ganhadores</span>
+      <div class="activity-ticker__track" id="tickerTrack"></div>
     </div>
 
     <!-- Skeleton loader (visível enquanto carrega) -->
@@ -994,6 +1005,42 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- ╔══════════════════════════════════════════════════════════╗ -->
+  <!-- ║  Modal — Preview palpite (visitante)                    ║ -->
+  <!-- ╚══════════════════════════════════════════════════════════╝ -->
+  <div class="modal-overlay hidden" id="modalGuestBet" role="dialog" aria-modal="true">
+    <div class="modal-box guest-bet-modal">
+      <button class="modal-close" id="closeModalGuestBet" aria-label="Fechar">&times;</button>
+      <div class="guest-bet-header">
+        <i class="fa-solid fa-bullseye" style="color:var(--primary);font-size:1.6rem"></i>
+        <h3>Simule seu palpite</h3>
+        <p>Veja quanto você pode ganhar — crie sua conta e aposte de verdade!</p>
+      </div>
+      <div id="guestBetMatchup" class="guest-bet-matchup"></div>
+      <div class="guest-bet-sim">
+        <label class="form-label">Valor do palpite</label>
+        <div class="input-prefix-wrap">
+          <span class="input-prefix">R$</span>
+          <input type="number" id="guestBetValue" class="input input-prefix-input" min="1" value="50" step="1">
+        </div>
+        <div class="guest-bet-result">
+          <span>Você pode ganhar até</span>
+          <strong id="guestBetMax" class="guest-bet-max">—</strong>
+        </div>
+        <p class="guest-bet-mult-hint">Multiplicador de <span id="guestBetMultMin">1</span>× a <span id="guestBetMultMax">100</span>×</p>
+      </div>
+      <div class="guest-bet-ctas">
+        <button class="btn btn--primary btn--full btn--lg" id="guestBetRegisterBtn">
+          <i class="fa-solid fa-user-plus"></i>
+          <span id="guestBetRegisterLabel">Criar conta gratuita e apostar</span>
+        </button>
+        <button class="btn btn--ghost btn--full" id="guestBetLoginBtn">
+          <i class="fa-solid fa-right-to-bracket"></i> Já tenho conta — Entrar
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ╔══════════════════════════════════════════════════════════╗ -->
   <!-- ║  Modal PIX — Pagamento de aposta                        ║ -->

@@ -54,4 +54,21 @@ class BetRepository
         $stmt = $this->db->query('SELECT a.*, u.nome, j.time_casa, j.time_fora, j.placar_real FROM apostas a JOIN users u ON a.user_id = u.id JOIN jogos j ON a.jogo_id = j.id WHERE j.status = "finalizado"');
         return $stmt->fetchAll();
     }
+
+    public function recentWins(int $limit = 15): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT u.nome, a.possivel_ganho, j.time_casa, j.time_fora, j.placar_real
+             FROM apostas a
+             JOIN users u ON a.user_id = u.id
+             JOIN jogos j ON a.jogo_id = j.id
+             WHERE a.status = :status
+             ORDER BY a.id DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':status', 'ganhou');
+        $stmt->bindValue(':limit',  $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

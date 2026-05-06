@@ -158,6 +158,24 @@ try {
         route('/api/user/saques', 'GET',  fn() => $withdrawCtrl->list());
         route('/api/user/saques', 'POST', fn() => $withdrawCtrl->request());
 
+        // ── Feed público ─────────────────────────────────────────────────
+        route('/api/feed', 'GET', function() use ($bets) {
+            $wins = $bets->recentWins(15);
+            $feed = [];
+            foreach ($wins as $w) {
+                $parts  = explode(' ', trim($w['nome']));
+                $nome   = $parts[0] . (isset($parts[1]) ? ' ' . mb_substr($parts[1], 0, 1, 'UTF-8') . '.' : '');
+                $feed[] = [
+                    'nome'        => $nome,
+                    'valor_ganho' => (float) $w['possivel_ganho'],
+                    'time_casa'   => $w['time_casa'],
+                    'time_fora'   => $w['time_fora'],
+                    'placar_real' => $w['placar_real'],
+                ];
+            }
+            jsonResponse(['feed' => $feed]);
+        });
+
         // ── Webhooks ─────────────────────────────────────────────────────
         route('/api/webhooks/mercadopago', 'POST', fn() => $webhookCtrl->mercadopago());
         route('/api/webhooks/expay',         'POST', fn() => $webhookCtrl->expay());

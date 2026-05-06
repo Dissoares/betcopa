@@ -19,8 +19,9 @@ const S = {
   betPercent:   10,
   timers:       [],        // countdown interval refs
   pollTimer:    null,      // intervalo de polling para jogos ao vivo
-  adminEmail:   'admin@betcopa.local',
-  activeFilter: 'todos',   // filtro ativo nos cards de jogos
+  adminEmail:     'admin@betcopa.local',
+  activeFilter:   'todos',   // filtro ativo nos cards de jogos
+  bonusCadastro:  0,
 };
 
 let editingGameId = null;
@@ -563,6 +564,11 @@ const renderCard = (g) => {
     ? `<button class="btn btn--ghost btn--full" disabled>
          <i class="fa-solid fa-lock"></i> Apostas encerradas
        </button>`
+    : !betBlocked && !S.user
+    ? `<button class="btn btn--primary btn--full" data-action="guest-bet" data-id="${g.id}">
+         <i class="fa-solid fa-bullseye"></i> Fazer Palpite
+       </button>
+       ${ctaHtml}`
     : `<button class="btn ${!betBlocked ? 'btn--primary' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
          ${!betBlocked ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
@@ -2092,6 +2098,7 @@ const loadUser = async () => {
     S.user = null;
   }
   renderHeader();
+  renderHeroBonusBadge();
 };
 
 const loadGames = async () => {
@@ -2944,6 +2951,82 @@ const applyBrandLogo = (url) => {
   });
 };
 
+// ── Hero bonus badge ──────────────────────────────────────────
+const renderHeroBonusBadge = () => {
+  const badge = document.getElementById('heroBonusBadge');
+  if (!badge) return;
+  if (S.user || !S.bonusCadastro) { badge.classList.add('hidden'); return; }
+  const amt = document.getElementById('heroBonusAmt');
+  if (amt) amt.textContent = fmtMoney(S.bonusCadastro);
+  badge.classList.remove('hidden');
+};
+
+// ── Guest bet preview modal ───────────────────────────────────
+const openGuestBetModal = (gameId) => {
+  const g = S.games.find(g => g.id === Number(gameId));
+  if (!g) return;
+
+  const emblemH = g.logo_casa
+    ? `<img src="${g.logo_casa}" class="res-emblem" alt="${g.time_casa}">`
+    : `<span class="guest-bet-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
+  const emblemA = g.logo_fora
+    ? `<img src="${g.logo_fora}" class="res-emblem" alt="${g.time_fora}">`
+    : `<span class="guest-bet-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
+
+  const matchup = document.getElementById('guestBetMatchup');
+  if (matchup) matchup.innerHTML = `
+    <div class="guest-bet-teams">
+      <div class="guest-bet-team">${emblemH}<span>${g.time_casa}</span></div>
+      <div class="guest-bet-vs">VS</div>
+      <div class="guest-bet-team">${emblemA}<span>${g.time_fora}</span></div>
+    </div>
+    <time class="guest-bet-date">${fmtGameDate(g.data_hora)}</time>`;
+
+  const minEl = document.getElementById('guestBetMultMin');
+  const maxEl = document.getElementById('guestBetMultMax');
+  if (minEl) minEl.textContent = S.multMin + '×';
+  if (maxEl) maxEl.textContent = S.multMax + '×';
+
+  const updateMax = () => {
+    const val = parseFloat(document.getElementById('guestBetValue')?.value) || 0;
+    const el  = document.getElementById('guestBetMax');
+    if (el) el.textContent = fmtMoney(val * S.multMax);
+  };
+  const input = document.getElementById('guestBetValue');
+  if (input) { input.value = 50; input.oninput = updateMax; }
+  updateMax();
+
+  const registerLabel = document.getElementById('guestBetRegisterLabel');
+  if (registerLabel) {
+    registerLabel.innerHTML = S.bonusCadastro > 0
+      ? `Criar conta e ganhar <strong>${fmtMoney(S.bonusCadastro)}</strong> de bônus`
+      : 'Criar conta gratuita e apostar';
+  }
+
+  document.getElementById('modalGuestBet')?.classList.remove('hidden');
+};
+
+// ── Activity feed / ticker ────────────────────────────────────
+const loadFeed = async () => {
+  try {
+    const { feed } = await api('/api/feed');
+    if (!feed || !feed.length) return;
+    const ticker = document.getElementById('activityTicker');
+    const track  = document.getElementById('tickerTrack');
+    if (!ticker || !track) return;
+    const items = feed.map(w => {
+      const score = w.placar_real ? ` (${w.placar_real.replace('x', '×')})` : '';
+      return `<span class="ticker-item">
+        <i class="fa-solid fa-trophy" style="color:var(--gold)"></i>
+        <strong>${w.nome}</strong> acertou ${w.time_casa} × ${w.time_fora}${score}
+        e ganhou <strong class="ticker-prize">${fmtMoney(w.valor_ganho)}</strong>
+      </span>`;
+    }).join('');
+    track.innerHTML = items + items; // duplicar para loop contínuo
+    ticker.classList.remove('hidden');
+  } catch (_) {}
+};
+
 const loadBetConfig = async () => {
   try {
     const cfg = await api('/api/config/bets');
@@ -2953,7 +3036,9 @@ const loadBetConfig = async () => {
     if (S.multiplier < S.multMin) S.multiplier = S.multMin;
     if (S.multiplier > S.multMax) S.multiplier = S.multMax;
     if (cfg.admin_email) S.adminEmail = cfg.admin_email;
+    S.bonusCadastro = cfg.bonus_cadastro || 0;
     applyBrandLogo(cfg.site_logo || '');
+    renderHeroBonusBadge();
   } catch (_) { /* usa defaults */ }
 };
 
