@@ -762,9 +762,16 @@ body.drawer-open { overflow: hidden; }
   color: var(--text-muted); white-space: nowrap;
 }
 .game-card__date--live {
-  display: inline-flex; align-items: center; gap: .35rem;
-  font-size: .7rem; font-weight: 700;
-  color: var(--danger);
+  font-size: .68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .05em;
+  color: #fff;
+  background: rgba(230,57,70,.18);
+  border: 1px solid rgba(230,57,70,.35);
+  border-radius: 4px;
+  padding: .15rem .45rem;
+  font-family: ui-monospace, 'Courier New', monospace;
 }
 
 /* ─ Matchup row ---------------------------------------------- */
@@ -1845,17 +1852,42 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   letter-spacing: .04em;
   line-height: 1;
 }
-.gc-score--live  .gc-score__val        { color: var(--text); font-size: 1.55rem; }
-.gc-score__period {
-  font-size: .58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--danger);
-  opacity: .8;
-  font-variant-numeric: tabular-nums;
+.gc-score--live {
+  background: linear-gradient(135deg, rgba(10,10,20,.92), rgba(5,5,15,.95));
+  border: 1px solid rgba(230,57,70,.4);
+  border-radius: 8px;
+  padding: .45rem .8rem;
+  gap: .25rem;
+  box-shadow: 0 0 18px rgba(230,57,70,.12), inset 0 1px 0 rgba(255,255,255,.05);
+  min-width: 110px;
 }
-/* Chip pulsante removido — período vai abaixo do placar */
+.gc-score--live .gc-score__val { color: #fff; font-size: 1.6rem; text-shadow: 0 0 20px rgba(255,255,255,.25); }
+
+/* Barra de período + relógio estilo TV */
+.gc-tv-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+}
+.gc-tv-bar__period {
+  font-size: .55rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--danger);
+  line-height: 1;
+}
+.gc-tv-bar__clock {
+  font-size: .72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+  color: #fff;
+  line-height: 1;
+  font-family: ui-monospace, 'Courier New', monospace;
+}
+
 .gc-score__label--live { display: none; }
 .gc-score__label--live i { display: none; }
 .gc-score--final .gc-score__val   { color: var(--info); text-shadow: var(--score-shadow); }

@@ -538,14 +538,18 @@ const renderCard = (g) => {
   const oddNum     = parseFloat(g.odd || 1);
   const oddFmt     = oddNum % 1 === 0 ? oddNum.toFixed(0) : oddNum.toFixed(1).replace('.', ',');
 
+  const { period: livePeriod, shortPeriod: liveShort, clockStr } =
+    isLive ? fmtLiveClock(g) : { period: null, shortPeriod: null, clockStr: null };
+
   let midHtml;
   if (isLive) {
-    const { period, min } = fmtLiveClock(g);
-    const clockTxt = min !== null ? `${period} · ${min}'` : period;
     midHtml = `
         <div class="gc-score gc-score--live">
+          <div class="gc-tv-bar">
+            <span class="gc-tv-bar__period" id="lvperiod-${g.id}">${liveShort ?? ''}</span>
+            <span class="gc-tv-bar__clock" id="lvclock-${g.id}">${clockStr ?? ''}</span>
+          </div>
           <span class="gc-score__val">${scoreStr ?? '0 × 0'}</span>
-          <span class="gc-score__period" id="lvclock-${g.id}">${clockTxt}</span>
         </div>`;
   } else if (isFinal && scoreStr) {
     midHtml = `
@@ -600,7 +604,7 @@ const renderCard = (g) => {
       <div class="game-card__head">
         ${badgeLabel}
         ${isLive
-          ? `<span class="game-card__date game-card__date--live"><i class="fa-solid fa-circle fa-beat" style="font-size:.5em;color:var(--danger)"></i> Ao Vivo</span>`
+          ? `<span class="game-card__date game-card__date--live" id="gcdateclock-${g.id}">${clockStr ?? liveShort ?? ''}</span>`
           : `<time class="game-card__date">${fmtGameDate(g.data_hora)}</time>`
         }
       </div>
@@ -704,10 +708,10 @@ const renderMatchBanner = () => {
 
     if (gLive) {
       const score = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
-      const { period, min } = fmtLiveClock(g);
+      const { period, clockStr } = fmtLiveClock(g);
       pill   = `<div class="mb-pill mb-pill--live"><i class="fa-solid fa-circle fa-beat"></i> AO VIVO</div>`;
       center = `<div class="mb-score">${score}</div>
-                <div class="mb-clock" id="mbc-clk-${g.id}">${min !== null ? `${period} · ${min}'` : period}</div>`;
+                <div class="mb-clock" id="mbc-clk-${g.id}">${clockStr ? `${period} · ${clockStr}` : period}</div>`;
       cta    = `<button class="btn btn--danger btn--sm mb-cta-btn" disabled>
                   <i class="fa-solid fa-satellite-dish fa-beat"></i> Ao Vivo
                 </button>`;
@@ -763,9 +767,9 @@ const renderMatchBanner = () => {
     const clkEl = document.getElementById(`mbc-clk-${g.id}`);
     if (!clkEl) return;
     S.timers.push(setInterval(() => {
-      const { period, min } = fmtLiveClock(g);
-      clkEl.textContent = min !== null ? `${period} · ${min}'` : period;
-    }, 30_000));
+      const { period, clockStr } = fmtLiveClock(g);
+      clkEl.textContent = clockStr ? `${period} · ${clockStr}` : period;
+    }, 1000));
   });
 
   if (slides.length <= 1) return;
@@ -1024,21 +1028,32 @@ const fmtCountdown = (ms) => {
 };
 
 const fmtLiveClock = (g) => {
-  const api     = (g.status_api || '').toUpperCase();
-  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(g.data_hora)) / 60000));
-  // elapsed=0 significa data_hora no futuro (dados inconsistentes) — não exibe minuto
-  const hasMin  = elapsed > 0;
+  const api        = (g.status_api || '').toUpperCase();
+  const elapsedMs  = Math.max(0, Date.now() - new Date(g.data_hora));
+  const elapsedSec = Math.floor(elapsedMs / 1000);
+  const elapsedMin = Math.floor(elapsedSec / 60);
+  const secs       = elapsedSec % 60;
+  const hasTime    = elapsedSec > 0;
 
-  if (api === 'HT')  return { period: 'Intervalo',      min: null };
-  if (api === 'BT')  return { period: 'Interv. Prorr.', min: null };
-  if (api === 'P')   return { period: 'Pênaltis',       min: null };
-  if (api === 'INT') return { period: 'Interrompido',   min: null };
+  const clk = (m, s) => `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-  if (api === '1H')  return { period: '1º Tempo',    min: hasMin ? Math.min(elapsed, 45) : null };
-  if (api === '2H')  return { period: '2º Tempo',    min: hasMin ? Math.min(45 + Math.max(0, elapsed - 60), 90) : null };
-  if (api === 'ET')  return { period: 'Prorrogação', min: hasMin ? Math.min(90 + Math.max(0, elapsed - 110), 120) : null };
+  if (api === 'HT')  return { period: 'Intervalo',      shortPeriod: 'INT',   clockStr: null };
+  if (api === 'BT')  return { period: 'Interv. Prorr.', shortPeriod: 'INT',   clockStr: null };
+  if (api === 'P')   return { period: 'Pênaltis',       shortPeriod: 'PEN',   clockStr: null };
+  if (api === 'INT') return { period: 'Interrompido',   shortPeriod: 'INT',   clockStr: null };
 
-  return { period: 'Ao Vivo', min: null };
+  if (api === '1H')  return { period: '1º Tempo',    shortPeriod: '1T',    clockStr: hasTime ? clk(Math.min(elapsedMin, 45), secs) : null };
+  if (api === '2H')  return { period: '2º Tempo',    shortPeriod: '2T',    clockStr: hasTime ? clk(Math.min(45 + Math.max(0, elapsedMin - 60), 90), secs) : null };
+  if (api === 'ET')  return { period: 'Prorrogação', shortPeriod: 'PRORR', clockStr: hasTime ? clk(Math.min(90 + Math.max(0, elapsedMin - 110), 120), secs) : null };
+
+  // Estimativa por tempo decorrido quando status_api não foi atualizado
+  if (hasTime) {
+    if (elapsedMin <= 48)  return { period: '1º Tempo',    shortPeriod: '1T',    clockStr: clk(Math.min(elapsedMin, 45), secs) };
+    if (elapsedMin <= 63)  return { period: 'Intervalo',   shortPeriod: 'INT',   clockStr: null };
+    if (elapsedMin <= 108) return { period: '2º Tempo',    shortPeriod: '2T',    clockStr: clk(Math.min(45 + Math.max(0, elapsedMin - 63), 90), secs) };
+    if (elapsedMin <= 130) return { period: 'Prorrogação', shortPeriod: 'PRORR', clockStr: clk(Math.min(90 + Math.max(0, elapsedMin - 108), 120), secs) };
+  }
+  return { period: 'Ao Vivo', shortPeriod: 'AO VIVO', clockStr: null };
 };
 
 const startLiveClocks = () => {
@@ -1046,11 +1061,16 @@ const startLiveClocks = () => {
     const el = document.getElementById(`lvclock-${g.id}`);
     if (!el || el.dataset.t) return;
     el.dataset.t = '1';
+    const perEl      = document.getElementById(`lvperiod-${g.id}`);
+    const dateClkEl  = document.getElementById(`gcdateclock-${g.id}`);
     const tick = () => {
-      const { period, min } = fmtLiveClock(g);
-      el.textContent = min !== null ? `${period} · ${min}'` : period;
-    };    tick();
-    S.timers.push(setInterval(tick, 30000));
+      const { shortPeriod, clockStr } = fmtLiveClock(g);
+      el.textContent = clockStr ?? '';
+      if (perEl)     perEl.textContent     = shortPeriod ?? '';
+      if (dateClkEl) dateClkEl.textContent = clockStr ?? shortPeriod ?? '';
+    };
+    tick();
+    S.timers.push(setInterval(tick, 1000));
   });
 };
 
