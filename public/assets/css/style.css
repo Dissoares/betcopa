@@ -753,10 +753,24 @@ body.drawer-open { overflow: hidden; }
   50%     { box-shadow: 0 0 0 6px rgba(255,71,87,.22); }
 }
 
-/* ─ Head: badge + data ---------------------------------------- */
+/* ─ Head: badge + liga + data --------------------------------- */
 .game-card__head {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: space-between; align-items: center; gap: .3rem;
 }
+.gc-league {
+  flex: 1;
+  text-align: center;
+  font-size: .52rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 .25rem;
+}
+.gc-league i { color: var(--gold); font-size: .48rem; }
 .game-card__date {
   font-size: .7rem; font-weight: 500;
   color: var(--text-muted); white-space: nowrap;

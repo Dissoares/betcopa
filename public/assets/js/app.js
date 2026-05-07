@@ -517,6 +517,31 @@ const updateHeroStats = () => {
   });
 };
 
+// ── League name abbreviations ─────────────────────────────────
+const LEAGUE_SHORT = {
+  'Campeonato Brasileiro Série A': 'Série A',
+  'Campeonato Brasileiro Série B': 'Série B',
+  'Campeonato Brasileiro Série C': 'Série C',
+  'Brasileirão Série A':           'Série A',
+  'Brasileirão Série B':           'Série B',
+  'Copa Libertadores':             'Libertadores',
+  'Copa Sul-Americana':            'Sul-Americana',
+  'Copa do Mundo FIFA':            'Copa do Mundo',
+  'UEFA Champions League':         'Champions',
+  'UEFA Europa League':            'Europa League',
+  'UEFA Europa Conference League': 'Conference',
+  'Premier League':                'Premier League',
+  'La Liga':                       'La Liga',
+  'Serie A':                       'Serie A',
+  'Ligue 1':                       'Ligue 1',
+  'Bundesliga':                    'Bundesliga',
+  'Eredivisie':                    'Eredivisie',
+  'Primeira Liga':                 'Primeira Liga',
+  'Championship':                  'Championship',
+  'Copa América':                  'Copa América',
+};
+const leagueShortName = (name) => LEAGUE_SHORT[name] || name;
+
 // ── Game card renderer ────────────────────────────────────────
 const renderCard = (g) => {
   const emblemHome = getEmblem(g, 'home');
@@ -599,12 +624,17 @@ const renderCard = (g) => {
        </button>
        ${ctaHtml}`;
 
+  const leagueHtml = g.liga_nome
+    ? `<span class="gc-league"><i class="fa-solid fa-trophy"></i> ${leagueShortName(g.liga_nome)}</span>`
+    : `<span></span>`;
+
   return `
     <article class="game-card game-card--${statusClass}">
       <div class="game-card__head">
         ${badgeLabel}
+        ${leagueHtml}
         ${isLive
-          ? `<span class="game-card__date game-card__date--live" id="gcdateclock-${g.id}">${clockStr ?? liveShort ?? ''}</span>`
+          ? `<span class="game-card__date game-card__date--live" id="gcdateclock-${g.id}">${liveShort ?? ''}</span>`
           : `<time class="game-card__date">${fmtGameDate(g.data_hora)}</time>`
         }
       </div>
