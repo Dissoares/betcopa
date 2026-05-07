@@ -4058,3 +4058,98 @@ input:focus, select:focus {
   .legal-table th,
   .legal-table td    { padding: .5rem .75rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   §39. SHARE BET MODAL
+   ═══════════════════════════════════════════════════════════════ */
+.share-modal {
+  width: 100%;
+  max-width: 560px;
+  padding: 1.5rem;
+}
+
+.share-modal__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.share-modal__title i { color: var(--primary); }
+
+.share-preview {
+  background: #080e1c;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 5 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  border: 1px solid #1c2333;
+}
+.share-preview canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 12px;
+}
+
+.share-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .75rem;
+  color: var(--text-muted);
+  font-size: .875rem;
+}
+.share-spinner i { font-size: 1.75rem; color: var(--primary); }
+
+.share-actions {
+  display: flex;
+  gap: .625rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.share-btn {
+  flex: 1 1 auto;
+  min-width: 120px;
+  max-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .6rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: filter .15s, transform .1s;
+}
+.share-btn:hover  { filter: brightness(1.12); }
+.share-btn:active { transform: scale(.97); }
+.share-btn--whatsapp { background: #25D366; color: #fff; }
+.share-btn--twitter  { background: #000;    color: #fff; }
+.share-btn--download { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+.share-btn--native   { background: var(--primary);     color: #000; }
+
+/* ── Share icon on bet cards ─────────────────────────────── */
+.btn-share-bet {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: .3rem .5rem;
+  font-size: .75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  line-height: 1;
+  transition: border-color .15s, color .15s;
+}
+.btn-share-bet:hover { border-color: var(--primary); color: var(--primary); }

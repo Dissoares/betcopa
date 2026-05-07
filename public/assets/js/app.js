@@ -1016,6 +1016,264 @@ const betTimeline = (status) => {
   }).join('')}</div>`;
 };
 
+// ── Share bet helpers ─────────────────────────────────────────
+const loadImgCors = src => new Promise(resolve => {
+  if (!src) return resolve(null);
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload  = () => resolve(img);
+  img.onerror = () => resolve(null);
+  img.src = src;
+});
+
+const rrect = (ctx, x, y, w, h, r) => {
+  ctx.beginPath();
+  if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+  ctx.moveTo(x + r, y);    ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+};
+
+const isoToEmoji = code => {
+  if (!code || code.length !== 2) return '';
+  const offset = 127397; // 0x1F1E0 - 65
+  return [...code.toUpperCase()].map(c => String.fromCodePoint(c.charCodeAt(0) + offset)).join('');
+};
+
+const generateBetCard = async (bet) => {
+  const W = 600, H = 360;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.getElementById('shareCanvas');
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const game = S.games.find(g => g.id === bet.jogo_id);
+
+  const [imgHome, imgAway] = await Promise.all([
+    loadImgCors(game?.bandeira_casa ? flagUrl(game.bandeira_casa) : null),
+    loadImgCors(game?.bandeira_fora ? flagUrl(game.bandeira_fora) : null),
+  ]);
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0,   '#080e1c');
+  bgGrad.addColorStop(0.5, '#0b1220');
+  bgGrad.addColorStop(1,   '#0d1625');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  const glowGrad = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, 280);
+  glowGrad.addColorStop(0, 'rgba(0,200,83,.10)');
+  glowGrad.addColorStop(1, 'rgba(0,200,83,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Accent bar helper (used top + bottom)
+  const accentBar = () => {
+    const g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0,   'rgba(0,200,83,0)');
+    g.addColorStop(0.2, '#00C853');
+    g.addColorStop(0.5, '#FFD700');
+    g.addColorStop(0.8, '#00C853');
+    g.addColorStop(1,   'rgba(0,200,83,0)');
+    return g;
+  };
+  ctx.fillStyle = accentBar(); ctx.fillRect(0, 0, W, 4);
+
+  // Brand
+  ctx.font = 'bold 18px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#00C853';
+  ctx.fillText('BetCopa', 22, 30);
+
+  // Liga name
+  if (game?.liga_nome) {
+    ctx.font = '12px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.textAlign = 'right';
+    ctx.fillText(game.liga_nome, W - 22, 30);
+    ctx.textAlign = 'left';
+  }
+
+  // Status badge
+  if (bet.status === 'ganhou' || bet.status === 'perdido') {
+    const isWin   = bet.status === 'ganhou';
+    const label   = isWin ? '🏆 GANHOU!' : '✕ Perdeu';
+    const badgeBg = isWin ? 'rgba(0,200,83,.18)' : 'rgba(255,71,87,.15)';
+    const badgeTxt = isWin ? '#00C853' : '#FF4757';
+    ctx.font = 'bold 11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    const tw = ctx.measureText(label).width;
+    rrect(ctx, W - tw - 38, 40, tw + 16, 22, 11);
+    ctx.fillStyle = badgeBg; ctx.fill();
+    ctx.strokeStyle = badgeTxt; ctx.globalAlpha = .35; ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = badgeTxt;
+    ctx.textAlign = 'right';
+    ctx.fillText(label, W - 26, 55);
+    ctx.textAlign = 'left';
+  }
+
+  // Teams & flags
+  const teamY  = 100;
+  const flagSz = 40;
+  const cx     = W / 2;
+  const homeX  = cx - 120;
+  const awayX  = cx + 120;
+
+  const drawFlag = (img, code, x, y, sz) => {
+    if (img) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, x - sz / 2, y - sz / 2, sz, sz);
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else {
+      ctx.font = `${sz * .75}px serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.fillText(isoToEmoji(code) || '🏳', x, y + sz * .28);
+      ctx.textAlign = 'left';
+    }
+  };
+
+  drawFlag(imgHome, game?.bandeira_casa, homeX, teamY, flagSz);
+  drawFlag(imgAway, game?.bandeira_fora, awayX, teamY, flagSz);
+
+  ctx.font = 'bold 14px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.textAlign = 'center';
+  ctx.fillText(bet.time_casa || '—', homeX, teamY + flagSz / 2 + 18);
+  ctx.fillText(bet.time_fora || '—', awayX, teamY + flagSz / 2 + 18);
+
+  ctx.font = 'bold 16px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.25)';
+  ctx.fillText('VS', cx, teamY + 6);
+  ctx.textAlign = 'left';
+
+  // Score box
+  const scoreY = 178;
+  const boxW = 160, boxH = 56;
+  rrect(ctx, cx - boxW / 2, scoreY, boxW, boxH, 12);
+  ctx.fillStyle = 'rgba(0,200,83,.1)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,200,83,.4)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  ctx.font = '11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#00C853';
+  ctx.textAlign = 'center';
+  ctx.fillText('MEU PALPITE', cx, scoreY - 8);
+
+  ctx.font = 'bold 28px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(`${bet.placar_casa}  ×  ${bet.placar_fora}`, cx, scoreY + 38);
+  ctx.textAlign = 'left';
+
+  // Stats row
+  const statsY = 268;
+  const colW   = (W - 80) / 3;
+  const statLabels = ['Apostei', 'Multiplicador', 'Prêmio Potencial'];
+  const statVals   = [
+    fmtMoney(bet.valor),
+    `${parseFloat(bet.odd).toFixed(0)}×`,
+    bet.status === 'perdido' ? '—' : fmtMoney(bet.possivel_ganho),
+  ];
+  const statColors = [
+    'rgba(255,255,255,.7)',
+    'rgba(255,255,255,.7)',
+    bet.status === 'ganhou' ? '#00C853' : '#FFD700',
+  ];
+
+  statLabels.forEach((lbl, i) => {
+    const sx = 40 + i * colW;
+    if (i > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx, statsY - 10);
+      ctx.lineTo(sx, statsY + 38);
+      ctx.stroke();
+    }
+    ctx.font = '11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, sx + colW / 2, statsY);
+    ctx.font = 'bold 15px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    ctx.fillStyle = statColors[i];
+    ctx.fillText(statVals[i], sx + colW / 2, statsY + 22);
+  });
+  ctx.textAlign = 'left';
+
+  // Bottom bar + domain
+  ctx.fillStyle = accentBar(); ctx.fillRect(0, H - 4, W, 4);
+  ctx.font = '11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.2)';
+  ctx.textAlign = 'right';
+  ctx.fillText('betcopa.com', W - 22, H - 10);
+  ctx.textAlign = 'left';
+
+  return canvas;
+};
+
+let _shareBetId = null;
+
+const openShareModal = async (betId) => {
+  _shareBetId = Number(betId);
+  const bet = S.bets.find(b => b.id === _shareBetId);
+  if (!bet) return;
+
+  const overlay  = document.getElementById('modalShareOverlay');
+  const spinner  = document.getElementById('shareSpinner');
+  const canvas   = document.getElementById('shareCanvas');
+  const actionBtns = ['btnShareWhatsApp','btnShareTwitter','btnShareDownload','btnShareNative'];
+
+  overlay.classList.remove('hidden');
+  spinner.classList.remove('hidden');
+  spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Gerando imagem…</span>';
+  canvas.classList.add('hidden');
+  actionBtns.forEach(id => document.getElementById(id)?.classList.add('hidden'));
+
+  try {
+    await generateBetCard(bet);
+    spinner.classList.add('hidden');
+    canvas.classList.remove('hidden');
+    document.getElementById('btnShareWhatsApp')?.classList.remove('hidden');
+    document.getElementById('btnShareTwitter')?.classList.remove('hidden');
+    document.getElementById('btnShareDownload')?.classList.remove('hidden');
+    if (navigator.share) document.getElementById('btnShareNative')?.classList.remove('hidden');
+  } catch {
+    spinner.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#FF4757"></i><span>Erro ao gerar imagem.</span>';
+  }
+};
+
+const closeShareModal = () => {
+  document.getElementById('modalShareOverlay')?.classList.add('hidden');
+  _shareBetId = null;
+};
+
+const getShareText = (bet) => {
+  const game  = S.games.find(g => g.id === bet?.jogo_id);
+  const match = bet ? `${bet.time_casa} × ${bet.time_fora}` : '';
+  const score = bet ? `${bet.placar_casa}-${bet.placar_fora}` : '';
+  const liga  = game?.liga_nome ? `${game.liga_nome} • ` : '';
+  const prize = bet ? fmtMoney(bet.possivel_ganho) : '';
+  return `🏆 Fiz meu palpite no BetCopa!\n${liga}${match}\nPlacar: ${score} • Prêmio potencial: ${prize}\n\nAcesse: https://betcopa.com`;
+};
+
 const renderBets = () => {
   const list  = document.getElementById('betsList');
   const empty = document.getElementById('betsEmpty');
@@ -1079,7 +1337,12 @@ const renderBets = () => {
             </div>
           </div>
         </div>
-        <div class="bet-card__actions">${actionHtml}</div>
+        <div class="bet-card__actions">
+          ${actionHtml}
+          <button class="btn-share-bet" data-action="share" data-id="${b.id}" title="Compartilhar palpite">
+            <i class="fa-solid fa-share-nodes"></i>
+          </button>
+        </div>
       </div>`;
   }).join('');
 };
@@ -2244,6 +2507,7 @@ const bind = () => {
     if (!btn) return;
     const { action, id } = btn.dataset;
     if (action === 'bet')     openBetModal(id);
+    if (action === 'share')   openShareModal(id);
     if (action === 'pay')     { S.selectedBet = { id: Number(id) }; openModal('modalTicket'); }
     if (action === 'confirm') {
       const betId = Number(id);
@@ -2316,6 +2580,40 @@ const bind = () => {
     if (e.target === document.getElementById('modalSaqueOverlay')) closeSaqueModal();
   });
   document.getElementById('formSaque')?.addEventListener('submit', submitSaque);
+
+  // Share modal
+  document.getElementById('btnShareClose')?.addEventListener('click', closeShareModal);
+  document.getElementById('modalShareOverlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalShareOverlay')) closeShareModal();
+  });
+  document.getElementById('btnShareWhatsApp')?.addEventListener('click', () => {
+    const bet = S.bets.find(b => b.id === _shareBetId);
+    window.open(`https://wa.me/?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
+  });
+  document.getElementById('btnShareTwitter')?.addEventListener('click', () => {
+    const bet = S.bets.find(b => b.id === _shareBetId);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
+  });
+  document.getElementById('btnShareDownload')?.addEventListener('click', () => {
+    const canvas = document.getElementById('shareCanvas');
+    if (!canvas) return;
+    const bet = S.bets.find(b => b.id === _shareBetId);
+    const a = document.createElement('a');
+    a.download = `palpite-betcopa-${bet?.id ?? 'bet'}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+  document.getElementById('btnShareNative')?.addEventListener('click', () => {
+    const canvas = document.getElementById('shareCanvas');
+    const bet = S.bets.find(b => b.id === _shareBetId);
+    if (!canvas || !navigator.share) return;
+    canvas.toBlob(async blob => {
+      try {
+        const file = new File([blob], 'palpite-betcopa.png', { type: 'image/png' });
+        await navigator.share({ title: 'Meu palpite no BetCopa', text: getShareText(bet), files: [file] });
+      } catch { /* user cancelled */ }
+    }, 'image/png');
+  });
 
   // Mobile drawer — delegado para cobrir botões gerados dinamicamente
   document.addEventListener('click', e => {

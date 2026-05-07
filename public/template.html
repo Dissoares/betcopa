@@ -1708,6 +1708,39 @@
     </div>
   </div>
 
+  <!-- ══ Share Bet Modal ═══════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modalShareOverlay" role="dialog" aria-modal="true" aria-labelledby="modalShareTitle">
+    <div class="modal-box share-modal">
+      <button class="modal-close" id="btnShareClose" aria-label="Fechar">&times;</button>
+      <h2 class="share-modal__title" id="modalShareTitle">
+        <i class="fa-solid fa-share-nodes"></i> Compartilhar Palpite
+      </h2>
+
+      <div class="share-preview" id="sharePreview">
+        <div class="share-spinner" id="shareSpinner">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          <span>Gerando imagem…</span>
+        </div>
+        <canvas id="shareCanvas" class="hidden"></canvas>
+      </div>
+
+      <div class="share-actions">
+        <button class="share-btn share-btn--whatsapp hidden" id="btnShareWhatsApp">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </button>
+        <button class="share-btn share-btn--twitter hidden" id="btnShareTwitter">
+          <i class="fa-brands fa-x-twitter"></i> Twitter/X
+        </button>
+        <button class="share-btn share-btn--download hidden" id="btnShareDownload">
+          <i class="fa-solid fa-download"></i> Baixar
+        </button>
+        <button class="share-btn share-btn--native hidden" id="btnShareNative">
+          <i class="fa-solid fa-share"></i> Compartilhar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="/assets/js/app.js?v=2"></script>
 </body>
 </html>
