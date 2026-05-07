@@ -49,12 +49,13 @@ class BetService
             throw new InvalidArgumentException('Apostas encerradas: jogo já está em andamento');
         }
 
-        $gameDate = new DateTime($game['data_hora']);
-        if ($gameDate <= new DateTime()) {
+        $tz = new DateTimeZone($this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
+        $gameDate = new DateTime($game['data_hora'], $tz);
+        if ($gameDate <= new DateTime('now', $tz)) {
             throw new InvalidArgumentException('Apostas encerradas: jogo já iniciou');
         }
 
-        $maxAnticipation = new DateTime('+7 days');
+        $maxAnticipation = new DateTime('+7 days', $tz);
         if ($gameDate > $maxAnticipation) {
             throw new InvalidArgumentException('Apostas só são permitidas até 7 dias antes do jogo');
         }
