@@ -293,6 +293,8 @@ const gameBadge = (g) => {
 };
 
 // ── Navigation ────────────────────────────────────────────────
+const LEGAL_VIEWS = ['termos', 'privacidade', 'jogo-responsavel'];
+
 const navigate = (view) => {
   if (view === 'admin' && (!S.user || S.user.email !== S.adminEmail)) {
     view = S.user ? 'jogos' : 'auth';
@@ -313,6 +315,9 @@ const navigate = (view) => {
   // Banner só aparece na view de jogos
   const bannerWrap = document.getElementById('matchBannerWrap');
   if (bannerWrap) bannerWrap.classList.toggle('hidden', view !== 'jogos');
+
+  // Páginas legais sempre abrem do topo
+  if (LEGAL_VIEWS.includes(view)) window.scrollTo({ top: 0, behavior: 'smooth' });
 
   history.replaceState(null, '', `/#${view}`);
 };
@@ -3197,7 +3202,7 @@ const init = async () => {
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
   } else if (hash) {
-    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'admin', 'auth'];
+    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel'];
     if (validViews.includes(hash)) {
       navigate(hash);
       if (hash === 'ganhadores')  renderRanking();
