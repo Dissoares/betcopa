@@ -861,6 +861,62 @@ const renderMatchBanner = () => {
   }, { passive: true });
 };
 
+// ── League tab filter ─────────────────────────────────────────
+let _activeLeague = 'all';
+
+// Priority order for known leagues (rest sorted alphabetically after)
+const LEAGUE_PRIORITY = [
+  'Copa do Mundo FIFA', 'Copa do Mundo', 'World Cup',
+  'UEFA Champions League', 'Champions League',
+  'UEFA Europa League', 'Europa League',
+  'Brasileirão Série A', 'Brasileirao Serie A',
+  'Copa Libertadores', 'Copa do Brasil',
+  'Premier League', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1',
+];
+
+const renderLeagueTabs = () => {
+  const bar = document.getElementById('leagueTabs');
+  if (!bar) return;
+
+  // Count games per league (non-cancelled)
+  const counts = {};
+  S.games.forEach(g => {
+    const liga = g.liga_nome || 'Outras';
+    counts[liga] = (counts[liga] || 0) + 1;
+  });
+
+  const leagues = Object.keys(counts);
+
+  // Hide bar only when there are no leagues
+  if (leagues.length === 0) { bar.classList.add('hidden'); return; }
+
+  // Sort: priority first, then alphabetical
+  leagues.sort((a, b) => {
+    const ai = LEAGUE_PRIORITY.findIndex(p => a.toLowerCase().includes(p.toLowerCase()));
+    const bi = LEAGUE_PRIORITY.findIndex(p => b.toLowerCase().includes(p.toLowerCase()));
+    const av = ai === -1 ? 999 : ai;
+    const bv = bi === -1 ? 999 : bi;
+    return av !== bv ? av - bv : a.localeCompare(b, 'pt-BR');
+  });
+
+  const totalCount = S.games.length;
+  bar.innerHTML = [
+    `<button class="league-tab ${_activeLeague === 'all' ? 'league-tab--active' : ''}"
+             data-league="all" role="tab" aria-selected="${_activeLeague === 'all'}">
+       Todos <span class="league-tab__count">${totalCount}</span>
+     </button>`,
+    ...leagues.map(liga =>
+      `<button class="league-tab ${_activeLeague === liga ? 'league-tab--active' : ''}"
+               data-league="${liga.replace(/"/g, '&quot;')}" role="tab"
+               aria-selected="${_activeLeague === liga}">
+         ${liga} <span class="league-tab__count">${counts[liga]}</span>
+       </button>`
+    ),
+  ].join('');
+
+  bar.classList.remove('hidden');
+};
+
 const renderGames = () => {
   const container = document.getElementById('gamesGrid');
   const empty     = document.getElementById('gamesEmpty');
@@ -869,7 +925,13 @@ const renderGames = () => {
   S.timers.forEach(clearInterval);
   S.timers = [];
 
+  renderLeagueTabs();
   updateHeroStats();
+
+  // Apply league filter
+  const games = _activeLeague === 'all'
+    ? S.games
+    : S.games.filter(g => (g.liga_nome || 'Outras') === _activeLeague);
 
   const now     = new Date();
   const sameDay = (a, b) =>
@@ -878,9 +940,9 @@ const renderGames = () => {
     a.getDate()     === b.getDate();
   const dayOffset = (n) => { const d = new Date(now); d.setDate(d.getDate() + n); return d; };
 
-  const live = S.games.filter(isGameLive);
+  const live = games.filter(isGameLive);
 
-  const openSorted = S.games
+  const openSorted = games
     .filter(g => g.status === 'aberto' && !isGameLive(g))
     .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
@@ -911,7 +973,7 @@ const renderGames = () => {
     };
   });
 
-  const finished = S.games
+  const finished = games
     .filter(g => g.status === 'finalizado' || g.status === 'encerrado')
     .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
 
@@ -2393,6 +2455,7 @@ const loadGames = async () => {
   } catch {
     S.games = [];
   }
+  _activeLeague = 'all'; // reset filter on full reload
   if (skel) skel.classList.add('hidden');
   renderGames();
   if (!document.getElementById('view-resultados')?.classList.contains('hidden')) renderResultados();
@@ -2852,6 +2915,19 @@ const bind = () => {
         })
         .catch(err => toast(err.message || 'Erro ao confirmar.', 'danger'));
     }
+  });
+
+  // League tab filter
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('.league-tab[data-league]');
+    if (!tab) return;
+    _activeLeague = tab.dataset.league;
+    document.querySelectorAll('.league-tab').forEach(t => {
+      const active = t.dataset.league === _activeLeague;
+      t.classList.toggle('league-tab--active', active);
+      t.setAttribute('aria-selected', active);
+    });
+    renderGames();
   });
 
   // "Ver mais" section expansion

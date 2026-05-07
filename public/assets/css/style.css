@@ -4580,3 +4580,65 @@ input:focus, select:focus {
   .btn-pwa-install__label { display: none; }
   .notif-panel { width: calc(100vw - 2rem); right: -4rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   §42. LEAGUE / COMPETITION TABS
+   ═══════════════════════════════════════════════════════════════ */
+.league-tabs {
+  display: flex;
+  gap: .5rem;
+  overflow-x: auto;
+  padding: .25rem 0 .75rem;
+  margin: .5rem 0 .25rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Fade edges to indicate scroll */
+  mask-image: linear-gradient(to right, transparent 0, #000 1.5rem, #000 calc(100% - 1.5rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 1.5rem, #000 calc(100% - 1.5rem), transparent 100%);
+}
+.league-tabs::-webkit-scrollbar { display: none; }
+
+.league-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  white-space: nowrap;
+  padding: .45rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: .82rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color .15s, background .15s, color .15s, transform .1s;
+  user-select: none;
+}
+.league-tab:hover:not(.league-tab--active) {
+  border-color: var(--primary);
+  color: var(--text);
+  background: rgba(0,200,83,.06);
+}
+.league-tab:active { transform: scale(.97); }
+
+.league-tab--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #000;
+  font-weight: 700;
+}
+
+.league-tab__count {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .1rem .35rem;
+  border-radius: 10px;
+  background: rgba(0,0,0,.15);
+  line-height: 1.5;
+  min-width: 18px;
+  text-align: center;
+}
+.league-tab--active .league-tab__count {
+  background: rgba(0,0,0,.2);
+}
