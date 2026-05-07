@@ -1308,54 +1308,114 @@
   <!-- ===== FOOTER ===== -->
   <footer class="site-footer">
 
-    <!-- Faixa de selos de confiança -->
+    <!-- ① Linha separadora com brilho -->
+    <div class="site-footer__topline" aria-hidden="true"></div>
+
+    <!-- ② Faixa de selos de confiança -->
     <div class="site-footer__trust">
       <div class="container site-footer__trust-inner">
-        <div class="ft-badge">
-          <i class="fa-solid fa-lock"></i>
-          <span>SSL Seguro</span>
+
+        <div class="ft-badge ft-badge--ssl">
+          <div class="ft-badge__icon"><i class="fa-solid fa-lock"></i></div>
+          <div class="ft-badge__text">
+            <span class="ft-badge__title">SSL 256-bit</span>
+            <span class="ft-badge__sub">Criptografado</span>
+          </div>
         </div>
-        <div class="ft-badge">
-          <i class="fa-solid fa-shield-halved"></i>
-          <span>Dados Protegidos</span>
+
+        <div class="ft-badge ft-badge--lgpd">
+          <div class="ft-badge__icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="ft-badge__text">
+            <span class="ft-badge__title">LGPD Compliant</span>
+            <span class="ft-badge__sub">Dados Protegidos</span>
+          </div>
         </div>
-        <div class="ft-badge">
-          <i class="fa-solid fa-user-shield"></i>
-          <span>Privacidade LGPD</span>
+
+        <div class="ft-badge ft-badge--verified">
+          <div class="ft-badge__icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="ft-badge__text">
+            <span class="ft-badge__title">Verificado</span>
+            <span class="ft-badge__sub">Plataforma Segura</span>
+          </div>
         </div>
-        <div class="ft-badge">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Plataforma Verificada</span>
+
+        <div class="ft-badge ft-badge--pix">
+          <div class="ft-badge__icon"><i class="fa-brands fa-pix"></i></div>
+          <div class="ft-badge__text">
+            <span class="ft-badge__title">PIX Oficial</span>
+            <span class="ft-badge__sub">Pagamento Instantâneo</span>
+          </div>
         </div>
-        <div class="ft-badge">
-          <i class="fa-brands fa-pix"></i>
-          <span>Pix</span>
+
+        <div class="ft-badge ft-badge--18">
+          <div class="ft-badge__icon"><i class="fa-solid fa-user-shield"></i></div>
+          <div class="ft-badge__text">
+            <span class="ft-badge__title">+18 apenas</span>
+            <span class="ft-badge__sub">Acesso Restrito</span>
+          </div>
         </div>
+
       </div>
     </div>
 
-    <!-- Corpo principal -->
+    <!-- ③ Corpo principal -->
     <div class="container site-footer__main">
 
       <!-- Coluna brand -->
       <div class="site-footer__brand">
-        <span class="site-footer__logo">
+
+        <a class="site-footer__logo" href="#" data-nav="jogos">
           <img id="brandLogoFooter" class="brand-logo-img hidden" src="" alt="Logo" />
-          <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> BetCopa</span>
-        </span>
+          <span class="brand-logo-text"><i class="fa-solid fa-futbol"></i> <span>Bet</span>Copa</span>
+        </a>
+
         <p class="site-footer__tagline">
-          Apostas esportivas com as melhores odds.<br>
-          Copa do Mundo 2026 — rápido, seguro e confiável.
+          Acerte o placar. Ganhe de verdade.<br>
+          A plataforma de palpites esportivos<br>mais confiável do Brasil.
         </p>
-        <div class="site-footer__social">
-          <a href="#" class="ft-social" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-          <a href="#" class="ft-social" aria-label="Twitter/X"><i class="fa-brands fa-x-twitter"></i></a>
-          <a href="#" class="ft-social" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+
+        <!-- Prova social -->
+        <div class="site-footer__stats">
+          <div class="ft-stat">
+            <strong>5.000+</strong>
+            <span>Apostadores</span>
+          </div>
+          <div class="ft-stat-sep"></div>
+          <div class="ft-stat">
+            <strong>R$&nbsp;2M+</strong>
+            <span>Em prêmios pagos</span>
+          </div>
+          <div class="ft-stat-sep"></div>
+          <div class="ft-stat">
+            <strong>99,9%</strong>
+            <span>Uptime</span>
+          </div>
         </div>
+
+        <!-- Redes sociais -->
+        <div class="site-footer__social">
+          <a href="#" class="ft-social ft-social--instagram" aria-label="Instagram" title="Siga no Instagram">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="#" class="ft-social ft-social--twitter" aria-label="Twitter/X" title="Siga no X (Twitter)">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+          <a href="#" class="ft-social ft-social--whatsapp" aria-label="WhatsApp" title="Entre no grupo do WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i>
+          </a>
+          <a href="#" class="ft-social ft-social--telegram" aria-label="Telegram" title="Canal no Telegram">
+            <i class="fa-brands fa-telegram"></i>
+          </a>
+          <a href="#" class="ft-social ft-social--youtube" aria-label="YouTube" title="Canal no YouTube">
+            <i class="fa-brands fa-youtube"></i>
+          </a>
+        </div>
+
       </div>
 
-      <!-- Links -->
+      <!-- Links nav -->
       <nav class="site-footer__links">
+
         <div class="site-footer__col">
           <h4>Plataforma</h4>
           <a href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</a>
@@ -1363,40 +1423,91 @@
           <a href="#" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</a>
           <a href="#" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ranking</a>
         </div>
+
         <div class="site-footer__col">
           <h4>Conta</h4>
           <a href="#" data-nav="auth"><i class="fa-solid fa-right-to-bracket"></i> Entrar</a>
-          <a href="#" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Cadastrar</a>
+          <a href="#" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Cadastrar grátis</a>
+          <a href="#" data-nav="auth"><i class="fa-solid fa-key"></i> Esqueci a senha</a>
         </div>
+
         <div class="site-footer__col">
-          <h4>Legal &amp; Suporte</h4>
-          <a href="#" data-nav="privacidade"><i class="fa-solid fa-file-shield"></i> Privacidade</a>
-          <a href="#" data-nav="termos"><i class="fa-solid fa-scale-balanced"></i> Termos de Uso</a>
-          <a href="#" data-nav="jogo-responsavel"><i class="fa-solid fa-heart-pulse"></i> Jogo Responsável</a>
+          <h4>Ajuda</h4>
           <a href="mailto:suporte@betcopa.com"><i class="fa-solid fa-headset"></i> Suporte</a>
+          <a href="#" data-nav="jogo-responsavel"><i class="fa-solid fa-heart-pulse"></i> Jogo Responsável</a>
+          <a href="#" data-nav="termos"><i class="fa-solid fa-circle-question"></i> Como Funciona</a>
         </div>
+
+        <div class="site-footer__col">
+          <h4>Legal</h4>
+          <a href="#" data-nav="termos"><i class="fa-solid fa-scale-balanced"></i> Termos de Uso</a>
+          <a href="#" data-nav="privacidade"><i class="fa-solid fa-file-shield"></i> Privacidade</a>
+          <a href="#" data-nav="jogo-responsavel"><i class="fa-solid fa-shield-halved"></i> Jogo Responsável</a>
+        </div>
+
       </nav>
 
     </div>
 
-    <!-- Aviso jogo responsável -->
-    <div class="site-footer__responsible">
-      <div class="container site-footer__responsible-inner">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>Jogue com responsabilidade. Apostas envolvem risco financeiro. <strong>Proibido para menores de 18 anos.</strong> Se o jogo deixar de ser diversão, procure ajuda: <strong>0800 722 7526</strong>. <button class="btn-link btn-link--footer" data-nav="jogo-responsavel">Saiba mais</button></span>
+    <!-- ④ Barra de métodos de pagamento -->
+    <div class="site-footer__payments">
+      <div class="container site-footer__payments-inner">
+        <span class="ft-pay-label"><i class="fa-solid fa-credit-card"></i> Pagamentos aceitos</span>
+        <div class="ft-pay-methods">
+          <span class="ft-pay-method ft-pay-method--pix">
+            <i class="fa-brands fa-pix"></i> PIX
+          </span>
+          <span class="ft-pay-method">
+            <i class="fa-solid fa-credit-card"></i> Mercado Pago
+          </span>
+          <span class="ft-pay-method">
+            <i class="fa-solid fa-bolt"></i> ExPay Brasil
+          </span>
+        </div>
+        <div class="ft-pay-note">
+          <i class="fa-solid fa-clock"></i> Pagamentos processados em segundos
+        </div>
       </div>
     </div>
 
-    <!-- Rodapé final -->
+    <!-- ⑤ Faixa jogo responsável -->
+    <div class="site-footer__responsible">
+      <div class="container site-footer__responsible-inner">
+        <div class="ft-responsible__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="ft-responsible__text">
+          <strong>Jogue com responsabilidade.</strong>
+          Apostas envolvem risco financeiro.
+          <strong>Proibido para menores de 18 anos.</strong>
+          Se o jogo deixar de ser diversão, procure ajuda:
+          <strong>CVV 188</strong> · <strong>PGMB 0800 722 7526</strong>.
+          <button class="btn-link btn-link--footer" data-nav="jogo-responsavel">Saiba mais →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑥ Bottom bar -->
     <div class="site-footer__bottom">
       <div class="container site-footer__bottom-inner">
-        <span class="site-footer__copy">© 2026 BetCopa. Todos os direitos reservados.</span>
-        <div class="site-footer__badges">
-          <span class="ft-mini-badge"><i class="fa-solid fa-lock"></i> SSL</span>
-          <span class="ft-mini-badge"><i class="fa-brands fa-pix"></i> PIX</span>
-          <span class="ft-mini-badge"><i class="fa-solid fa-shield-halved"></i> LGPD</span>
-          <span class="ft-mini-badge ft-mini-badge--18"><i class="fa-solid fa-circle-xmark"></i> 18+</span>
+
+        <div class="site-footer__bottom-left">
+          <span class="site-footer__copy">© 2026 BetCopa Entretenimento Ltda.</span>
+          <span class="site-footer__disclaimer">Plataforma de entretenimento esportivo. Apostas para maiores de 18&nbsp;anos.</span>
         </div>
+
+        <div class="site-footer__bottom-right">
+          <nav class="site-footer__bottom-nav">
+            <a href="#" data-nav="termos">Termos</a>
+            <a href="#" data-nav="privacidade">Privacidade</a>
+            <a href="#" data-nav="jogo-responsavel">Jogo Responsável</a>
+          </nav>
+          <div class="site-footer__badges">
+            <span class="ft-mini-badge ft-mini-badge--ssl"><i class="fa-solid fa-lock"></i> SSL</span>
+            <span class="ft-mini-badge ft-mini-badge--pix"><i class="fa-brands fa-pix"></i> PIX</span>
+            <span class="ft-mini-badge ft-mini-badge--lgpd"><i class="fa-solid fa-shield-halved"></i> LGPD</span>
+            <span class="ft-mini-badge ft-mini-badge--18"><i class="fa-solid fa-circle-xmark"></i> +18</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
