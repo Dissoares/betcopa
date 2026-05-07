@@ -273,9 +273,9 @@ const gameBadge = (g) => {
     return `<span class="badge badge--final"><i class="fa-solid fa-flag-checkered"></i> ${label}</span>`;
   }
 
-  // 4. Fechado para apostas (apostas encerradas, jogo ainda não terminou)
+  // 4. Encerrado (apostas fechadas, jogo não processado)
   if (s === 'encerrado') {
-    return `<span class="badge badge--closed"><i class="fa-solid fa-lock"></i> Fechado</span>`;
+    return `<span class="badge badge--closed"><i class="fa-solid fa-lock"></i> Encerrado</span>`;
   }
 
   // 5. Em Breve: aberto + menos de 1h para começar

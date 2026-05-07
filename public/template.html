@@ -142,23 +142,50 @@
   <!-- ===== VIEW: JOGOS ===== -->
   <main class="container view" id="view-jogos">
 
-    <!-- Copa 2026 Hero -->
+    <!-- Hero -->
     <div class="copa-hero">
       <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
       <div class="copa-hero__content">
-        <div class="copa-hero__eyebrow"><i class="fa-solid fa-futbol"></i> Copa do Mundo 2026</div>
-        <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
-        <p class="copa-hero__sub">Faça seu palpite, escolha seu multiplicador e leve o prêmio para casa.</p>
-        <div class="copa-hero__stats">
-          <div class="copa-hero__stat"><strong id="heroStatGames">—</strong><span>Jogos</span></div>
-          <div class="copa-hero__stat hidden" id="heroStatLiveWrap"><strong id="heroStatLive">0</strong><span>Ao Vivo</span></div>
-          <div class="copa-hero__stat"><strong id="heroStatOpen">—</strong><span>aberto</span></div>
+
+        <!-- Esquerda: tagline + CTA -->
+        <div class="copa-hero__left">
+          <div class="copa-hero__eyebrow"><i class="fa-solid fa-futbol"></i> Apostas Esportivas</div>
+          <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
+          <p class="copa-hero__sub">Faça seu palpite nos melhores jogos, escolha seu multiplicador e leve o prêmio para casa.</p>
+          <div class="copa-hero__actions">
+            <button class="btn btn--primary btn--lg copa-hero__cta" data-nav="jogos">
+              <i class="fa-solid fa-bolt"></i> Apostar Agora
+            </button>
+            <div id="heroBonusBadge" class="hero-bonus hidden">
+              <i class="fa-solid fa-gift"></i>
+              <span>Bônus de <strong id="heroBonusAmt">R$50</strong> no cadastro</span>
+              <button class="btn btn--primary btn--sm" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+            </div>
+          </div>
         </div>
-        <div id="heroBonusBadge" class="hero-bonus hidden">
-          <i class="fa-solid fa-gift"></i>
-          <span>Ganhe <strong id="heroBonusAmt">R$50</strong> de bônus ao criar sua conta!</span>
-          <button class="btn btn--primary btn--sm" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+
+        <!-- Direita: stats -->
+        <div class="copa-hero__right">
+          <div class="copa-hero__stats">
+            <div class="copa-hero__stat">
+              <div class="copa-hero__stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+              <strong id="heroStatGames">—</strong>
+              <span>Jogos</span>
+            </div>
+            <div class="copa-hero__stat copa-hero__stat--live hidden" id="heroStatLiveWrap">
+              <div class="copa-hero__stat-icon"><i class="fa-solid fa-circle copa-hero__live-dot"></i></div>
+              <strong id="heroStatLive">0</strong>
+              <span>Ao Vivo</span>
+            </div>
+            <div class="copa-hero__stat">
+              <div class="copa-hero__stat-icon"><i class="fa-solid fa-lock-open"></i></div>
+              <strong id="heroStatOpen">—</strong>
+              <span>Abertos</span>
+            </div>
+          </div>
+          <div class="hero-field-deco" aria-hidden="true"></div>
         </div>
+
       </div>
     </div>
 
