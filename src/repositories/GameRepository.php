@@ -14,6 +14,20 @@ class GameRepository
         return $stmt->fetchAll();
     }
 
+    /**
+     * Marca como 'encerrado' todos os jogos 'aberto' cuja data_hora já passou.
+     * $threshold deve estar no mesmo fuso horário em que data_hora foi salvo.
+     */
+    public function expireOldGames(string $threshold): int
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE jogos SET status = 'encerrado'
+             WHERE status = 'aberto' AND data_hora <= :now"
+        );
+        $stmt->execute(['now' => $threshold]);
+        return (int) $stmt->rowCount();
+    }
+
     public function find(int $id): ?array
     {
         $stmt = $this->db->prepare('SELECT * FROM jogos WHERE id = :id');
