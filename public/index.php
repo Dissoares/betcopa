@@ -39,6 +39,8 @@ require_once __DIR__ . '/../src/controllers/WithdrawalController.php';
 require_once __DIR__ . '/../src/controllers/WebhookController.php';
 require_once __DIR__ . '/../src/repositories/TicketRepository.php';
 require_once __DIR__ . '/../src/controllers/TicketController.php';
+require_once __DIR__ . '/../src/repositories/NotificationRepository.php';
+require_once __DIR__ . '/../src/controllers/NotificationController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -69,8 +71,9 @@ function deps(): array
     $withdrawals  = new WithdrawalRepository($db);
     $resets       = new PasswordResetRepository($db);
     $ticketsRepo  = new TicketRepository($db);
+    $notifsRepo   = new NotificationRepository($db);
     $config       = require __DIR__ . '/../src/config.php';
-    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo];
+    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo, $notifsRepo];
 }
 
 try {
@@ -80,7 +83,7 @@ try {
             jsonResponse(['token' => Csrf::token()]);
         }
 
-        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo] = deps();
+        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo, $notifsRepo] = deps();
 
         $adminEmail = $configRepo->get('admin_email', $config['admin_email']);
 
@@ -99,7 +102,9 @@ try {
         $rankCtrl    = new RankingController($bets);
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
         $adminCtrl->setWithdrawalRepository($withdrawals);
+        $notifCtrl    = new NotificationController($notifsRepo);
         $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
+        $ticketCtrl->setNotificationRepository($notifsRepo);
         $withdrawCtrl = new WithdrawalController($withdrawals, $transactions, $configRepo, $adminEmail);
         $withdrawCtrl->setMailer($mailer);
         $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo);
@@ -161,6 +166,11 @@ try {
         // ── User: Saques ───────────────────────────────────────────────────
         route('/api/user/saques', 'GET',  fn() => $withdrawCtrl->list());
         route('/api/user/saques', 'POST', fn() => $withdrawCtrl->request());
+
+        // ── Notificações ──────────────────────────────────────────────────
+        route('/api/notifications',          'GET',  fn() => $notifCtrl->list());
+        route('/api/notifications/read-all', 'POST', fn() => $notifCtrl->markAllRead());
+        routePattern('/^\/api\/notifications\/(\d+)\/read$/', 'POST', fn(int $id) => $notifCtrl->markRead($id));
 
         // ── Tickets (suporte) ─────────────────────────────────────────────
         route('/api/tickets',            'GET',  fn() => $ticketCtrl->listMine());

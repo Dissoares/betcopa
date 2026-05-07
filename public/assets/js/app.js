@@ -451,11 +451,17 @@ const renderHeader = () => {
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = '');
     document.getElementById('btnNavLogin')?.remove();
     if (isAdmin) document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = '');
+    // Show bell and start notification polling
+    document.getElementById('notifBell')?.classList.remove('hidden');
+    if (!_notifPoll) startNotifPoll();
   } else {
     wrap.innerHTML = `<button class="btn btn--primary btn--sm" id="btnNavLogin">Entrar</button>`;
     document.getElementById('btnNavLogin').addEventListener('click', () => navigate('auth'));
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = 'none');
+    // Hide bell and stop polling
+    document.getElementById('notifBell')?.classList.add('hidden');
+    stopNotifPoll();
   }
   renderDrawer();
 };
@@ -2462,6 +2468,84 @@ const submitSaque = async (e) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// PWA — install prompt
+// ═══════════════════════════════════════════════════════════════
+let _installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  document.getElementById('btnInstallPwa')?.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  document.getElementById('btnInstallPwa')?.classList.add('hidden');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+let _notifPoll = null;
+
+const _notifIcons = {
+  ticket_reply:      'fa-headset',
+  bet_won:           'fa-trophy',
+  bet_lost:          'fa-xmark',
+  saque_aprovado:    'fa-money-bill-wave',
+  saque_rejeitado:   'fa-ban',
+};
+
+const updateNotifBadge = (count) => {
+  const badge = document.getElementById('notifBadge');
+  if (!badge) return;
+  badge.textContent = count > 99 ? '99+' : count;
+  badge.classList.toggle('hidden', count === 0);
+};
+
+const renderNotifList = (notifications) => {
+  const list = document.getElementById('notifList');
+  if (!list) return;
+  if (!notifications.length) {
+    list.innerHTML = `<div class="notif-empty">
+      <i class="fa-solid fa-bell-slash"></i><span>Nenhuma notificação</span>
+    </div>`;
+    return;
+  }
+  list.innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.lida ? '' : 'notif-item--unread'}"
+         data-notif-id="${n.id}" data-notif-url="${escHtml(n.url || '')}">
+      <div class="notif-item__icon notif-item__icon--${n.tipo}">
+        <i class="fa-solid ${_notifIcons[n.tipo] || 'fa-bell'}"></i>
+      </div>
+      <div class="notif-item__body">
+        <div class="notif-item__title">${escHtml(n.titulo)}</div>
+        ${n.corpo ? `<div class="notif-item__text">${escHtml(n.corpo)}</div>` : ''}
+        <div class="notif-item__time">${fmtTicketDate(n.criado_em)}</div>
+      </div>
+      ${!n.lida ? '<span class="notif-item__dot"></span>' : ''}
+    </div>`).join('');
+};
+
+const loadNotifications = async () => {
+  if (!S.user) return;
+  try {
+    const { notifications, unread } = await api('/api/notifications');
+    updateNotifBadge(unread);
+    renderNotifList(notifications);
+  } catch { /* ignore poll errors */ }
+};
+
+const startNotifPoll = () => {
+  loadNotifications();
+  _notifPoll = setInterval(loadNotifications, 30_000);
+};
+
+const stopNotifPoll = () => {
+  if (_notifPoll) { clearInterval(_notifPoll); _notifPoll = null; }
+};
+
+// ═══════════════════════════════════════════════════════════════
 // TICKETS / SUPORTE
 // ═══════════════════════════════════════════════════════════════
 let _ticketPoll       = null;
@@ -2931,6 +3015,52 @@ const bind = () => {
         await navigator.share({ title: 'Meu palpite no BetCopa', text: getShareText(bet), files: [file] });
       } catch { /* user cancelled */ }
     }, 'image/png');
+  });
+
+  // ── PWA install ───────────────────────────────────────────
+  document.getElementById('btnInstallPwa')?.addEventListener('click', async () => {
+    if (!_installPrompt) return;
+    _installPrompt.prompt();
+    const { outcome } = await _installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      _installPrompt = null;
+      document.getElementById('btnInstallPwa')?.classList.add('hidden');
+    }
+  });
+
+  // ── Notification bell toggle ──────────────────────────────
+  document.getElementById('btnNotifBell')?.addEventListener('click', e => {
+    e.stopPropagation();
+    const panel = document.getElementById('notifPanel');
+    if (panel?.classList.contains('hidden')) {
+      panel.classList.remove('hidden');
+      loadNotifications();
+    } else {
+      panel?.classList.add('hidden');
+    }
+  });
+
+  // Close notification panel on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#notifBell'))
+      document.getElementById('notifPanel')?.classList.add('hidden');
+  });
+
+  // Mark all notifications as read
+  document.getElementById('btnNotifReadAll')?.addEventListener('click', async () => {
+    await api('/api/notifications/read-all', 'POST', {}).catch(() => {});
+    await loadNotifications();
+  });
+
+  // Click individual notification: mark read + navigate
+  document.addEventListener('click', e => {
+    const item = e.target.closest('.notif-item[data-notif-id]');
+    if (!item) return;
+    const { notifId, notifUrl } = item.dataset;
+    api(`/api/notifications/${notifId}/read`, 'POST', {}).catch(() => {});
+    document.getElementById('notifPanel')?.classList.add('hidden');
+    if (notifUrl) navigate(notifUrl.replace('/#', '').replace('/', '') || 'jogos');
+    loadNotifications();
   });
 
   // Mobile drawer — delegado para cobrir botões gerados dinamicamente

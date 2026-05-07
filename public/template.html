@@ -85,6 +85,32 @@
         <div class="header__user" id="headerUser">
           <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
         </div>
+
+        <!-- PWA install -->
+        <button class="btn btn--ghost btn--sm btn-pwa-install hidden" id="btnInstallPwa" aria-label="Instalar app">
+          <i class="fa-solid fa-download"></i><span class="btn-pwa-install__label"> Instalar</span>
+        </button>
+
+        <!-- Notification bell -->
+        <div class="notif-bell hidden" id="notifBell">
+          <button class="notif-bell__btn" id="btnNotifBell" aria-label="Notificações">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notif-bell__badge hidden" id="notifBadge">0</span>
+          </button>
+          <div class="notif-panel hidden" id="notifPanel">
+            <div class="notif-panel__head">
+              <span class="notif-panel__title"><i class="fa-solid fa-bell" style="color:var(--primary)"></i> Notificações</span>
+              <button class="btn btn--ghost btn--sm" id="btnNotifReadAll">Marcar lidas</button>
+            </div>
+            <div class="notif-panel__list" id="notifList">
+              <div class="notif-empty">
+                <i class="fa-solid fa-bell-slash"></i>
+                <span>Nenhuma notificação</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <button class="mobile-toggle" id="btnMobileMenu" aria-label="Abrir menu">
           <i class="fa-solid fa-bars"></i>
         </button>
@@ -1834,5 +1860,10 @@
   </div>
 
   <script src="/assets/js/app.js?v=2"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>

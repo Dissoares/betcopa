@@ -3,10 +3,17 @@ declare(strict_types=1);
 
 class TicketController
 {
+    private ?NotificationRepository $notifications = null;
+
     public function __construct(
         private TicketRepository $tickets,
         private string           $adminEmail
     ) {}
+
+    public function setNotificationRepository(NotificationRepository $repo): void
+    {
+        $this->notifications = $repo;
+    }
 
     private function isAdmin(): bool
     {
@@ -92,6 +99,21 @@ class TicketController
 
         $tipo  = $isAdmin ? 'admin' : 'user';
         $msgId = $this->tickets->addMessage($id, $tipo, $userId, $mensagem);
+
+        // Notificar o usuário quando o admin responder
+        if ($isAdmin && $this->notifications) {
+            $preview = mb_strlen($mensagem) > 80
+                ? mb_substr($mensagem, 0, 80, 'UTF-8') . '…'
+                : $mensagem;
+            $this->notifications->create(
+                (int) $ticket['user_id'],
+                'ticket_reply',
+                'Nova resposta no suporte',
+                $preview,
+                '/#suporte'
+            );
+        }
+
         jsonResponse(['message_id' => $msgId]);
     }
 
