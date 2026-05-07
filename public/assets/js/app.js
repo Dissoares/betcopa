@@ -319,6 +319,13 @@ const navigate = (view) => {
   // Páginas legais sempre abrem do topo
   if (LEGAL_VIEWS.includes(view)) window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  // Suporte: carrega tickets do usuário
+  if (view === 'suporte' && S.user) {
+    stopTicketPoll();
+    _activeTicketId = null;
+    loadUserTickets();
+  }
+
   history.replaceState(null, '', `/#${view}`);
 };
 
@@ -2454,6 +2461,248 @@ const submitSaque = async (e) => {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════
+// TICKETS / SUPORTE
+// ═══════════════════════════════════════════════════════════════
+let _ticketPoll       = null;
+let _activeTicketId   = null;
+let _lastMsgId        = 0;
+let _ticketSide       = 'user';
+let _allTickets       = [];
+let _adminTicketFilter = 'todos';
+
+const escHtml = s => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const fmtTicketDate = dt => {
+  const d = new Date(dt);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' +
+         d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+};
+
+const ticketStatusBadge = status => {
+  const map = { aberto: 'Aberto', em_atendimento: 'Em atendimento', fechado: 'Fechado' };
+  return `<span class="ticket-status ticket-status--${status}">${map[status] || status}</span>`;
+};
+
+const stopTicketPoll = () => {
+  if (_ticketPoll) { clearInterval(_ticketPoll); _ticketPoll = null; }
+};
+
+const appendMessages = (msgs, container, asAdmin) => {
+  msgs.forEach(msg => {
+    const isAdminMsg = msg.remetente_tipo === 'admin';
+    const div = document.createElement('div');
+    div.className = `chat-bubble ${isAdminMsg ? 'chat-bubble--admin' : 'chat-bubble--user'}`;
+    const authorHtml = isAdminMsg && asAdmin
+      ? `<div class="chat-bubble__author"><i class="fa-solid fa-headset"></i> Suporte</div>`
+      : !isAdminMsg && asAdmin
+        ? `<div class="chat-bubble__author" style="color:var(--text-muted)"><i class="fa-solid fa-user"></i> ${escHtml(msg.user_nome || 'Usuário')}</div>`
+        : isAdminMsg && !asAdmin
+          ? `<div class="chat-bubble__author"><i class="fa-solid fa-headset"></i> Suporte</div>`
+          : '';
+    div.innerHTML = `${authorHtml}
+      <div class="chat-bubble__body">${escHtml(msg.mensagem).replace(/\n/g,'<br>')}</div>
+      <div class="chat-bubble__time">${fmtTicketDate(msg.criado_em)}</div>`;
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
+};
+
+const renderUserTicketList = (tickets) => {
+  const list  = document.getElementById('userTicketList');
+  const empty = document.getElementById('userTicketEmpty');
+  if (!list) return;
+  if (!tickets.length) {
+    list.innerHTML = '';
+    if (empty) list.appendChild(empty);
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = tickets.map(t => `
+    <div class="ticket-item ${t.id === _activeTicketId ? 'ticket-item--active' : ''}"
+         data-ticket-id="${t.id}" data-ticket-side="user">
+      <div class="ticket-item__row">
+        <span class="ticket-item__subject">${escHtml(t.assunto)}</span>
+        ${ticketStatusBadge(t.status)}
+      </div>
+      <div class="ticket-item__meta">
+        <span>${fmtTicketDate(t.criado_em)}</span>
+        <span>${t.total_msgs || 0} msg</span>
+      </div>
+      ${t.ultima_mensagem ? `<div class="ticket-item__preview">${escHtml(t.ultima_mensagem)}</div>` : ''}
+    </div>`).join('');
+};
+
+const renderAdminTicketList = (tickets, filter) => {
+  const list = document.getElementById('adminTicketList');
+  if (!list) return;
+  const shown = filter === 'todos' ? tickets : tickets.filter(t => t.status === filter);
+  if (!shown.length) {
+    list.innerHTML = '<p class="empty-state" style="padding:2rem;text-align:center">Nenhum ticket.</p>';
+    return;
+  }
+  list.innerHTML = shown.map(t => `
+    <div class="ticket-item ${t.id === _activeTicketId ? 'ticket-item--active' : ''}"
+         data-ticket-id="${t.id}" data-ticket-side="admin">
+      <div class="ticket-item__row">
+        <span class="ticket-item__subject">${escHtml(t.assunto)}</span>
+        ${ticketStatusBadge(t.status)}
+      </div>
+      <div class="ticket-item__meta">
+        <span>${escHtml(t.user_nome || '')}</span>
+        <span>${fmtTicketDate(t.atualizado_em)}</span>
+      </div>
+      ${t.ultima_mensagem ? `<div class="ticket-item__preview">${escHtml(t.ultima_mensagem)}</div>` : ''}
+    </div>`).join('');
+};
+
+const updateAdminTicketBadge = () => {
+  const open  = _allTickets.filter(t => t.status !== 'fechado').length;
+  const badge = document.getElementById('adminTicketBadge');
+  if (!badge) return;
+  badge.textContent = open;
+  badge.classList.toggle('hidden', open === 0);
+};
+
+const renderUserChat = (ticket, msgs) => {
+  document.getElementById('userTicketChat')?.classList.remove('hidden');
+  const header = document.getElementById('userChatHeader');
+  if (header) header.innerHTML = `
+    <div class="ticket-chat-header__subject">${escHtml(ticket.assunto)}</div>
+    <div class="ticket-chat-header__meta">
+      ${ticketStatusBadge(ticket.status)}
+      <span>Aberto em ${fmtTicketDate(ticket.criado_em)}</span>
+      <button class="btn btn--ghost btn--sm" id="btnBackTickets" style="margin-left:auto">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+      </button>
+    </div>`;
+  document.getElementById('btnBackTickets')?.addEventListener('click', closeTicketChat);
+  const container = document.getElementById('userChatMessages');
+  if (container) { container.innerHTML = ''; appendMessages(msgs, container, false); }
+  const closed = ticket.status === 'fechado';
+  const inp = document.getElementById('userChatInput');
+  const snd = document.getElementById('userChatSend');
+  if (inp) { inp.disabled = closed; inp.placeholder = closed ? 'Ticket fechado.' : 'Escreva sua mensagem…'; }
+  if (snd) snd.disabled = closed;
+};
+
+const renderAdminChat = (ticket, msgs) => {
+  document.getElementById('adminTicketChat')?.classList.remove('hidden');
+  const header = document.getElementById('adminChatHeader');
+  if (header) header.innerHTML = `
+    <div class="ticket-chat-header__subject">${escHtml(ticket.assunto)}</div>
+    <div class="ticket-chat-header__meta">
+      ${ticketStatusBadge(ticket.status)}
+      <span>${escHtml(ticket.user_nome || '')} · ${escHtml(ticket.user_email || '')}</span>
+    </div>`;
+  const container = document.getElementById('adminChatMessages');
+  if (container) { container.innerHTML = ''; appendMessages(msgs, container, true); }
+  const actions = document.getElementById('adminChatActions');
+  if (actions) actions.innerHTML = `
+    <span style="font-size:.78rem;color:var(--text-muted);margin-right:auto">Status:</span>
+    ${['aberto','em_atendimento','fechado'].map(s => `
+      <button class="btn btn--ghost btn--sm ${ticket.status === s ? 'btn--active-status' : ''}"
+              data-status-action="${s}" data-ticket-id="${ticket.id}">
+        ${s === 'aberto' ? 'Aberto' : s === 'em_atendimento' ? 'Em atendimento' : 'Fechado'}
+      </button>`).join('')}`;
+  const closed = ticket.status === 'fechado';
+  const inp = document.getElementById('adminChatInput');
+  const snd = document.getElementById('adminChatSend');
+  if (inp) { inp.disabled = closed; inp.placeholder = closed ? 'Ticket fechado.' : 'Escreva sua resposta…'; }
+  if (snd) snd.disabled = closed;
+};
+
+const openTicketChat = async (id, side) => {
+  stopTicketPoll();
+  _activeTicketId = id;
+  _lastMsgId      = 0;
+  _ticketSide     = side;
+  // Highlight active item
+  document.querySelectorAll('.ticket-item').forEach(el =>
+    el.classList.toggle('ticket-item--active', Number(el.dataset.ticketId) === id));
+  try {
+    const { ticket, messages } = await api(`/api/tickets/${id}`);
+    if (messages.length) _lastMsgId = messages[messages.length - 1].id;
+    if (side === 'user')  renderUserChat(ticket, messages);
+    else                  renderAdminChat(ticket, messages);
+    _ticketPoll = setInterval(async () => {
+      if (!_activeTicketId) return;
+      try {
+        const d = await api(`/api/tickets/${_activeTicketId}?after=${_lastMsgId}`);
+        const newMsgs = d.messages || [];
+        if (!newMsgs.length) return;
+        _lastMsgId = newMsgs[newMsgs.length - 1].id;
+        const cid = _ticketSide === 'user' ? 'userChatMessages' : 'adminChatMessages';
+        const c = document.getElementById(cid);
+        if (c) appendMessages(newMsgs, c, _ticketSide === 'admin');
+        if (_ticketSide === 'user') loadUserTickets();
+        else loadAdminTickets();
+      } catch { /* ignore poll errors */ }
+    }, 4000);
+  } catch (err) {
+    toast(err.message || 'Erro ao carregar ticket.', 'danger');
+  }
+};
+
+const closeTicketChat = () => {
+  stopTicketPoll();
+  _activeTicketId = null;
+  document.getElementById('userTicketChat')?.classList.add('hidden');
+  document.getElementById('adminTicketChat')?.classList.add('hidden');
+  document.querySelectorAll('.ticket-item').forEach(el => el.classList.remove('ticket-item--active'));
+};
+
+const sendTicketMessage = async (ticketId, text, side) => {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  const inp = document.getElementById(side === 'user' ? 'userChatInput' : 'adminChatInput');
+  const snd = document.getElementById(side === 'user' ? 'userChatSend' : 'adminChatSend');
+  if (snd) snd.disabled = true;
+  try {
+    await api(`/api/tickets/${ticketId}/messages`, 'POST', { mensagem: trimmed });
+    if (inp) inp.value = '';
+    // Refresh chat to get server timestamp
+    const { ticket, messages } = await api(`/api/tickets/${ticketId}`);
+    if (messages.length) _lastMsgId = messages[messages.length - 1].id;
+    if (side === 'user')  renderUserChat(ticket, messages);
+    else                  renderAdminChat(ticket, messages);
+    if (side === 'user') loadUserTickets();
+    else loadAdminTickets();
+  } catch (err) {
+    toast(err.message || 'Erro ao enviar mensagem.', 'danger');
+  } finally {
+    if (snd) snd.disabled = false;
+  }
+};
+
+const loadUserTickets = async () => {
+  try {
+    const { tickets } = await api('/api/tickets');
+    _allTickets = tickets || [];
+    renderUserTicketList(_allTickets);
+  } catch { /* ignore */ }
+};
+
+const loadAdminTickets = async () => {
+  try {
+    const { tickets } = await api('/api/admin/tickets');
+    _allTickets = tickets || [];
+    updateAdminTicketBadge();
+    renderAdminTicketList(_allTickets, _adminTicketFilter);
+  } catch { /* ignore */ }
+};
+
+const createTicket = async (assunto, mensagem) => {
+  const { ticket_id } = await api('/api/tickets', 'POST', { assunto, mensagem });
+  toast('Ticket aberto com sucesso!', 'success');
+  document.getElementById('modalNewTicket')?.classList.add('hidden');
+  document.getElementById('formNewTicket')?.reset();
+  await loadUserTickets();
+  openTicketChat(ticket_id, 'user');
+};
+
 // ── Event binding ─────────────────────────────────────────────
 const bind = () => {
   // Nav — cobre header, drawer e qualquer outro elemento com data-nav
@@ -2580,6 +2829,75 @@ const bind = () => {
     if (e.target === document.getElementById('modalSaqueOverlay')) closeSaqueModal();
   });
   document.getElementById('formSaque')?.addEventListener('submit', submitSaque);
+
+  // ── Ticket: list item clicks ──────────────────────────────
+  document.addEventListener('click', e => {
+    const item = e.target.closest('.ticket-item[data-ticket-id]');
+    if (!item) return;
+    openTicketChat(Number(item.dataset.ticketId), item.dataset.ticketSide);
+  });
+
+  // ── Ticket: admin filter buttons ──────────────────────────
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.ticket-filter-btn[data-ticket-filter]');
+    if (!btn) return;
+    _adminTicketFilter = btn.dataset.ticketFilter;
+    document.querySelectorAll('.ticket-filter-btn').forEach(b =>
+      b.classList.toggle('ticket-filter-btn--active', b === btn));
+    renderAdminTicketList(_allTickets, _adminTicketFilter);
+  });
+
+  // ── Ticket: admin status change ───────────────────────────
+  document.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-status-action]');
+    if (!btn) return;
+    const { statusAction, ticketId } = btn.dataset;
+    try {
+      await api(`/api/admin/tickets/${ticketId}/status`, 'POST', { status: statusAction });
+      toast('Status atualizado.', 'success');
+      await loadAdminTickets();
+      if (_activeTicketId === Number(ticketId)) openTicketChat(Number(ticketId), 'admin');
+    } catch (err) { toast(err.message || 'Erro.', 'danger'); }
+  });
+
+  // ── Ticket: new ticket modal ──────────────────────────────
+  document.getElementById('btnNewTicket')?.addEventListener('click', () =>
+    document.getElementById('modalNewTicket')?.classList.remove('hidden'));
+  document.getElementById('btnNewTicketClose')?.addEventListener('click', () =>
+    document.getElementById('modalNewTicket')?.classList.add('hidden'));
+  document.getElementById('modalNewTicket')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalNewTicket'))
+      document.getElementById('modalNewTicket')?.classList.add('hidden');
+  });
+  document.getElementById('formNewTicket')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const assunto  = document.getElementById('ticketAssunto').value.trim();
+    const mensagem = document.getElementById('ticketMensagem').value.trim();
+    if (!assunto || !mensagem) return;
+    const btn = document.getElementById('btnSubmitTicket');
+    btn.disabled = true;
+    try { await createTicket(assunto, mensagem); }
+    catch (err) { toast(err.message || 'Erro ao criar ticket.', 'danger'); }
+    finally { btn.disabled = false; }
+  });
+
+  // ── Ticket: user chat send ────────────────────────────────
+  document.getElementById('userChatSend')?.addEventListener('click', () => {
+    const inp = document.getElementById('userChatInput');
+    if (inp && _activeTicketId) sendTicketMessage(_activeTicketId, inp.value, 'user');
+  });
+  document.getElementById('userChatInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('userChatSend')?.click(); }
+  });
+
+  // ── Ticket: admin chat send ───────────────────────────────
+  document.getElementById('adminChatSend')?.addEventListener('click', () => {
+    const inp = document.getElementById('adminChatInput');
+    if (inp && _activeTicketId) sendTicketMessage(_activeTicketId, inp.value, 'admin');
+  });
+  document.getElementById('adminChatInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('adminChatSend')?.click(); }
+  });
 
   // Share modal
   document.getElementById('btnShareClose')?.addEventListener('click', closeShareModal);
@@ -2821,6 +3139,7 @@ const switchAdminTab = (tab) => {
   if (tab === 'apostas')   loadAdminBets();
   if (tab === 'config')    loadAdminConfig();
   if (tab === 'jogos')     populateAdminSelect();
+  if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
 };
 
 // ── Dashboard ─────────────────────────────────────────────────
@@ -3518,12 +3837,12 @@ const init = async () => {
       navigate(S.user ? 'jogos' : 'auth');
     } else {
       const tab = hash.replace('admin/', '') || 'dashboard';
-      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config'];
+      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config', 'suporte'];
       navigate('admin');
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
   } else if (hash) {
-    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel'];
+    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel', 'suporte'];
     if (validViews.includes(hash)) {
       navigate(hash);
       if (hash === 'ganhadores')  renderRanking();

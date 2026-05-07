@@ -37,6 +37,8 @@ require_once __DIR__ . '/../src/controllers/RankingController.php';
 require_once __DIR__ . '/../src/controllers/AdminController.php';
 require_once __DIR__ . '/../src/controllers/WithdrawalController.php';
 require_once __DIR__ . '/../src/controllers/WebhookController.php';
+require_once __DIR__ . '/../src/repositories/TicketRepository.php';
+require_once __DIR__ . '/../src/controllers/TicketController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -66,8 +68,9 @@ function deps(): array
     $payments     = new PaymentRepository($db);
     $withdrawals  = new WithdrawalRepository($db);
     $resets       = new PasswordResetRepository($db);
+    $ticketsRepo  = new TicketRepository($db);
     $config       = require __DIR__ . '/../src/config.php';
-    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets];
+    return [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo];
 }
 
 try {
@@ -77,7 +80,7 @@ try {
             jsonResponse(['token' => Csrf::token()]);
         }
 
-        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets] = deps();
+        [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo] = deps();
 
         $adminEmail = $configRepo->get('admin_email', $config['admin_email']);
 
@@ -96,6 +99,7 @@ try {
         $rankCtrl    = new RankingController($bets);
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
         $adminCtrl->setWithdrawalRepository($withdrawals);
+        $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
         $withdrawCtrl = new WithdrawalController($withdrawals, $transactions, $configRepo, $adminEmail);
         $withdrawCtrl->setMailer($mailer);
         $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo);
@@ -157,6 +161,14 @@ try {
         // ── User: Saques ───────────────────────────────────────────────────
         route('/api/user/saques', 'GET',  fn() => $withdrawCtrl->list());
         route('/api/user/saques', 'POST', fn() => $withdrawCtrl->request());
+
+        // ── Tickets (suporte) ─────────────────────────────────────────────
+        route('/api/tickets',            'GET',  fn() => $ticketCtrl->listMine());
+        route('/api/tickets',            'POST', fn() => $ticketCtrl->create());
+        route('/api/admin/tickets',      'GET',  fn() => $ticketCtrl->listAll());
+        routePattern('/^\/api\/tickets\/(\d+)$/',                    'GET',  fn(int $id) => $ticketCtrl->show($id));
+        routePattern('/^\/api\/tickets\/(\d+)\/messages$/',          'POST', fn(int $id) => $ticketCtrl->sendMessage($id));
+        routePattern('/^\/api\/admin\/tickets\/(\d+)\/status$/',     'POST', fn(int $id) => $ticketCtrl->updateStatus($id));
 
         // ── Feed público ─────────────────────────────────────────────────
         route('/api/feed', 'GET', function() use ($bets) {

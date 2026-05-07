@@ -77,6 +77,7 @@
         <button class="nav__btn" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="nav__btn" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none"><i class="fa-solid fa-list-check"></i> Meus Palpites</button>
+        <button class="nav__btn nav__btn--auth" data-nav="suporte" style="display:none"><i class="fa-solid fa-headset"></i> Suporte</button>
         <button class="nav__btn nav__btn--admin" data-nav="admin" style="display:none"><i class="fa-solid fa-sliders"></i> Admin</button>
       </nav>
       <!-- Ações direita -->
@@ -297,6 +298,7 @@
           <button class="admin-nav__btn" data-admin-tab="apostas"><i class="fa-solid fa-bullseye"></i> Apostas</button>
           <button class="admin-nav__btn" data-admin-tab="usuarios"><i class="fa-solid fa-users"></i> Usuários</button>
           <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
+          <button class="admin-nav__btn" data-admin-tab="suporte"><i class="fa-solid fa-headset"></i> Suporte <span class="admin-nav__badge hidden" id="adminTicketBadge">0</span></button>
         </nav>
         <div class="admin-sidebar__footer">
           <button class="btn btn--ghost btn--icon btn-theme-toggle" aria-label="Alternar tema">
@@ -827,6 +829,38 @@
           </form>
         </div>
 
+        <!-- ── ABA: SUPORTE ── -->
+        <div class="admin-tab hidden" id="atab-suporte">
+          <div class="admin-page-header admin-page-header--actions">
+            <div>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-headset"></i> Suporte</h2>
+              <p class="admin-page-header__sub">Tickets de suporte dos usuários</p>
+            </div>
+            <div class="ticket-filter-bar">
+              <button class="ticket-filter-btn ticket-filter-btn--active" data-ticket-filter="todos">Todos</button>
+              <button class="ticket-filter-btn" data-ticket-filter="aberto">Abertos</button>
+              <button class="ticket-filter-btn" data-ticket-filter="em_atendimento">Em atendimento</button>
+              <button class="ticket-filter-btn" data-ticket-filter="fechado">Fechados</button>
+            </div>
+          </div>
+          <div class="ticket-split">
+            <div class="ticket-split__list" id="adminTicketList">
+              <p class="empty-state" style="padding:2rem;text-align:center;display:none" id="adminTicketEmpty">Nenhum ticket encontrado.</p>
+            </div>
+            <div class="ticket-split__chat hidden" id="adminTicketChat">
+              <div class="ticket-chat-header" id="adminChatHeader"></div>
+              <div class="ticket-chat-messages" id="adminChatMessages"></div>
+              <div class="ticket-chat-footer">
+                <div class="ticket-chat-input-wrap">
+                  <textarea class="ticket-chat-input" id="adminChatInput" placeholder="Escreva sua resposta…" rows="2"></textarea>
+                  <button class="btn btn--primary ticket-chat-send" id="adminChatSend"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+                <div class="ticket-chat-actions" id="adminChatActions"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /admin-content -->
     </div><!-- /admin-layout -->
   </main>
@@ -1228,6 +1262,64 @@
       </div>
     </div>
   </main>
+
+  <!-- ===== VIEW: SUPORTE ===== -->
+  <main class="container view hidden" id="view-suporte">
+    <div class="ticket-page">
+      <div class="ticket-page__head">
+        <div>
+          <h1 class="ticket-page__title"><i class="fa-solid fa-headset"></i> Suporte</h1>
+          <p class="ticket-page__sub">Envie sua dúvida ou problema — nossa equipe responde em breve.</p>
+        </div>
+        <button class="btn btn--primary" id="btnNewTicket">
+          <i class="fa-solid fa-plus"></i> Novo ticket
+        </button>
+      </div>
+      <div class="ticket-split" id="ticketSplit">
+        <div class="ticket-split__list" id="userTicketList">
+          <div class="empty-state" id="userTicketEmpty" style="padding:2rem;text-align:center">
+            <i class="fa-solid fa-ticket" style="font-size:2.5rem;opacity:.2;display:block;margin-bottom:.75rem"></i>
+            Nenhum ticket ainda. Clique em <strong>Novo ticket</strong> para começar.
+          </div>
+        </div>
+        <div class="ticket-split__chat hidden" id="userTicketChat">
+          <div class="ticket-chat-header" id="userChatHeader"></div>
+          <div class="ticket-chat-messages" id="userChatMessages"></div>
+          <div class="ticket-chat-footer">
+            <div class="ticket-chat-input-wrap">
+              <textarea class="ticket-chat-input" id="userChatInput" placeholder="Escreva sua mensagem…" rows="2"></textarea>
+              <button class="btn btn--primary ticket-chat-send" id="userChatSend"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ══ New Ticket Modal ═══════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modalNewTicket" role="dialog" aria-modal="true" aria-labelledby="modalNewTicketTitle">
+    <div class="modal-box" style="max-width:480px">
+      <button class="modal-close" id="btnNewTicketClose" aria-label="Fechar">&times;</button>
+      <h2 style="margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem" id="modalNewTicketTitle">
+        <i class="fa-solid fa-ticket" style="color:var(--primary)"></i> Novo Ticket
+      </h2>
+      <form id="formNewTicket" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="ticketAssunto">Assunto</label>
+          <input class="form-input" id="ticketAssunto" type="text" placeholder="Descreva brevemente o problema" required maxlength="120" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ticketMensagem">Mensagem</label>
+          <textarea class="form-input" id="ticketMensagem" rows="5"
+                    placeholder="Descreva sua dúvida ou problema em detalhes…" required
+                    style="resize:vertical"></textarea>
+        </div>
+        <button class="btn btn--primary btn--full" type="submit" id="btnSubmitTicket">
+          <i class="fa-solid fa-paper-plane"></i> Enviar ticket
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- ===== MODAL: PALPITE ===== -->
   <div class="modal hidden" id="modalPalpite">
