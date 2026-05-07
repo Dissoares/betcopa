@@ -97,13 +97,15 @@ class AdminController
     public function betConfig(): void
     {
         jsonResponse([
-            'mult_min'    => (int)   $this->config->get('mult_min',    1),
-            'mult_max'    => (int)   $this->config->get('mult_max',    100),
-            'bet_percent' => (float) $this->config->get('bet_percent', 10),
-            'site_logo'   =>         $this->config->get('site_logo',   ''),
-            'site_nome'      =>         $this->config->get('site_nome',   'BetCopa'),
-            'admin_email'    =>         $this->adminEmail,
-            'bonus_cadastro' => (float) $this->config->get('bonus_cadastro', 0),
+            'mult_min'         => (int)   $this->config->get('mult_min',          1),
+            'mult_max'         => (int)   $this->config->get('mult_max',          100),
+            'bet_percent'      => (float) $this->config->get('bet_percent',        10),
+            'site_logo'        =>         $this->config->get('site_logo',          ''),
+            'site_nome'        =>         $this->config->get('site_nome',          'BetCopa'),
+            'site_title'       =>         $this->config->get('site_title',         'BetCopa | Acerte o Placar. Ganhe de Verdade.'),
+            'site_description' =>         $this->config->get('site_description',   'Faça seu palpite no placar exato, escolha seu multiplicador e leve o prêmio para casa. Copa do Mundo 2026 — rápido, seguro e confiável.'),
+            'admin_email'      =>         $this->adminEmail,
+            'bonus_cadastro'   => (float) $this->config->get('bonus_cadastro',     0),
         ]);
     }
 

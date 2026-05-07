@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#080e1c"/>
+      <stop offset="100%" stop-color="#0d1625"/>
+    </linearGradient>
+
+    <!-- Ambient glow from top-center -->
+    <radialGradient id="glow" cx="50%" cy="0%" r="65%">
+      <stop offset="0%"   stop-color="#00C853" stop-opacity=".13"/>
+      <stop offset="100%" stop-color="#00C853" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Accent line gradient -->
+    <linearGradient id="accentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="transparent"/>
+      <stop offset="20%"  stop-color="#00C853"/>
+      <stop offset="50%"  stop-color="#FFD700"/>
+      <stop offset="80%"  stop-color="#00C853"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+
+    <!-- Gold gradient text effect -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#00C853"/>
+      <stop offset="100%" stop-color="#00E676"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Background ─────────────────────────────────────────── -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- ── Decorative circles (top-right) ─────────────────────── -->
+  <circle cx="1080" cy="80"  r="240" fill="none" stroke="#00C853" stroke-width="1" opacity=".05"/>
+  <circle cx="1080" cy="80"  r="175" fill="none" stroke="#00C853" stroke-width="1" opacity=".07"/>
+  <circle cx="1080" cy="80"  r="110" fill="none" stroke="#00C853" stroke-width="1" opacity=".09"/>
+
+  <!-- ── Decorative circles (bottom-left) ───────────────────── -->
+  <circle cx="120"  cy="560" r="200" fill="none" stroke="#FFD700" stroke-width="1" opacity=".04"/>
+  <circle cx="120"  cy="560" r="140" fill="none" stroke="#FFD700" stroke-width="1" opacity=".06"/>
+
+  <!-- ── Top accent line ────────────────────────────────────── -->
+  <rect x="0" y="0" width="1200" height="5" fill="url(#accentLine)"/>
+
+  <!-- ── Football icon (left) ───────────────────────────────── -->
+  <circle cx="138" cy="190" r="58" fill="none" stroke="#00C853" stroke-width="2"   opacity=".25"/>
+  <circle cx="138" cy="190" r="40" fill="#00C853"                                   opacity=".06"/>
+  <!-- seam lines -->
+  <path d="M138 135 L138 152 M138 228 L138 245
+           M83 190 L100 190 M176 190 L193 190"
+        stroke="#00C853" stroke-width="2.5" stroke-linecap="round" opacity=".35"/>
+  <path d="M105 157 L117 169 M159 211 L171 223
+           M171 157 L159 169 M117 211 L105 223"
+        stroke="#00C853" stroke-width="1.5" stroke-linecap="round" opacity=".2"/>
+  <circle cx="138" cy="190" r="10" fill="#00C853" opacity=".5"/>
+  <circle cx="138" cy="190" r="5"  fill="#00C853" opacity=".9"/>
+
+  <!-- ── Brand name ─────────────────────────────────────────── -->
+  <text x="600" y="215"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="900"
+        font-size="116"
+        fill="white"
+        letter-spacing="-5"
+        opacity=".97">BetCopa</text>
+
+  <!-- ── Copa badge ─────────────────────────────────────────── -->
+  <rect x="440" y="232" width="320" height="38" rx="19"
+        fill="#00C853" fill-opacity=".12"
+        stroke="#00C853" stroke-opacity=".35" stroke-width="1"/>
+  <text x="600" y="258"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-weight="700"
+        font-size="15"
+        fill="#00C853"
+        letter-spacing="3">COPA DO MUNDO 2026</text>
+
+  <!-- ── Tagline ─────────────────────────────────────────────── -->
+  <text x="600" y="322"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="400"
+        font-size="30"
+        fill="#9CA3AF"
+        letter-spacing=".5">Acerte o Placar. Ganhe de Verdade.</text>
+
+  <!-- ── Divider ─────────────────────────────────────────────── -->
+  <rect x="450" y="352" width="300" height="2" rx="1" fill="url(#accentLine)" opacity=".4"/>
+
+  <!-- ── Stats card ─────────────────────────────────────────── -->
+  <rect x="230" y="385" width="740" height="96" rx="18"
+        fill="#111827"
+        stroke="#1C2333" stroke-width="1"/>
+
+  <!-- Stat divider lines -->
+  <line x1="580" y1="405" x2="580" y2="461" stroke="#1C2333" stroke-width="1"/>
+  <line x1="820" y1="405" x2="820" y2="461" stroke="#1C2333" stroke-width="1"/>
+
+  <!-- Stat 1 — apostadores -->
+  <text x="405" y="441"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-weight="900"
+        font-size="32"
+        fill="#00C853">5.000+</text>
+  <text x="405" y="463"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-size="13"
+        fill="#6B7280">Apostadores Ativos</text>
+
+  <!-- Stat 2 — prêmios -->
+  <text x="700" y="441"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-weight="900"
+        font-size="32"
+        fill="#FFD700">R$ 2M+</text>
+  <text x="700" y="463"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-size="13"
+        fill="#6B7280">Em Prêmios Pagos</text>
+
+  <!-- Stat 3 — pix -->
+  <text x="940" y="441"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-weight="900"
+        font-size="32"
+        fill="#32BCAD">PIX</text>
+  <text x="940" y="463"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-size="13"
+        fill="#6B7280">Pagamento Instantâneo</text>
+
+  <!-- ── Domain tag ──────────────────────────────────────────── -->
+  <rect x="520" y="518" width="160" height="28" rx="14"
+        fill="#111827"
+        stroke="#1C2333" stroke-width="1"/>
+  <text x="600" y="537"
+        text-anchor="middle"
+        font-family="-apple-system, sans-serif"
+        font-size="13"
+        fill="#4B5563"
+        letter-spacing="1">betcopa.com</text>
+
+  <!-- ── Bottom accent line ─────────────────────────────────── -->
+  <rect x="0" y="625" width="1200" height="5" fill="url(#accentLine)"/>
+</svg>

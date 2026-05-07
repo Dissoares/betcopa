@@ -1,0 +1,56 @@
+{
+  "name": "BetCopa — Acerte o Placar",
+  "short_name": "BetCopa",
+  "description": "Faça seu palpite no placar exato e ganhe prêmios reais. Copa do Mundo 2026.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0A0F1E",
+  "theme_color": "#00C853",
+  "lang": "pt-BR",
+  "categories": ["sports", "entertainment", "games"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/og-image.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml",
+      "label": "BetCopa — Tela principal"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ver Jogos",
+      "short_name": "Jogos",
+      "description": "Ver todos os jogos disponíveis",
+      "url": "/#jogos",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Meus Palpites",
+      "short_name": "Palpites",
+      "description": "Ver meus palpites",
+      "url": "/#palpites",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}

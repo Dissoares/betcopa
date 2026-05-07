@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="7" fill="#0A0F1E"/>
+
+  <!-- Outer ring -->
+  <circle cx="16" cy="16" r="13" fill="none" stroke="#00C853" stroke-width="1.5" stroke-opacity=".9"/>
+
+  <!-- Football seam: vertical arc -->
+  <path d="M16 3 C 20 8 20 24 16 29" fill="none" stroke="#00C853" stroke-width="1" stroke-opacity=".45"/>
+  <path d="M16 3 C 12 8 12 24 16 29" fill="none" stroke="#00C853" stroke-width="1" stroke-opacity=".45"/>
+
+  <!-- Football seam: horizontal arc -->
+  <path d="M3 16 C 8 12 24 12 29 16" fill="none" stroke="#00C853" stroke-width="1" stroke-opacity=".45"/>
+  <path d="M3 16 C 8 20 24 20 29 16" fill="none" stroke="#00C853" stroke-width="1" stroke-opacity=".45"/>
+
+  <!-- Center pentagon dot -->
+  <circle cx="16" cy="16" r="3.5" fill="#00C853"/>
+  <circle cx="16" cy="16" r="2"   fill="#0A0F1E"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="32" height="3" rx="2" fill="#00C853" opacity=".6"/>
+</svg>

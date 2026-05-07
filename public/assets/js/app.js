@@ -3032,6 +3032,27 @@ const loadFeed = async () => {
   } catch (_) {}
 };
 
+// ── Dynamic meta-tag updater ──────────────────────────────
+const updateMetaTags = (title, description) => {
+  if (title) {
+    document.title = title;
+    const els = ['ogTitle', 'twitterTitle'];
+    els.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('content', title); });
+    document.getElementById('pageTitle')?.setAttribute('content', title);
+  }
+  if (description) {
+    const els = [
+      { id: 'metaDescription', attr: 'content' },
+      { id: 'ogDescription',   attr: 'content' },
+      { id: 'twitterDescription', attr: 'content' },
+    ];
+    els.forEach(({ id, attr }) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute(attr, description);
+    });
+  }
+};
+
 const loadBetConfig = async () => {
   try {
     const cfg = await api('/api/config/bets');
@@ -3044,7 +3065,9 @@ const loadBetConfig = async () => {
     S.bonusCadastro = cfg.bonus_cadastro || 0;
     applyBrandLogo(cfg.site_logo || '');
     renderHeroBonusBadge();
-  } catch (_) { /* usa defaults */ }
+    // Atualiza title e meta description com valores do banco
+    updateMetaTags(cfg.site_title || null, cfg.site_description || null);
+  } catch (_) { /* usa defaults do HTML estático */ }
 };
 
 // Draws a soccer ball: white sphere + classic black pentagonal patches
