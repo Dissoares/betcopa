@@ -257,7 +257,7 @@ const gameBadge = (g) => {
 
   // 1. Ao Vivo — badge AO VIVO no header do card
   const liveStatuses = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
-  if (liveStatuses.includes(api)) {
+  if (liveStatuses.includes(api) || (s === 'aberto' && diff <= 0)) {
     return `<span class="badge badge--live"><i class="fa-solid fa-circle"></i> AO VIVO</span>`;
   }
 
@@ -497,11 +497,13 @@ const loadTheme = () => {
 // ── Game helpers ──────────────────────────────────────────────
 const LIVE_API_CODES = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
 
-const isGameLive = (g) => LIVE_API_CODES.includes((g.status_api || '').toUpperCase());
+const isGameLive = (g) =>
+  LIVE_API_CODES.includes((g.status_api || '').toUpperCase()) ||
+  (g.status === 'aberto' && new Date(g.data_hora) <= Date.now());
 
 const updateHeroStats = () => {
-  const live = S.games.filter(g => LIVE_API_CODES.includes((g.status_api || '').toUpperCase())).length;
-  const open = S.games.filter(g => g.status === 'aberto').length;
+  const live = S.games.filter(isGameLive).length;
+  const open = S.games.filter(g => g.status === 'aberto' && !isGameLive(g)).length;
   const el = id => document.getElementById(id);
   if (el('heroStatGames')) el('heroStatGames').textContent = S.games.length;
   if (el('heroStatOpen'))  el('heroStatOpen').textContent  = open;

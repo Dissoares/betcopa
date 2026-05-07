@@ -10,9 +10,10 @@ class GameService
 
     public function listGames(): array
     {
-        $tz  = new DateTimeZone('America/Sao_Paulo');
-        $now = (new DateTime('now', $tz))->format('Y-m-d H:i:s');
-        $this->games->expireOldGames($now);
+        $tz        = new DateTimeZone('America/Sao_Paulo');
+        $threshold = new DateTime('now', $tz);
+        $threshold->modify('-3 hours');
+        $this->games->expireOldGames($threshold->format('Y-m-d H:i:s'));
         return $this->games->all();
     }
 
