@@ -29,6 +29,7 @@ require_once __DIR__ . '/../src/services/Mailer.php';
 require_once __DIR__ . '/../src/services/GameService.php';
 require_once __DIR__ . '/../src/services/BetService.php';
 require_once __DIR__ . '/../src/services/FootballDataService.php';
+require_once __DIR__ . '/../src/services/EspnService.php';
 require_once __DIR__ . '/../src/controllers/AuthController.php';
 require_once __DIR__ . '/../src/controllers/GameController.php';
 require_once __DIR__ . '/../src/controllers/BetController.php';
@@ -118,6 +119,7 @@ try {
 
         // ── Jogos ─────────────────────────────────────────────
         route('/api/jogos',        'GET',  fn() => $gameCtrl->list());
+        route('/api/jogos/live',   'GET',  fn() => $gameCtrl->listLive());
         route('/api/admin/jogos',  'POST', fn() => $gameCtrl->create());
         route('/api/admin/import', 'POST', fn() => $gameCtrl->import());
         route('/api/admin/sync',                     'POST', fn() => $gameCtrl->sync());

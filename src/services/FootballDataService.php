@@ -106,9 +106,13 @@ class FootballDataService
         $minute                  = $match['minute'] ?? null;
         [$localStatus, $statusApi] = $this->mapStatus($apiStatus, $minute);
 
-        // Placar: fullTime é preenchido tanto ao vivo quanto no final
-        $score      = $match['score'] ?? [];
-        $ft         = $score['fullTime'] ?? ['home' => null, 'away' => null];
+        // Placar: fullTime é preenchido em jogo e no final
+        // No intervalo (PAUSED) fullTime fica null — usa halfTime como fallback
+        $score = $match['score'] ?? [];
+        $ft    = $score['fullTime'] ?? ['home' => null, 'away' => null];
+        if ($ft['home'] === null && isset($score['halfTime']['home']) && $score['halfTime']['home'] !== null) {
+            $ft = $score['halfTime'];
+        }
         $placarReal = null;
         if ($ft['home'] !== null && $ft['away'] !== null) {
             $placarReal = $ft['home'] . 'x' . $ft['away'];

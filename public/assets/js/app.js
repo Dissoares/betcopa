@@ -572,7 +572,7 @@ const renderCard = (g) => {
         <div class="gc-score gc-score--live">
           <div class="gc-tv-bar">
             <span class="gc-tv-bar__period" id="lvperiod-${g.id}">${liveShort ?? ''}</span>
-            <span class="gc-tv-bar__clock" id="lvclock-${g.id}">${clockStr ?? ''}</span>
+            <span class="gc-tv-bar__clock" id="lvclock-${g.id}">${clockStr ?? '—'}</span>
           </div>
           <span class="gc-score__val">${scoreStr ?? '0 × 0'}</span>
         </div>`;
@@ -1067,10 +1067,10 @@ const fmtLiveClock = (g) => {
 
   const clk = (m, s) => `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-  if (api === 'HT')  return { period: 'Intervalo',      shortPeriod: 'INT',   clockStr: null };
-  if (api === 'BT')  return { period: 'Interv. Prorr.', shortPeriod: 'INT',   clockStr: null };
+  if (api === 'HT')  return { period: 'Intervalo',      shortPeriod: 'HT',    clockStr: null };
+  if (api === 'BT')  return { period: 'Interv. Prorr.', shortPeriod: 'HT',    clockStr: null };
   if (api === 'P')   return { period: 'Pênaltis',       shortPeriod: 'PEN',   clockStr: null };
-  if (api === 'INT') return { period: 'Interrompido',   shortPeriod: 'INT',   clockStr: null };
+  if (api === 'INT') return { period: 'Interrompido',   shortPeriod: 'SUSP',  clockStr: null };
 
   if (api === '1H')  return { period: '1º Tempo',    shortPeriod: '1T',    clockStr: hasTime ? clk(Math.min(elapsedMin, 45), secs) : null };
   if (api === '2H')  return { period: '2º Tempo',    shortPeriod: '2T',    clockStr: hasTime ? clk(Math.min(45 + Math.max(0, elapsedMin - 60), 90), secs) : null };
@@ -1095,7 +1095,7 @@ const startLiveClocks = () => {
     const dateClkEl  = document.getElementById(`gcdateclock-${g.id}`);
     const tick = () => {
       const { shortPeriod, clockStr } = fmtLiveClock(g);
-      el.textContent = clockStr ?? '';
+      el.textContent = clockStr ?? '—';
       if (perEl)     perEl.textContent     = shortPeriod ?? '';
       if (dateClkEl) dateClkEl.textContent = clockStr ?? shortPeriod ?? '';
     };
@@ -3708,14 +3708,17 @@ const submitAdminConfig = async (e) => {
 };
 
 // ── Live polling ──────────────────────────────────────────────
-const POLL_INTERVAL = 60_000; // 60s
+const POLL_INTERVAL = 30_000; // 30s
 
+// Poll leve: busca só jogos ao vivo e faz merge no S.games
 const loadGamesSilent = async () => {
   try {
-    const r = await api('/api/jogos');
-    S.games = r.jogos;
+    const r = await api('/api/jogos/live');
+    if (r.jogos) {
+      const byId = Object.fromEntries(r.jogos.map(g => [g.id, g]));
+      S.games = S.games.map(g => byId[g.id] ?? g);
+    }
     renderGames();
-    if (S.user) await loadBets();
   } catch { /* ignora erros silenciosos */ }
 };
 

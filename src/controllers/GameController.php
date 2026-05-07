@@ -23,6 +23,111 @@ class GameController
         jsonResponse(['jogos' => $this->service->listGames()]);
     }
 
+    /** GET /api/jogos/live — retorna só os jogos em andamento e sincroniza placares */
+    public function listLive(): void
+    {
+        $games        = $this->service->listGames();
+        $tz           = new DateTimeZone($this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
+        $now          = new DateTime('now', $tz);
+        $liveApiCodes = ['1H','2H','ET','BT','P','HT','LIVE','INT'];
+
+        $isLive = function (array $g) use ($now, $liveApiCodes): bool {
+            if (in_array(strtoupper($g['status_api'] ?? ''), $liveApiCodes, true)) return true;
+            if ($g['status'] !== 'aberto') return false;
+            return (new DateTime($g['data_hora'])) <= $now;
+        };
+
+        $live = array_values(array_filter($games, $isLive));
+
+        if (!empty($live)) {
+            $this->autoSyncLive($live);
+            // Re-fetch só os jogos ao vivo com dados atualizados
+            $games = $this->service->listGames();
+            $live  = array_values(array_filter($games, $isLive));
+        }
+
+        jsonResponse(['jogos' => $live]);
+    }
+
+    /**
+     * Sincroniza placares dos jogos em andamento automaticamente.
+     * Rate-limitado a 1 chamada a cada 90 s via arquivo de lock.
+     * Retorna true se alguma atualização foi feita.
+     */
+    private function autoSyncLive(array $games): bool
+    {
+        if (empty($games)) return false;
+
+        // Rate limit: no máximo 1 sync a cada 30 s
+        $lock = sys_get_temp_dir() . '/betcopa_live_sync.lock';
+        if (is_file($lock) && time() - (int) file_get_contents($lock) < 30) return false;
+        file_put_contents($lock, time());
+
+        $tz  = new DateTimeZone($this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
+        $now = new DateTime('now', $tz);
+
+        $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football']['key'] ?? '');
+        $timezone = $this->configRepo->get('api_football_timezone', $this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
+        $fdApi    = $apiKey ? new FootballDataService($apiKey, $timezone) : null;
+        $espn     = new EspnService();
+        $updated  = false;
+
+        foreach (array_slice($games, 0, 5) as $game) {
+            try {
+                $norm = null;
+
+                // 1) football-data.org (quando há api_fixture_id)
+                if ($fdApi && !empty($game['api_fixture_id'])) {
+                    try {
+                        $match = $fdApi->fetchMatchById((int) $game['api_fixture_id']);
+                        if ($match) $norm = $fdApi->normalize($match);
+                    } catch (\Throwable $e) {
+                        Logger::error('FD sync error', ['id' => $game['id'], 'err' => $e->getMessage()]);
+                    }
+                }
+
+                // 2) ESPN fallback: sem dados ou API retornou NS para jogo que já começou
+                $gameStarted = (new DateTime($game['data_hora'])) <= $now;
+                if (!$norm || ($norm['status_api'] === 'NS' && $gameStarted)) {
+                    $date     = (new DateTime($game['data_hora']))->format('Y-m-d');
+                    $espnNorm = $espn->findMatchScore(
+                        $game['time_casa'],
+                        $game['time_fora'],
+                        $date,
+                        $game['liga_nome'] ?? ''
+                    );
+                    if ($espnNorm) {
+                        $norm = $espnNorm;
+                        Logger::info('ESPN fallback', [
+                            'id'     => $game['id'],
+                            'score'  => $espnNorm['placar_real'],
+                            'status' => $espnNorm['status_api'],
+                        ]);
+                    }
+                }
+
+                if (!$norm) continue;
+
+                if ($norm['status'] === 'finalizado' && $norm['placar_real']) {
+                    $this->repository->updateResult((int) $game['id'], $norm['placar_real']);
+                    $this->bets->processResult((int) $game['id']);
+                    Logger::info('Auto-sync: finalizado', ['id' => $game['id'], 'placar' => $norm['placar_real']]);
+                } else {
+                    if ($norm['placar_real']) {
+                        $this->repository->updateLiveScore((int) $game['id'], $norm['placar_real']);
+                    }
+                    $this->repository->updateStatus((int) $game['id'], $game['status'], $norm['status_api']);
+                }
+                $updated = true;
+                usleep(150_000);
+            } catch (\Throwable $e) {
+                Logger::error('Auto-sync live', ['err' => $e->getMessage()]);
+            }
+        }
+
+        return $updated;
+    }
+
     public function create(): void
     {
         Csrf::verify();
