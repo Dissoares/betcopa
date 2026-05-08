@@ -1717,16 +1717,28 @@ const submitBet = async () => {
 const fillTicket = (bet) => {
   const game    = S.selectedGame;
   const isGuest = !bet.id;
+  const mult    = bet.multiplicador ?? S.multiplier ?? '—';
+
   document.getElementById('ticketId').textContent      = isGuest ? 'Pré-visualização' : `#${String(bet.id).padStart(6, '0')}`;
   document.getElementById('ticketGame').textContent    = game ? `${game.time_casa} × ${game.time_fora}` : '—';
   document.getElementById('ticketPalpite').textContent = `${bet.placar_casa} × ${bet.placar_fora}`;
+  document.getElementById('ticketMult').textContent    = mult !== '—' ? `${mult}×` : '—';
   document.getElementById('ticketValor').textContent   = fmtMoney(bet.valor);
   document.getElementById('ticketPremio').textContent  = fmtMoney(bet.possivel_ganho);
+
+  const lgEl = document.getElementById('ticketLeague');
+  const dtEl = document.getElementById('ticketDate');
+  if (lgEl) lgEl.textContent = game ? (leagueShortName(game.liga_nome || '') || game.liga_nome || '—') : '—';
+  if (dtEl && game) {
+    const d = new Date(game.data_hora);
+    dtEl.textContent = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
 
   const payBtn = document.getElementById('btnSimulatePay');
   payBtn.innerHTML = isGuest
     ? '<i class="fa-solid fa-lock"></i> Entrar para Pagar via PIX'
-    : '<i class="fa-solid fa-credit-card"></i> Pagar via PIX';
+    : '<i class="fa-solid fa-qrcode"></i> Pagar via PIX';
 };
 
 // ── PIX modal state ───────────────────────────────────────────

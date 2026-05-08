@@ -1459,35 +1459,52 @@
   <!-- ===== MODAL: TICKET PAGAMENTO ===== -->
   <div class="modal hidden" id="modalTicket">
     <div class="modal__backdrop" data-close="modalTicket"></div>
-    <div class="modal__box">
+    <div class="modal__box tk">
       <button class="modal__close" data-close="modalTicket">×</button>
-      <div class="ticket">
-        <div class="ticket__header">
-          <span class="ticket__icon"><i class="fa-solid fa-receipt"></i></span>
-          <div>
-            <div class="ticket__title">Ticket de Aposta</div>
-            <div class="ticket__id" id="ticketId">#000000</div>
-          </div>
+
+      <!-- Header: jogo em destaque -->
+      <div class="tk__header">
+        <div class="tk__header-top">
+          <span class="tk__label"><i class="fa-solid fa-ticket"></i> Ticket de Aposta</span>
+          <span class="tk__id" id="ticketId">#000000</span>
         </div>
-        <hr class="ticket__divider" />
-        <div class="ticket__row">
-          <span class="ticket__label">Jogo</span>
-          <span class="ticket__val" id="ticketGame">—</span>
+        <div class="tk__game" id="ticketGame">—</div>
+        <div class="tk__meta">
+          <span id="ticketLeague">—</span>
+          <span class="tk__meta-sep">·</span>
+          <span id="ticketDate">—</span>
         </div>
-        <div class="ticket__row">
-          <span class="ticket__label">Seu palpite</span>
-          <span class="ticket__val" id="ticketPalpite">—</span>
+      </div>
+
+      <!-- Linhas de dados -->
+      <div class="tk__body">
+        <div class="tk__row">
+          <span class="tk__row-label">Seu palpite</span>
+          <span class="tk__row-val" id="ticketPalpite">—</span>
         </div>
-        <div class="ticket__row">
-          <span class="ticket__label">Valor</span>
-          <span class="ticket__val" id="ticketValor">—</span>
+        <div class="tk__row">
+          <span class="tk__row-label">Multiplicador</span>
+          <span class="tk__row-val" id="ticketMult">—</span>
         </div>
-        <div class="ticket__row">
-          <span class="ticket__label">Prêmio potencial</span>
-          <span class="ticket__val ticket__val--win" id="ticketPremio">—</span>
+        <div class="tk__row">
+          <span class="tk__row-label">Você aposta</span>
+          <span class="tk__row-val" id="ticketValor">—</span>
         </div>
-        <hr class="ticket__divider ticket__divider--dashed" />
-        <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay"><i class="fa-solid fa-credit-card"></i> Pagar via PIX</button>
+      </div>
+
+      <!-- Prêmio em destaque -->
+      <div class="tk__prize">
+        <span class="tk__prize-label"><i class="fa-solid fa-trophy"></i> Prêmio potencial</span>
+        <span class="tk__prize-amount" id="ticketPremio">—</span>
+      </div>
+
+      <!-- Separador estilo ticket -->
+      <div class="tk__perf"></div>
+
+      <div class="tk__footer">
+        <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay">
+          <i class="fa-solid fa-qrcode"></i> Pagar via PIX
+        </button>
       </div>
     </div>
   </div>

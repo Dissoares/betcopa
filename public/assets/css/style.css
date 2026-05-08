@@ -1312,7 +1312,7 @@ select {
   text-shadow: 0 0 20px rgba(0,200,83,.4);
 }
 
-/* Ticket */
+/* Ticket (legacy — mantido para compatibilidade) */
 .ticket__header {
   display: flex; align-items: center; gap: .9rem;
   padding-bottom: 1.1rem; border-bottom: 1px solid var(--border);
@@ -1321,17 +1321,95 @@ select {
 .ticket__icon  { font-size: 2.4rem; }
 .ticket__title { font-weight: 800; font-size: 1.05rem; margin-bottom: .15rem; }
 .ticket__id    { color: var(--text-muted); font-size: .82rem; font-family: 'Courier New', monospace; }
-
 .ticket__divider         { border: 0; border-top: 1px solid var(--border); margin: .9rem 0; }
 .ticket__divider--dashed { border-style: dashed; margin-bottom: 1.1rem; }
-
-.ticket__row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: .35rem 0;
-}
-.ticket__label    { font-size: .82rem; color: var(--text-muted); }
-.ticket__val      { font-weight: 700; font-size: .92rem; }
+.ticket__row   { display: flex; justify-content: space-between; align-items: center; padding: .35rem 0; }
+.ticket__label { font-size: .82rem; color: var(--text-muted); }
+.ticket__val   { font-weight: 700; font-size: .92rem; }
 .ticket__val--win { color: var(--primary); font-size: 1.05rem; }
+
+/* ── Ticket modal redesign (.tk) ─────────────────────────── */
+.tk { padding: 0; overflow: hidden; }
+
+.tk__header {
+  padding: 1.4rem 1.5rem 1.2rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.tk__header-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: .75rem;
+}
+.tk__label {
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--text-muted);
+}
+.tk__label i { color: var(--primary); margin-right: .25rem; }
+.tk__id {
+  font-family: 'Courier New', monospace; font-size: .75rem;
+  color: var(--text-muted); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: .12rem .5rem;
+}
+.tk__game {
+  font-size: 1.15rem; font-weight: 800;
+  margin-bottom: .3rem; color: var(--text);
+}
+.tk__meta {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .74rem; color: var(--text-muted);
+}
+.tk__meta-sep { opacity: .35; }
+
+.tk__body {
+  padding: .5rem 1.5rem;
+}
+.tk__row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .6rem 0; border-bottom: 1px solid var(--border);
+}
+.tk__row:last-child { border-bottom: none; }
+.tk__row-label { font-size: .82rem; color: var(--text-muted); }
+.tk__row-val   { font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; }
+
+.tk__prize {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(0,200,83,.07);
+  border-top: 1px solid rgba(0,200,83,.2);
+  border-bottom: 1px solid rgba(0,200,83,.15);
+}
+.tk__prize-label {
+  font-size: .88rem; font-weight: 700;
+  display: flex; align-items: center; gap: .4rem;
+}
+.tk__prize-label i { color: var(--primary); }
+.tk__prize-amount {
+  font-size: 1.6rem; font-weight: 900; color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 20px rgba(0,200,83,.4);
+}
+
+/* Separador estilo ticket físico */
+.tk__perf {
+  position: relative; height: 1px;
+  background: repeating-linear-gradient(
+    to right, transparent 0, transparent 5px,
+    var(--border) 5px, var(--border) 11px
+  );
+  margin: 0 -0px;
+}
+.tk__perf::before, .tk__perf::after {
+  content: ''; position: absolute;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--bg, #0d0f1a);
+  border: 1px solid var(--border);
+  top: -9px;
+}
+.tk__perf::before { left:  -9px; }
+.tk__perf::after  { right: -9px; }
+
+.tk__footer { padding: 1.25rem 1.5rem 1.5rem; }
 
 /* Modal de resultado */
 .resultado-win__icon   { font-size: 5rem; margin-bottom: .75rem; display: block; }
