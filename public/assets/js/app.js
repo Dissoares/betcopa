@@ -1617,6 +1617,15 @@ const openBetModal = (gameId, pending = null) => {
   document.getElementById('scoreHome').textContent    = S.scoreHome;
   document.getElementById('scoreAway').textContent    = S.scoreAway;
 
+  const lgEl = document.getElementById('betLeagueName');
+  const dtEl = document.getElementById('betGameDate');
+  if (lgEl) lgEl.textContent = leagueShortName(game.liga_nome || '') || game.liga_nome || '—';
+  if (dtEl) {
+    const d = new Date(game.data_hora);
+    dtEl.textContent = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
   updateBetPreview();
   openModal('modalPalpite');
 };
@@ -1634,6 +1643,18 @@ const updateBetPreview = () => {
   document.getElementById('betWinAmount').textContent      = fmtMoney(premio);
   document.getElementById('betPreviewScore').textContent   =
     `${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}`;
+
+  const riskTag = document.getElementById('betRiskTag');
+  if (riskTag && S.multMax > S.multMin) {
+    const pct = (mult - S.multMin) / (S.multMax - S.multMin);
+    const [label, cls] =
+      pct < 0.20 ? ['Conservador', 'bm__risk-tag--low']  :
+      pct < 0.50 ? ['Moderado',    'bm__risk-tag--mid']  :
+      pct < 0.80 ? ['Agressivo',   'bm__risk-tag--high'] :
+                   ['Extremo',     'bm__risk-tag--max'];
+    riskTag.textContent = label;
+    riskTag.className   = `bm__risk-tag ${cls}`;
+  }
 
   // Update slider track fill
   const slider = document.getElementById('multiplierSlider');

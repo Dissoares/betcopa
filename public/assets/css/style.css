@@ -1190,6 +1190,128 @@ select {
 .bet-summary__amount   { font-weight: 700; }
 .bet-summary__win      { color: var(--primary); font-size: 1.1rem; font-weight: 900; }
 
+/* ── Bet Modal redesign (.bm) ────────────────────────────── */
+.bm { padding: 1.5rem 1.5rem 1.75rem; }
+
+/* Liga / data */
+.bm__meta {
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+  font-size: .74rem; color: var(--text-muted); margin-bottom: 1.4rem;
+  padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+}
+.bm__meta-icon  { color: var(--primary); font-size: .72rem; }
+.bm__meta-league { font-weight: 700; color: var(--text-dim); }
+.bm__meta-sep   { opacity: .4; }
+.bm__meta-date  { font-variant-numeric: tabular-nums; }
+
+/* Times */
+.bm__matchup {
+  display: flex; align-items: center; justify-content: center;
+  gap: .75rem; margin-bottom: 1.5rem;
+}
+.bm__team {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .4rem; flex: 1; text-align: center;
+}
+.bm__team-name {
+  font-size: .75rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-dim);
+  max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bm__vs {
+  font-size: .68rem; font-weight: 900; letter-spacing: .14em;
+  color: var(--text-muted); padding: 0 .2rem;
+}
+
+/* Scoreboard */
+.bm__scoreboard {
+  display: flex; align-items: center; justify-content: center;
+  gap: .75rem; margin-bottom: .9rem;
+}
+.bm__score-group { display: flex; align-items: center; gap: .5rem; }
+.bm__score-box {
+  width: 3.2rem; height: 3.2rem;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: 1.5px solid rgba(0,200,83,.3);
+  border-radius: var(--radius);
+  box-shadow: 0 0 12px rgba(0,200,83,.08) inset;
+}
+.bm__score-box .score-value {
+  font-size: 2rem; line-height: 1; width: auto;
+}
+.bm__score-x {
+  font-size: 1.1rem; font-weight: 900; color: var(--text-muted);
+}
+
+/* Preview */
+.bm__preview {
+  text-align: center; font-size: .82rem; font-weight: 600;
+  color: var(--primary);
+  background: rgba(0,200,83,.07); border: 1px solid rgba(0,200,83,.18);
+  border-radius: 999px; padding: .38rem 1rem;
+  margin: 0 auto .5rem; max-width: fit-content;
+  display: block; margin-bottom: 1.25rem;
+}
+
+/* Multiplicador */
+.bm__mult {
+  background: var(--surface-2); border-radius: var(--radius);
+  padding: 1rem 1.1rem; margin-bottom: 1rem;
+}
+.bm__mult-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: .65rem;
+}
+.bm__mult-label { font-size: .85rem; font-weight: 600; }
+.bm__mult-val   {
+  font-size: 1.45rem; font-weight: 900; color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.bm__mult-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: .5rem; font-size: .7rem; color: var(--text-muted);
+}
+.bm__risk-tag {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; border-radius: 999px;
+  padding: .18rem .65rem; border: 1px solid;
+}
+.bm__risk-tag--low  { color: #00c853; background: rgba(0,200,83,.12);  border-color: rgba(0,200,83,.3); }
+.bm__risk-tag--mid  { color: #ffb300; background: rgba(255,179,0,.12); border-color: rgba(255,179,0,.3); }
+.bm__risk-tag--high { color: #ff6d00; background: rgba(255,109,0,.12); border-color: rgba(255,109,0,.3); }
+.bm__risk-tag--max  { color: #f44336; background: rgba(244,67,54,.12); border-color: rgba(244,67,54,.3); }
+
+/* Resumo */
+.bm__summary {
+  border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 1.1rem;
+}
+.bm__summary-pay {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .8rem; color: var(--text-muted);
+  padding: .55rem .9rem;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-bottom: none; border-radius: var(--radius) var(--radius) 0 0;
+}
+.bm__summary-prize {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .9rem 1rem;
+  background: rgba(0,200,83,.07);
+  border: 1px solid rgba(0,200,83,.2);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.bm__prize-label {
+  font-size: .88rem; font-weight: 700;
+  display: flex; align-items: center; gap: .4rem;
+}
+.bm__prize-label i { color: var(--primary); }
+.bm__prize-amount  {
+  font-size: 1.55rem; font-weight: 900; color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 20px rgba(0,200,83,.4);
+}
+
 /* Ticket */
 .ticket__header {
   display: flex; align-items: center; gap: .9rem;
