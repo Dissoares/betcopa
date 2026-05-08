@@ -91,9 +91,10 @@ class BetService
             'placar_casa'   => $placarCasa,
             'placar_fora'   => $placarFora,
             'valor'         => $valor,
-            'multiplicador' => $multiplicador,
+            'multiplicador'  => $multiplicador,
             'possivel_ganho' => $possivelGanho,
-            'status'        => 'pendente',
+            'status'         => 'pendente',
+            'criado_em'      => date('Y-m-d H:i:s'),
         ];
     }
 

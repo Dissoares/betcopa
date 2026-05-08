@@ -1361,6 +1361,20 @@ select {
 }
 .tk__meta-sep { opacity: .35; }
 
+/* Status banner */
+.tk__status {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .65rem 1.5rem;
+  font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  border-top: 1px solid; border-bottom: 1px solid;
+}
+.tk__status--preview  { background: rgba(255,255,255,.04); border-color: var(--border);          color: var(--text-muted); }
+.tk__status--pendente { background: rgba(255,179,0,.1);    border-color: rgba(255,179,0,.3);      color: #ffb300; }
+.tk__status--pago     { background: rgba(33,150,243,.1);   border-color: rgba(33,150,243,.3);     color: #42a5f5; }
+.tk__status--confirmado { background: rgba(0,200,83,.1);   border-color: rgba(0,200,83,.3);       color: var(--primary); }
+.tk__status--ganhou   { background: rgba(255,215,0,.1);    border-color: rgba(255,215,0,.35);     color: #ffd700; }
+.tk__status--perdido  { background: rgba(244,67,54,.1);    border-color: rgba(244,67,54,.3);      color: #ef5350; }
+
 .tk__body {
   padding: .5rem 1.5rem;
 }
@@ -1369,8 +1383,9 @@ select {
   padding: .6rem 0; border-bottom: 1px solid var(--border);
 }
 .tk__row:last-child { border-bottom: none; }
-.tk__row-label { font-size: .82rem; color: var(--text-muted); }
-.tk__row-val   { font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.tk__row-label         { font-size: .82rem; color: var(--text-muted); }
+.tk__row-val           { font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.tk__row-val--muted    { font-weight: 500; color: var(--text-muted); font-size: .85rem; }
 
 .tk__prize {
   display: flex; justify-content: space-between; align-items: center;

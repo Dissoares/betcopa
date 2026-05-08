@@ -1714,18 +1714,34 @@ const submitBet = async () => {
 };
 
 // ── Ticket modal ──────────────────────────────────────────────
+// Mapa de status → [classe CSS, ícone FA, texto]
+const TICKET_STATUS_MAP = {
+  preview:    ['preview',    'fa-eye',              'Pré-visualização'],
+  pendente:   ['pendente',   'fa-clock',            'Aguardando Pagamento'],
+  pago:       ['pago',       'fa-credit-card',      'Pago · Aguardando Jogo'],
+  confirmado: ['confirmado', 'fa-circle-check',     'Confirmada'],
+  ganhou:     ['ganhou',     'fa-trophy',           'Aposta Vencedora!'],
+  perdido:    ['perdido',    'fa-circle-xmark',     'Aposta Perdida'],
+};
+
 const fillTicket = (bet) => {
   const game    = S.selectedGame;
   const isGuest = !bet.id;
   const mult    = bet.multiplicador ?? S.multiplier ?? '—';
+  const status  = isGuest ? 'preview' : (bet.status ?? 'pendente');
 
-  document.getElementById('ticketId').textContent      = isGuest ? 'Pré-visualização' : `#${String(bet.id).padStart(6, '0')}`;
+  // ID
+  document.getElementById('ticketId').textContent = isGuest
+    ? 'Visualização' : `#${String(bet.id).padStart(6, '0')}`;
+
+  // Jogo
   document.getElementById('ticketGame').textContent    = game ? `${game.time_casa} × ${game.time_fora}` : '—';
   document.getElementById('ticketPalpite').textContent = `${bet.placar_casa} × ${bet.placar_fora}`;
   document.getElementById('ticketMult').textContent    = mult !== '—' ? `${mult}×` : '—';
   document.getElementById('ticketValor').textContent   = fmtMoney(bet.valor);
   document.getElementById('ticketPremio').textContent  = fmtMoney(bet.possivel_ganho);
 
+  // Liga + data do jogo
   const lgEl = document.getElementById('ticketLeague');
   const dtEl = document.getElementById('ticketDate');
   if (lgEl) lgEl.textContent = game ? (leagueShortName(game.liga_nome || '') || game.liga_nome || '—') : '—';
@@ -1735,10 +1751,38 @@ const fillTicket = (bet) => {
       + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  // Timestamp de registro
+  const regEl = document.getElementById('ticketRegistered');
+  if (regEl) {
+    if (isGuest) {
+      regEl.textContent = '—';
+    } else {
+      const ts = bet.criado_em ? new Date(bet.criado_em) : new Date();
+      regEl.textContent = ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+        + ' às ' + ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+
+  // Status banner
+  const statusEl   = document.getElementById('ticketStatus');
+  const statusIcon = document.getElementById('ticketStatusIcon');
+  const statusText = document.getElementById('ticketStatusText');
+  if (statusEl) {
+    const [cls, icon, label] = TICKET_STATUS_MAP[status] ?? TICKET_STATUS_MAP.pendente;
+    statusEl.className  = `tk__status tk__status--${cls}`;
+    if (statusIcon) statusIcon.innerHTML = `<i class="fa-solid fa-${icon}"></i>`;
+    if (statusText) statusText.textContent = label;
+  }
+
+  // Botão de pagamento
   const payBtn = document.getElementById('btnSimulatePay');
-  payBtn.innerHTML = isGuest
-    ? '<i class="fa-solid fa-lock"></i> Entrar para Pagar via PIX'
-    : '<i class="fa-solid fa-qrcode"></i> Pagar via PIX';
+  if (payBtn) {
+    const paid = ['pago','confirmado','ganhou','perdido'].includes(status);
+    payBtn.style.display = paid ? 'none' : '';
+    payBtn.innerHTML = isGuest
+      ? '<i class="fa-solid fa-lock"></i> Entrar para Pagar via PIX'
+      : '<i class="fa-solid fa-qrcode"></i> Pagar via PIX';
+  }
 };
 
 // ── PIX modal state ───────────────────────────────────────────
