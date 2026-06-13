@@ -3725,7 +3725,7 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
 
 // ── Usuários ──────────────────────────────────────────────────
 let _adminUsersPage = 1;
-const ADMIN_PAGE_LIMIT = 50;
+const ADMIN_PAGE_LIMIT = 20;
 
 const _pager = (page, total, limit, action) => {
   if (total <= limit) return '';
