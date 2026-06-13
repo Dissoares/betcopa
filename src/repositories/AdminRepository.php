@@ -106,9 +106,10 @@ class AdminRepository
         return (int) $stmt->fetchColumn();
     }
 
-    public function betStatsByGame(): array
+    public function betStatsByGame(int $page = 1, int $limit = 10): array
     {
-        return $this->db->query("
+        $offset = ($page - 1) * $limit;
+        $stmt   = $this->db->prepare("
             SELECT
               j.id, j.time_casa, j.time_fora, j.status,
               COUNT(a.id)                                        AS total_apostas,
@@ -119,10 +120,20 @@ class AdminRepository
             LEFT JOIN apostas a ON a.jogo_id = j.id
             GROUP BY j.id
             ORDER BY j.data_hora DESC
-        ")->fetchAll();
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 
-    public function recentBets(int $limit = 10): array
+    public function countGames(): int
+    {
+        return (int) $this->db->query("SELECT COUNT(*) FROM jogos")->fetchColumn();
+    }
+
+    public function recentBets(int $limit = 10, int $offset = 0): array
     {
         $stmt = $this->db->prepare("
             SELECT a.id, a.status, a.valor, a.possivel_ganho, a.criado_em,
@@ -132,9 +143,10 @@ class AdminRepository
             JOIN users u ON u.id = a.user_id
             JOIN jogos  j ON j.id = a.jogo_id
             ORDER BY a.criado_em DESC
-            LIMIT :lim
+            LIMIT :lim OFFSET :offset
         ");
-        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':lim',    $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }

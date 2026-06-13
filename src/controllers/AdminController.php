@@ -28,13 +28,23 @@ class AdminController
     public function dashboard(): void
     {
         ensureAdmin($this->adminEmail);
+        $limit      = 10;
+        $betsPage   = max(1, (int) ($_GET['bets_page']  ?? 1));
+        $gamesPage  = max(1, (int) ($_GET['games_page'] ?? 1));
+
         $stats   = $this->admin->dashboardStats();
-        $recent  = $this->admin->recentBets(8);
-        $byGame  = $this->admin->betStatsByGame();
+        $recent  = $this->admin->recentBets($limit, ($betsPage  - 1) * $limit);
+        $byGame  = $this->admin->betStatsByGame($gamesPage, $limit);
+
         jsonResponse([
-            'stats'   => $stats,
-            'recentes' => $recent,
-            'por_jogo' => $byGame,
+            'stats'       => $stats,
+            'recentes'    => $recent,
+            'total_bets'  => $this->admin->countBets(),
+            'por_jogo'    => $byGame,
+            'total_jogos' => $this->admin->countGames(),
+            'bets_page'   => $betsPage,
+            'games_page'  => $gamesPage,
+            'limit'       => $limit,
         ]);
     }
 

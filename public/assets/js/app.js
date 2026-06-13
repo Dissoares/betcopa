@@ -3577,6 +3577,20 @@ const bind = () => {
     if (btn.dataset.action === 'bets-next') fetchAdminBets(_adminBetsPage + 1);
   });
 
+  // Paginação do dashboard
+  document.getElementById('dashRecentes')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'dash-bets-prev') loadAdminDashboard({ betsPage: _dashBetsPage - 1 });
+    if (btn.dataset.action === 'dash-bets-next') loadAdminDashboard({ betsPage: _dashBetsPage + 1 });
+  });
+  document.getElementById('dashPorJogo')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'dash-games-prev') loadAdminDashboard({ gamesPage: _dashGamesPage - 1 });
+    if (btn.dataset.action === 'dash-games-next') loadAdminDashboard({ gamesPage: _dashGamesPage + 1 });
+  });
+
   // Filtro de usuários (client-side)
   const applyUserFilter = () => {
     const term   = (document.getElementById('filterUser')?.value || '').toLowerCase();
@@ -3632,30 +3646,45 @@ const switchAdminTab = (tab) => {
 };
 
 // ── Dashboard ─────────────────────────────────────────────────
-const loadAdminDashboard = async () => {
-  const statsEl   = document.getElementById('dashStats');
-  const recentEl  = document.getElementById('dashRecentes');
-  const byGameEl  = document.getElementById('dashPorJogo');
-  statsEl.innerHTML = '<p class="text--muted">Carregando...</p>';
+let _dashBetsPage  = 1;
+let _dashGamesPage = 1;
+
+const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashGamesPage } = {}) => {
+  _dashBetsPage  = betsPage;
+  _dashGamesPage = gamesPage;
+
+  const statsEl  = document.getElementById('dashStats');
+  const recentEl = document.getElementById('dashRecentes');
+  const byGameEl = document.getElementById('dashPorJogo');
+  if (!statsEl) return;
+
+  if (betsPage === 1 && gamesPage === 1) {
+    statsEl.innerHTML = '<p class="text--muted">Carregando...</p>';
+  }
 
   try {
-    const { stats, recentes, por_jogo } = await api('/api/admin/dashboard');
+    const url = `/api/admin/dashboard?bets_page=${betsPage}&games_page=${gamesPage}`;
+    const { stats, recentes, total_bets, por_jogo, total_jogos, limit } = await api(url);
 
-    statsEl.innerHTML = [
-      { label: 'Usuários',        value: stats.total_usuarios,        cls: '' },
-      { label: 'Total apostas',   value: stats.total_apostas,         cls: '' },
-      { label: 'Volume apostado', value: fmtR$(stats.volume_apostado), cls: 'info' },
-      { label: 'Prêmios pagos',   value: fmtR$(stats.volume_pago),     cls: 'danger' },
-      { label: 'Margem da casa',  value: fmtR$(stats.margem_casa),     cls: 'green' },
-      { label: 'Apostas ganhas',  value: stats.apostas_ganhas,         cls: 'green' },
-      { label: 'Pendentes pag.',  value: stats.apostas_pendentes,      cls: 'gold' },
-      { label: 'Jogos abertos',   value: stats.jogos_abertos,          cls: '' },
-    ].map(c => `
-      <div class="dash-card ${c.cls ? `dash-card--${c.cls}` : ''}">
-        <div class="dash-card__label">${c.label}</div>
-        <div class="dash-card__value ${c.cls ? `dash-card__value--${c.cls}` : ''}">${c.value}</div>
-      </div>`).join('');
+    // Cards de stats (só atualiza na primeira carga)
+    if (betsPage === 1 && gamesPage === 1) {
+      statsEl.innerHTML = [
+        { label: 'Usuários',        value: stats.total_usuarios,         cls: '' },
+        { label: 'Total apostas',   value: stats.total_apostas,          cls: '' },
+        { label: 'Volume apostado', value: fmtR$(stats.volume_apostado), cls: 'info' },
+        { label: 'Prêmios pagos',   value: fmtR$(stats.volume_pago),     cls: 'danger' },
+        { label: 'Margem da casa',  value: fmtR$(stats.margem_casa),     cls: 'green' },
+        { label: 'Apostas ganhas',  value: stats.apostas_ganhas,         cls: 'green' },
+        { label: 'Pendentes pag.',  value: stats.apostas_pendentes,      cls: 'gold' },
+        { label: 'Jogos abertos',   value: stats.jogos_abertos,          cls: '' },
+      ].map(c => `
+        <div class="dash-card ${c.cls ? `dash-card--${c.cls}` : ''}">
+          <div class="dash-card__label">${c.label}</div>
+          <div class="dash-card__value ${c.cls ? `dash-card__value--${c.cls}` : ''}">${c.value}</div>
+        </div>`).join('');
+    }
 
+    // Apostas recentes paginadas
     recentEl.innerHTML = recentes.length
       ? `<table class="admin-table">
            <thead><tr><th>#</th><th>Usuário</th><th>Jogo</th><th>Valor</th><th>Status</th></tr></thead>
@@ -3668,9 +3697,11 @@ const loadAdminDashboard = async () => {
                <td>${statusPill(b.status)}</td>
              </tr>`).join('')}
            </tbody>
-         </table>`
+         </table>
+         ${_pager(betsPage, total_bets, limit, 'dash-bets')}`
       : '<p class="text--muted">Nenhuma aposta ainda.</p>';
 
+    // Por jogo paginado
     byGameEl.innerHTML = por_jogo.length
       ? `<table class="admin-table">
            <thead><tr><th>Jogo</th><th>Apostas</th><th>Arrecadado</th><th>Pago</th><th>Pendentes</th></tr></thead>
@@ -3683,7 +3714,8 @@ const loadAdminDashboard = async () => {
                <td>${g.pendentes > 0 ? `<span class="status-pill status-pill--pendente">${g.pendentes}</span>` : '0'}</td>
              </tr>`).join('')}
            </tbody>
-         </table>`
+         </table>
+         ${_pager(gamesPage, total_jogos, limit, 'dash-games')}`
       : '<p class="text--muted">Nenhum jogo cadastrado.</p>';
 
   } catch (err) {
