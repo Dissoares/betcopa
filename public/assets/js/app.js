@@ -1467,7 +1467,7 @@ const renderBets = () => {
           </button>
         </div>
       </div>`;
-  }).join('');
+  }).join('') + _pager(_betsPage, _betsTotal, BETS_LIMIT, 'my-bets');
 };
 
 // ── Resultados ────────────────────────────────────────────────
@@ -2709,12 +2709,18 @@ const loadGames = async () => {
   if (!document.getElementById('view-resultados')?.classList.contains('hidden')) renderResultados();
 };
 
-const loadBets = async () => {
-  if (!S.user) { S.bets = []; renderBets(); return; }
+let _betsPage  = 1;
+let _betsTotal = 0;
+const BETS_LIMIT = 10;
+
+const loadBets = async (page = _betsPage) => {
+  _betsPage = page;
+  if (!S.user) { S.bets = []; _betsTotal = 0; renderBets(); return; }
   try {
-    const r = await api('/api/apostas');
+    const r    = await api(`/api/apostas?page=${page}&limit=${BETS_LIMIT}`);
     const prev = S.bets || [];
-    S.bets = r.apostas;
+    S.bets     = r.apostas;
+    _betsTotal = r.total ?? 0;
 
     // Detecta mudanças para 'ganhou' ou 'perdido' e mostra resultado
     S.bets.forEach(b => {
@@ -2724,7 +2730,7 @@ const loadBets = async () => {
       }
     });
   } catch {
-    S.bets = [];
+    S.bets = []; _betsTotal = 0;
   }
   renderBets();
 };
@@ -3105,7 +3111,7 @@ const bind = () => {
     const btn = e.target.closest('[data-nav]');
     if (!btn) return;
     navigate(btn.dataset.nav);
-    if (btn.dataset.nav === 'palpites')    loadBets();
+    if (btn.dataset.nav === 'palpites')    loadBets(1);
     if (btn.dataset.nav === 'ganhadores')  renderRanking();
     if (btn.dataset.nav === 'resultados')  renderResultados();
     if (btn.dataset.nav === 'admin')       populateAdminSelect();
@@ -3134,7 +3140,7 @@ const bind = () => {
     const view = item.dataset.udropNav;
     navigate(view);
     document.getElementById('userDropdown')?.classList.remove('udrop--open');
-    if (view === 'palpites')    loadBets();
+    if (view === 'palpites')    loadBets(1);
     if (view === 'ganhadores')  renderRanking();
     if (view === 'resultados')  renderResultados();
     if (view === 'admin')       populateAdminSelect();
@@ -3143,6 +3149,14 @@ const bind = () => {
   document.addEventListener('click', e => {
     if (e.target.closest('#dropdownLogout')) logout();
     if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
+  });
+
+  // Paginação "Meus Palpites"
+  document.getElementById('betsList')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'my-bets-prev') loadBets(_betsPage - 1);
+    if (btn.dataset.action === 'my-bets-next') loadBets(_betsPage + 1);
   });
 
   // Game grid actions (bet / pay / confirm) via delegation
