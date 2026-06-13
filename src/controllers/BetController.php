@@ -15,7 +15,14 @@ class BetController
     public function list(): void
     {
         $userId = ensureLogged();
-        jsonResponse(['apostas' => $this->repository->listByUser($userId)]);
+        $page   = max(1, (int) ($_GET['page']  ?? 1));
+        $limit  = max(5,  min(50, (int) ($_GET['limit'] ?? 10)));
+        jsonResponse([
+            'apostas' => $this->repository->listByUser($userId, $page, $limit),
+            'total'   => $this->repository->countByUser($userId),
+            'page'    => $page,
+            'limit'   => $limit,
+        ]);
     }
 
     public function create(): void

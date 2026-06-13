@@ -22,11 +22,22 @@ class BetRepository
         return $stmt->fetch() ?: null;
     }
 
-    public function listByUser(int $userId): array
+    public function listByUser(int $userId, int $page = 1, int $limit = 10): array
     {
-        $stmt = $this->db->prepare('SELECT a.*, j.time_casa, j.time_fora, j.data_hora, j.status AS jogo_status FROM apostas a JOIN jogos j ON a.jogo_id = j.id WHERE a.user_id = :user_id ORDER BY a.criado_em DESC');
-        $stmt->execute(['user_id' => $userId]);
+        $offset = ($page - 1) * $limit;
+        $stmt   = $this->db->prepare('SELECT a.*, j.time_casa, j.time_fora, j.data_hora, j.status AS jogo_status FROM apostas a JOIN jogos j ON a.jogo_id = j.id WHERE a.user_id = :user_id ORDER BY a.criado_em DESC LIMIT :limit OFFSET :offset');
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit',   $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset',  $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    public function countByUser(int $userId): int
+    {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM apostas WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        return (int) $stmt->fetchColumn();
     }
 
     public function updateStatus(int $id, string $status): bool
