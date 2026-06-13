@@ -88,4 +88,22 @@ class AuthController
         $this->service->resetPassword($token, $novaSenha, $this->resets);
         jsonResponse(['message' => 'Senha redefinida com sucesso! Faça login.']);
     }
+
+    public function googleLogin(): void
+    {
+        $body     = json_decode(file_get_contents('php://input'), true) ?: [];
+        $idToken  = trim($body['credential'] ?? '');
+
+        if (!$idToken) {
+            jsonResponse(['error' => 'Token ausente'], 422);
+        }
+
+        $clientId = $this->service->getGoogleClientId();
+        if (!$clientId) {
+            jsonResponse(['error' => 'Login com Google não configurado. Contate o administrador.'], 503);
+        }
+
+        $user = $this->service->loginWithGoogle($idToken, $clientId);
+        jsonResponse(['user' => ['id' => $user['id'], 'nome' => $user['nome'], 'email' => $user['email']]]);
+    }
 }

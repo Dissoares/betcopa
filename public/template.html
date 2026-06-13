@@ -60,6 +60,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="/assets/css/style.css?v=4" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -278,8 +280,10 @@
             <label>Senha</label>
             <input id="loginPassword" type="password" placeholder="••••••••" required />
           </div>
-          <button class="btn btn--primary btn--full btn--large" type="submit">Entrar →</button>
+          <button class="btn btn--primary btn--full btn--large" type="submit">Entrar &rarr;</button>
         </form>
+        <div class="auth-divider"><span>ou</span></div>
+        <div id="googleBtnLogin" class="google-signin-wrap"></div>
         <p style="text-align:center;margin-top:.75rem">
           <button class="btn-link" id="btnForgotPassword">Esqueci minha senha</button>
         </p>
@@ -337,8 +341,10 @@
             <label>Senha</label>
             <input id="registerPassword" type="password" placeholder="Mínimo 6 caracteres" required />
           </div>
-          <button class="btn btn--primary btn--full btn--large" type="submit">Criar conta grátis →</button>
+          <button class="btn btn--primary btn--full btn--large" type="submit">Criar conta gr&aacute;tis &rarr;</button>
         </form>
+        <div class="auth-divider"><span>ou</span></div>
+        <div id="googleBtnRegister" class="google-signin-wrap"></div>
       </div>
     </div>
   </main>
@@ -669,6 +675,7 @@
             <button type="button" class="config-tab" data-config-tab="api">API</button>
             <button type="button" class="config-tab" data-config-tab="users">Usuários</button>
             <button type="button" class="config-tab" data-config-tab="seo">SEO</button>
+            <button type="button" class="config-tab" data-config-tab="google"><i class="fa-brands fa-google"></i> Google</button>
           </div>
 
           <form id="adminConfigForm">
@@ -798,6 +805,34 @@
                         <option value="0">N&atilde;o</option>
                       </select>
                     </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <div class="config-panel" data-config-panel="google">
+                <div class="panel">
+                  <h3 class="panel__title"><i class="fa-brands fa-google" style="color:#4285F4"></i> Google OAuth</h3>
+                  <p class="text--muted" style="margin-top:0;margin-bottom:1.25rem;font-size:.88rem">
+                    Permite que usu&aacute;rios fa&ccedil;am login e se cadastrem com a conta Google. Deixe o campo vazio para desativar.
+                  </p>
+                  <div class="form-group">
+                    <label>Google Client ID</label>
+                    <input id="cfg_google_client_id" type="text" autocomplete="off"
+                           placeholder="000000000000-xxxxxxxxxxxx.apps.googleusercontent.com" />
+                    <small class="form-hint">
+                      <strong>Como obter:</strong>
+                      <a href="https://console.cloud.google.com/apis/credentials" target="_blank">console.cloud.google.com</a>
+                      &rarr; Criar credencial &rarr; <em>ID do cliente OAuth 2.0</em> &rarr; Tipo: <em>Aplicativo Web</em>.
+                    </small>
+                  </div>
+                  <div class="alert alert--info" style="font-size:.82rem;margin-top:1rem">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <strong>Origens JavaScript autorizadas</strong> no painel Google devem incluir a URL do seu site, ex: <code id="googleOriginUrl"></code>
+                  </div>
+                  <div class="alert alert--warning" style="font-size:.82rem;margin-top:.6rem">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    O bot&atilde;o Google s&oacute; aparece na p&aacute;gina de login ap&oacute;s salvar e recarregar a p&aacute;gina.
                   </div>
                 </div>
               </div>

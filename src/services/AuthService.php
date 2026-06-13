@@ -86,4 +86,96 @@ class AuthService
 
         return $user;
     }
+
+    /**
+     * Retorna o Google OAuth Client ID configurado no admin, ou null.
+     */
+    public function getGoogleClientId(): ?string
+    {
+        $id = $this->config->get('google_client_id', '');
+        return $id !== '' ? $id : null;
+    }
+
+    /**
+     * Autentica ou registra usuário via token Google Identity Services.
+     * Verifica o ID token na API do Google e cria/encontra a conta local.
+     */
+    public function loginWithGoogle(string $idToken, string $clientId): array
+    {
+        // Verifica token na API do Google
+        $url  = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken);
+        $ch   = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        ]);
+        $body  = curl_exec($ch);
+        $errno = curl_errno($ch);
+        curl_close($ch);
+
+        if ($errno || !$body) {
+            throw new RuntimeException('Falha ao verificar token Google. Tente novamente.');
+        }
+
+        $payload = json_decode($body, true) ?? [];
+
+        if (isset($payload['error'])) {
+            throw new InvalidArgumentException('Token Google inválido ou expirado.');
+        }
+
+        // Valida audience
+        if (($payload['aud'] ?? '') !== $clientId) {
+            throw new InvalidArgumentException('Token Google não pertence a esta aplicação.');
+        }
+
+        // Exige e-mail verificado
+        if (($payload['email_verified'] ?? 'false') !== 'true' && ($payload['email_verified'] ?? false) !== true) {
+            throw new InvalidArgumentException('E-mail Google não verificado.');
+        }
+
+        $googleId = (string) ($payload['sub']   ?? '');
+        $email    = (string) ($payload['email'] ?? '');
+        $nome     = (string) ($payload['name']  ?? $email);
+
+        if (!$googleId || !$email) {
+            throw new InvalidArgumentException('Token Google não contém dados necessários.');
+        }
+
+        // Busca por google_id primeiro, depois por e-mail
+        $user = $this->users->findByGoogleId($googleId);
+
+        if (!$user) {
+            $user = $this->users->findByEmail($email);
+            if ($user) {
+                // Vincula google_id à conta existente
+                $this->users->setGoogleId((int) $user['id'], $googleId);
+                $user['google_id'] = $googleId;
+            }
+        }
+
+        if (!$user) {
+            // Cria nova conta automaticamente
+            $userId = $this->users->createWithGoogle($nome, $email, $googleId);
+
+            $bonus = (float) $this->config->get('bonus_cadastro', '0');
+            if ($bonus > 0) {
+                $this->transactions->create($userId, 'credito', $bonus, 'Bônus de cadastro');
+            }
+
+            Logger::info('Conta Google criada', ['id' => $userId, 'email' => $email]);
+            $user = $this->users->findById($userId);
+        }
+
+        if (!empty($user['bloqueado'])) {
+            throw new InvalidArgumentException('Conta suspensa. Entre em contato com o suporte.');
+        }
+
+        session_start();
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_email'] = $user['email'];
+        Logger::info('Login Google', ['user_id' => $user['id']]);
+
+        return $user;
+    }
 }

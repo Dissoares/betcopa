@@ -2034,6 +2034,64 @@ const switchAuthTab = (tab) => {
   });
 };
 
+// ── Google Sign-In ──────────────────────────────────────────
+const googleCallback = async (response) => {
+  try {
+    const res = await api('/api/auth/google', 'POST', { credential: response.credential });
+    await loadUser();
+    await loadBets();
+
+    if (S.pendingBet) {
+      const pb = S.pendingBet;
+      S.pendingBet = null;
+      navigate('jogos');
+      showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}!`, 'success');
+      setTimeout(async () => {
+        try {
+          const result = await api('/api/apostas', 'POST', {
+            jogo_id:       pb.gameId,
+            placar_casa:   pb.scoreHome,
+            placar_fora:   pb.scoreAway,
+            multiplicador: pb.multiplier,
+          });
+          S.selectedGame = S.games.find(g => g.id === pb.gameId) ?? S.selectedGame;
+          S.selectedBet  = result.aposta;
+          fillTicket(result.aposta);
+          openModal('modalTicket');
+          await loadBets();
+        } catch (err) {
+          toast(err.message || 'Erro ao registrar palpite.', 'danger');
+        }
+      }, 350);
+    } else {
+      navigate('jogos');
+      showAlert(`Bem-vindo, ${res.user.nome.split(' ')[0]}!`, 'success');
+    }
+  } catch (err) {
+    showAlert(err.message || 'Erro ao autenticar com Google.', 'danger');
+  }
+};
+
+const initGoogleButtons = (clientId) => {
+  if (!window.google?.accounts?.id) return;
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback:  googleCallback,
+  });
+  ['googleBtnLogin', 'googleBtnRegister'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '';
+    google.accounts.id.renderButton(el, {
+      theme: 'filled_black',
+      size:  'large',
+      width: el.parentElement?.offsetWidth || 320,
+      text:  id === 'googleBtnRegister' ? 'signup_with' : 'signin_with',
+      locale: 'pt-BR',
+    });
+  });
+};
+
 const submitForgotPassword = async (e) => {
   e.preventDefault();
   const btn   = e.target.querySelector('button[type=submit]');
@@ -3707,12 +3765,17 @@ const loadAdminConfig = async () => {
     set('cfg_mp_webhook_secret',         'mp_webhook_secret');
     set('cfg_gateway_ativo',             'gateway_ativo');
     set('cfg_expay_merchant_key',        'expay_merchant_key');
+    set('cfg_google_client_id',          'google_client_id');
 
-    // Exibe URLs dos webhooks
+    // Inicia botões Google se client id já estiver salvo
+    const googleClientId = config['google_client_id']?.valor ?? '';
+    if (googleClientId) initGoogleButtons(googleClientId);
     const whEl    = document.getElementById('webhookUrl');
     const whExpay = document.getElementById('webhookUrlExpay');
-    if (whEl)    whEl.textContent    = `${location.origin}/api/webhooks/mercadopago`;
-    if (whExpay) whExpay.textContent = `${location.origin}/api/webhooks/expay`;
+    const whGoogle = document.getElementById('googleOriginUrl');
+    if (whEl)     whEl.textContent     = `${location.origin}/api/webhooks/mercadopago`;
+    if (whExpay)  whExpay.textContent  = `${location.origin}/api/webhooks/expay`;
+    if (whGoogle) whGoogle.textContent = location.origin;
 
     // Mostra os campos do gateway selecionado
     toggleGatewayFields();
@@ -3774,6 +3837,7 @@ const submitAdminConfig = async (e) => {
       mp_access_token:           get('cfg_mp_access_token'),
       mp_webhook_secret:         get('cfg_mp_webhook_secret'),
       expay_merchant_key:        get('cfg_expay_merchant_key'),
+      google_client_id:          get('cfg_google_client_id'),
     });
     toast(res.message ?? 'Configurações salvas!', 'success');
     // O logo já foi aplicado no momento do upload — não precisa refazer aqui
@@ -4158,6 +4222,20 @@ const init = async () => {
   await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
+
+  // Inicializa botões Google com o client_id público da API
+  try {
+    const cfg = await api('/api/admin/config-public');
+    const googleClientId = cfg?.google_client_id ?? '';
+    if (googleClientId) {
+      if (window.google?.accounts?.id) {
+        initGoogleButtons(googleClientId);
+      } else {
+        // GSI ainda não carregou — aguarda
+        window.addEventListener('load', () => initGoogleButtons(googleClientId));
+      }
+    }
+  } catch { /* silencioso — login com Google simplesmente não aparece */ }
 
   // Detecção de link de reset de senha (?reset=TOKEN na query string)
   const resetToken = new URLSearchParams(location.search).get('reset');

@@ -114,6 +114,7 @@ try {
         route('/api/register',        'POST', fn() => $authCtrl->register());
         route('/api/login',           'POST', fn() => $authCtrl->login());
         route('/api/logout',          'POST', fn() => $authCtrl->logout());
+        route('/api/auth/google',     'POST', fn() => $authCtrl->googleLogin());
         route('/api/auth/forgot',     'POST', fn() => $authCtrl->forgotPassword());
         route('/api/auth/reset',      'POST', fn() => $authCtrl->resetPassword());
 
@@ -154,6 +155,12 @@ try {
 
         // ── Config pública (mult range) ───────────────────────────
         route('/api/config/bets',  'GET',  fn() => $adminCtrl->betConfig());
+        route('/api/admin/config-public', 'GET', function() use ($configRepo) {
+            // Expõe somente as chaves seguras para o frontend público (sem autenticação)
+            jsonResponse([
+                'google_client_id' => $configRepo->get('google_client_id', ''),
+            ]);
+        });
 
         // ── Admin: Configurações ──────────────────────────────
         route('/api/admin/config',       'GET',  fn() => $adminCtrl->getConfig());
