@@ -764,19 +764,37 @@
                         <div class="form-group">
                           <label>Access Token</label>
                           <input id="cfg_mp_access_token" type="password" autocomplete="off"
-                                 placeholder="APP_USR-..." />
-                          <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Credenciais de produ&ccedil;&atilde;o.</small>
+                                 placeholder="APP_USR-0000000000000000-000000-..." />
+                          <small class="form-hint">
+                            Exemplo: <code style="font-size:.75rem">APP_USR-0000000000000000-000000-abcdef1234567890abcdef1234567890-000000000</code><br>
+                            Encontre em: MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Credenciais de produ&ccedil;&atilde;o &rarr; <strong>Access Token</strong>.
+                          </small>
                         </div>
                         <div class="form-group">
-                          <label>Webhook Secret</label>
+                          <label>Webhook Secret <span style="font-weight:400;font-size:.75rem;opacity:.6">(opcional)</span></label>
                           <input id="cfg_mp_webhook_secret" type="password" autocomplete="off"
-                                 placeholder="Chave secreta do webhook" />
-                          <small class="form-hint">MP &rarr; Suas integra&ccedil;&otilde;es &rarr; Webhooks &rarr; Chave secreta.</small>
+                                 placeholder="Deixe em branco — n&atilde;o &eacute; obrigat&oacute;rio" />
+                          <small class="form-hint">
+                            <strong>Pode deixar vazio.</strong> O sistema funciona sem ele.<br>
+                            Serve apenas para validar a autenticidade das notifica&ccedil;&otilde;es do MP (seguran&ccedil;a extra).
+                          </small>
                         </div>
                       </div>
                       <div class="alert alert--info" style="font-size:.78rem;margin-top:.75rem">
                         <i class="fa-solid fa-circle-info"></i>
-                        URL do webhook MP: <code id="webhookUrl"></code>
+                        URL do webhook MP (preenchida automaticamente em cada cobran&ccedil;a): <code id="webhookUrl"></code>
+                      </div>
+                      <div style="margin-top:.6rem;font-size:.78rem;display:flex;gap:1rem;flex-wrap:wrap">
+                        <a href="https://www.mercadopago.com.br/settings/account/credentials" target="_blank" rel="noopener"
+                           style="color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem">
+                          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.7rem"></i>
+                          Abrir Credenciais de produ&ccedil;&atilde;o no MP
+                        </a>
+                        <a href="https://www.mercadopago.com.br/developers/pt/docs/your-integrations/notifications/webhooks" target="_blank" rel="noopener"
+                           style="color:var(--accent);opacity:.75;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem">
+                          <i class="fa-solid fa-book" style="font-size:.7rem"></i>
+                          Documenta&ccedil;&atilde;o de webhooks MP
+                        </a>
                       </div>
                     </div>
 
