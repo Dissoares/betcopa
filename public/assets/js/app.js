@@ -1471,39 +1471,83 @@ const renderBets = () => {
 };
 
 // ── Resultados ────────────────────────────────────────────────
-let _resSearch = '';
+let _resSearch     = '';
+let _resDateFilter = 'all';
 
 const renderResultCard = (g) => {
-  const scoreStr = g.placar_real ? g.placar_real.replace('x', ' × ') : '—';
+  const parts     = g.placar_real ? g.placar_real.split('x') : null;
+  const homeGoals = parts ? parseInt(parts[0]) : null;
+  const awayGoals = parts ? parseInt(parts[1]) : null;
+  const homeWin   = homeGoals !== null && homeGoals > awayGoals;
+  const awayWin   = awayGoals !== null && awayGoals > homeGoals;
+  const draw      = homeGoals !== null && homeGoals === awayGoals;
 
   const emblemH = g.logo_casa
-    ? `<img src="${g.logo_casa}" class="res-emblem" alt="${g.time_casa}">`
-    : `<span class="res-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
+    ? `<img src="${g.logo_casa}" class="rc__emblem-img" alt="${g.time_casa}" loading="lazy">`
+    : `<span class="rc__emblem-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
   const emblemA = g.logo_fora
-    ? `<img src="${g.logo_fora}" class="res-emblem" alt="${g.time_fora}">`
-    : `<span class="res-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
+    ? `<img src="${g.logo_fora}" class="rc__emblem-img" alt="${g.time_fora}" loading="lazy">`
+    : `<span class="rc__emblem-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
+
+  const scoreHtml = parts !== null
+    ? `<span class="rc__goal ${homeWin ? 'rc__goal--win' : awayWin ? 'rc__goal--loss' : ''}">${homeGoals}</span>
+       <span class="rc__sep">:</span>
+       <span class="rc__goal ${awayWin ? 'rc__goal--win' : homeWin ? 'rc__goal--loss' : ''}">${awayGoals}</span>`
+    : `<span class="rc__no-score">-</span>`;
+
+  // Texto descritivo do resultado
+  let summaryText = '';
+  if (parts !== null) {
+    if (homeWin)
+      summaryText = `<strong>${g.time_casa}</strong> venceu ${homeGoals} a ${awayGoals} contra ${g.time_fora}`;
+    else if (awayWin)
+      summaryText = `<strong>${g.time_fora}</strong> venceu ${awayGoals} a ${homeGoals} contra ${g.time_casa}`;
+    else
+      summaryText = `Empate: ${g.time_casa} ${homeGoals} a ${awayGoals} ${g.time_fora}`;
+  }
+
+  const timeStr    = new Date(g.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const leagueLabel = g.liga_nome ? (leagueShortName(g.liga_nome) || g.liga_nome) : '';
 
   return `
-    <div class="res-row res-row--final">
-      <time class="res-date">${fmtGameDate(g.data_hora)}</time>
-      <div class="res-teams">
-        <div class="res-team res-team--home">${emblemH}<span>${g.time_casa}</span></div>
-        <div class="res-score res-score--final">${scoreStr}</div>
-        <div class="res-team res-team--away">${emblemA}<span>${g.time_fora}</span></div>
+    <div class="rc">
+      <div class="rc__top">
+        <span class="rc__league">${leagueLabel}</span>
+        <time class="rc__time">${timeStr}</time>
       </div>
-      <div class="res-meta">${gameBadge(g)}</div>
+      <div class="rc__match">
+        <div class="rc__side rc__side--home ${homeWin ? 'rc__side--winner' : ''}">
+          <div class="rc__emblem">${emblemH}</div>
+          <span class="rc__name">${g.time_casa}</span>
+        </div>
+        <div class="rc__score-box">${scoreHtml}</div>
+        <div class="rc__side rc__side--away ${awayWin ? 'rc__side--winner' : ''}">
+          <span class="rc__name">${g.time_fora}</span>
+          <div class="rc__emblem">${emblemA}</div>
+        </div>
+      </div>
+      ${summaryText ? `<div class="rc__summary">${summaryText}</div>` : ''}
     </div>`;
 };
 
 const renderResultados = () => {
-  let games = S.games.filter(g => g.status === 'finalizado');
+  let games = S.games.filter(g => g.status === 'finalizado' || g.placar_real);
 
   const q = _resSearch.trim().toLowerCase();
   if (q) games = games.filter(g =>
-    g.time_casa.toLowerCase().includes(q) || g.time_fora.toLowerCase().includes(q)
+    g.time_casa.toLowerCase().includes(q) ||
+    g.time_fora.toLowerCase().includes(q) ||
+    (g.liga_nome || '').toLowerCase().includes(q)
   );
 
-  // Most recent first
+  if (_resDateFilter === 'hoje') {
+    const today = new Date().toDateString();
+    games = games.filter(g => new Date(g.data_hora).toDateString() === today);
+  } else if (_resDateFilter === 'semana') {
+    const since = Date.now() - 7 * 24 * 3600_000;
+    games = games.filter(g => new Date(g.data_hora) >= since);
+  }
+
   games.sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
 
   const list  = document.getElementById('resultsList');
@@ -1512,7 +1556,24 @@ const renderResultados = () => {
 
   if (!games.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  list.innerHTML = games.map(renderResultCard).join('');
+
+  // Agrupar por data
+  const groups = new Map();
+  games.forEach(g => {
+    const d   = new Date(g.data_hora);
+    const key = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(g);
+  });
+
+  list.innerHTML = [...groups.entries()].map(([dateLabel, gms]) => `
+    <div class="res-group">
+      <div class="res-group__header">
+        <span class="res-group__date">${dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}</span>
+        <span class="res-group__count">${gms.length} jogo${gms.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="res-group__list">${gms.map(renderResultCard).join('')}</div>
+    </div>`).join('');
 };
 
 // ── Ranking ───────────────────────────────────────────────────
@@ -3512,6 +3573,17 @@ const bind = () => {
   document.getElementById('resSearch')?.addEventListener('input', e => {
     clearTimeout(_resSearchTimer);
     _resSearchTimer = setTimeout(() => { _resSearch = e.target.value; renderResultados(); }, 250);
+  });
+
+  // Resultados: filtro de data
+  document.getElementById('resDateTabs')?.addEventListener('click', e => {
+    const tab = e.target.closest('[data-filter]');
+    if (!tab) return;
+    _resDateFilter = tab.dataset.filter;
+    document.querySelectorAll('#resDateTabs .res-date-tab').forEach(t =>
+      t.classList.toggle('res-date-tab--active', t === tab)
+    );
+    renderResultados();
   });
 
   // Admin sidebar tabs

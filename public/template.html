@@ -247,13 +247,15 @@
 
   <!-- ===== VIEW: RESULTADOS ===== -->
   <main class="container view hidden" id="view-resultados">
-    <div class="section-header">
-      <h2><i class="fa-solid fa-chart-simple"></i> Resultados</h2>
-    </div>
-    <div class="res-filters">
+    <div class="res-toolbar">
       <div class="res-filters__search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="resSearch" placeholder="Buscar time…" autocomplete="off">
+        <input type="text" id="resSearch" placeholder="Buscar time ou competição…" autocomplete="off">
+      </div>
+      <div class="res-date-tabs" id="resDateTabs">
+        <button class="res-date-tab res-date-tab--active" data-filter="all">Todos</button>
+        <button class="res-date-tab" data-filter="hoje">Hoje</button>
+        <button class="res-date-tab" data-filter="semana">Esta semana</button>
       </div>
     </div>
     <div id="resultsList"></div>
