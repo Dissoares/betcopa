@@ -13,10 +13,10 @@ const S = {
   pendingBet:   null,      // picks salvos para retomar após login
   scoreHome:    0,
   scoreAway:    0,
-  multiplier:   5,
-  multMin:      1,
-  multMax:      100,
-  betPercent:   10,
+  stake:        50,
+  stakeMin:     5,
+  stakeMax:     500,
+  oddPadrao:    5,
   timers:       [],        // countdown interval refs
   pollTimer:    null,      // intervalo de polling para jogos ao vivo
   adminEmail:     'admin@betcopa.local',
@@ -613,11 +613,6 @@ const renderCard = (g) => {
     ? `<button class="btn btn--ghost btn--full" disabled>
          <i class="fa-solid fa-lock"></i> Apostas encerradas
        </button>`
-    : !betBlocked && !S.user
-    ? `<button class="btn btn--primary btn--full" data-action="guest-bet" data-id="${g.id}">
-         <i class="fa-solid fa-bullseye"></i> Fazer Palpite
-       </button>
-       ${ctaHtml}`
     : `<button class="btn ${!betBlocked ? 'btn--primary' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
          ${!betBlocked ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
@@ -1590,32 +1585,48 @@ const closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
 const closeAllModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 
 // ── Bet modal ─────────────────────────────────────────────────
+const renderScore = (elId, val) => {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (val === null) {
+    el.textContent = '×';
+    el.classList.add('score-value--empty');
+  } else {
+    el.textContent = val;
+    el.classList.remove('score-value--empty');
+  }
+};
+
 const openBetModal = (gameId, pending = null) => {
   const game = S.games.find(g => g.id === Number(gameId));
   if (!game) return;
 
   S.selectedGame = game;
-  S.scoreHome    = pending?.scoreHome  ?? 0;
-  S.scoreAway    = pending?.scoreAway  ?? 0;
-  S.multiplier   = Math.min(S.multMax, Math.max(S.multMin, pending?.multiplier ?? Math.round((S.multMin + S.multMax) / 2)));
+  S.scoreHome    = pending?.scoreHome ?? null;
+  S.scoreAway    = pending?.scoreAway ?? null;
+  S.stake        = pending?.stake ?? S.stakeMin;
 
-  const slider = document.getElementById('multiplierSlider');
-  slider.min   = S.multMin;
-  slider.max   = S.multMax;
-  slider.value = S.multiplier;
-  const lblMin = document.getElementById('sliderLabelMin');
-  const lblMax = document.getElementById('sliderLabelMax');
-  if (lblMin) lblMin.textContent = `${S.multMin}×`;
-  if (lblMax) lblMax.textContent = `${S.multMax}×`;
-  const payLbl = document.getElementById('betPayLabel');
-  if (payLbl) payLbl.textContent = `Você aposta (${S.betPercent}% do prêmio)`;
+  const slider = document.getElementById('stakeSlider');
+  if (slider) {
+    slider.min   = S.stakeMin;
+    slider.max   = S.stakeMax;
+    slider.step  = Math.max(1, Math.floor((S.stakeMax - S.stakeMin) / 100));
+    slider.value = S.stake;
+  }
+  const lblMin = document.getElementById('stakeLabelMin');
+  const lblMax = document.getElementById('stakeLabelMax');
+  if (lblMin) lblMin.textContent = fmtMoney(S.stakeMin);
+  if (lblMax) lblMax.textContent = fmtMoney(S.stakeMax);
+  const effectiveOdd = parseFloat(game.odd || 0) > 1 ? parseFloat(game.odd) : S.oddPadrao;
+  const oddEl = document.getElementById('gameOddDisplay');
+  if (oddEl) oddEl.textContent = `${Number.isInteger(effectiveOdd) ? effectiveOdd : effectiveOdd.toFixed(1)}×`;
 
   document.getElementById('betFlagHome').innerHTML    = getEmblem(game, 'home');
   document.getElementById('betNameHome').textContent  = game.time_casa;
   document.getElementById('betFlagAway').innerHTML    = getEmblem(game, 'away');
   document.getElementById('betNameAway').textContent  = game.time_fora;
-  document.getElementById('scoreHome').textContent    = S.scoreHome;
-  document.getElementById('scoreAway').textContent    = S.scoreAway;
+  renderScore('scoreHome', S.scoreHome);
+  renderScore('scoreAway', S.scoreAway);
 
   const lgEl = document.getElementById('betLeagueName');
   const dtEl = document.getElementById('betGameDate');
@@ -1626,65 +1637,82 @@ const openBetModal = (gameId, pending = null) => {
       + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  startBetCountdown(new Date(game.data_hora));
+
   updateBetPreview();
   openModal('modalPalpite');
 };
 
+let _betCountdownTimer = null;
+const startBetCountdown = (gameDate) => {
+  if (_betCountdownTimer) { clearInterval(_betCountdownTimer); _betCountdownTimer = null; }
+  const cdEl  = document.getElementById('betGameCountdown');
+  const rowEl = document.getElementById('betCountdownRow');
+  if (!cdEl || !rowEl) return;
+  const tick = () => {
+    const diff = gameDate - Date.now();
+    if (diff <= 0) {
+      cdEl.textContent = 'Jogo em andamento';
+      rowEl.className  = 'bm__meta-row2 bm__meta-row2--live';
+      clearInterval(_betCountdownTimer); _betCountdownTimer = null;
+      return;
+    }
+    const s = Math.floor(diff / 1000);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sc = s % 60;
+    const label = d > 0
+      ? `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`
+      : h > 0
+        ? `${h}h ${String(m).padStart(2,'0')}m ${String(sc).padStart(2,'0')}s`
+        : `${String(m).padStart(2,'0')}m ${String(sc).padStart(2,'0')}s`;
+    cdEl.textContent = `Começa em ${label}`;
+    rowEl.className  = diff <= 3_600_000 ? 'bm__meta-row2 bm__meta-row2--soon' : 'bm__meta-row2';
+  };
+  tick();
+  _betCountdownTimer = setInterval(tick, 1000);
+};
+
 const updateBetPreview = () => {
-  const game      = S.selectedGame;
+  const game = S.selectedGame;
   if (!game) return;
-  const mult      = S.multiplier;
-  const base      = parseFloat(game.valor_base || 1);
-  const premio    = base * mult;
-  const valor     = +(premio * S.betPercent / 100).toFixed(2);
+  const odd    = parseFloat(game.odd || 0) > 1 ? parseFloat(game.odd) : S.oddPadrao;
+  const premio = +(S.stake * odd).toFixed(2);
 
-  document.getElementById('multiplierDisplay').textContent = `${mult}×`;
-  document.getElementById('betPayAmount').textContent      = fmtMoney(valor);
-  document.getElementById('betWinAmount').textContent      = fmtMoney(premio);
-  document.getElementById('betPreviewScore').textContent   =
-    `${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}`;
+  document.getElementById('stakeDisplay').textContent    = fmtMoney(S.stake);
+  document.getElementById('betWinAmount').textContent    = fmtMoney(premio);
+  const scoreStr = S.scoreHome === null || S.scoreAway === null
+    ? `${game.time_casa} ? × ? ${game.time_fora}`
+    : `${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}`;
+  document.getElementById('betPreviewScore').textContent = scoreStr;
 
-  const riskTag = document.getElementById('betRiskTag');
-  if (riskTag && S.multMax > S.multMin) {
-    const pct = (mult - S.multMin) / (S.multMax - S.multMin);
-    const [label, cls] =
-      pct < 0.20 ? ['Conservador', 'bm__risk-tag--low']  :
-      pct < 0.50 ? ['Moderado',    'bm__risk-tag--mid']  :
-      pct < 0.80 ? ['Agressivo',   'bm__risk-tag--high'] :
-                   ['Extremo',     'bm__risk-tag--max'];
-    riskTag.textContent = label;
-    riskTag.className   = `bm__risk-tag ${cls}`;
+  const slider = document.getElementById('stakeSlider');
+  if (slider) {
+    const range = (S.stakeMax - S.stakeMin) || 1;
+    const pct   = ((S.stake - S.stakeMin) / range) * 100;
+    slider.style.background = `linear-gradient(to right, var(--primary) ${pct}%, var(--surface-3) ${pct}%)`;
   }
-
-  // Update slider track fill
-  const slider = document.getElementById('multiplierSlider');
-  const range  = (S.multMax - S.multMin) || 1;
-  const pct    = ((mult - S.multMin) / range) * 100;
-  slider.style.background = `linear-gradient(to right, var(--primary) ${pct}%, var(--surface-3) ${pct}%)`;
 };
 
 const submitBet = async () => {
+  if (S.scoreHome === null || S.scoreAway === null) {
+    toast('Selecione o placar antes de confirmar o palpite.', 'danger');
+    document.querySelector('.bm__scoreboard')?.classList.add('bm__scoreboard--shake');
+    setTimeout(() => document.querySelector('.bm__scoreboard')?.classList.remove('bm__scoreboard--shake'), 600);
+    return;
+  }
   if (!S.user) {
-    // Sem login: mostra ticket em pré-visualização (sem chamar a API)
-    const base   = parseFloat(S.selectedGame.valor_base || 1);
-    const premio = base * S.multiplier;
-    const valor  = +(premio * S.betPercent / 100).toFixed(2);
-    S.selectedBet = null;
-    S.pendingBet  = {
-      gameId:     S.selectedGame.id,
-      scoreHome:  S.scoreHome,
-      scoreAway:  S.scoreAway,
-      multiplier: S.multiplier,
+    S.pendingBet = {
+      gameId:    S.selectedGame.id,
+      scoreHome: S.scoreHome,
+      scoreAway: S.scoreAway,
+      stake:     S.stake,
     };
     closeModal('modalPalpite');
-    fillTicket({
-      id:             null,
-      placar_casa:    S.scoreHome,
-      placar_fora:    S.scoreAway,
-      valor,
-      possivel_ganho: premio,
-    });
-    openModal('modalTicket');
+    switchAuthTab('login');
+    navigate('auth');
+    showAlert('Entre ou crie uma conta para confirmar seu palpite — ele será retomado automaticamente!', 'info');
     return;
   }
 
@@ -1694,10 +1722,10 @@ const submitBet = async () => {
 
   try {
     const result = await api('/api/apostas', 'POST', {
-      jogo_id:       S.selectedGame.id,
-      placar_casa:   S.scoreHome,
-      placar_fora:   S.scoreAway,
-      multiplicador: S.multiplier,
+      jogo_id:     S.selectedGame.id,
+      placar_casa: S.scoreHome,
+      placar_fora: S.scoreAway,
+      valor:       S.stake,
     });
 
     S.selectedBet = result.aposta;
@@ -1727,19 +1755,28 @@ const TICKET_STATUS_MAP = {
 const fillTicket = (bet) => {
   const game    = S.selectedGame;
   const isGuest = !bet.id;
-  const mult    = bet.multiplicador ?? S.multiplier ?? '—';
+  const oddRaw  = parseFloat(bet.odd ?? 0);
+  const oddFmt  = oddRaw > 0 ? (Number.isInteger(oddRaw) ? `${oddRaw}×` : `${oddRaw.toFixed(1)}×`) : '—';
   const status  = isGuest ? 'preview' : (bet.status ?? 'pendente');
 
   // ID
   document.getElementById('ticketId').textContent = isGuest
-    ? 'Visualização' : `#${String(bet.id).padStart(6, '0')}`;
+    ? 'Pré-visualização' : `#${String(bet.id).padStart(6, '0')}`;
 
   // Jogo
   document.getElementById('ticketGame').textContent    = game ? `${game.time_casa} × ${game.time_fora}` : '—';
   document.getElementById('ticketPalpite').textContent = `${bet.placar_casa} × ${bet.placar_fora}`;
-  document.getElementById('ticketMult').textContent    = mult !== '—' ? `${mult}×` : '—';
+  document.getElementById('ticketMult').textContent    = oddFmt;
   document.getElementById('ticketValor').textContent   = fmtMoney(bet.valor);
   document.getElementById('ticketPremio').textContent  = fmtMoney(bet.possivel_ganho);
+
+  // Fórmula de cálculo
+  const calcEl = document.getElementById('ticketPrizeCalc');
+  if (calcEl) {
+    calcEl.textContent = oddRaw > 0
+      ? `${fmtMoney(bet.valor)} × ${oddFmt} = ${fmtMoney(bet.possivel_ganho)}`
+      : '';
+  }
 
   // Liga + data do jogo
   const lgEl = document.getElementById('ticketLeague');
@@ -1968,10 +2005,10 @@ const submitLogin = async (e) => {
       setTimeout(async () => {
         try {
           const result = await api('/api/apostas', 'POST', {
-            jogo_id:       pb.gameId,
-            placar_casa:   pb.scoreHome,
-            placar_fora:   pb.scoreAway,
-            multiplicador: pb.multiplier,
+            jogo_id:     pb.gameId,
+            placar_casa: pb.scoreHome,
+            placar_fora: pb.scoreAway,
+            valor:       pb.stake,
           });
           S.selectedGame = S.games.find(g => g.id === pb.gameId) ?? S.selectedGame;
           S.selectedBet  = result.aposta;
@@ -2004,8 +2041,7 @@ const submitRegister = async (e) => {
       email: document.getElementById('registerEmail').value,
       senha: document.getElementById('registerPassword').value,
     });
-    showAlert('Conta criada! Faça login para começar.', 'success');
-    // switch to login tab
+    showAlert(S.pendingBet ? 'Conta criada! Faça login para confirmar seu palpite.' : 'Conta criada! Faça login para começar.', 'success');
     switchAuthTab('login');
     e.target.reset();
   } catch (err) {
@@ -2020,6 +2056,7 @@ const logout = async () => {
   S.user = null; S.bets = [];
   renderHeader();
   renderBets();
+  renderGames();
   navigate('jogos');
   showAlert('Até logo!', 'info');
 };
@@ -2049,10 +2086,10 @@ const googleCallback = async (response) => {
       setTimeout(async () => {
         try {
           const result = await api('/api/apostas', 'POST', {
-            jogo_id:       pb.gameId,
-            placar_casa:   pb.scoreHome,
-            placar_fora:   pb.scoreAway,
-            multiplicador: pb.multiplier,
+            jogo_id:     pb.gameId,
+            placar_casa: pb.scoreHome,
+            placar_fora: pb.scoreAway,
+            valor:       pb.stake,
           });
           S.selectedGame = S.games.find(g => g.id === pb.gameId) ?? S.selectedGame;
           S.selectedBet  = result.aposta;
@@ -2263,10 +2300,8 @@ const editGame = (id) => {
   if (statusEl) statusEl.value = g.status || 'aberto';
   const apiEl = document.getElementById('adminStatusApi');
   if (apiEl) apiEl.value = g.status_api || '';
-  const vbEl = document.getElementById('adminValorBase');
-  if (vbEl) vbEl.value = g.valor_base || '1.00';
   const oddEl = document.getElementById('adminCreateOdd');
-  if (oddEl) oddEl.value = g.odd || '1.00';
+  if (oddEl) oddEl.value = parseFloat(g.odd || 0) > 1 ? g.odd : S.oddPadrao;
 
   // Placar (placar_real = '2x1')
   if (g.placar_real) {
@@ -2316,6 +2351,8 @@ const deleteGame = async (id, label) => {
 const cancelEditGame = () => {
   editingGameId = null;
   document.getElementById('adminGameForm').reset();
+  const oddEl = document.getElementById('adminCreateOdd');
+  if (oddEl) oddEl.value = S.oddPadrao;
   const apiEl = document.getElementById('adminStatusApi');
   if (apiEl) apiEl.value = '';
   const flagReset = '<i class="fa-regular fa-flag" style="font-size:1.4rem;opacity:.4"></i>';
@@ -2467,7 +2504,6 @@ const submitAdminGame = async (e) => {
       status_api:    document.getElementById('adminStatusApi')?.value || '',
       placar_casa:   document.getElementById('adminCreateScoreHome').value !== '' ? parseInt(document.getElementById('adminCreateScoreHome').value, 10) : null,
       placar_fora:   document.getElementById('adminCreateScoreAway').value !== '' ? parseInt(document.getElementById('adminCreateScoreAway').value, 10) : null,
-      valor_base:    parseFloat(document.getElementById('adminValorBase').value),
       odd:           parseFloat(document.getElementById('adminCreateOdd').value),
     };
     if (isEditing) {
@@ -3089,8 +3125,8 @@ const bind = () => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const { action, id } = btn.dataset;
-    if (action === 'bet')     openBetModal(id);
-    if (action === 'share')   openShareModal(id);
+    if (action === 'bet')   openBetModal(id);
+    if (action === 'share') openShareModal(id);
     if (action === 'pay')     { S.selectedBet = { id: Number(id) }; openModal('modalTicket'); }
     if (action === 'confirm') {
       const betId = Number(id);
@@ -3135,26 +3171,38 @@ const bind = () => {
   // Modal close via backdrop or × button
   document.addEventListener('click', e => {
     const target = e.target;
-    if (target.dataset.close) closeModal(target.dataset.close);
-    if (target.classList.contains('modal__backdrop') && !target.dataset.close) closeAllModals();
+    if (target.dataset.close) {
+      closeModal(target.dataset.close);
+      if (target.dataset.close === 'modalPalpite' && _betCountdownTimer) {
+        clearInterval(_betCountdownTimer); _betCountdownTimer = null;
+      }
+    }
+    if (target.classList.contains('modal__backdrop') && !target.dataset.close) {
+      closeAllModals();
+      if (_betCountdownTimer) { clearInterval(_betCountdownTimer); _betCountdownTimer = null; }
+    }
   });
 
   // Score counter buttons
+  const stepScore = (val, dir) => {
+    if (val === null) return dir > 0 ? 0 : null;
+    if (val === 0 && dir < 0) return null;
+    return Math.max(0, val + dir);
+  };
   document.getElementById('modalPalpite').addEventListener('click', e => {
     const btn = e.target.closest('.score-btn');
     if (!btn) return;
-    const dir  = Number(btn.dataset.dir);
-    const side = btn.dataset.score;
-    if (side === 'home') S.scoreHome = Math.max(0, S.scoreHome + dir);
-    if (side === 'away') S.scoreAway = Math.max(0, S.scoreAway + dir);
-    document.getElementById('scoreHome').textContent = S.scoreHome;
-    document.getElementById('scoreAway').textContent = S.scoreAway;
+    const dir = Number(btn.dataset.dir);
+    if (btn.dataset.score === 'home') S.scoreHome = stepScore(S.scoreHome, dir);
+    if (btn.dataset.score === 'away') S.scoreAway = stepScore(S.scoreAway, dir);
+    renderScore('scoreHome', S.scoreHome);
+    renderScore('scoreAway', S.scoreAway);
     updateBetPreview();
   });
 
-  // Multiplier slider
-  document.getElementById('multiplierSlider').addEventListener('input', e => {
-    S.multiplier = Number(e.target.value);
+  // Stake slider
+  document.getElementById('stakeSlider').addEventListener('input', e => {
+    S.stake = Number(e.target.value);
     updateBetPreview();
   });
 
@@ -3278,6 +3326,23 @@ const bind = () => {
         await navigator.share({ title: 'Meu palpite no BetCopa', text: getShareText(bet), files: [file] });
       } catch { /* user cancelled */ }
     }, 'image/png');
+  });
+
+  // ── Guest bet modal ───────────────────────────────────────
+  const closeGuestBetModal = () => document.getElementById('modalGuestBet')?.classList.add('hidden');
+  document.getElementById('closeModalGuestBet')?.addEventListener('click', closeGuestBetModal);
+  document.getElementById('modalGuestBet')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalGuestBet')) closeGuestBetModal();
+  });
+  document.getElementById('guestBetRegisterBtn')?.addEventListener('click', () => {
+    closeGuestBetModal();
+    switchAuthTab('register');
+    navigate('auth');
+  });
+  document.getElementById('guestBetLoginBtn')?.addEventListener('click', () => {
+    closeGuestBetModal();
+    switchAuthTab('login');
+    navigate('auth');
   });
 
   // ── PWA install ───────────────────────────────────────────
@@ -3754,11 +3819,9 @@ const loadAdminConfig = async () => {
     set('cfg_api_football_key',          'api_football_key');
     set('cfg_api_football_timezone',     'api_football_timezone');
     set('cfg_bonus_cadastro',            'bonus_cadastro');
-    set('cfg_valor_base_padrao',         'valor_base_padrao');
-    set('cfg_mult_min',                  'mult_min');
-    set('cfg_mult_max',                  'mult_max');
-    set('cfg_bet_percent',               'bet_percent');
-    set('cfg_max_aposta',                'max_aposta');
+    set('cfg_odd_padrao',                'odd_padrao');
+    set('cfg_stake_min',                 'stake_min');
+    set('cfg_stake_max',                 'stake_max');
     set('cfg_max_ganho',                 'max_ganho');
     set('cfg_saques_ativos',             'saques_ativos');
     set('cfg_mp_access_token',           'mp_access_token');
@@ -3826,11 +3889,9 @@ const submitAdminConfig = async (e) => {
       api_football_key:          get('cfg_api_football_key'),
       api_football_timezone:     get('cfg_api_football_timezone'),
       bonus_cadastro:            get('cfg_bonus_cadastro'),
-      valor_base_padrao:         get('cfg_valor_base_padrao'),
-      mult_min:                  get('cfg_mult_min'),
-      mult_max:                  get('cfg_mult_max'),
-      bet_percent:               get('cfg_bet_percent'),
-      max_aposta:                get('cfg_max_aposta'),
+      odd_padrao:                get('cfg_odd_padrao'),
+      stake_min:                 get('cfg_stake_min'),
+      stake_max:                 get('cfg_stake_max'),
       max_ganho:                 get('cfg_max_ganho'),
       saques_ativos:             get('cfg_saques_ativos'),
       gateway_ativo:             get('cfg_gateway_ativo'),
@@ -4075,11 +4136,9 @@ const updateMetaTags = (title, description) => {
 const loadBetConfig = async () => {
   try {
     const cfg = await api('/api/config/bets');
-    S.multMin    = cfg.mult_min    || 1;
-    S.multMax    = cfg.mult_max    || 100;
-    S.betPercent = cfg.bet_percent || 10;
-    if (S.multiplier < S.multMin) S.multiplier = S.multMin;
-    if (S.multiplier > S.multMax) S.multiplier = S.multMax;
+    S.stakeMin  = cfg.stake_min  || 5;
+    S.stakeMax  = cfg.stake_max  || 500;
+    S.oddPadrao = cfg.odd_padrao || 5;
     if (cfg.admin_email) S.adminEmail = cfg.admin_email;
     S.bonusCadastro = cfg.bonus_cadastro || 0;
     applyBrandLogo(cfg.site_logo || '');

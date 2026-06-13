@@ -30,10 +30,9 @@ class BetService
 
     /**
      * Cria uma aposta.
-     * possivel_ganho = valor_base × multiplicador
-     * valor_pago     = possivel_ganho × 10%  (aposta é sempre 10% do prêmio)
+     * possivel_ganho = valor_apostado × odd_do_jogo
      */
-    public function createBet(int $userId, int $jogoId, int $placarCasa, int $placarFora, int $multiplicador): array
+    public function createBet(int $userId, int $jogoId, int $placarCasa, int $placarFora, float $valor): array
     {
         $game = $this->games->find($jogoId);
         if (!$game) {
@@ -60,11 +59,13 @@ class BetService
             throw new InvalidArgumentException('Apostas só são permitidas até 7 dias antes do jogo');
         }
 
-        $multiplicador = max(1, min(1000, $multiplicador));
-        $valorBase     = (float) ($game['valor_base'] ?? 1.00);
-        $betPercent    = (float) $this->configRepo->get('bet_percent', 10) / 100;
-        $possivelGanho = round($valorBase * $multiplicador, 2);
-        $valor         = round($possivelGanho * $betPercent, 2);
+        $stakeMin      = (float) $this->configRepo->get('stake_min',   5.00);
+        $stakeMax      = (float) $this->configRepo->get('stake_max',   500.00);
+        $oddPadrao     = (float) $this->configRepo->get('odd_padrao',  5.00);
+        $valor         = round(max($stakeMin, min($stakeMax, $valor)), 2);
+        $gameOdd       = (float) ($game['odd'] ?? 0);
+        $odd           = $gameOdd > 1 ? $gameOdd : max(1.00, $oddPadrao);
+        $possivelGanho = round($valor * $odd, 2);
 
         if ($valor <= 0 || $valor > $this->config['limits']['max_bet_value']) {
             throw new InvalidArgumentException('Valor da aposta fora do limite permitido');
@@ -74,24 +75,24 @@ class BetService
         }
 
         $id = $this->bets->create([
-            'user_id'       => $userId,
-            'jogo_id'       => $jogoId,
-            'placar_casa'   => $placarCasa,
-            'placar_fora'   => $placarFora,
-            'valor'         => $valor,
-            'odd'           => $multiplicador, // armazena o multiplicador escolhido
+            'user_id'        => $userId,
+            'jogo_id'        => $jogoId,
+            'placar_casa'    => $placarCasa,
+            'placar_fora'    => $placarFora,
+            'valor'          => $valor,
+            'odd'            => $odd,
             'possivel_ganho' => $possivelGanho,
-            'status'        => 'pendente',
+            'status'         => 'pendente',
         ]);
 
-        Logger::info('Aposta criada', ['bet_id' => $id, 'user_id' => $userId, 'game_id' => $jogoId, 'mult' => $multiplicador]);
+        Logger::info('Aposta criada', ['bet_id' => $id, 'user_id' => $userId, 'game_id' => $jogoId, 'valor' => $valor, 'odd' => $odd]);
         return [
-            'id'            => $id,
-            'jogo_id'       => $jogoId,
-            'placar_casa'   => $placarCasa,
-            'placar_fora'   => $placarFora,
-            'valor'         => $valor,
-            'multiplicador'  => $multiplicador,
+            'id'             => $id,
+            'jogo_id'        => $jogoId,
+            'placar_casa'    => $placarCasa,
+            'placar_fora'    => $placarFora,
+            'valor'          => $valor,
+            'odd'            => $odd,
             'possivel_ganho' => $possivelGanho,
             'status'         => 'pendente',
             'criado_em'      => date('Y-m-d H:i:s'),

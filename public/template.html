@@ -489,12 +489,8 @@
                 </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label>Valor base (R$)</label>
-                    <input id="adminValorBase" type="number" min="0.5" max="50" step="0.5" value="1.00" required />
-                  </div>
-                  <div class="form-group">
-                    <label>Multiplicador</label>
-                    <input id="adminCreateOdd" type="number" min="1" step="0.01" value="1.00" required />
+                    <label>Multiplicador de ganho <small style="color:var(--text-muted)">(ex: 5 = aposta R$50 → ganha R$250)</small></label>
+                    <input id="adminCreateOdd" type="number" min="1" step="0.01" value="5.00" required />
                   </div>
                 </div>
 
@@ -843,29 +839,22 @@
                     <h3 class="panel__title"><i class="fa-solid fa-dice"></i> Apostas</h3>
                     <div class="form-group">
                       <label>Bônus de cadastro (R$)</label>
-                      <input id="cfg_bonus_cadastro" type="number" min="0" step="0.50" placeholder="100.00" />
+                      <input id="cfg_bonus_cadastro" type="number" min="0" step="0.50" placeholder="0.00" />
                     </div>
                     <div class="form-group">
-                      <label>Valor base padrão por palpite (R$)</label>
-                      <input id="cfg_valor_base_padrao" type="number" min="0.5" step="0.5" placeholder="1.00" />
+                      <label>Multiplicador padrão <small style="color:var(--text-muted)">(ex: 5 = aposta R$100 → ganha R$500)</small></label>
+                      <input id="cfg_odd_padrao" type="number" min="1" step="0.01" placeholder="5" />
+                      <p class="form-hint" style="margin-top:.4rem"><i class="fa-solid fa-circle-info"></i> Usado quando o jogo não tiver multiplicador próprio. Pode ser sobrescrito por jogo.</p>
                     </div>
                     <div class="form-row">
                       <div class="form-group">
-                        <label>Multiplicador mínimo</label>
-                        <input id="cfg_mult_min" type="number" min="1" max="1000" placeholder="1" />
+                        <label>Aposta mínima (R$)</label>
+                        <input id="cfg_stake_min" type="number" min="1" step="1" placeholder="5" />
                       </div>
                       <div class="form-group">
-                        <label>Multiplicador máximo</label>
-                        <input id="cfg_mult_max" type="number" min="2" max="1000" placeholder="100" />
+                        <label>Aposta máxima (R$)</label>
+                        <input id="cfg_stake_max" type="number" min="1" step="1" placeholder="500" />
                       </div>
-                    </div>
-                    <div class="form-group">
-                      <label>% do prêmio que o usuário paga <small style="color:var(--text-muted)">(ex: 10 = aposta R$10 para concorrer R$100)</small></label>
-                      <input id="cfg_bet_percent" type="number" min="1" max="99" step="1" placeholder="10" />
-                    </div>
-                    <div class="form-group">
-                      <label>Valor máximo por aposta (R$)</label>
-                      <input id="cfg_max_aposta" type="number" min="1" placeholder="500.00" />
                     </div>
                     <div class="form-group">
                       <label>Ganho máximo por aposta (R$)</label>
@@ -1422,10 +1411,16 @@
 
       <!-- Liga + data -->
       <div class="bm__meta">
-        <i class="fa-solid fa-trophy bm__meta-icon"></i>
-        <span class="bm__meta-league" id="betLeagueName">—</span>
-        <span class="bm__meta-sep">·</span>
-        <span class="bm__meta-date" id="betGameDate">—</span>
+        <div class="bm__meta-row1">
+          <i class="fa-solid fa-trophy bm__meta-icon"></i>
+          <span class="bm__meta-league" id="betLeagueName">—</span>
+          <span class="bm__meta-sep">·</span>
+          <span class="bm__meta-date" id="betGameDate">—</span>
+        </div>
+        <div class="bm__meta-row2" id="betCountdownRow">
+          <i class="fa-regular fa-clock"></i>
+          <span id="betGameCountdown">—</span>
+        </div>
       </div>
 
       <!-- Times -->
@@ -1459,29 +1454,28 @@
       <!-- Preview -->
       <div class="bm__preview" id="betPreviewScore">Brasil 0 × 0 Argentina</div>
 
-      <!-- Multiplicador -->
-      <div class="bm__mult">
-        <div class="bm__mult-header">
-          <span class="bm__mult-label">Multiplicador</span>
-          <span class="bm__mult-val" id="multiplierDisplay">5×</span>
+      <!-- Valor da aposta -->
+      <div class="bm__stake">
+        <div class="bm__stake-header">
+          <span class="bm__stake-label">Selecione o valor do seu palpite</span>
+          <span class="bm__stake-val" id="stakeDisplay">R$ 50,00</span>
         </div>
-        <input class="multiplier-slider" id="multiplierSlider" type="range" min="1" max="100" value="5" step="1" />
-        <div class="bm__mult-foot">
-          <span id="sliderLabelMin">1×</span>
-          <span class="bm__risk-tag" id="betRiskTag">Moderado</span>
-          <span id="sliderLabelMax">1000×</span>
+        <input class="stake-slider" id="stakeSlider" type="range" min="5" max="500" value="50" step="5" />
+        <div class="bm__stake-foot">
+          <span id="stakeLabelMin">R$ 5</span>
+          <span id="stakeLabelMax">R$ 500</span>
         </div>
       </div>
 
       <!-- Resumo -->
       <div class="bm__summary">
         <div class="bm__summary-pay">
-          <span id="betPayLabel">Você aposta (10% do prêmio)</span>
-          <span id="betPayAmount">R$ 5,00</span>
+          <span class="bm__summary-odd-label">Multiplicador do jogo</span>
+          <span class="bm__mult-badge" id="gameOddDisplay">5×</span>
         </div>
         <div class="bm__summary-prize">
-          <span class="bm__prize-label"><i class="fa-solid fa-trophy"></i> Você ganha</span>
-          <span class="bm__prize-amount" id="betWinAmount">R$ 25,00</span>
+          <span class="bm__prize-label"><i class="fa-solid fa-trophy"></i> Você pode ganhar</span>
+          <span class="bm__prize-amount" id="betWinAmount">R$ 250,00</span>
         </div>
       </div>
 
@@ -1520,31 +1514,30 @@
       <!-- Linhas de dados -->
       <div class="tk__body">
         <div class="tk__row">
-          <span class="tk__row-label">Mercado</span>
-          <span class="tk__row-val">Placar Exato</span>
-        </div>
-        <div class="tk__row">
           <span class="tk__row-label">Seu palpite</span>
           <span class="tk__row-val" id="ticketPalpite">—</span>
+        </div>
+        <div class="tk__row">
+          <span class="tk__row-label">Valor apostado</span>
+          <span class="tk__row-val" id="ticketValor">—</span>
         </div>
         <div class="tk__row">
           <span class="tk__row-label">Multiplicador</span>
           <span class="tk__row-val" id="ticketMult">—</span>
         </div>
-        <div class="tk__row">
+        <div class="tk__row tk__row--muted">
           <span class="tk__row-label">Apostado em</span>
           <span class="tk__row-val tk__row-val--muted" id="ticketRegistered">—</span>
-        </div>
-        <div class="tk__row">
-          <span class="tk__row-label">Você aposta</span>
-          <span class="tk__row-val" id="ticketValor">—</span>
         </div>
       </div>
 
       <!-- Prêmio em destaque -->
       <div class="tk__prize">
-        <span class="tk__prize-label"><i class="fa-solid fa-trophy"></i> Prêmio potencial</span>
-        <span class="tk__prize-amount" id="ticketPremio">—</span>
+        <div class="tk__prize-calc" id="ticketPrizeCalc">—</div>
+        <div class="tk__prize-row">
+          <span class="tk__prize-label"><i class="fa-solid fa-trophy"></i> Prêmio potencial</span>
+          <span class="tk__prize-amount" id="ticketPremio">—</span>
+        </div>
       </div>
 
       <!-- Separador estilo ticket -->
@@ -1804,41 +1797,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-  <!-- ╔══════════════════════════════════════════════════════════╗ -->
-  <!-- ║  Modal — Preview palpite (visitante)                    ║ -->
-  <!-- ╚══════════════════════════════════════════════════════════╝ -->
-  <div class="modal-overlay hidden" id="modalGuestBet" role="dialog" aria-modal="true">
-    <div class="modal-box guest-bet-modal">
-      <button class="modal-close" id="closeModalGuestBet" aria-label="Fechar">&times;</button>
-      <div class="guest-bet-header">
-        <i class="fa-solid fa-bullseye" style="color:var(--primary);font-size:1.6rem"></i>
-        <h3>Simule seu palpite</h3>
-        <p>Veja quanto você pode ganhar — crie sua conta e aposte de verdade!</p>
-      </div>
-      <div id="guestBetMatchup" class="guest-bet-matchup"></div>
-      <div class="guest-bet-sim">
-        <label class="form-label">Valor do palpite</label>
-        <div class="input-prefix-wrap">
-          <span class="input-prefix">R$</span>
-          <input type="number" id="guestBetValue" class="input input-prefix-input" min="1" value="50" step="1">
-        </div>
-        <div class="guest-bet-result">
-          <span>Você pode ganhar até</span>
-          <strong id="guestBetMax" class="guest-bet-max">—</strong>
-        </div>
-        <p class="guest-bet-mult-hint">Multiplicador de <span id="guestBetMultMin">1</span>× a <span id="guestBetMultMax">100</span>×</p>
-      </div>
-      <div class="guest-bet-ctas">
-        <button class="btn btn--primary btn--full btn--lg" id="guestBetRegisterBtn">
-          <i class="fa-solid fa-user-plus"></i>
-          <span id="guestBetRegisterLabel">Criar conta gratuita e apostar</span>
-        </button>
-        <button class="btn btn--ghost btn--full" id="guestBetLoginBtn">
-          <i class="fa-solid fa-right-to-bracket"></i> Já tenho conta — Entrar
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- ╔══════════════════════════════════════════════════════════╗ -->
   <!-- ║  Modal PIX — Pagamento de aposta                        ║ -->

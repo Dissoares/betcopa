@@ -3,9 +3,9 @@ return [
     'db' => [
         'driver'  => 'mysql',
         'host'    => '127.0.0.1',
-        'dbname'  => 'srawnhvz_placaronline',
-        'user'    => 'srawnhvz_placaronline',
-        'pass'    => '@Dantas22',
+        'dbname'  => 'betcopa',
+        'user'    => 'root',
+        'pass'    => '',
         'charset' => 'utf8mb4',
     ],
     'limits' => [

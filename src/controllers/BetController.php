@@ -26,10 +26,10 @@ class BetController
 
         $bet = $this->service->createBet(
             $userId,
-            (int) ($body['jogo_id']      ?? 0),
-            (int) ($body['placar_casa']  ?? 0),
-            (int) ($body['placar_fora']  ?? 0),
-            (int) ($body['multiplicador'] ?? 5)
+            (int)   ($body['jogo_id']     ?? 0),
+            (int)   ($body['placar_casa'] ?? 0),
+            (int)   ($body['placar_fora'] ?? 0),
+            (float) ($body['valor']       ?? 50.0)
         );
 
         jsonResponse(['aposta' => $bet], 201);

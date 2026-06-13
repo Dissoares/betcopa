@@ -97,9 +97,9 @@ class AdminController
     public function betConfig(): void
     {
         jsonResponse([
-            'mult_min'         => (int)   $this->config->get('mult_min',          1),
-            'mult_max'         => (int)   $this->config->get('mult_max',          100),
-            'bet_percent'      => (float) $this->config->get('bet_percent',        10),
+            'odd_padrao'       => (float) $this->config->get('odd_padrao',          5.00),
+            'stake_min'        => (float) $this->config->get('stake_min',          5.00),
+            'stake_max'        => (float) $this->config->get('stake_max',          500.00),
             'site_logo'        =>         $this->config->get('site_logo',          ''),
             'site_nome'        =>         $this->config->get('site_nome',          'BetCopa'),
             'site_title'       =>         $this->config->get('site_title',         'BetCopa | Acerte o Placar. Ganhe de Verdade.'),
@@ -121,7 +121,7 @@ class AdminController
             'api_football_key', 'api_football_timezone',
             'pix_tipo', 'pix_chave', 'pix_nome',
             'bonus_cadastro', 'valor_base_padrao',
-            'mult_min', 'mult_max', 'bet_percent',
+            'odd_padrao', 'stake_min', 'stake_max',
             'max_aposta', 'max_ganho',
             'gateway_ativo', 'mp_access_token', 'mp_webhook_secret',
             'expay_merchant_key',
