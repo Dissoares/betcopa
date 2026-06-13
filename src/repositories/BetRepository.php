@@ -62,7 +62,7 @@ class BetRepository
 
     public function listCompleted(): array
     {
-        $stmt = $this->db->query('SELECT a.*, u.nome, j.time_casa, j.time_fora, j.placar_real FROM apostas a JOIN users u ON a.user_id = u.id JOIN jogos j ON a.jogo_id = j.id WHERE j.status = "finalizado"');
+        $stmt = $this->db->query('SELECT a.*, u.nome, j.time_casa, j.time_fora, j.placar_real, j.bandeira_casa, j.bandeira_fora, j.logo_casa, j.logo_fora FROM apostas a JOIN users u ON a.user_id = u.id JOIN jogos j ON a.jogo_id = j.id WHERE j.status = "finalizado"');
         return $stmt->fetchAll();
     }
 

@@ -1394,11 +1394,12 @@ const closeShareModal = () => {
 
 const getShareText = (bet) => {
   const game  = S.games.find(g => g.id === bet?.jogo_id);
-  const match = bet ? `${bet.time_casa} × ${bet.time_fora}` : '';
+  const fH = game?.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
+  const fA = game?.bandeira_fora ? flagEmoji(game.bandeira_fora) + ' ' : '';
+  const match = bet ? `${fH}${bet.time_casa} × ${fA}${bet.time_fora}` : '';
   const score = bet ? `${bet.placar_casa}-${bet.placar_fora}` : '';
   const liga  = game?.liga_nome ? `${game.liga_nome} • ` : '';
-  const prize = bet ? fmtMoney(bet.possivel_ganho) : '';
-  return `🏆 Veja meu palpite no placar desse jogo! \n${liga}${match}\nPlacar: ${score}: https://placarjogos.online/`;
+  return `🏆 Veja meu palpite no placar desse jogo!\n${liga}${match}\nPlacar: ${score}: https://placarjogos.online/`;
 };
 
 const renderBets = () => {
@@ -1640,10 +1641,20 @@ const renderRanking = async () => {
 
   if (data.quase && data.quase.length) {
     nearEl.innerHTML = data.quase.map((r, i) => `
-      <div class="ranking-row">
+      <div class="ranking-row ranking-row--near">
         <span class="ranking-row__pos">${i + 1}</span>
-        <span class="ranking-row__name">${maskName(r.nome)}</span>
-        <span class="ranking-row__diff">${r.diferenca} gol(s)</span>
+        <div class="ranking-row__info">
+          <span class="ranking-row__name">${escHtml((() => { const n = r.nome_real || r.nome; return n.length <= 4 ? n : n.slice(0,3) + '*'.repeat(Math.max(1, n.length - 4)) + n.slice(-1); })())}</span>
+          ${(() => {
+              const IS = 'width:18px;height:18px;object-fit:contain;vertical-align:middle;border-radius:2px';
+              const imgH = r.logo_casa ? `<img src="${r.logo_casa}" style="${IS}" onerror="this.style.display='none'">` : r.bandeira_casa ? `<img src="${flagUrl(r.bandeira_casa)}" style="${IS}" onerror="this.style.display='none'">` : '';
+              const imgA = r.logo_fora  ? `<img src="${r.logo_fora}"  style="${IS}" onerror="this.style.display='none'">` : r.bandeira_fora ? `<img src="${flagUrl(r.bandeira_fora)}"  style="${IS}" onerror="this.style.display='none'">` : '';
+              const [tc, tf] = r.jogo.split(' x ');
+              return `<span class="ranking-row__palpite ranking-row__jogo">${imgH} ${tc} × ${imgA} ${tf}</span>
+                      <span class="ranking-row__palpite">Resultado: <strong style="color:var(--primary)">${(r.resultado||'').replace('x','×')}</strong> &nbsp;·&nbsp; Palpite: <strong style="color:var(--danger)">${r.aposta.replace('x','×')}</strong></span>`;
+            })()}
+        </div>
+        <span class="ranking-row__diff">${r.diferenca === 1 ? '1 gol' : r.diferenca + ' gols'} de diferença</span>
       </div>`).join('');
   } else {
     nearEl.innerHTML = '<p class="text--muted">Nenhum palpite registrado ainda.</p>';
@@ -3723,6 +3734,15 @@ const bind = () => {
   };
   document.getElementById('filterUser')?.addEventListener('input', applyUserFilter);
   document.getElementById('filterUserStatus')?.addEventListener('change', applyUserFilter);
+
+  // Hero CTA — rola para os jogos
+  document.getElementById('btnHeroCta')?.addEventListener('click', () => {
+    navigate('jogos');
+    setTimeout(() => {
+      const target = document.getElementById('leagueTabs') || document.getElementById('gamesGrid');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  });
 
   // Botão refresh dashboard
   document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);

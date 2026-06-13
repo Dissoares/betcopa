@@ -982,7 +982,18 @@ body.drawer-open { overflow: hidden; }
 .ranking-row__pos  { font-size: .78rem; font-weight: 800; color: var(--text-muted); width: 1.4rem; flex-shrink: 0; }
 .ranking-row__name { flex: 1; font-weight: 600; font-size: .9rem; }
 .ranking-row__val  { font-weight: 700; color: var(--primary); font-size: .9rem; }
-.ranking-row__diff { font-weight: 700; color: var(--text-dim); font-size: .85rem; }
+.ranking-row__diff    { font-weight: 700; color: var(--text-dim); font-size: .8rem; white-space: nowrap; flex-shrink: 0; }
+.ranking-row--near    { align-items: flex-start; }
+.ranking-row__info    { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
+.ranking-row__palpite { font-size: .75rem; color: var(--text-muted); line-height: 1.4; }
+.ranking-row__jogo    { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+@media (max-width: 540px) {
+  .ranking-row--near { flex-wrap: wrap; }
+  .ranking-row--near .ranking-row__diff {
+    width: 100%; margin-left: 1.6rem;
+    font-size: .73rem; margin-top: .1rem;
+  }
+}
 
 
 /* ============================================================
