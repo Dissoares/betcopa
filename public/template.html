@@ -1448,31 +1448,28 @@
         </div>
       </div>
 
-      <!-- Times + Scoreboard integrado -->
+      <!-- Times + Scoreboard -->
       <div class="bm__matchup">
         <div class="bm__team">
           <span class="bet-team__flag" id="betFlagHome"></span>
           <span class="bm__team-name" id="betNameHome"></span>
-        </div>
-        <div class="bm__score-group">
-          <button class="score-btn" data-score="home" data-dir="-1">−</button>
-          <div class="bm__score-box"><span class="score-value" id="scoreHome">0</span></div>
-          <button class="score-btn" data-score="home" data-dir="1">+</button>
+          <div class="bm__score-group">
+            <button class="score-btn" data-score="home" data-dir="-1">−</button>
+            <div class="bm__score-box"><span class="score-value" id="scoreHome">0</span></div>
+            <button class="score-btn" data-score="home" data-dir="1">+</button>
+          </div>
         </div>
         <span class="bm__vs">×</span>
-        <div class="bm__score-group">
-          <button class="score-btn" data-score="away" data-dir="-1">−</button>
-          <div class="bm__score-box"><span class="score-value" id="scoreAway">0</span></div>
-          <button class="score-btn" data-score="away" data-dir="1">+</button>
-        </div>
         <div class="bm__team">
           <span class="bet-team__flag" id="betFlagAway"></span>
           <span class="bm__team-name" id="betNameAway"></span>
+          <div class="bm__score-group">
+            <button class="score-btn" data-score="away" data-dir="-1">−</button>
+            <div class="bm__score-box"><span class="score-value" id="scoreAway">0</span></div>
+            <button class="score-btn" data-score="away" data-dir="1">+</button>
+          </div>
         </div>
       </div>
-
-      <!-- Preview -->
-      <div class="bm__preview" id="betPreviewScore">Brasil 0 × 0 Argentina</div>
 
       <!-- Valor da aposta -->
       <div class="bm__stake">
@@ -1494,10 +1491,11 @@
           <span class="bm__mult-badge" id="gameOddDisplay">5×</span>
         </div>
         <div class="bm__summary-prize">
-          <span class="bm__prize-label"><i class="fa-solid fa-trophy"></i> Você pode ganhar</span>
+          <span class="bm__prize-label"><i class="fa-solid fa-trophy"></i> Valor do resultado</span>
           <span class="bm__prize-amount" id="betWinAmount">R$ 250,00</span>
         </div>
       </div>
+      <p class="bm__prize-hint hidden" id="betPrizeHint"></p>
 
       <button class="btn btn--primary btn--full btn--large" id="btnConfirmBet">
         Confirmar Palpite →

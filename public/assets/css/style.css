@@ -1234,11 +1234,11 @@ select {
 /* Times */
 .bm__matchup {
   display: flex; align-items: center; justify-content: center;
-  gap: .6rem; margin-bottom: 1rem;
+  gap: .5rem; margin-bottom: 1rem; width: 100%;
 }
 .bm__team {
   display: flex; flex-direction: column; align-items: center;
-  gap: .4rem; text-align: center;
+  gap: .35rem; flex: 1; min-width: 0; text-align: center;
 }
 .bm__team .bet-team__flag {
   display: flex; align-items: center; justify-content: center;
@@ -1259,8 +1259,9 @@ select {
   max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .bm__vs {
-  font-size: 1.1rem; font-weight: 900;
-  color: var(--text-muted); padding: 0 .15rem;
+  font-size: 2rem; font-weight: 900;
+  color: var(--text-muted); padding: 0 .25rem;
+  align-self: flex-start; margin-top: .6rem;
 }
 
 /* Scoreboard */
@@ -1367,8 +1368,8 @@ select {
   border-bottom: none; border-radius: var(--radius) var(--radius) 0 0;
 }
 .bm__summary-prize {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: .9rem 1rem;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  padding: .75rem 1rem .6rem;
   background: rgba(0,200,83,.07);
   border: 1px solid rgba(0,200,83,.2);
   border-radius: 0 0 var(--radius) var(--radius);
@@ -1382,6 +1383,10 @@ select {
   font-size: 1.55rem; font-weight: 900; color: var(--primary);
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 20px rgba(0,200,83,.4);
+}
+.bm__prize-hint {
+  font-size: .75rem; color: var(--text-muted);
+  text-align: center; margin: .5rem 0 .25rem; line-height: 1.5;
 }
 
 /* Ticket (legacy — mantido para compatibilidade) */

@@ -1750,10 +1750,16 @@ const updateBetPreview = () => {
 
   document.getElementById('stakeDisplay').textContent    = fmtMoney(S.stake);
   document.getElementById('betWinAmount').textContent    = fmtMoney(premio);
-  const scoreStr = S.scoreHome === null || S.scoreAway === null
-    ? `${game.time_casa} ? × ? ${game.time_fora}`
-    : `${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}`;
-  document.getElementById('betPreviewScore').textContent = scoreStr;
+  const hintEl = document.getElementById('betPrizeHint');
+  if (hintEl) {
+    if (S.scoreHome === null || S.scoreAway === null) {
+      hintEl.classList.add('hidden');
+      hintEl.textContent = '';
+    } else {
+      hintEl.classList.remove('hidden');
+      hintEl.textContent = `Seu palpite é ${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}, você ganhará ${fmtMoney(premio)} se acertar o placar exato.`;
+    }
+  }
 
   const slider = document.getElementById('stakeSlider');
   if (slider) {
