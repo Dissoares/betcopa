@@ -319,8 +319,9 @@ const navigate = (view) => {
   // Páginas legais sempre abrem do topo
   if (LEGAL_VIEWS.includes(view)) window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Suporte: carrega tickets do usuário
-  if (view === 'suporte' && S.user) {
+  // Suporte: exige login
+  if (view === 'suporte') {
+    if (!S.user) { navigate('auth'); return; }
     stopTicketPoll();
     _activeTicketId = null;
     loadUserTickets();
@@ -353,6 +354,7 @@ const renderDrawer = () => {
         <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
+        <button class="dr-item" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
       </div>
       ${isAdmin ? `
       <div class="dr-sep"></div>
@@ -383,6 +385,7 @@ const renderDrawer = () => {
         <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
         <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
+        <button class="dr-item" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
       </div>
       <div class="dr-sep"></div>
       <button class="btn btn--primary btn--full" data-nav="auth">
