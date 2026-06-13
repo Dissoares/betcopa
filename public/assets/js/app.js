@@ -1123,12 +1123,13 @@ const betTimeline = (status) => {
   const STEPS = [
     { key: 'pendente',  label: 'Aguardando' },
     { key: 'pago',      label: 'Pago' },
-    { key: 'confirmado',label: 'Confirmado' },
+    { key: 'confirmado',label: 'Concorrendo' },
     { key: 'resultado', label: status === 'ganhou' ? '<span style="color:var(--primary)">Ganhou!</span>' : status === 'perdido' ? '<span style="color:var(--danger)">Perdeu</span>' : 'Resultado' },
   ];
   const ORDER = ['pendente', 'pago', 'confirmado'];
   const done  = status === 'ganhou' || status === 'perdido';
-  const idx   = done ? 3 : ORDER.indexOf(status);
+  // confirmado: todos os passos anteriores ficam verdes (idx=3 cobre os 3 primeiros)
+  const idx   = done ? 3 : status === 'confirmado' ? 3 : ORDER.indexOf(status);
 
   return `<div class="bet-status-steps">${STEPS.map((step, i) => {
     const state = i < idx ? 'done' : i === idx ? 'active' : '';
@@ -1394,7 +1395,7 @@ const getShareText = (bet) => {
   const score = bet ? `${bet.placar_casa}-${bet.placar_fora}` : '';
   const liga  = game?.liga_nome ? `${game.liga_nome} • ` : '';
   const prize = bet ? fmtMoney(bet.possivel_ganho) : '';
-  return `🏆 Fiz meu palpite no BetCopa!\n${liga}${match}\nPlacar: ${score} • Prêmio potencial: ${prize}\n\nAcesse: https://betcopa.com`;
+  return `🏆 Veja meu palpite no placar desse jogo! \n${liga}${match}\nPlacar: ${score}: https://placarjogos.online/`;
 };
 
 const renderBets = () => {
@@ -1430,7 +1431,12 @@ const renderBets = () => {
     const actionHtml = b.status === 'pendente'
       ? `<button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}"><i class="fa-solid fa-credit-card"></i> Pagar PIX</button>`
       : b.status === 'pago'
-      ? `<button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-check"></i> Confirmar</button>`
+      ? `<div class="bet-verify-wrap">
+           <span class="bet-verify-hint"><i class="fa-solid fa-circle-info"></i> Pague o PIX e clique para confirmar</span>
+           <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-rotate"></i> Verificar PIX</button>
+         </div>`
+      : b.status === 'confirmado'
+      ? `<span class="badge badge--confirmed"><i class="fa-solid fa-futbol"></i> Concorrendo</span>`
       : isWin
       ? `<span class="badge badge--open"><i class="fa-solid fa-trophy"></i> Ganhou!</span>`
       : isLoss
@@ -2790,6 +2796,25 @@ const loadBets = async (page = _betsPage) => {
         showResultado(b, b.status === 'ganhou');
       }
     });
+
+    // Auto-verifica apostas em status 'pago' — confirma silenciosamente se PIX já foi pago
+    const pagoBets = S.bets.filter(b => b.status === 'pago');
+    if (pagoBets.length) {
+      let anyConfirmed = false;
+      await Promise.allSettled(pagoBets.map(async b => {
+        try {
+          await api(`/api/apostas/${b.id}/confirmar`, 'POST', {});
+          anyConfirmed = true;
+        } catch { /* pagamento ainda pendente — silencioso */ }
+      }));
+      if (anyConfirmed) {
+        const r2  = await api(`/api/apostas?page=${page}&limit=${BETS_LIMIT}`);
+        S.bets    = r2.apostas;
+        _betsTotal = r2.total ?? 0;
+        toast('Pagamento confirmado! Você está concorrendo.', 'success');
+        await loadUser();
+      }
+    }
   } catch {
     S.bets = []; _betsTotal = 0;
   }
