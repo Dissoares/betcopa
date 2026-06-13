@@ -1494,8 +1494,8 @@
       <!-- Header: jogo em destaque -->
       <div class="tk__header">
         <div class="tk__header-top">
-          <span class="tk__label"><i class="fa-solid fa-ticket"></i> Ticket de Aposta</span>
-          <span class="tk__id" id="ticketId">#000000</span>
+          <span class="tk__label"><i class="fa-solid fa-circle-check"></i> Confirmação de Palpite</span>
+          <span class="tk__id" id="ticketId"></span>
         </div>
         <div class="tk__game" id="ticketGame">—</div>
         <div class="tk__meta">
@@ -1505,25 +1505,36 @@
         </div>
       </div>
 
-      <!-- Status banner -->
-      <div class="tk__status" id="ticketStatus">
-        <span class="tk__status-icon" id="ticketStatusIcon"></span>
-        <span class="tk__status-text" id="ticketStatusText">—</span>
+      <!-- Matchup: bandeiras com nomes ao lado e palpite no centro -->
+      <div class="tk__matchup">
+        <div class="tk__tm">
+          <div class="tk__tm-flag" id="ticketFlagCasa"></div>
+          <span class="tk__tm-name" id="ticketTimeCasa">—</span>
+        </div>
+        <div class="tk__score-box">
+          <span class="tk__score-val" id="ticketScoreCasa">—</span>
+          <span class="tk__score-sep">×</span>
+          <span class="tk__score-val" id="ticketScoreFora">—</span>
+        </div>
+        <div class="tk__tm tk__tm--rev">
+          <div class="tk__tm-flag" id="ticketFlagFora"></div>
+          <span class="tk__tm-name" id="ticketTimeFora">—</span>
+        </div>
       </div>
 
-      <!-- Linhas de dados -->
+      <!-- Recibo -->
       <div class="tk__body">
         <div class="tk__row">
-          <span class="tk__row-label">Seu palpite</span>
-          <span class="tk__row-val" id="ticketPalpite">—</span>
+          <span class="tk__row-label">Data do Jogo</span>
+          <span class="tk__row-val" id="ticketDateTime">—</span>
         </div>
         <div class="tk__row">
-          <span class="tk__row-label">Valor apostado</span>
-          <span class="tk__row-val" id="ticketValor">—</span>
-        </div>
-        <div class="tk__row">
-          <span class="tk__row-label">Multiplicador</span>
+          <span class="tk__row-label">Multiplicador de prêmio</span>
           <span class="tk__row-val" id="ticketMult">—</span>
+        </div>
+        <div class="tk__row">
+          <span class="tk__row-label">Prêmio por acerto</span>
+          <span class="tk__row-val" id="ticketPremio">—</span>
         </div>
         <div class="tk__row tk__row--muted">
           <span class="tk__row-label">Apostado em</span>
@@ -1531,21 +1542,55 @@
         </div>
       </div>
 
-      <!-- Prêmio em destaque -->
-      <div class="tk__prize">
-        <div class="tk__prize-calc" id="ticketPrizeCalc">—</div>
-        <div class="tk__prize-row">
-          <span class="tk__prize-label"><i class="fa-solid fa-trophy"></i> Prêmio potencial</span>
-          <span class="tk__prize-amount" id="ticketPremio">—</span>
-        </div>
-      </div>
-
       <!-- Separador estilo ticket -->
       <div class="tk__perf"></div>
 
+      <!-- Valor do palpite em destaque -->
+      <div class="tk__stake-bar">
+        <span class="tk__stake-bar-label">Valor do palpite</span>
+        <span class="tk__stake-bar-amount" id="ticketValor">—</span>
+      </div>
+
       <div class="tk__footer">
         <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay">
-          <i class="fa-solid fa-qrcode"></i> Pagar via PIX
+          Confirmar <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: OPÇÕES DE PAGAMENTO ===== -->
+  <div class="modal hidden" id="modalPaymentOpts">
+    <div class="modal__backdrop" data-close="modalPaymentOpts"></div>
+    <div class="modal__box pay-opts">
+      <button class="modal__close" data-close="modalPaymentOpts">×</button>
+
+      <div class="pay-opts__header">
+        <h3 class="pay-opts__title"><i class="fa-solid fa-lock"></i> Finalizar pagamento</h3>
+        <div class="pay-opts__amount-row">
+          <span>Total a pagar</span>
+          <strong id="payOptsAmount">R$ 0,00</strong>
+        </div>
+      </div>
+
+      <p class="pay-opts__section-label">Forma de pagamento</p>
+
+      <div class="pay-opts__methods">
+        <button class="pay-opt-card pay-opt-card--active" data-method="pix" id="payOptPix">
+          <i class="fa-brands fa-pix pay-opt-card__icon"></i>
+          <span class="pay-opt-card__name">PIX</span>
+          <span class="pay-opt-card__sub">Aprovação imediata</span>
+        </button>
+        <button class="pay-opt-card pay-opt-card--soon" disabled>
+          <i class="fa-solid fa-credit-card pay-opt-card__icon"></i>
+          <span class="pay-opt-card__name">Cartão</span>
+          <span class="pay-opt-card__sub">Em breve</span>
+        </button>
+      </div>
+
+      <div class="pay-opts__footer">
+        <button class="btn btn--primary btn--full btn--large" id="btnFinalizePayment">
+          <i class="fa-brands fa-pix"></i> Pagar com PIX
         </button>
       </div>
     </div>

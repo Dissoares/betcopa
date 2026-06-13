@@ -600,8 +600,9 @@ const renderCard = (g) => {
     ? '<i class="fa-solid fa-calendar-xmark"></i> Apostas em breve'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
+  const ctaOdd = g.odd > 1 ? g.odd : S.oddPadrao;
   const ctaHtml = !isClosed
-    ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte e ganhe de <strong>${S.multMin}×</strong> a <strong>${S.multMax}×</strong> o valor!</p>`
+    ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte o placar e ganhe <strong>${ctaOdd}×</strong> vezes o seu palpite!</p>`
     : '';
 
   const urgencyHtml = isSoon
@@ -1764,40 +1765,57 @@ const fillTicket = (bet) => {
     ? 'Pré-visualização' : `#${String(bet.id).padStart(6, '0')}`;
 
   // Jogo
-  document.getElementById('ticketGame').textContent    = game ? `${game.time_casa} × ${game.time_fora}` : '—';
-  document.getElementById('ticketPalpite').textContent = `${bet.placar_casa} × ${bet.placar_fora}`;
-  document.getElementById('ticketMult').textContent    = oddFmt;
-  document.getElementById('ticketValor').textContent   = fmtMoney(bet.valor);
-  document.getElementById('ticketPremio').textContent  = fmtMoney(bet.possivel_ganho);
+  const gameLabel = game ? `${game.time_casa} × ${game.time_fora}` : '—';
+  document.getElementById('ticketGame').textContent  = gameLabel;
+  document.getElementById('ticketMult').textContent  = oddFmt;
+  document.getElementById('ticketValor').textContent = fmtMoney(bet.valor);
+  document.getElementById('ticketPremio').textContent = fmtMoney(bet.possivel_ganho);
 
-  // Fórmula de cálculo
-  const calcEl = document.getElementById('ticketPrizeCalc');
-  if (calcEl) {
-    calcEl.textContent = oddRaw > 0
-      ? `${fmtMoney(bet.valor)} × ${oddFmt} = ${fmtMoney(bet.possivel_ganho)}`
-      : '';
+  // Matchup visual com bandeiras e placar apostado
+  const flagCasaEl  = document.getElementById('ticketFlagCasa');
+  const flagForaEl  = document.getElementById('ticketFlagFora');
+  const timeCasaEl  = document.getElementById('ticketTimeCasa');
+  const timeForaEl  = document.getElementById('ticketTimeFora');
+  const scoreCasaEl = document.getElementById('ticketScoreCasa');
+  const scoreForaEl = document.getElementById('ticketScoreFora');
+  if (game) {
+    const fH = game.logo_casa
+      ? `<img src="${game.logo_casa}" alt="${game.time_casa}">`
+      : `<span>${flagEmoji(game.bandeira_casa || '')}</span>`;
+    const fA = game.logo_fora
+      ? `<img src="${game.logo_fora}" alt="${game.time_fora}">`
+      : `<span>${flagEmoji(game.bandeira_fora || '')}</span>`;
+    if (flagCasaEl) flagCasaEl.innerHTML = fH;
+    if (flagForaEl) flagForaEl.innerHTML = fA;
+    if (timeCasaEl) timeCasaEl.textContent = game.time_casa;
+    if (timeForaEl) timeForaEl.textContent = game.time_fora;
   }
+  if (scoreCasaEl) scoreCasaEl.textContent = bet.placar_casa ?? '—';
+  if (scoreForaEl) scoreForaEl.textContent = bet.placar_fora ?? '—';
 
   // Liga + data do jogo
   const lgEl = document.getElementById('ticketLeague');
   const dtEl = document.getElementById('ticketDate');
   if (lgEl) lgEl.textContent = game ? (leagueShortName(game.liga_nome || '') || game.liga_nome || '—') : '—';
-  if (dtEl && game) {
+  let gameDateStr = '—';
+  if (game) {
     const d = new Date(game.data_hora);
-    dtEl.textContent = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-      + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    gameDateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (dtEl) dtEl.textContent = gameDateStr;
   }
+  const dtRowEl = document.getElementById('ticketDateTime');
+  if (dtRowEl) dtRowEl.textContent = gameDateStr;
 
-  // Timestamp de registro
+  // Timestamp de registro — só exibe após pagamento
   const regEl = document.getElementById('ticketRegistered');
-  if (regEl) {
-    if (isGuest) {
-      regEl.textContent = '—';
-    } else {
-      const ts = bet.criado_em ? new Date(bet.criado_em) : new Date();
-      regEl.textContent = ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-        + ' às ' + ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
+  const regRow = regEl?.closest('.tk__row');
+  const showReg = ['pago','confirmado','ganhou','perdido'].includes(status);
+  if (regRow) regRow.style.display = showReg ? '' : 'none';
+  if (regEl && showReg && !isGuest) {
+    const ts = bet.criado_em ? new Date(bet.criado_em) : new Date();
+    regEl.textContent = ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      + ' às ' + ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
   // Status banner
@@ -1817,8 +1835,8 @@ const fillTicket = (bet) => {
     const paid = ['pago','confirmado','ganhou','perdido'].includes(status);
     payBtn.style.display = paid ? 'none' : '';
     payBtn.innerHTML = isGuest
-      ? '<i class="fa-solid fa-lock"></i> Entrar para Pagar via PIX'
-      : '<i class="fa-solid fa-qrcode"></i> Pagar via PIX';
+      ? '<i class="fa-solid fa-lock"></i> Entrar para confirmar'
+      : 'Confirmar e pagar <i class="fa-solid fa-arrow-right"></i>';
   }
 };
 
@@ -1907,26 +1925,33 @@ const closePixModal = () => {
   document.getElementById('modalPixOverlay').classList.add('hidden');
 };
 
-const simulatePay = async () => {
+const simulatePay = () => {
   if (!S.user) {
     closeModal('modalTicket');
-    showAlert('Entre ou cadastre-se para pagar — seu palpite será retomado!', 'info');
+    showAlert('Entre ou cadastre-se para continuar — seu palpite será retomado!', 'info');
     navigate('auth');
     return;
   }
+  // Abre seleção de método de pagamento
+  const amountEl = document.getElementById('payOptsAmount');
+  if (amountEl) amountEl.textContent = fmtMoney(S.selectedBet?.valor ?? 0);
+  closeModal('modalTicket');
+  openModal('modalPaymentOpts');
+};
 
-  const btn = document.getElementById('btnSimulatePay');
-  btn.disabled = true; btn.textContent = 'Processando PIX...';
+const confirmPixPayment = async () => {
+  const btn = document.getElementById('btnFinalizePayment');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
     const data = await api(`/api/apostas/${S.selectedBet.id}/pagar`, 'POST', {});
     S.selectedBet.valor = S.selectedBet.valor || data.valor;
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> PIX gerado!';
-    closeModal('modalTicket');
+    closeModal('modalPaymentOpts');
     openPixModal(data);
     await loadBets();
   } catch (err) {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
-    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pagar via PIX';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com PIX';
   }
 };
 
@@ -3127,7 +3152,12 @@ const bind = () => {
     const { action, id } = btn.dataset;
     if (action === 'bet')   openBetModal(id);
     if (action === 'share') openShareModal(id);
-    if (action === 'pay')     { S.selectedBet = { id: Number(id) }; openModal('modalTicket'); }
+    if (action === 'pay') {
+      const betId = Number(id);
+      const betData = S.bets?.find(b => b.id === betId);
+      S.selectedBet = { id: betId, valor: betData?.valor };
+      openModal('modalTicket');
+    }
     if (action === 'confirm') {
       const betId = Number(id);
       api(`/api/apostas/${betId}/confirmar`, 'POST', {})
@@ -3211,6 +3241,7 @@ const bind = () => {
 
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
+  document.getElementById('btnFinalizePayment')?.addEventListener('click', confirmPixPayment);
 
   // PIX modal
   document.getElementById('btnPixClose')?.addEventListener('click', closePixModal);
@@ -4067,15 +4098,10 @@ const openGuestBetModal = (gameId) => {
     </div>
     <time class="guest-bet-date">${fmtGameDate(g.data_hora)}</time>`;
 
-  const minEl = document.getElementById('guestBetMultMin');
-  const maxEl = document.getElementById('guestBetMultMax');
-  if (minEl) minEl.textContent = S.multMin + '×';
-  if (maxEl) maxEl.textContent = S.multMax + '×';
-
   const updateMax = () => {
     const val = parseFloat(document.getElementById('guestBetValue')?.value) || 0;
     const el  = document.getElementById('guestBetMax');
-    if (el) el.textContent = fmtMoney(val * S.multMax);
+    if (el) el.textContent = fmtMoney(val * S.oddPadrao);
   };
   const input = document.getElementById('guestBetValue');
   if (input) { input.value = 50; input.oninput = updateMax; }
