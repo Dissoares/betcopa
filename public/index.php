@@ -167,6 +167,7 @@ try {
         route('/api/admin/config',       'POST', fn() => $adminCtrl->updateConfig());
         route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
         route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
+        route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
         // ── Admin: Saques ──────────────────────────────────────────────────
         route('/api/admin/saques', 'GET', fn() => $adminCtrl->listWithdrawals());
         routePattern('/^\/api\/admin\/saques\/(\d+)\/aprovar$/', 'POST',  fn(int $id) => $withdrawCtrl->approve($id));
@@ -213,7 +214,11 @@ try {
         jsonResponse(['error' => 'Rota não encontrada'], 404);
     }
 
-    echo file_get_contents(__DIR__ . '/../public/template.html');
+    $db  = Database::connection();
+    $ver = (new ConfigRepository($db))->get('cache_version', '1');
+    $html = file_get_contents(__DIR__ . '/../public/template.html');
+    $html = preg_replace('/(\?v=)\d+/', '$1' . $ver, $html);
+    echo $html;
 
 } catch (Throwable $e) {
     Logger::error($e->getMessage(), ['trace' => $e->getTraceAsString()]);

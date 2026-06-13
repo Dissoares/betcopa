@@ -233,4 +233,14 @@ class AdminController
         $this->config->set('site_logo', '');
         jsonResponse(['message' => 'Logo removido.']);
     }
+
+    public function clearCache(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        $next = (int) $this->config->get('cache_version', '1') + 1;
+        $this->config->set('cache_version', (string) $next);
+        Logger::info('Cache limpo', ['version' => $next]);
+        jsonResponse(['message' => 'Cache limpo com sucesso.', 'version' => $next]);
+    }
 }

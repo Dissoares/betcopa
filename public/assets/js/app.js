@@ -1766,8 +1766,8 @@ const updateBetPreview = () => {
 const submitBet = async () => {
   if (S.scoreHome === null || S.scoreAway === null) {
     toast('Selecione o placar antes de confirmar o palpite.', 'danger');
-    document.querySelector('.bm__scoreboard')?.classList.add('bm__scoreboard--shake');
-    setTimeout(() => document.querySelector('.bm__scoreboard')?.classList.remove('bm__scoreboard--shake'), 600);
+    document.querySelector('.bm__matchup')?.classList.add('bm__scoreboard--shake');
+    setTimeout(() => document.querySelector('.bm__matchup')?.classList.remove('bm__scoreboard--shake'), 600);
     return;
   }
   if (!S.user) {
@@ -3724,6 +3724,27 @@ const bind = () => {
   // Import / Sync (botões dentro da aba Jogos)
   document.getElementById('btnImport')?.addEventListener('click', importFromApi);
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
+
+  // Limpar cache
+  document.getElementById('btnClearCache')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnClearCache');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Limpando...';
+    try {
+      const r = await api('/api/admin/cache/clear', 'POST', {});
+      toast(`Cache limpo! Versão ${r.version} — visitantes receberão os arquivos atualizados.`, 'success');
+      // Limpa SW cache local do navegador admin também
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+    } catch (err) {
+      toast(err.message || 'Erro ao limpar cache.', 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Limpar Cache';
+    }
+  });
 };
 
 // ── Admin helpers ─────────────────────────────────────────────

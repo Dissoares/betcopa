@@ -663,8 +663,13 @@
         <!-- ── ABA: CONFIGURAÇÕES ── -->
         <div class="admin-tab hidden" id="atab-config">
           <div class="admin-page-header">
-            <h2 class="admin-page-header__title"><i class="fa-solid fa-gear"></i> Configurações</h2>
-            <p class="admin-page-header__sub">Ajuste os parâmetros e integrações da plataforma</p>
+            <div>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-gear"></i> Configurações</h2>
+              <p class="admin-page-header__sub">Ajuste os parâmetros e integrações da plataforma</p>
+            </div>
+            <button type="button" id="btnClearCache" class="btn btn--ghost btn--sm">
+              <i class="fa-solid fa-rotate"></i> Limpar Cache
+            </button>
           </div>
           <div class="config-tabs" id="configTabs">
             <button type="button" class="config-tab config-tab--active" data-config-tab="system">Sistema</button>
@@ -1443,31 +1448,26 @@
         </div>
       </div>
 
-      <!-- Times -->
+      <!-- Times + Scoreboard integrado -->
       <div class="bm__matchup">
         <div class="bm__team">
           <span class="bet-team__flag" id="betFlagHome"></span>
           <span class="bm__team-name" id="betNameHome"></span>
         </div>
-        <span class="bm__vs">VS</span>
-        <div class="bm__team">
-          <span class="bet-team__flag" id="betFlagAway"></span>
-          <span class="bm__team-name" id="betNameAway"></span>
-        </div>
-      </div>
-
-      <!-- Scoreboard -->
-      <div class="bm__scoreboard">
         <div class="bm__score-group">
           <button class="score-btn" data-score="home" data-dir="-1">−</button>
           <div class="bm__score-box"><span class="score-value" id="scoreHome">0</span></div>
           <button class="score-btn" data-score="home" data-dir="1">+</button>
         </div>
-        <span class="bm__score-x">×</span>
+        <span class="bm__vs">×</span>
         <div class="bm__score-group">
           <button class="score-btn" data-score="away" data-dir="-1">−</button>
           <div class="bm__score-box"><span class="score-value" id="scoreAway">0</span></div>
           <button class="score-btn" data-score="away" data-dir="1">+</button>
+        </div>
+        <div class="bm__team">
+          <span class="bet-team__flag" id="betFlagAway"></span>
+          <span class="bm__team-name" id="betNameAway"></span>
         </div>
       </div>
 
@@ -1817,7 +1817,7 @@
     </div>
 
     <!-- ⑤ Faixa jogo responsável -->
-    <div class="site-footer__responsible">
+    <!-- <div class="site-footer__responsible">
       <div class="container site-footer__responsible-inner">
         <div class="ft-responsible__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div class="ft-responsible__text">
@@ -1829,7 +1829,7 @@
           <button class="btn-link btn-link--footer" data-nav="jogo-responsavel">Saiba mais →</button>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- ⑥ Bottom bar -->
     <div class="site-footer__bottom">
