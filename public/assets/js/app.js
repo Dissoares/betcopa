@@ -4438,6 +4438,7 @@ const submitAdminConfig = async (e) => {
       google_client_id:          get('cfg_google_client_id'),
     });
     toast(res.message ?? 'Configurações salvas!', 'success');
+    applyBrandName(get('cfg_site_nome'));
     // O logo já foi aplicado no momento do upload — não precisa refazer aqui
   } catch (err) {
     toast(err.message, 'danger');
@@ -4553,6 +4554,14 @@ const removeLogo = async () => {
 };
 
 // ── Init (continuação) ────────────────────────────────────────
+
+const applyBrandName = (name) => {
+  if (!name) return;
+  document.querySelectorAll('.brand-logo-text').forEach(el => {
+    el.innerHTML = `<i class="fa-solid fa-futbol"></i> ${name}`;
+  });
+  document.title = name;
+};
 
 // Aplica (ou remove) o logo de imagem nos 3 pontos de marca
 const applyBrandLogo = (url) => {
@@ -4674,6 +4683,7 @@ const loadBetConfig = async () => {
     if (cfg.admin_email) S.adminEmail = cfg.admin_email;
     S.bonusCadastro = cfg.bonus_cadastro || 0;
     applyBrandLogo(cfg.site_logo || '');
+    if (cfg.site_nome) applyBrandName(cfg.site_nome);
     renderHeroBonusBadge();
     // Atualiza title e meta description com valores do banco
     updateMetaTags(cfg.site_title || null, cfg.site_description || null);
