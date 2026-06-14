@@ -2029,6 +2029,13 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   min-width: 80px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background .18s, border-color .18s, transform .15s;
+}
+button.copa-hero__stat:hover {
+  background: rgba(255,255,255,.09);
+  border-color: rgba(0,200,83,.35);
+  transform: translateY(-2px);
 }
 .copa-hero__stat-icon {
   font-size: .9rem; color: var(--primary); margin-bottom: .1rem;
