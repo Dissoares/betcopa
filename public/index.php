@@ -42,6 +42,7 @@ require_once __DIR__ . '/../src/repositories/TicketRepository.php';
 require_once __DIR__ . '/../src/controllers/TicketController.php';
 require_once __DIR__ . '/../src/repositories/NotificationRepository.php';
 require_once __DIR__ . '/../src/controllers/NotificationController.php';
+require_once __DIR__ . '/../src/repositories/OnlineRepository.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -85,6 +86,7 @@ try {
         }
 
         [$users, $games, $bets, $transactions, $config, $configRepo, $adminRepo, $payments, $withdrawals, $resets, $ticketsRepo, $notifsRepo] = deps();
+        $db = Database::connection();
 
         $adminEmail = $configRepo->get('admin_email', $config['admin_email']);
 
@@ -103,6 +105,7 @@ try {
         $rankCtrl    = new RankingController($bets);
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
         $adminCtrl->setWithdrawalRepository($withdrawals);
+        $adminCtrl->setOnlineRepository(new OnlineRepository($db));
         $notifCtrl    = new NotificationController($notifsRepo);
         $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
         $ticketCtrl->setNotificationRepository($notifsRepo);
@@ -168,6 +171,21 @@ try {
         route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
         route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
+        route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
+
+        // ── Ping de presença (público) ─────────────────────────────────────────
+        route('/api/ping', 'POST', function() use ($db) {
+            $body = json_decode(file_get_contents('php://input'), true) ?: [];
+            $sid  = (string) ($body['session_id'] ?? '');
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $sid)) {
+                jsonResponse(['ok' => false], 400);
+                return;
+            }
+            if (session_status() === PHP_SESSION_NONE) session_start();
+            $userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+            (new OnlineRepository($db))->upsert($sid, $userId);
+            jsonResponse(['ok' => true]);
+        });
         // ── Admin: Saques ──────────────────────────────────────────────────
         route('/api/admin/saques', 'GET', fn() => $adminCtrl->listWithdrawals());
         routePattern('/^\/api\/admin\/saques\/(\d+)\/aprovar$/', 'POST',  fn(int $id) => $withdrawCtrl->approve($id));

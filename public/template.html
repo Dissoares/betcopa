@@ -365,6 +365,7 @@
           <button class="admin-nav__btn" data-admin-tab="usuarios"><i class="fa-solid fa-users"></i> Usuários</button>
           <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
           <button class="admin-nav__btn" data-admin-tab="suporte"><i class="fa-solid fa-headset"></i> Suporte <span class="admin-nav__badge hidden" id="adminTicketBadge">0</span></button>
+          <button class="admin-nav__btn" data-admin-tab="online"><i class="fa-solid fa-signal"></i> Online</button>
         </nav>
         <div class="admin-sidebar__footer">
           <button class="btn btn--ghost btn--icon btn-theme-toggle" aria-label="Alternar tema">
@@ -965,6 +966,22 @@
                 <div class="ticket-chat-actions" id="adminChatActions"></div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- ── ABA: ONLINE ── -->
+        <div class="admin-tab hidden" id="atab-online">
+          <div class="admin-page-header admin-page-header--actions">
+            <div>
+              <h2 class="admin-page-header__title"><span class="online-dot"></span> Online Agora</h2>
+              <p class="admin-page-header__sub">Usuários e visitantes ativos nos últimos 3 minutos</p>
+            </div>
+            <button class="btn btn--ghost btn--sm" id="btnRefreshOnline"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
+          </div>
+          <div class="dash-grid" id="onlineStats"><!-- JS --></div>
+          <div class="panel" style="margin-top:1.5rem">
+            <h3 class="panel__title"><i class="fa-solid fa-user-check"></i> Usuários logados online</h3>
+            <div id="onlineUsersList"></div>
           </div>
         </div>
 

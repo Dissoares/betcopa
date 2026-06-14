@@ -3475,7 +3475,35 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   box-shadow: 0 10px 32px rgba(0,0,0,.2);
 }
 
-/* ── 9. Score buttons — spring e glow ───────────────────── */
+/* ── 9. Online presence ─────────────────────────────────── */
+.online-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: online-pulse 2s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: .35rem;
+}
+@keyframes online-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .35; transform: scale(.7); }
+}
+.online-user-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .875rem;
+}
+.online-user-row:last-child { border-bottom: none; }
+.online-user-row__name  { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.online-user-row__email { color: var(--text-muted); font-size: .8rem; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.online-user-row__time  { color: var(--text-muted); font-size: .78rem; white-space: nowrap; }
+
+/* ── 10. Score buttons — spring e glow ───────────────────── */
 .score-btn {
   transition:
     background .15s ease,

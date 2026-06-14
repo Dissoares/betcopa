@@ -1,11 +1,12 @@
 <?php
 class AdminController
 {
-    private AdminRepository  $admin;
-    private ConfigRepository $config;
-    private UserRepository   $users;
-    private string           $adminEmail;
+    private AdminRepository   $admin;
+    private ConfigRepository  $config;
+    private UserRepository    $users;
+    private string            $adminEmail;
     private ?WithdrawalRepository $withdrawals = null;
+    private ?OnlineRepository $online = null;
 
     public function __construct(
         AdminRepository  $admin,
@@ -22,6 +23,11 @@ class AdminController
     public function setWithdrawalRepository(WithdrawalRepository $repo): void
     {
         $this->withdrawals = $repo;
+    }
+
+    public function setOnlineRepository(OnlineRepository $repo): void
+    {
+        $this->online = $repo;
     }
 
     // ── Dashboard ─────────────────────────────────────────────
@@ -232,6 +238,14 @@ class AdminController
 
         $this->config->set('site_logo', '');
         jsonResponse(['message' => 'Logo removido.']);
+    }
+
+    public function online(): void
+    {
+        ensureAdmin($this->adminEmail);
+        $stats = $this->online ? $this->online->stats() : ['total' => 0, 'usuarios' => 0, 'visitantes' => 0];
+        $users = $this->online ? $this->online->listOnlineUsers() : [];
+        jsonResponse(['stats' => $stats, 'usuarios_online' => $users]);
     }
 
     public function clearCache(): void

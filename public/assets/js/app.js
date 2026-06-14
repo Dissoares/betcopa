@@ -1143,6 +1143,67 @@ const betTimeline = (status) => {
   }).join('')}</div>`;
 };
 
+// ── Online presence ───────────────────────────────────────────
+const getOrCreateSid = () => {
+  let sid = localStorage.getItem('bc_sid');
+  if (!sid) {
+    sid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    localStorage.setItem('bc_sid', sid);
+  }
+  return sid;
+};
+
+const pingOnline = async () => {
+  try { await api('/api/ping', 'POST', { session_id: getOrCreateSid() }); } catch { /* ignore */ }
+};
+
+let _onlineInterval = null;
+
+const loadAdminOnline = async () => {
+  try {
+    const { stats, usuarios_online } = await api('/api/admin/online');
+
+    const statsEl = document.getElementById('onlineStats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div class="dash-card dash-card--green">
+          <div class="dash-card__label">Total Online</div>
+          <div class="dash-card__value dash-card__value--green">${stats.total}</div>
+        </div>
+        <div class="dash-card dash-card--info">
+          <div class="dash-card__label">Usuários logados</div>
+          <div class="dash-card__value dash-card__value--info">${stats.usuarios}</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card__label">Visitantes</div>
+          <div class="dash-card__value">${stats.visitantes}</div>
+        </div>`;
+    }
+
+    const listEl = document.getElementById('onlineUsersList');
+    if (listEl) {
+      if (!usuarios_online.length) {
+        listEl.innerHTML = '<p class="text--muted" style="font-size:.88rem;padding:.5rem 0">Nenhum usuário logado online agora.</p>';
+      } else {
+        listEl.innerHTML = usuarios_online.map(u => {
+          const dt   = new Date(u.last_seen.replace(' ', 'T'));
+          const diff = Math.round((Date.now() - dt.getTime()) / 1000);
+          const ago  = diff < 60 ? `${diff}s atrás` : `${Math.round(diff / 60)}min atrás`;
+          return `<div class="online-user-row">
+            <span class="online-dot"></span>
+            <span class="online-user-row__name">${u.nome}</span>
+            <span class="online-user-row__email">${u.email}</span>
+            <span class="online-user-row__time">${ago}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+  } catch { /* ignore */ }
+};
+
 // ── Share bet helpers ─────────────────────────────────────────
 const loadImgCors = src => new Promise(resolve => {
   if (!src) return resolve(null);
@@ -1174,7 +1235,7 @@ const isoToEmoji = code => {
 };
 
 const generateBetCard = async (bet) => {
-  const W = 600, H = 360;
+  const W = 600, H = 260;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const canvas = document.getElementById('shareCanvas');
   canvas.width  = W * dpr;
@@ -1308,41 +1369,6 @@ const generateBetCard = async (bet) => {
   ctx.font = 'bold 28px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
   ctx.fillStyle = '#fff';
   ctx.fillText(`${bet.placar_casa}  ×  ${bet.placar_fora}`, cx, scoreY + 38);
-  ctx.textAlign = 'left';
-
-  // Stats row
-  const statsY = 268;
-  const colW   = (W - 80) / 3;
-  const statLabels = ['Apostei', 'Multiplicador', 'Prêmio Potencial'];
-  const statVals   = [
-    fmtMoney(bet.valor),
-    `${parseFloat(bet.odd).toFixed(0)}×`,
-    bet.status === 'perdido' ? '—' : fmtMoney(bet.possivel_ganho),
-  ];
-  const statColors = [
-    'rgba(255,255,255,.7)',
-    'rgba(255,255,255,.7)',
-    bet.status === 'ganhou' ? '#00C853' : '#FFD700',
-  ];
-
-  statLabels.forEach((lbl, i) => {
-    const sx = 40 + i * colW;
-    if (i > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,.08)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(sx, statsY - 10);
-      ctx.lineTo(sx, statsY + 38);
-      ctx.stroke();
-    }
-    ctx.font = '11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,.35)';
-    ctx.textAlign = 'center';
-    ctx.fillText(lbl, sx + colW / 2, statsY);
-    ctx.font = 'bold 15px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-    ctx.fillStyle = statColors[i];
-    ctx.fillText(statVals[i], sx + colW / 2, statsY + 22);
-  });
   ctx.textAlign = 'left';
 
   // Bottom bar + domain
@@ -3451,8 +3477,20 @@ const bind = () => {
     if (e.target === document.getElementById('modalShareOverlay')) closeShareModal();
   });
   document.getElementById('btnShareWhatsApp')?.addEventListener('click', () => {
-    const bet = S.bets.find(b => b.id === _shareBetId);
-    window.open(`https://wa.me/?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
+    const bet    = S.bets.find(b => b.id === _shareBetId);
+    const canvas = document.getElementById('shareCanvas');
+    const text   = getShareText(bet);
+    if (canvas && navigator.canShare) {
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'palpite-betcopa.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ title: 'Meu palpite no BetCopa', text, files: [file] }); return; } catch { /* cancelled */ }
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      }, 'image/png');
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
   });
   document.getElementById('btnShareTwitter')?.addEventListener('click', () => {
     const bet = S.bets.find(b => b.id === _shareBetId);
@@ -3746,6 +3784,7 @@ const bind = () => {
 
   // Botão refresh dashboard
   document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);
+  document.getElementById('btnRefreshOnline')?.addEventListener('click', loadAdminOnline);
 
   // Config form
   document.getElementById('adminConfigForm')?.addEventListener('submit', submitAdminConfig);
@@ -3790,6 +3829,7 @@ const statusPill = (s) => {
 
 // ── Admin tab navigation ──────────────────────────────────────
 const switchAdminTab = (tab) => {
+  clearInterval(_onlineInterval); _onlineInterval = null;
   document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.admin-nav__btn').forEach(btn => {
     btn.classList.toggle('admin-nav__btn--active', btn.dataset.adminTab === tab);
@@ -3804,6 +3844,7 @@ const switchAdminTab = (tab) => {
   if (tab === 'config')    loadAdminConfig();
   if (tab === 'jogos')     populateAdminSelect();
   if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
+  if (tab === 'online')    { loadAdminOnline(); _onlineInterval = setInterval(loadAdminOnline, 30000); }
 };
 
 // ── Dashboard ─────────────────────────────────────────────────
@@ -4500,6 +4541,8 @@ const init = async () => {
   await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
+  pingOnline();
+  setInterval(pingOnline, 30000);
 
   // Inicializa botões Google com o client_id público da API
   try {
@@ -4531,7 +4574,7 @@ const init = async () => {
       navigate(S.user ? 'jogos' : 'auth');
     } else {
       const tab = hash.replace('admin/', '') || 'dashboard';
-      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config', 'suporte'];
+      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config', 'suporte', 'online'];
       navigate('admin');
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
