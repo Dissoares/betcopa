@@ -12,17 +12,17 @@ class AdminRepository
     {
         $stats = $this->db->query("
             SELECT
-              (SELECT COUNT(*)                FROM users)                                               AS total_usuarios,
-              (SELECT COUNT(*)                FROM apostas)                                             AS total_apostas,
-              (SELECT COUNT(*)                FROM apostas WHERE status = 'pendente')                   AS apostas_pendentes,
-              (SELECT COUNT(*)                FROM apostas WHERE status = 'confirmado')                 AS apostas_confirmadas,
-              (SELECT COUNT(*)                FROM apostas WHERE status = 'ganhou')                     AS apostas_ganhas,
-              (SELECT COUNT(*)                FROM apostas WHERE status = 'perdido')                    AS apostas_perdidas,
-              (SELECT COALESCE(SUM(valor),0)  FROM apostas WHERE status IN ('confirmado','ganhou','perdido')) AS volume_apostado,
-              (SELECT COALESCE(SUM(possivel_ganho),0) FROM apostas WHERE status = 'ganhou')            AS volume_pago,
-              (SELECT COUNT(*)                FROM jogos  WHERE status = 'aberto')                     AS jogos_abertos,
-              (SELECT COUNT(*)                FROM jogos  WHERE status = 'finalizado')                 AS jogos_finalizados,
-              (SELECT COUNT(*)                FROM users  WHERE bloqueado = 1)                         AS usuarios_bloqueados
+              (SELECT COUNT(*) FROM users WHERE email NOT LIKE '%.seed@betcopa.local')                                                                           AS total_usuarios,
+              (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local')                                    AS total_apostas,
+              (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'pendente')          AS apostas_pendentes,
+              (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'confirmado')        AS apostas_confirmadas,
+              (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'ganhou')            AS apostas_ganhas,
+              (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'perdido')           AS apostas_perdidas,
+              (SELECT COALESCE(SUM(a.valor),0) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status IN ('confirmado','ganhou','perdido')) AS volume_apostado,
+              (SELECT COALESCE(SUM(a.possivel_ganho),0) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'ganhou')                 AS volume_pago,
+              (SELECT COUNT(*) FROM jogos WHERE status = 'aberto')                                                                                               AS jogos_abertos,
+              (SELECT COUNT(*) FROM jogos WHERE status = 'finalizado')                                                                                           AS jogos_finalizados,
+              (SELECT COUNT(*) FROM users WHERE bloqueado = 1 AND email NOT LIKE '%.seed@betcopa.local')                                                         AS usuarios_bloqueados
         ")->fetch();
 
         $stats['margem_casa'] = (float)$stats['volume_apostado'] - (float)$stats['volume_pago'];
@@ -94,13 +94,13 @@ class AdminRepository
 
     public function countBets(int $jogoId = 0, string $status = ''): int
     {
-        $where  = [];
+        $where  = ["u.email NOT LIKE '%.seed@betcopa.local'"];
         $params = [];
 
         if ($jogoId) { $where[] = 'a.jogo_id = :jogo_id'; $params['jogo_id'] = $jogoId; }
         if ($status) { $where[] = 'a.status  = :status';  $params['status']  = $status; }
 
-        $sql  = "SELECT COUNT(*) FROM apostas a " . ($where ? 'WHERE ' . implode(' AND ', $where) : '');
+        $sql  = "SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE " . implode(' AND ', $where);
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return (int) $stmt->fetchColumn();
@@ -118,6 +118,8 @@ class AdminRepository
               COALESCE(SUM(CASE WHEN a.status = 'pendente' THEN 1 END), 0)                              AS pendentes
             FROM jogos j
             INNER JOIN apostas a ON a.jogo_id = j.id
+            INNER JOIN users u ON u.id = a.user_id
+            WHERE u.email NOT LIKE '%.seed@betcopa.local'
             GROUP BY j.id
             HAVING COUNT(a.id) > 0
             ORDER BY j.data_hora DESC
@@ -132,7 +134,10 @@ class AdminRepository
     public function countGames(): int
     {
         return (int) $this->db->query(
-            "SELECT COUNT(DISTINCT j.id) FROM jogos j INNER JOIN apostas a ON a.jogo_id = j.id"
+            "SELECT COUNT(DISTINCT j.id) FROM jogos j
+             INNER JOIN apostas a ON a.jogo_id = j.id
+             INNER JOIN users u ON u.id = a.user_id
+             WHERE u.email NOT LIKE '%.seed@betcopa.local'"
         )->fetchColumn();
     }
 
@@ -145,6 +150,7 @@ class AdminRepository
             FROM apostas a
             JOIN users u ON u.id = a.user_id
             JOIN jogos  j ON j.id = a.jogo_id
+            WHERE u.email NOT LIKE '%.seed@betcopa.local'
             ORDER BY a.criado_em DESC
             LIMIT :lim OFFSET :offset
         ");
