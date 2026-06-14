@@ -668,7 +668,7 @@ const renderCard = (g) => {
     : '';
 
   const urgencyHtml = isSoon
-    ? `<span class="gc-urgency"><i class="fa-solid fa-bolt"></i> Encerra em breve!</span>`
+    ? `<span class="gc-urgency"><i class="fa-solid fa-bolt"></i> Palpites encerram em breve!</span>`
     : '';
 
   const betBlocked = isClosed || isTooFar;
@@ -1620,7 +1620,7 @@ const renderResultCard = (g) => {
 };
 
 const renderResultados = () => {
-  let games = S.games.filter(g => g.status === 'finalizado' || g.placar_real);
+  let games = S.games.filter(g => g.status === 'finalizado');
 
   const q = _resSearch.trim().toLowerCase();
   if (q) games = games.filter(g =>
@@ -2038,7 +2038,8 @@ const fillTicket = (bet) => {
   // Jogo
   const gameLabel = game ? `${game.time_casa} × ${game.time_fora}` : '—';
   document.getElementById('ticketGame').textContent  = gameLabel;
-  document.getElementById('ticketMult').textContent  = oddFmt;
+  const ticketMultEl = document.getElementById('ticketMult');
+  if (ticketMultEl) ticketMultEl.textContent = oddFmt;
   document.getElementById('ticketValor').textContent = fmtMoney(bet.valor);
   document.getElementById('ticketPremio').textContent = fmtMoney(bet.possivel_ganho);
 
