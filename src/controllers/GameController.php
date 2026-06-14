@@ -194,6 +194,16 @@ class GameController
         jsonResponse(['processados' => $processados, 'erros' => $erros]);
     }
 
+    /** POST /api/admin/jogos/excluir/todos */
+    public function deleteAll(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        $count = $this->repository->deleteAll();
+        Logger::info('Todos os jogos excluídos', ['total' => $count]);
+        jsonResponse(['message' => "{$count} jogo(s) excluído(s).", 'excluidos' => $count]);
+    }
+
     /** POST /api/admin/jogos/excluir/lote */
     public function bulkDelete(): void
     {

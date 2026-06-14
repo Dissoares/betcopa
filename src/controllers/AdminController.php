@@ -102,6 +102,49 @@ class AdminController
         ]);
     }
 
+    public function bulkDeleteUsers(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $body = json_decode(file_get_contents('php://input'), true) ?: [];
+        $ids  = array_filter(array_map('intval', $body['ids'] ?? []), fn($id) => $id > 0);
+
+        if (empty($ids)) {
+            jsonResponse(['error' => 'Nenhum usuário selecionado.'], 400);
+            return;
+        }
+
+        $deleted = $this->users->deleteMany(array_values($ids), $this->adminEmail);
+        $skipped = count($ids) - count($deleted);
+
+        Logger::info('Usuários excluídos em lote', ['excluidos' => count($deleted), 'ignorados' => $skipped]);
+        jsonResponse([
+            'message'   => count($deleted) . ' usuário(s) excluído(s).' . ($skipped > 0 ? " {$skipped} ignorado(s) (conta admin)." : ''),
+            'excluidos' => count($deleted),
+        ]);
+    }
+
+    public function deleteAllUsers(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $count = $this->users->deleteAll($this->adminEmail);
+        Logger::info('Todos os usuários excluídos', ['total' => $count]);
+        jsonResponse(['message' => "{$count} usuário(s) excluído(s). Conta admin preservada.", 'excluidos' => $count]);
+    }
+
+    public function deleteAllBets(BetRepository $bets): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $count = $bets->deleteAll();
+        Logger::info('Todas as apostas excluídas', ['total' => $count]);
+        jsonResponse(['message' => "{$count} aposta(s) excluída(s).", 'excluidas' => $count]);
+    }
+
     public function bulkDeleteBets(BetRepository $bets): void
     {
         Csrf::verify();
@@ -269,6 +312,24 @@ class AdminController
         $stats = $this->online ? $this->online->stats() : ['total' => 0, 'usuarios' => 0, 'visitantes' => 0];
         $users = $this->online ? $this->online->listOnlineUsers() : [];
         jsonResponse(['stats' => $stats, 'usuarios_online' => $users]);
+    }
+
+    public function resetData(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $db = Database::connection();
+        $db->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $db->exec('TRUNCATE TABLE apostas');
+        $db->exec('TRUNCATE TABLE jogos');
+        $db->exec('TRUNCATE TABLE transacoes');
+        $db->exec('TRUNCATE TABLE payments');
+        $db->exec('TRUNCATE TABLE online_sessions');
+        $db->exec('SET FOREIGN_KEY_CHECKS = 1');
+
+        Logger::info('Reset de dados executado');
+        jsonResponse(['message' => 'Todos os dados foram apagados com sucesso.']);
     }
 
     public function clearCache(): void

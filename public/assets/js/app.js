@@ -3792,6 +3792,30 @@ const bind = () => {
     if (chk) _toggleGameSel(Number(chk.dataset.id), chk.checked);
   });
   document.getElementById('btnBulkDelete')?.addEventListener('click', bulkDeleteGames);
+  document.getElementById('btnDeleteAllGames')?.addEventListener('click', async () => {
+    const total = S.games?.length ?? 0;
+    const ok = await confirm({
+      title:        `Excluir todos os ${total} jogo(s)?`,
+      message:      'Esta ação remove permanentemente todos os jogos cadastrados e não pode ser desfeita.',
+      confirmLabel: 'Excluir tudo',
+      confirmColor: '#FF4757',
+    });
+    if (!ok) return;
+    const btn = document.getElementById('btnDeleteAllGames');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      const res = await api('/api/admin/jogos/excluir/todos', 'POST', {});
+      toast(res.message, 'success');
+      _selectedGames.clear(); _syncBulkBar();
+      _selectedDashGames.clear();
+      await loadGames();
+      renderAdminGames();
+    } catch (err) {
+      toast(err.message || 'Erro ao excluir.', 'danger');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Limpar tudo';
+    }
+  });
   document.getElementById('btnBulkClear')?.addEventListener('click', () => {
     _selectedGames.clear();
     _syncBulkBar();
@@ -3843,6 +3867,40 @@ const bind = () => {
     if (btn.dataset.action === 'users-next') { loadAdminUsers(_adminUsersPage + 1); return; }
     if (btn.dataset.uid) handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
   });
+  document.getElementById('adminUsersList')?.addEventListener('change', e => {
+    const chk = e.target.closest('.user-row-chk');
+    if (chk) _toggleUserSel(Number(chk.dataset.id), chk.checked);
+  });
+  document.getElementById('btnBulkDeleteUsers')?.addEventListener('click', bulkDeleteUsers);
+  document.getElementById('btnBulkClearUsers')?.addEventListener('click', () => {
+    _selectedUsers.clear();
+    _syncUsersBulkBar();
+    document.querySelectorAll('#adminUsersList .user-row-chk').forEach(c => c.checked = false);
+    const all = document.getElementById('chkAllUsers');
+    if (all) all.checked = false;
+  });
+  document.getElementById('btnDeleteAllUsers')?.addEventListener('click', async () => {
+    const ok = await confirm({
+      title:        'Excluir todos os usuários?',
+      message:      'A conta admin será preservada. Esta ação não pode ser desfeita.',
+      confirmText:  'Excluir tudo',
+      cancelText:   'Cancelar',
+      confirmColor: '#FF4757',
+    });
+    if (!ok) return;
+    const btn = document.getElementById('btnDeleteAllUsers');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      const res = await api('/api/admin/usuarios/excluir/todos', 'POST', {});
+      toast(res.message, 'success');
+      _selectedUsers.clear(); _syncUsersBulkBar();
+      await loadAdminUsers(1);
+    } catch (err) {
+      toast(err.message, 'danger');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir tudo';
+    }
+  });
 
   // Filtro de apostas
   document.getElementById('btnFilterBets')?.addEventListener('click', () => { _adminBetsPage = 1; fetchAdminBets(); });
@@ -3871,6 +3929,28 @@ const bind = () => {
     document.querySelectorAll('#adminBetsList .bet-row-chk').forEach(c => c.checked = false);
     const all = document.getElementById('chkAllBets');
     if (all) all.checked = false;
+  });
+  document.getElementById('btnDeleteAllBets')?.addEventListener('click', async () => {
+    const ok = await confirm({
+      title:        'Excluir todas as apostas?',
+      message:      'Todas as apostas serão removidas permanentemente. Esta ação não pode ser desfeita.',
+      confirmText:  'Excluir tudo',
+      cancelText:   'Cancelar',
+      confirmColor: '#FF4757',
+    });
+    if (!ok) return;
+    const btn = document.getElementById('btnDeleteAllBets');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      const res = await api('/api/admin/apostas/excluir/todos', 'POST', {});
+      toast(res.message, 'success');
+      _selectedBets.clear(); _syncBetsBulkBar();
+      await fetchAdminBets(1);
+    } catch (err) {
+      toast(err.message, 'danger');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir tudo';
+    }
   });
 
   // Paginação do dashboard
@@ -3926,6 +4006,33 @@ const bind = () => {
   document.getElementById('btnImport')?.addEventListener('click', importFromApi);
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
   document.getElementById('btnSyncImages')?.addEventListener('click', syncImages);
+
+  // Reset geral de dados
+  document.getElementById('btnResetData')?.addEventListener('click', async () => {
+    const ok = await confirm({
+      title:        'Resetar TODOS os dados?',
+      message:      'Isso apagará permanentemente todos os jogos, apostas, pagamentos e transações. Usuários e configurações são mantidos. Esta ação é irreversível.',
+      confirmLabel: 'Sim, apagar tudo',
+      confirmColor: '#FF4757',
+    });
+    if (!ok) return;
+    const btn = document.getElementById('btnResetData');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Apagando...';
+    try {
+      const res = await api('/api/admin/reset-data', 'POST', {});
+      toast(res.message, 'success');
+      _selectedGames.clear(); _syncBulkBar();
+      _selectedDashGames.clear();
+      _selectedBets.clear(); _syncBetsBulkBar();
+      _selectedUsers.clear(); _syncUsersBulkBar();
+      S.games = []; S.bets = [];
+      renderGames(); renderBets(); renderAdminGames();
+    } catch (err) {
+      toast(err.message || 'Erro ao resetar.', 'danger');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-skull"></i> Resetar todos os dados';
+    }
+  });
 
   // Limpar cache
   document.getElementById('btnClearCache')?.addEventListener('click', async () => {
@@ -4154,11 +4261,15 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
     el.innerHTML = `
       <table class="admin-table">
         <thead>
-          <tr><th>#</th><th>Nome</th><th>Email</th><th>Saldo</th><th>Apostas</th><th>Ganhas</th><th>Status</th><th>Ações</th></tr>
+          <tr>
+            <th><input type="checkbox" id="chkAllUsers" title="Selecionar todos"></th>
+            <th>#</th><th>Nome</th><th>Email</th><th>Saldo</th><th>Apostas</th><th>Ganhas</th><th>Status</th><th>Ações</th>
+          </tr>
         </thead>
         <tbody>
           ${usuarios.map(u => `
             <tr data-status="${u.bloqueado == 1 ? 'bloqueado' : 'ativo'}">
+              <td><input type="checkbox" class="user-row-chk" data-id="${u.id}" ${_selectedUsers.has(u.id) ? 'checked' : ''}></td>
               <td>${u.id}</td>
               <td>${u.nome}</td>
               <td>${u.email}</td>
@@ -4176,6 +4287,8 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
         </tbody>
       </table>
       ${_pager(page, total, limit, 'users')}`;
+
+    document.getElementById('chkAllUsers')?.addEventListener('change', e => _selectAllUsers(e.target.checked));
   } catch (err) {
     el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   }
@@ -4201,6 +4314,58 @@ const handleBlockUser = async (uid, block) => {
     loadAdminUsers();
   } catch (err) {
     toast(err.message, 'danger');
+  }
+};
+
+// ── Admin Usuários bulk ───────────────────────────────────────
+const _selectedUsers = new Set();
+
+const _syncUsersBulkBar = () => {
+  const bar     = document.getElementById('bulkUsersActionBar');
+  const countEl = document.getElementById('bulkUsersSelCount');
+  if (!bar) return;
+  bar.classList.toggle('hidden', _selectedUsers.size === 0);
+  if (countEl) countEl.textContent = _selectedUsers.size;
+};
+
+const _toggleUserSel = (id, checked) => {
+  checked ? _selectedUsers.add(id) : _selectedUsers.delete(id);
+  _syncUsersBulkBar();
+};
+
+const _selectAllUsers = (checked) => {
+  document.querySelectorAll('#adminUsersList .user-row-chk').forEach(c => {
+    c.checked = checked;
+    _toggleUserSel(Number(c.dataset.id), checked);
+  });
+};
+
+const bulkDeleteUsers = async () => {
+  if (!_selectedUsers.size) return;
+  const ids = [..._selectedUsers];
+  const ok  = await confirm({
+    title:        `Excluir ${ids.length} usuário(s)?`,
+    message:      'A conta admin será preservada. Esta ação não pode ser desfeita.',
+    confirmText:  'Excluir',
+    cancelText:   'Cancelar',
+    confirmColor: '#FF4757',
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btnBulkDeleteUsers');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+  try {
+    const res = await api('/api/admin/usuarios/excluir/lote', 'POST', { ids });
+    toast(res.message, 'success');
+    _selectedUsers.clear();
+    _syncUsersBulkBar();
+    await loadAdminUsers(_adminUsersPage);
+  } catch (err) {
+    toast(err.message, 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir selecionados';
   }
 };
 

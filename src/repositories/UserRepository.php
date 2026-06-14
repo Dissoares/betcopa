@@ -39,6 +39,32 @@ class UserRepository
         $this->db->prepare('UPDATE users SET bloqueado = 0 WHERE id = :id')->execute(['id' => $id]);
     }
 
+    /** Exclui usuários em lote, protegendo o admin pelo email. */
+    public function deleteMany(array $ids, string $adminEmail): array
+    {
+        if (empty($ids)) return [];
+        $ids  = array_map('intval', $ids);
+        $ph   = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT id FROM users WHERE id IN ({$ph}) AND email != ?"
+        );
+        $stmt->execute([...$ids, $adminEmail]);
+        $allowed = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id');
+        if (empty($allowed)) return [];
+
+        $ph2 = implode(',', array_fill(0, count($allowed), '?'));
+        $this->db->prepare("DELETE FROM users WHERE id IN ({$ph2})")->execute($allowed);
+        return $allowed;
+    }
+
+    /** Exclui todos os usuários exceto o admin. */
+    public function deleteAll(string $adminEmail): int
+    {
+        $stmt = $this->db->prepare('DELETE FROM users WHERE email != :email');
+        $stmt->execute(['email' => $adminEmail]);
+        return (int) $stmt->rowCount();
+    }
+
     public function isBlocked(int $id): bool
     {
         $stmt = $this->db->prepare('SELECT bloqueado FROM users WHERE id = :id');

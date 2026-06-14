@@ -546,7 +546,10 @@
           <div class="panel">
             <div class="admin-list-header">
               <h3 class="panel__title" style="margin:0">Jogos cadastrados</h3>
-              <span class="text--muted" id="adminGamesCount"></span>
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <span class="text--muted" id="adminGamesCount"></span>
+                <button class="btn btn--danger btn--sm" id="btnDeleteAllGames"><i class="fa-solid fa-trash-can"></i> Limpar tudo</button>
+              </div>
             </div>
             <div class="bulk-action-bar hidden" id="bulkActionBar">
               <span id="bulkSelCount">0</span> jogo(s) selecionado(s)
@@ -619,7 +622,10 @@
               <h2 class="admin-page-header__title"><i class="fa-solid fa-bullseye"></i> Apostas</h2>
               <p class="admin-page-header__sub">Visualize e filtre todas as apostas da plataforma</p>
             </div>
-            <span class="text--muted" id="adminBetsCount"></span>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="text--muted" id="adminBetsCount"></span>
+              <button class="btn btn--danger btn--sm" id="btnDeleteAllBets"><i class="fa-solid fa-trash"></i> Excluir tudo</button>
+            </div>
           </div>
 
           <div class="admin-toolbar">
@@ -656,7 +662,10 @@
               <h2 class="admin-page-header__title"><i class="fa-solid fa-users"></i> Usuários</h2>
               <p class="admin-page-header__sub">Gerenciar contas e permissões de usuários</p>
             </div>
-            <span class="text--muted" id="adminUsersCount"></span>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="text--muted" id="adminUsersCount"></span>
+              <button class="btn btn--danger btn--sm" id="btnDeleteAllUsers"><i class="fa-solid fa-trash"></i> Excluir tudo</button>
+            </div>
           </div>
 
           <div class="admin-toolbar">
@@ -666,6 +675,12 @@
               <option value="ativo">Ativos</option>
               <option value="bloqueado">Bloqueados</option>
             </select>
+          </div>
+
+          <div class="bulk-action-bar hidden" id="bulkUsersActionBar">
+            <span id="bulkUsersSelCount">0</span> usuário(s) selecionado(s)
+            <button class="btn btn--danger btn--sm" id="btnBulkDeleteUsers"><i class="fa-solid fa-trash"></i> Excluir selecionados</button>
+            <button class="btn btn--ghost btn--sm" id="btnBulkClearUsers">Limpar seleção</button>
           </div>
 
           <div class="panel">
@@ -947,6 +962,14 @@
             </div>
             <div id="configStatus" style="margin-top:.75rem"></div>
           </form>
+
+          <div class="danger-zone">
+            <h3 class="danger-zone__title"><i class="fa-solid fa-triangle-exclamation"></i> Zona de Perigo</h3>
+            <p class="danger-zone__desc">Apaga permanentemente <strong>todos os jogos, apostas, pagamentos e transações</strong>. Usuários e configurações são mantidos.</p>
+            <button class="btn btn--danger" id="btnResetData">
+              <i class="fa-solid fa-skull"></i> Resetar todos os dados
+            </button>
+          </div>
         </div>
 
         <!-- ── ABA: SUPORTE ── -->

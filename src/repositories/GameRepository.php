@@ -231,7 +231,11 @@ class GameRepository
         return $stmt->execute(['id' => $id]);
     }
 
-    /** Exclui múltiplos jogos que NÃO estejam finalizados. Retorna IDs excluídos. */
+    public function deleteAll(): int
+    {
+        return (int) $this->db->exec('DELETE FROM jogos');
+    }
+
     public function deleteMany(array $ids): array
     {
         if (empty($ids)) return [];

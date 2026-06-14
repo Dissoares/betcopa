@@ -131,6 +131,7 @@ try {
         route('/api/admin/sync-images',              'POST', fn() => $gameCtrl->syncImages());
         route('/api/admin/jogos/resultado/lote',     'POST', fn() => $gameCtrl->bulkResult());
         route('/api/admin/jogos/excluir/lote',       'POST', fn() => $gameCtrl->bulkDelete());
+        route('/api/admin/jogos/excluir/todos',      'POST', fn() => $gameCtrl->deleteAll());
         routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'PUT',
             fn(int $id) => $gameCtrl->update($id));
         routePattern('/^\/api\/admin\/jogos\/(\d+)\/resultado$/', 'POST',
@@ -153,12 +154,15 @@ try {
 
         // ── Admin: Usuários ───────────────────────────────────
         route('/api/admin/usuarios', 'GET', fn() => $adminCtrl->listUsers());
+        route('/api/admin/usuarios/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteUsers());
+        route('/api/admin/usuarios/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllUsers());
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/bloquear$/',   'POST', fn(int $id) => $adminCtrl->blockUser($id));
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/desbloquear$/', 'POST', fn(int $id) => $adminCtrl->unblockUser($id));
 
         // ── Admin: Apostas ────────────────────────────────────
         route('/api/admin/apostas',              'GET',  fn() => $adminCtrl->listBets());
         route('/api/admin/apostas/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteBets($bets));
+        route('/api/admin/apostas/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllBets($bets));
 
         // ── Config pública (mult range) ───────────────────────────
         route('/api/config/bets',  'GET',  fn() => $adminCtrl->betConfig());
@@ -175,6 +179,7 @@ try {
         route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
         route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
+        route('/api/admin/reset-data',   'POST', fn() => $adminCtrl->resetData());
         route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
 
         // ── Ping de presença (público) ─────────────────────────────────────────
