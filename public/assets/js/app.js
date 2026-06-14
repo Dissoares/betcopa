@@ -1579,6 +1579,7 @@ const renderResultCard = (g) => {
   const homeWin   = homeGoals !== null && homeGoals > awayGoals;
   const awayWin   = awayGoals !== null && awayGoals > homeGoals;
   const draw      = homeGoals !== null && homeGoals === awayGoals;
+  const hasScore  = homeGoals !== null;
 
   const emblemH = g.logo_casa
     ? `<img src="${g.logo_casa}" class="rc__emblem-img" alt="${g.time_casa}" loading="lazy">`
@@ -1587,24 +1588,10 @@ const renderResultCard = (g) => {
     ? `<img src="${g.logo_fora}" class="rc__emblem-img" alt="${g.time_fora}" loading="lazy">`
     : `<span class="rc__emblem-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
 
-  const scoreHtml = parts !== null
-    ? `<span class="rc__goal ${homeWin ? 'rc__goal--win' : awayWin ? 'rc__goal--loss' : ''}">${homeGoals}</span>
-       <span class="rc__sep">:</span>
-       <span class="rc__goal ${awayWin ? 'rc__goal--win' : homeWin ? 'rc__goal--loss' : ''}">${awayGoals}</span>`
-    : `<span class="rc__no-score">-</span>`;
+  const homeClass = !hasScore ? '' : homeWin ? 'rc__half--win' : draw ? 'rc__half--draw' : 'rc__half--loss';
+  const awayClass = !hasScore ? '' : awayWin ? 'rc__half--win' : draw ? 'rc__half--draw' : 'rc__half--loss';
 
-  // Texto descritivo do resultado
-  let summaryText = '';
-  if (parts !== null) {
-    if (homeWin)
-      summaryText = `<strong>${g.time_casa}</strong> venceu ${homeGoals} a ${awayGoals} contra ${g.time_fora}`;
-    else if (awayWin)
-      summaryText = `<strong>${g.time_fora}</strong> venceu ${awayGoals} a ${homeGoals} contra ${g.time_casa}`;
-    else
-      summaryText = `Empate: ${g.time_casa} ${homeGoals} a ${awayGoals} ${g.time_fora}`;
-  }
-
-  const timeStr    = new Date(g.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const timeStr     = new Date(g.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const leagueLabel = g.liga_nome ? (leagueShortName(g.liga_nome) || g.liga_nome) : '';
 
   return `
@@ -1613,18 +1600,18 @@ const renderResultCard = (g) => {
         <span class="rc__league">${leagueLabel}</span>
         <time class="rc__time">${timeStr}</time>
       </div>
-      <div class="rc__match">
-        <div class="rc__side rc__side--home ${homeWin ? 'rc__side--winner' : ''}">
+      <div class="rc__duel">
+        <div class="rc__half rc__half--home ${homeClass}">
           <div class="rc__emblem">${emblemH}</div>
           <span class="rc__name">${g.time_casa}</span>
+          <strong class="rc__half-score">${homeGoals !== null ? homeGoals : '—'}</strong>
         </div>
-        <div class="rc__score-box">${scoreHtml}</div>
-        <div class="rc__side rc__side--away ${awayWin ? 'rc__side--winner' : ''}">
-          <span class="rc__name">${g.time_fora}</span>
+        <div class="rc__half rc__half--away ${awayClass}">
           <div class="rc__emblem">${emblemA}</div>
+          <span class="rc__name">${g.time_fora}</span>
+          <strong class="rc__half-score">${awayGoals !== null ? awayGoals : '—'}</strong>
         </div>
       </div>
-      ${summaryText ? `<div class="rc__summary">${summaryText}</div>` : ''}
     </div>`;
 };
 
