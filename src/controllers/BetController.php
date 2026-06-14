@@ -59,4 +59,12 @@ class BetController
         $this->service->confirmPayment($userId, $id, $gateway);
         jsonResponse(['message' => 'Aposta confirmada']);
     }
+
+    public function payWithBalance(int $id): void
+    {
+        Csrf::verify();
+        $userId = ensureLogged();
+        $this->service->payBetWithBalance($userId, $id);
+        jsonResponse(['message' => 'Aposta confirmada com saldo']);
+    }
 }

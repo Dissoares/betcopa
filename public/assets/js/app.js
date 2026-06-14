@@ -22,6 +22,7 @@ const S = {
   adminEmail:     'admin@betcopa.local',
   activeFilter:   'todos',   // filtro ativo nos cards de jogos
   bonusCadastro:  0,
+  _payMethod:     'pix',     // método selecionado no modal de pagamento
 };
 
 
@@ -2243,6 +2244,20 @@ const closePixModal = () => {
   document.getElementById('modalPixOverlay').classList.add('hidden');
 };
 
+const _selectPayMethod = (method) => {
+  S._payMethod = method;
+  document.querySelectorAll('.pay-opt-card').forEach(c => c.classList.remove('pay-opt-card--active'));
+  const card = document.getElementById(method === 'saldo' ? 'payOptSaldo' : 'payOptPix');
+  if (card) card.classList.add('pay-opt-card--active');
+  const btn = document.getElementById('btnFinalizePayment');
+  if (!btn) return;
+  if (method === 'saldo') {
+    btn.innerHTML = '<i class="fa-solid fa-wallet"></i> Pagar com Saldo';
+  } else {
+    btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com PIX';
+  }
+};
+
 const simulatePay = () => {
   if (!S.user) {
     closeModal('modalTicket');
@@ -2250,11 +2265,33 @@ const simulatePay = () => {
     navigate('auth');
     return;
   }
-  // Abre seleção de método de pagamento
   const amountEl = document.getElementById('payOptsAmount');
   if (amountEl) amountEl.textContent = fmtMoney(S.selectedBet?.valor ?? 0);
+  const saldo = parseFloat(S.user?.saldo ?? 0);
+  const saldoEl = document.getElementById('payOptSaldoDisp');
+  if (saldoEl) saldoEl.textContent = fmtMoney(saldo) + ' disponível';
+  const saldoCard = document.getElementById('payOptSaldo');
+  const betValor  = S.selectedBet?.valor ?? 0;
+  if (saldoCard) saldoCard.disabled = saldo < betValor;
+  _selectPayMethod('pix');
   closeModal('modalTicket');
   openModal('modalPaymentOpts');
+};
+
+const confirmBalancePayment = async () => {
+  const btn = document.getElementById('btnFinalizePayment');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+  try {
+    await api(`/api/apostas/${S.selectedBet.id}/pagar-saldo`, 'POST', {});
+    closeModal('modalPaymentOpts');
+    await loadUser();
+    await loadBets();
+    toast('Aposta confirmada! Saldo debitado.', 'success');
+  } catch (err) {
+    toast(err.message || 'Erro ao processar pagamento.', 'danger');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-wallet"></i> Pagar com Saldo';
+  }
 };
 
 const confirmPixPayment = async () => {
@@ -3595,7 +3632,11 @@ const bind = () => {
 
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
-  document.getElementById('btnFinalizePayment')?.addEventListener('click', confirmPixPayment);
+  document.getElementById('btnFinalizePayment')?.addEventListener('click', () => {
+    if (S._payMethod === 'pix') confirmPixPayment(); else confirmBalancePayment();
+  });
+  document.getElementById('payOptSaldo')?.addEventListener('click', () => _selectPayMethod('saldo'));
+  document.getElementById('payOptPix')?.addEventListener('click',   () => _selectPayMethod('pix'));
 
   // PIX modal
   document.getElementById('btnPixClose')?.addEventListener('click', closePixModal);

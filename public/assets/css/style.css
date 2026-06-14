@@ -1736,6 +1736,7 @@ select {
 .pay-opt-card--active .pay-opt-card__icon { color: var(--primary); }
 .pay-opt-card--active .pay-opt-card__name { color: var(--primary); }
 .pay-opt-card--soon { opacity: .35; cursor: not-allowed; }
+.pay-opt-card:disabled { opacity: .35; cursor: not-allowed; }
 .pay-opts__footer { padding: 0 1.5rem 1.5rem; }
 
 /* Modal de resultado */

@@ -100,6 +100,29 @@ class BetService
     }
 
     /**
+     * Debita o saldo do usuário e confirma a aposta imediatamente.
+     */
+    public function payBetWithBalance(int $userId, int $betId): void
+    {
+        $bet = $this->bets->find($betId);
+        if (!$bet || (int) $bet['user_id'] !== $userId) {
+            throw new InvalidArgumentException('Aposta não encontrada');
+        }
+        if ($bet['status'] !== 'pendente') {
+            throw new InvalidArgumentException('Aposta não está pendente');
+        }
+
+        $saldo = $this->transactions->balance($userId);
+        if ($saldo < (float) $bet['valor']) {
+            throw new InvalidArgumentException('Saldo insuficiente. Seu saldo: R$ ' . number_format($saldo, 2, ',', '.'));
+        }
+
+        $this->transactions->create($userId, 'debito', (float) $bet['valor'], 'Aposta (saldo) #' . $betId);
+        $this->bets->updateStatus($betId, 'confirmado');
+        Logger::info('Aposta paga com saldo', ['bet_id' => $betId, 'user_id' => $userId, 'valor' => $bet['valor']]);
+    }
+
+    /**
      * Inicia o pagamento de uma aposta via gateway.
      * Retorna dados da cobrança PIX para o frontend.
      */
