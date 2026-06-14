@@ -3831,6 +3831,18 @@ const bind = () => {
   // Botão refresh dashboard
   document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);
   document.getElementById('btnRefreshOnline')?.addEventListener('click', loadAdminOnline);
+  document.getElementById('btnRefreshSaques')?.addEventListener('click', loadAdminSaques);
+
+  // Filtro de status de saques
+  document.getElementById('filterSaqueStatus')?.addEventListener('change', renderAdminSaques);
+
+  // Aprovar / Rejeitar saques (delegação)
+  document.getElementById('adminSaquesList')?.addEventListener('click', e => {
+    const btnAprovar  = e.target.closest('[data-saque-aprovar]');
+    const btnRejeitar = e.target.closest('[data-saque-rejeitar]');
+    if (btnAprovar)  _adminSaqueAprovar(parseInt(btnAprovar.dataset.saqueAprovar));
+    if (btnRejeitar) _adminSaqueRejeitar(parseInt(btnRejeitar.dataset.saqueRejeitar));
+  });
 
   // Config form
   document.getElementById('adminConfigForm')?.addEventListener('submit', submitAdminConfig);
@@ -3924,6 +3936,7 @@ const switchAdminTab = (tab) => {
   if (tab === 'dashboard') loadAdminDashboard();
   if (tab === 'usuarios')  loadAdminUsers();
   if (tab === 'apostas')   loadAdminBets();
+  if (tab === 'saques')    loadAdminSaques();
   if (tab === 'config')    loadAdminConfig();
   if (tab === 'jogos')     { populateAdminSelect(); renderLeaguePreview(); }
   if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
@@ -4328,6 +4341,112 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
   } catch (err) {
     el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   }
+};
+
+// ── Saques ────────────────────────────────────────────────────
+let _saquesAll = [];
+
+const loadAdminSaques = async () => {
+  const el = document.getElementById('adminSaquesList');
+  el.innerHTML = '<p class="text--muted">Carregando...</p>';
+  try {
+    const { saques } = await api('/api/admin/saques');
+    _saquesAll = saques || [];
+    _updateAdminSaquesBadge();
+    renderAdminSaques();
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  }
+};
+
+const _updateAdminSaquesBadge = () => {
+  const pendentes = _saquesAll.filter(s => s.status === 'pendente').length;
+  const badge = document.getElementById('adminSaquesBadge');
+  if (!badge) return;
+  badge.textContent = pendentes;
+  badge.classList.toggle('hidden', pendentes === 0);
+};
+
+const renderAdminSaques = () => {
+  const el     = document.getElementById('adminSaquesList');
+  const filter = document.getElementById('filterSaqueStatus')?.value || '';
+  const list   = filter ? _saquesAll.filter(s => s.status === filter) : _saquesAll;
+
+  if (!list.length) {
+    el.innerHTML = '<p class="text--muted">Nenhum pedido de saque encontrado.</p>';
+    return;
+  }
+
+  const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
+  const statusCls   = { pendente: 'pill--warning', aprovado: 'pill--success', rejeitado: 'pill--danger' };
+
+  el.innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Usuário</th>
+          <th>Valor</th>
+          <th>Chave PIX</th>
+          <th>Tipo</th>
+          <th>Status</th>
+          <th>Solicitado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(s => `
+          <tr>
+            <td>#${s.id}</td>
+            <td>
+              <strong>${s.user_nome}</strong><br>
+              <small class="text--muted">${s.user_email}</small>
+            </td>
+            <td><strong>${fmtR$(s.valor)}</strong></td>
+            <td><code>${s.chave_pix}</code></td>
+            <td>${s.tipo_pix}</td>
+            <td><span class="pill ${statusCls[s.status] || ''}">${statusLabel[s.status] || s.status}</span></td>
+            <td><small>${fmtDate(s.criado_em)}</small></td>
+            <td>
+              ${s.status === 'pendente' ? `
+                <div style="display:flex;gap:.4rem">
+                  <button class="btn btn--sm btn--primary" data-saque-aprovar="${s.id}">
+                    <i class="fa-solid fa-check"></i> Aprovar
+                  </button>
+                  <button class="btn btn--sm btn--danger" data-saque-rejeitar="${s.id}">
+                    <i class="fa-solid fa-xmark"></i> Rejeitar
+                  </button>
+                </div>
+              ` : s.obs ? `<small class="text--muted">${s.obs}</small>` : '—'}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+};
+
+const _adminSaqueAprovar = async (id) => {
+  const ok = await confirm({
+    title: 'Aprovar saque?',
+    message: 'O pagamento será marcado como aprovado. Certifique-se de que o valor já foi transferido.',
+    confirmLabel: 'Aprovar',
+    confirmColor: 'var(--primary)',
+  });
+  if (!ok) return;
+  try {
+    await api(`/api/admin/saques/${id}/aprovar`, 'POST');
+    toast('Saque aprovado.', 'success');
+    loadAdminSaques();
+  } catch (err) { toast(err.message, 'danger'); }
+};
+
+const _adminSaqueRejeitar = async (id) => {
+  const obs = prompt('Motivo da rejeição (opcional):') ?? '';
+  try {
+    await api(`/api/admin/saques/${id}/rejeitar`, 'POST', { obs });
+    toast('Saque rejeitado e saldo estornado.', 'success');
+    loadAdminSaques();
+  } catch (err) { toast(err.message, 'danger'); }
 };
 
 // ── Configurações ─────────────────────────────────────────────
@@ -4853,7 +4972,7 @@ const init = async () => {
       navigate(S.user ? 'jogos' : 'auth');
     } else {
       const tab = hash.replace('admin/', '') || 'dashboard';
-      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'config', 'suporte', 'online'];
+      const validTabs = ['dashboard', 'jogos', 'apostas', 'usuarios', 'saques', 'config', 'suporte', 'online'];
       navigate('admin');
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
