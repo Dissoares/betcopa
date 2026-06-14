@@ -1816,15 +1816,24 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 }
 .league-badge {
   display: inline-flex; align-items: center; gap: .35rem;
-  font-size: .8rem; padding: .3rem .7rem;
-  border-radius: 999px; border: 1px solid transparent;
+  font-size: .8rem; padding: .25rem .55rem .25rem .7rem;
+  border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text-muted);
   white-space: nowrap;
 }
 .league-badge--ok   { background: rgba(0,200,83,.1);  border-color: rgba(0,200,83,.25); color: var(--text); }
 .league-badge--ok strong { color: var(--primary); }
-.league-badge--zero { background: var(--surface-2); color: var(--text-muted); }
-.league-badge--err  { background: rgba(255,71,87,.08); color: var(--text-muted); }
-.league-preview-meta { font-size: .72rem; color: var(--text-muted); margin-top: .6rem; margin-bottom: 0; }
+.league-badge--zero { opacity: .6; }
+.league-badge__fetch {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  border: none; background: transparent; cursor: pointer;
+  color: inherit; opacity: .55; transition: opacity .15s, background .15s;
+  padding: 0; flex-shrink: 0;
+}
+.league-badge__fetch:hover:not(:disabled) { opacity: 1; background: rgba(255,255,255,.1); }
+.league-badge__fetch:disabled { cursor: wait; }
+.league-preview-meta { font-size: .72rem; color: var(--text-muted); }
 .admin-toolbar-panel {
   display: flex;
   align-items: center;

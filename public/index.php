@@ -131,6 +131,7 @@ try {
         route('/api/admin/sync-images',              'POST', fn() => $gameCtrl->syncImages());
         route('/api/admin/jogos/contagem-por-liga',   'GET',  fn() => $gameCtrl->countByLeague());
         route('/api/admin/jogos/preview-all',          'GET',  fn() => $gameCtrl->previewAll());
+        route('/api/admin/jogos/preview-league',       'GET',  fn() => $gameCtrl->previewLeague());
         route('/api/admin/jogos/resultado/lote',     'POST', fn() => $gameCtrl->bulkResult());
         route('/api/admin/jogos/excluir/lote',       'POST', fn() => $gameCtrl->bulkDelete());
         route('/api/admin/jogos/excluir/todos',      'POST', fn() => $gameCtrl->deleteAll());

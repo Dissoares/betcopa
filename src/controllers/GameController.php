@@ -229,6 +229,13 @@ class GameController
         $forceRefresh = !empty($_GET['refresh']);
         $cacheAge   = time() - $cachedTs;
 
+        // Retorna apenas o cache sem chamar a API
+        if (!empty($_GET['cache_only'])) {
+            $counts = $cachedJson ? (json_decode($cachedJson, true) ?: []) : [];
+            jsonResponse(['counts' => $counts, 'cached_at' => $cachedTs, 'from_cache' => true]);
+            return;
+        }
+
         if (!$forceRefresh && $cachedJson && $cacheAge < 3600) {
             $counts = json_decode($cachedJson, true) ?: [];
             jsonResponse(['counts' => $counts, 'cached_at' => $cachedTs, 'from_cache' => true]);
@@ -267,6 +274,53 @@ class GameController
         $this->configRepo->set('league_preview_cache_ts', (string) time());
 
         jsonResponse(['counts' => $counts, 'cached_at' => time(), 'from_cache' => false]);
+    }
+
+    /**
+     * GET /api/admin/jogos/preview-league?id=2013
+     * Busca contagem de jogos de UMA liga na API e atualiza o cache.
+     */
+    public function previewLeague(): void
+    {
+        ensureAdmin($this->adminEmail);
+
+        $validLeagues = [2000, 2013, 2001, 2021, 2014, 2019, 2002, 2015, 2003, 2017, 2152];
+        $id = (int) ($_GET['id'] ?? 0);
+        if (!in_array($id, $validLeagues, true)) {
+            jsonResponse(['error' => 'Liga inválida'], 400);
+            return;
+        }
+
+        $cachedJson = $this->configRepo->get('league_preview_cache', '');
+        $cachedTs   = (int) $this->configRepo->get('league_preview_cache_ts', '0');
+        $counts     = $cachedJson ? (json_decode($cachedJson, true) ?: []) : [];
+
+        $apiKey = $this->configRepo->get('api_football_key', $this->config['api_football_key'] ?? '');
+        if (empty($apiKey)) {
+            jsonResponse(['error' => 'API key não configurada.'], 400);
+            return;
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+
+        $timezone = $this->configRepo->get('api_football_timezone', 'America/Sao_Paulo');
+        $api = new FootballDataService($apiKey, $timezone);
+
+        try {
+            $matches    = $api->fetchMatches($id, '');
+            $count      = count($matches);
+        } catch (RuntimeException $e) {
+            jsonResponse(['error' => 'Erro ao consultar a API: ' . $e->getMessage()], 500);
+            return;
+        }
+
+        $counts[$id] = $count;
+        $this->configRepo->set('league_preview_cache', json_encode($counts));
+        if (!$cachedTs) {
+            $this->configRepo->set('league_preview_cache_ts', (string) time());
+        }
+
+        jsonResponse(['id' => $id, 'count' => $count, 'from_cache' => false]);
     }
 
     /** POST /api/admin/jogos/excluir/todos */

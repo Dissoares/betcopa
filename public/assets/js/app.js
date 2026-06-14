@@ -2399,7 +2399,7 @@ const renderAdminGames = () => {
     return true;
   });
 
-  const all        = [...filtered].sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+  const all        = [...filtered].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
   const total      = all.length;
   const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
   if (adminGamesPage >= totalPages) adminGamesPage = totalPages - 1;
@@ -3859,34 +3859,60 @@ const bind = () => {
     2017: 'Primeira Liga',   2152: 'Libertadores',
   };
 
-  const renderLeaguePreview = async (forceRefresh = false) => {
-    const el   = document.getElementById('leaguePreviewBadges');
-    const meta = document.getElementById('leaguePreviewMeta');
-    const btn  = document.getElementById('btnRefreshPreview');
+  let _leagueCounts = {};
+
+  const _renderLeagueBadges = () => {
+    const el = document.getElementById('leaguePreviewBadges');
     if (!el) return;
-    el.innerHTML = '<span class="text--muted" style="font-size:.85rem">Consultando API…</span>';
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
-    try {
-      const url = '/api/admin/jogos/preview-all' + (forceRefresh ? '?refresh=1' : '');
-      const { counts, cached_at, from_cache, error } = await api(url, 'GET');
-      if (error) { el.innerHTML = `<span class="text--muted">${error}</span>`; return; }
-      el.innerHTML = Object.entries(counts).map(([id, n]) => {
-        const name = LEAGUE_NAMES[Number(id)] || `Liga ${id}`;
-        if (n === null) return `<span class="league-badge league-badge--err" title="Erro ao consultar">${name} —</span>`;
-        return `<span class="league-badge ${n > 0 ? 'league-badge--ok' : 'league-badge--zero'}">${name} <strong>${n}</strong></span>`;
-      }).join('');
-      if (meta && cached_at) {
-        const age = Math.round((Date.now()/1000 - cached_at) / 60);
-        meta.textContent = from_cache ? `Cache de ${age} min atrás` : 'Atualizado agora';
-      }
-    } catch (err) {
-      el.innerHTML = `<span class="text--muted">Erro: ${err.message}</span>`;
-    } finally {
-      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Atualizar'; }
-    }
+    el.innerHTML = Object.entries(LEAGUE_NAMES).map(([id, name]) => {
+      const n = _leagueCounts[id];
+      const hasCount = n !== undefined && n !== null;
+      const cls = hasCount ? (n > 0 ? 'league-badge--ok' : 'league-badge--zero') : '';
+      return `<span class="league-badge ${cls}" data-league-badge="${id}">
+        ${name}
+        ${hasCount ? `<strong>${n}</strong>` : ''}
+        <button class="league-badge__fetch" data-fetch-league="${id}" title="Buscar da API">
+          <i class="fa-solid fa-rotate"></i>
+        </button>
+      </span>`;
+    }).join('');
   };
 
-  document.getElementById('btnRefreshPreview')?.addEventListener('click', () => renderLeaguePreview(true));
+  const renderLeaguePreview = async () => {
+    const el   = document.getElementById('leaguePreviewBadges');
+    const meta = document.getElementById('leaguePreviewMeta');
+    if (!el) return;
+    try {
+      const { counts, cached_at } = await api('/api/admin/jogos/preview-all?cache_only=1');
+      _leagueCounts = counts || {};
+      if (meta && cached_at) {
+        const age = Math.round((Date.now() / 1000 - cached_at) / 60);
+        meta.textContent = age < 2 ? 'Cache recente' : `Cache de ${age} min atrás`;
+      } else if (meta) {
+        meta.textContent = 'Clique em  para buscar da API';
+      }
+    } catch { _leagueCounts = {}; }
+    _renderLeagueBadges();
+  };
+
+  document.getElementById('leaguePreviewBadges')?.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-fetch-league]');
+    if (!btn) return;
+    const id = btn.dataset.fetchLeague;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      const { count } = await api(`/api/admin/jogos/preview-league?id=${id}`);
+      _leagueCounts[id] = count;
+      _renderLeagueBadges();
+      const meta = document.getElementById('leaguePreviewMeta');
+      if (meta) meta.textContent = 'Atualizado agora';
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+      toast(err.message || 'Erro ao consultar a API', 'danger');
+    }
+  });
 
   // Limpar cache
   document.getElementById('btnClearCache')?.addEventListener('click', async () => {
