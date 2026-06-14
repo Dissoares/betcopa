@@ -4007,33 +4007,6 @@ const bind = () => {
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
   document.getElementById('btnSyncImages')?.addEventListener('click', syncImages);
 
-  // Reset geral de dados
-  document.getElementById('btnResetData')?.addEventListener('click', async () => {
-    const ok = await confirm({
-      title:        'Resetar TODOS os dados?',
-      message:      'Isso apagará permanentemente todos os jogos, apostas, pagamentos e transações. Usuários e configurações são mantidos. Esta ação é irreversível.',
-      confirmLabel: 'Sim, apagar tudo',
-      confirmColor: '#FF4757',
-    });
-    if (!ok) return;
-    const btn = document.getElementById('btnResetData');
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Apagando...';
-    try {
-      const res = await api('/api/admin/reset-data', 'POST', {});
-      toast(res.message, 'success');
-      _selectedGames.clear(); _syncBulkBar();
-      _selectedDashGames.clear();
-      _selectedBets.clear(); _syncBetsBulkBar();
-      _selectedUsers.clear(); _syncUsersBulkBar();
-      S.games = []; S.bets = [];
-      renderGames(); renderBets(); renderAdminGames();
-    } catch (err) {
-      toast(err.message || 'Erro ao resetar.', 'danger');
-    } finally {
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-skull"></i> Resetar todos os dados';
-    }
-  });
-
   // Limpar cache
   document.getElementById('btnClearCache')?.addEventListener('click', async () => {
     const btn = document.getElementById('btnClearCache');

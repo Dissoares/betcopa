@@ -179,7 +179,6 @@ try {
         route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
         route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
-        route('/api/admin/reset-data',   'POST', fn() => $adminCtrl->resetData());
         route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
 
         // ── Ping de presença (público) ─────────────────────────────────────────

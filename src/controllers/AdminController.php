@@ -314,24 +314,6 @@ class AdminController
         jsonResponse(['stats' => $stats, 'usuarios_online' => $users]);
     }
 
-    public function resetData(): void
-    {
-        Csrf::verify();
-        ensureAdmin($this->adminEmail);
-
-        $db = Database::connection();
-        $db->exec('SET FOREIGN_KEY_CHECKS = 0');
-        $db->exec('TRUNCATE TABLE apostas');
-        $db->exec('TRUNCATE TABLE jogos');
-        $db->exec('TRUNCATE TABLE transacoes');
-        $db->exec('TRUNCATE TABLE payments');
-        $db->exec('TRUNCATE TABLE online_sessions');
-        $db->exec('SET FOREIGN_KEY_CHECKS = 1');
-
-        Logger::info('Reset de dados executado');
-        jsonResponse(['message' => 'Todos os dados foram apagados com sucesso.']);
-    }
-
     public function clearCache(): void
     {
         Csrf::verify();
