@@ -2616,19 +2616,79 @@ const importFromApi = async () => {
   const leagueId = Number(document.getElementById('importLeague').value);
   const status   = document.getElementById('importStatus').value;
 
-  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
-  resultEl.innerHTML = '';
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
+  resultEl.innerHTML = `
+    <div class="import-progress">
+      <div class="import-progress__bar-wrap">
+        <div class="import-progress__bar" id="importProgressBar" style="width:0%"></div>
+      </div>
+      <p class="import-progress__label" id="importProgressLabel">Buscando jogos na API…</p>
+    </div>`;
+
+  const setProgress = (current, total, game = '') => {
+    const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+    const bar = document.getElementById('importProgressBar');
+    const lbl = document.getElementById('importProgressLabel');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = game
+      ? `Importando ${current} de ${total}: ${game}`
+      : `${current} de ${total} jogos importados`;
+  };
 
   try {
-    const res = await api('/api/admin/import', 'POST', { league_id: leagueId, status });
-    resultEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
+    const response = await fetch('/api/admin/import', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf || '' },
+      body:    JSON.stringify({ league_id: leagueId, status }),
+    });
+
+    if (!response.ok && !response.body) {
+      const err = await response.json();
+      throw new Error(err.error || 'Erro ao importar');
+    }
+
+    const reader  = response.body.getReader();
+    const decoder = new TextDecoder();
+    let   buffer  = '';
+    let   done_data = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const data = JSON.parse(line);
+          if (data.type === 'total') {
+            setProgress(0, data.total, '');
+            const lbl = document.getElementById('importProgressLabel');
+            if (lbl) lbl.textContent = `0 de ${data.total} jogos…`;
+          } else if (data.type === 'progress') {
+            setProgress(data.current, data.total, data.game);
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${data.current}/${data.total}`;
+          } else if (data.type === 'done') {
+            done_data = data;
+          } else if (data.error) {
+            throw new Error(data.error);
+          }
+        } catch (parseErr) { /* linha incompleta */ }
+      }
+    }
+
+    const count = done_data?.count ?? 0;
+    resultEl.innerHTML = `<div class="alert alert--success"><i class="fa-solid fa-check"></i> ${count} partida(s) importada(s) com sucesso.</div>`;
     await loadGames();
     populateAdminSelect();
     refreshLeagueCounts();
   } catch (err) {
     resultEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
-    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Importar Jogos';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Importar Jogos';
   }
 };
 

@@ -258,11 +258,13 @@ class GameController
             return;
         }
 
-        $api    = new FootballDataService($apiKey, $timezone);
-        $counts = [];
+        $api      = new FootballDataService($apiKey, $timezone);
+        $dateFrom = date('Y-m-d');
+        $dateTo   = date('Y-m-d', strtotime('+1 year'));
+        $counts   = [];
         foreach ($leagues as $id => $name) {
             try {
-                $matches = $api->fetchMatches($id, '');
+                $matches = $api->fetchMatches($id, 'SCHEDULED,TIMED', null, $dateFrom, $dateTo);
                 $counts[$id] = count($matches);
             } catch (RuntimeException) {
                 $counts[$id] = null;
@@ -307,8 +309,8 @@ class GameController
         $api = new FootballDataService($apiKey, $timezone);
 
         try {
-            $matches    = $api->fetchMatches($id, '');
-            $count      = count($matches);
+            $matches = $api->fetchMatches($id, 'SCHEDULED,TIMED', null, date('Y-m-d'), date('Y-m-d', strtotime('+1 year')));
+            $count   = count($matches);
         } catch (RuntimeException $e) {
             jsonResponse(['error' => 'Erro ao consultar a API: ' . $e->getMessage()], 500);
             return;
@@ -378,7 +380,7 @@ class GameController
         jsonResponse(['message' => 'Jogo excluído com sucesso.']);
     }
 
-    /** POST /api/admin/import — importa partidas da football-data.org */
+    /** POST /api/admin/import — importa partidas com streaming de progresso (NDJSON) */
     public function import(): void
     {
         Csrf::verify();
@@ -391,9 +393,9 @@ class GameController
             return;
         }
 
-        $body         = json_decode(file_get_contents('php://input'), true) ?: [];
-        $competitionId = (int) ($body['league_id'] ?? 2000); // 2000 = Copa do Mundo
-        $status        = $body['status'] ?? 'SCHEDULED,TIMED'; // SCHEDULED,TIMED,IN_PLAY,PAUSED,FINISHED
+        $body          = json_decode(file_get_contents('php://input'), true) ?: [];
+        $competitionId = (int) ($body['league_id'] ?? 2000);
+        $status        = $body['status'] ?? 'SCHEDULED,TIMED';
 
         $api = new FootballDataService($apiKey, $timezone);
         try {
@@ -408,12 +410,23 @@ class GameController
             return;
         }
 
+        // Inicia streaming NDJSON
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        while (ob_get_level()) ob_end_clean();
+        header('Content-Type: application/x-ndjson; charset=utf-8');
+        header('X-Accel-Buffering: no');
+        header('Cache-Control: no-cache');
+
+        $total      = count($matches);
         $downloader = new ImageDownloaderService();
-        $count = 0;
+        $count      = 0;
+
+        echo json_encode(['type' => 'total', 'total' => $total]) . "\n";
+        flush();
+
         foreach ($matches as $match) {
             $normalized = $api->normalize($match);
 
-            // Baixa bandeiras e logos localmente
             $downloader->downloadFlag($normalized['bandeira_casa'] ?? '');
             $downloader->downloadFlag($normalized['bandeira_fora'] ?? '');
             if (!empty($normalized['logo_casa'])) {
@@ -428,10 +441,20 @@ class GameController
             $normalized['api_league_id'] = $competitionId;
             $this->repository->upsertByApiId($normalized);
             $count++;
+
+            echo json_encode([
+                'type'    => 'progress',
+                'current' => $count,
+                'total'   => $total,
+                'game'    => $normalized['time_casa'] . ' × ' . $normalized['time_fora'],
+            ]) . "\n";
+            flush();
         }
 
         Logger::info('Import football-data.org', ['competition' => $competitionId, 'count' => $count]);
-        jsonResponse(['message' => "{$count} partida(s) importada(s) com sucesso.", 'importados' => $count]);
+        echo json_encode(['type' => 'done', 'count' => $count]) . "\n";
+        flush();
+        exit;
     }
 
     /** POST /api/admin/sync-images — baixa/atualiza bandeiras e logos de todos os jogos */

@@ -1806,6 +1806,21 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 .import-result-area:empty { display: none; }
 .import-result-area { margin-top: .75rem; }
 
+.import-progress { margin-top: .5rem; }
+.import-progress__bar-wrap {
+  height: 8px; border-radius: 999px;
+  background: var(--surface-2); overflow: hidden;
+}
+.import-progress__bar {
+  height: 100%; border-radius: 999px;
+  background: var(--primary);
+  transition: width .25s ease;
+}
+.import-progress__label {
+  font-size: .8rem; color: var(--text-muted);
+  margin: .4rem 0 0; text-align: center;
+}
+
 /* League preview panel */
 .league-preview-header {
   display: flex; align-items: center; justify-content: space-between;

@@ -70,12 +70,17 @@ class FootballDataService
     }
 
     // ── Partidas ─────────────────────────────────────────────────
-    /** Busca partidas de uma competição por status */
-    public function fetchMatches(int $competitionId, ?string $status = null, ?int $matchday = null): array
+    /** Busca partidas de uma competição por status e/ou intervalo de datas (YYYY-MM-DD) */
+    public function fetchMatches(int $competitionId, ?string $status = null, ?int $matchday = null, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $params = [];
-        if ($status)   $params['status']   = $status;   // SCHEDULED,LIVE,IN_PLAY,PAUSED,FINISHED
+        if ($status)   $params['status']   = $status;
         if ($matchday) $params['matchday']  = $matchday;
+        // dateFrom e dateTo devem ser enviados juntos (exigência da API)
+        if ($dateFrom && $dateTo) {
+            $params['dateFrom'] = $dateFrom;
+            $params['dateTo']   = $dateTo;
+        }
 
         $data = $this->get("/competitions/{$competitionId}/matches", $params);
         return $data['matches'] ?? [];
