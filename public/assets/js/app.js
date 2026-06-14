@@ -1853,13 +1853,29 @@ const renderRanking = async () => {
     nearEl.innerHTML = data.quase.map((r, i) => {
       const { imgH, imgA, tc, tf } = teamImgs(r);
       const far = r.diferenca >= 2;
+
+      // Detecta se acertou um lado exato
+      const [betH, betA]   = r.aposta.split(' x ');
+      const [realH, realA] = (r.resultado || '').split('x');
+      let badgeText, badgeClass = '';
+      if (betH === realH && betA !== realA) {
+        const n = parseInt(realH, 10);
+        badgeText  = `Acertou ${n} gol${n !== 1 ? 's' : ''} do ${tc}`;
+      } else if (betA === realA && betH !== realH) {
+        const n = parseInt(realA, 10);
+        badgeText  = `Acertou ${n} gol${n !== 1 ? 's' : ''} do ${tf}`;
+      } else {
+        badgeText  = r.diferenca === 1 ? '1 gol' : `${r.diferenca} gols`;
+        badgeClass = far ? ' near-row__badge--far' : '';
+      }
+
       return `
         <div class="near-row">
           <span class="near-row__pos">${i + 1}</span>
           <div class="near-row__body">
             <div class="near-row__top">
               <span class="near-row__name">${escHtml(maskName(r.nome_real || r.nome))}</span>
-              <span class="near-row__badge${far ? ' near-row__badge--far' : ''}">${r.diferenca === 1 ? '1 gol' : r.diferenca + ' gols'}</span>
+              <span class="near-row__badge${badgeClass}">${badgeText}</span>
             </div>
             <div class="near-row__game">${imgH}${tc} × ${imgA}${tf}</div>
             <div class="near-row__detail">
@@ -4016,6 +4032,27 @@ const bind = () => {
     const all = document.getElementById('chkAllBets');
     if (all) all.checked = false;
   });
+  document.getElementById('btnSeedExampleBets')?.addEventListener('click', async () => {
+    const ok = await confirm({
+      title:       'Carregar apostas de exemplo?',
+      message:     'Serão criados 10 usuários de teste com apostas nos jogos já finalizados. Apostas anteriores desses usuários serão substituídas.',
+      confirmText: 'Carregar',
+      cancelText:  'Cancelar',
+    });
+    if (!ok) return;
+    const btn = document.getElementById('btnSeedExampleBets');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Carregando…';
+    try {
+      const res = await api('/api/admin/apostas/seed', 'POST', {});
+      toast(res.message, 'success');
+      loadAdminBets();
+    } catch (e) {
+      toast(e.message || 'Erro ao carregar apostas de exemplo.', 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-flask"></i> Carregar apostas de exemplo';
+    }
+  });
+
   document.getElementById('btnDeleteAllBets')?.addEventListener('click', async () => {
     const ok = await confirm({
       title:        'Excluir todas as apostas?',
