@@ -2643,15 +2643,22 @@ const importFromApi = async () => {
       body:    JSON.stringify({ league_id: leagueId, status }),
     });
 
-    if (!response.ok && !response.body) {
-      const err = await response.json();
-      throw new Error(err.error || 'Erro ao importar');
+    const contentType = response.headers.get('content-type') || '';
+
+    // Resposta normal (erro ou nenhum jogo encontrado)
+    if (!contentType.includes('x-ndjson')) {
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      resultEl.innerHTML = `<div class="alert alert--${data.importados > 0 ? 'success' : 'warning'}">${data.message}</div>`;
+      if (data.importados > 0) { await loadGames(); populateAdminSelect(); refreshLeagueCounts(); }
+      return;
     }
 
+    // Stream NDJSON com progresso
     const reader  = response.body.getReader();
     const decoder = new TextDecoder();
-    let   buffer  = '';
-    let   done_data = null;
+    let buffer    = '';
+    let doneData  = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -2661,25 +2668,24 @@ const importFromApi = async () => {
       buffer = lines.pop();
       for (const line of lines) {
         if (!line.trim()) continue;
-        try {
-          const data = JSON.parse(line);
-          if (data.type === 'total') {
-            setProgress(0, data.total, '');
-            const lbl = document.getElementById('importProgressLabel');
-            if (lbl) lbl.textContent = `0 de ${data.total} jogos…`;
-          } else if (data.type === 'progress') {
-            setProgress(data.current, data.total, data.game);
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${data.current}/${data.total}`;
-          } else if (data.type === 'done') {
-            done_data = data;
-          } else if (data.error) {
-            throw new Error(data.error);
-          }
-        } catch (parseErr) { /* linha incompleta */ }
+        let data;
+        try { data = JSON.parse(line); } catch { continue; }
+        if (data.type === 'total') {
+          setProgress(0, data.total);
+          const lbl = document.getElementById('importProgressLabel');
+          if (lbl) lbl.textContent = `0 de ${data.total} jogos…`;
+        } else if (data.type === 'progress') {
+          setProgress(data.current, data.total, data.game);
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${data.current}/${data.total}`;
+        } else if (data.type === 'done') {
+          doneData = data;
+        } else if (data.error) {
+          throw new Error(data.error);
+        }
       }
     }
 
-    const count = done_data?.count ?? 0;
+    const count = doneData?.count ?? 0;
     resultEl.innerHTML = `<div class="alert alert--success"><i class="fa-solid fa-check"></i> ${count} partida(s) importada(s) com sucesso.</div>`;
     await loadGames();
     populateAdminSelect();
