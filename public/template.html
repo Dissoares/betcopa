@@ -405,177 +405,11 @@
         <div class="admin-tab hidden" id="atab-jogos">
           <div class="admin-page-header">
             <h2 class="admin-page-header__title"><i class="fa-solid fa-futbol"></i> Jogos</h2>
-            <p class="admin-page-header__sub">Cadastre, edite e gerencie os jogos disponíveis para apostas</p>
+            <p class="admin-page-header__sub">Importe, sincronize e gerencie os jogos disponíveis para apostas</p>
           </div>
 
-          <div class="admin-jogos-layout">
-
-          <!-- Coluna esquerda: formulário -->
-          <div class="panel admin-jogos-form">
-            <h3 class="panel__title" id="adminGameFormTitle"><i class="fa-solid fa-plus"></i> Cadastrar Jogo</h3>
-            <form id="adminGameForm">
-
-                <!-- Preview ao vivo do confronto -->
-                <div class="gf-preview">
-                  <span class="gf-preview__flag" id="prevFlagHome"><i class="fa-regular fa-flag" style="font-size:1.2rem;opacity:.4"></i></span>
-                  <span class="gf-preview__name" id="prevNameHome">Casa</span>
-                  <span class="gf-preview__vs">×</span>
-                  <span class="gf-preview__name" id="prevNameAway">Fora</span>
-                  <span class="gf-preview__flag" id="prevFlagAway"><i class="fa-regular fa-flag" style="font-size:1.2rem;opacity:.4"></i></span>
-                </div>
-
-                <!-- Times -->
-                <div class="gf-teams">
-                  <div class="gf-team">
-                    <div class="gf-flag-preview" id="gfFlagPreviewHome"><i class="fa-regular fa-flag" style="font-size:2rem;opacity:.3"></i></div>
-                    <div class="form-group">
-                      <label>Time Casa</label>
-                      <select id="adminHome" required>
-                        <option value="">— selecione —</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="gf-vs">VS</div>
-                  <div class="gf-team">
-                    <div class="gf-flag-preview" id="gfFlagPreviewAway"><i class="fa-regular fa-flag" style="font-size:2rem;opacity:.3"></i></div>
-                    <div class="form-group">
-                      <label>Time Fora</label>
-                      <select id="adminAway" required>
-                        <option value="">— selecione —</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Data, Status, Valores -->
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Data e Hora</label>
-                    <input id="adminDate" type="datetime-local" required />
-                  </div>
-                  <div class="form-group">
-                    <label>Status</label>
-                    <select id="adminCreateStatus">
-                      <option value="aberto">Aberto</option>
-                      <option value="encerrado">Encerrado</option>
-                      <option value="finalizado">Finalizado</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Status da partida <span style="font-size:.75rem;color:var(--text-muted)">(Ao Vivo / API)</span></label>
-                    <select id="adminStatusApi">
-                      <option value="">— nenhum (padrão) —</option>
-                      <optgroup label="Ao Vivo">
-                        <option value="1H">1º Tempo (1H)</option>
-                        <option value="HT">Intervalo (HT)</option>
-                        <option value="2H">2º Tempo (2H)</option>
-                        <option value="ET">Prorrogação (ET)</option>
-                        <option value="BT">Intervalo PE (BT)</option>
-                        <option value="P">Pênaltis (P)</option>
-                        <option value="INT">Interrompido (INT)</option>
-                      </optgroup>
-                      <optgroup label="Encerrada">
-                        <option value="FT">Encerrado (FT)</option>
-                        <option value="AET">Encerrado PE (AET)</option>
-                        <option value="PEN">Encerrado Pên. (PEN)</option>
-                      </optgroup>
-                      <optgroup label="Outras">
-                        <option value="NS">Não começou (NS)</option>
-                        <option value="PST">Adiado (PST)</option>
-                        <option value="SUSP">Suspenso (SUSP)</option>
-                        <option value="CANC">Cancelado (CANC)</option>
-                      </optgroup>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Multiplicador de ganho <small style="color:var(--text-muted)">(ex: 5 = aposta R$50 → ganha R$250)</small></label>
-                    <input id="adminCreateOdd" type="number" min="1" step="0.01" value="5.00" required />
-                  </div>
-                </div>
-
-                <!-- Placar -->
-                <div class="form-section">
-                  <div class="form-section__label">Placar <span>(opcional)</span></div>
-                  <div class="gf-score">
-                    <input id="adminCreateScoreHome" type="number" min="0" max="50" placeholder="0" />
-                    <span class="gf-score__sep">×</span>
-                    <input id="adminCreateScoreAway" type="number" min="0" max="50" placeholder="0" />
-                  </div>
-                </div>
-
-                <button class="btn btn--primary btn--full" type="submit" id="adminGameSubmitBtn"><i class="fa-solid fa-plus"></i> Cadastrar Jogo</button>
-                <button class="btn btn--secondary btn--full hidden" type="button" id="btnCancelEditGame"><i class="fa-solid fa-xmark"></i> Cancelar edição</button>
-              </form>
-          </div><!-- /admin-jogos-form -->
-
-          <!-- Coluna direita: filtros -->
-          <div class="panel admin-jogos-filter">
-            <h3 class="panel__title"><i class="fa-solid fa-magnifying-glass"></i> Filtrar Lista</h3>
-            <div class="form-group">
-              <label>Buscar time</label>
-              <input id="filterTeam" type="search" placeholder="Ex: Brasil, Argentina…" />
-            </div>
-            <div class="form-group">
-              <label>Status</label>
-              <select id="filterStatus">
-                <option value="">Todos os status</option>
-                <option value="aberto">Aberto</option>
-                <option value="encerrado">Encerrado</option>
-                <option value="finalizado">Finalizado</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>De</label>
-                <input id="filterDateFrom" type="date" />
-              </div>
-              <div class="form-group">
-                <label>Até</label>
-                <input id="filterDateTo" type="date" />
-              </div>
-            </div>
-            <button class="btn btn--secondary btn--full" id="btnClearFilter" type="button"><i class="fa-solid fa-xmark"></i> Limpar filtros</button>
-          </div><!-- /admin-jogos-filter -->
-
-          </div><!-- /admin-jogos-layout -->
-
-          <div class="panel">
-            <div class="admin-list-header">
-              <h3 class="panel__title" style="margin:0">Jogos cadastrados</h3>
-              <div style="display:flex;align-items:center;gap:.6rem">
-                <span class="text--muted" id="adminGamesCount"></span>
-                <button class="btn btn--danger btn--sm" id="btnDeleteAllGames"><i class="fa-solid fa-trash-can"></i> Limpar tudo</button>
-              </div>
-            </div>
-            <div class="bulk-action-bar hidden" id="bulkActionBar">
-              <span id="bulkSelCount">0</span> jogo(s) selecionado(s)
-              <button class="btn btn--danger btn--sm" id="btnBulkDelete"><i class="fa-solid fa-trash"></i> Excluir selecionados</button>
-              <button class="btn btn--ghost btn--sm" id="btnBulkClear">Limpar seleção</button>
-            </div>
-            <div id="adminGamesList"></div>
-            <div class="admin-pagination" id="adminGamesPagination"></div>
-          </div>
-
-          <details class="panel admin-import-panel" id="bulkResultPanel">
-            <summary><i class="fa-solid fa-list-check"></i> Lançamento de resultado em lote</summary>
-            <div class="admin-import-body">
-              <div class="bulk-result-toolbar">
-                <label style="display:flex;align-items:center;gap:.4rem;font-size:.9rem;cursor:pointer">
-                  <input type="checkbox" id="checkAllBulk"> Selecionar todos
-                </label>
-                <button class="btn btn--primary btn--sm" id="btnBulkResult" disabled>
-                  <i class="fa-solid fa-check-double"></i> Registrar selecionados (<span id="bulkResultCount">0</span>)
-                </button>
-              </div>
-              <div id="bulkResultList"></div>
-            </div>
-          </details>
-
-          <details class="panel admin-import-panel">
+          <!-- Importador API -->
+          <details class="panel admin-import-panel" open>
             <summary><i class="fa-solid fa-satellite-dish"></i> football-data.org — Importar e sincronizar jogos</summary>
             <div class="admin-import-body">
               <div class="form-row" style="margin-top:1rem">
@@ -611,6 +445,57 @@
                 <button class="btn btn--ghost" id="btnSyncImages"><i class="fa-solid fa-images"></i> Sincronizar Imagens</button>
               </div>
               <div id="importResult" style="margin-top:.75rem"></div>
+            </div>
+          </details>
+
+          <!-- Filtros -->
+          <div class="panel">
+            <h3 class="panel__title"><i class="fa-solid fa-magnifying-glass"></i> Filtrar Lista</h3>
+            <div class="admin-toolbar" style="margin-top:.5rem">
+              <input id="filterTeam" type="search" placeholder="Buscar time…" />
+              <select id="filterStatus">
+                <option value="">Todos os status</option>
+                <option value="aberto">Aberto</option>
+                <option value="encerrado">Encerrado</option>
+                <option value="finalizado">Finalizado</option>
+              </select>
+              <input id="filterDateFrom" type="date" title="De" />
+              <input id="filterDateTo" type="date" title="Até" />
+              <button class="btn btn--ghost btn--sm" id="btnClearFilter" type="button"><i class="fa-solid fa-xmark"></i> Limpar</button>
+            </div>
+          </div>
+
+          <!-- Lista de jogos -->
+          <div class="panel">
+            <div class="admin-list-header">
+              <h3 class="panel__title" style="margin:0">Jogos cadastrados</h3>
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <span class="text--muted" id="adminGamesCount"></span>
+                <button class="btn btn--danger btn--sm" id="btnDeleteAllGames"><i class="fa-solid fa-trash-can"></i> Limpar tudo</button>
+              </div>
+            </div>
+            <div class="bulk-action-bar hidden" id="bulkActionBar">
+              <span id="bulkSelCount">0</span> jogo(s) selecionado(s)
+              <button class="btn btn--danger btn--sm" id="btnBulkDelete"><i class="fa-solid fa-trash"></i> Excluir selecionados</button>
+              <button class="btn btn--ghost btn--sm" id="btnBulkClear">Limpar seleção</button>
+            </div>
+            <div id="adminGamesList"></div>
+            <div class="admin-pagination" id="adminGamesPagination"></div>
+          </div>
+
+          <!-- Lançamento de resultado em lote -->
+          <details class="panel admin-import-panel" id="bulkResultPanel">
+            <summary><i class="fa-solid fa-list-check"></i> Lançamento de resultado em lote</summary>
+            <div class="admin-import-body">
+              <div class="bulk-result-toolbar">
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.9rem;cursor:pointer">
+                  <input type="checkbox" id="checkAllBulk"> Selecionar todos
+                </label>
+                <button class="btn btn--primary btn--sm" id="btnBulkResult" disabled>
+                  <i class="fa-solid fa-check-double"></i> Registrar selecionados (<span id="bulkResultCount">0</span>)
+                </button>
+              </div>
+              <div id="bulkResultList"></div>
             </div>
           </details>
         </div>

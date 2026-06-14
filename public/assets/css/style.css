@@ -1803,73 +1803,6 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 .admin-import-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; }
 
 
-/* ============================================================
-   §17b FORMULÁRIO DE JOGO (admin)
-   ============================================================ */
-
-/* Preview ao vivo do confronto */
-.gf-preview {
-  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .6rem;
-  margin-bottom: 1.1rem;
-  position: relative;
-  overflow: hidden;
-}
-.gf-preview::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at center, var(--primary-glow) 0%, transparent 70%);
-  pointer-events: none;
-}
-.gf-preview__flag { font-size: 2rem; line-height: 1; flex-shrink: 0; }
-.gf-preview__name {
-  font-size: .92rem; font-weight: 800;
-  max-width: 90px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-  color: var(--text);
-}
-.gf-preview__vs {
-  font-size: .7rem; font-weight: 900;
-  color: var(--text-muted); letter-spacing: .14em;
-  flex-shrink: 0;
-  background: var(--surface); border: 1px solid var(--border);
-  padding: .2rem .5rem; border-radius: 999px;
-}
-
-/* Times lado a lado com VS central */
-.gf-teams {
-  display: grid;
-  grid-template-columns: 1fr 28px 1fr;
-  gap: .6rem;
-  margin-bottom: .9rem;
-}
-.gf-team { display: flex; flex-direction: column; gap: .5rem; }
-.gf-vs {
-  display: flex; align-items: center; justify-content: center;
-  font-size: .65rem; font-weight: 900;
-  color: var(--text-muted); letter-spacing: .08em;
-  padding-top: 1.6rem;
-}
-
-/* Linha de bandeira: preview emoji + input código */
-.gf-flag-row {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: .4rem;
-  align-items: flex-end;
-}
-.gf-flag-preview {
-  font-size: 1.5rem; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  padding-bottom: .7rem;
-}
-
 /* Header da lista de jogos */
 .admin-list-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -1899,48 +1832,10 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   display: flex; align-items: center; justify-content: center; gap: 1rem;
 }
 
-/* Seção com linha separadora */
-.form-section { margin-bottom: .9rem; }
-.form-section__label {
-  font-size: .7rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .06em;
-  color: var(--text-muted);
-  display: flex; align-items: center; gap: .5rem;
-  margin-bottom: .6rem;
-}
-.form-section__label span { font-weight: 400; text-transform: none; font-size: .7rem; }
-.form-section__label::after {
-  content: ''; flex: 1; height: 1px;
-  background: var(--border);
-}
-
-/* Placar compacto */
-.gf-score {
-  display: flex; align-items: center; gap: .6rem;
-}
-.gf-score input {
-  width: 64px; text-align: center;
-  font-size: 1.1rem; font-weight: 700;
-}
-.gf-score__sep {
-  font-weight: 900; color: var(--text-muted); font-size: .9rem;
-}
-
-
 /* ============================================================
    §17 RESPONSIVO
    ============================================================ */
 
-/* Layout 2 colunas: form + filtro */
-.admin-jogos-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  align-items: start;
-  margin-bottom: 1.25rem;
-}
-.admin-jogos-filter .form-group { margin-bottom: .85rem; }
-.admin-jogos-filter .form-group:last-of-type { margin-bottom: 1rem; }
 @media (max-width: 900px) {
   .admin-layout  { flex-direction: column; }
   .admin-sidebar { width: 100%; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); padding: .75rem; }
@@ -1948,7 +1843,6 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .admin-nav__btn { width: auto; padding: .45rem .75rem; font-size: .82rem; }
   .admin-content  { padding: 1.25rem; }
   .admin-grid-2   { grid-template-columns: 1fr; }
-  .admin-jogos-layout { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {

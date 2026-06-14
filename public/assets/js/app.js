@@ -24,7 +24,6 @@ const S = {
   bonusCadastro:  0,
 };
 
-let editingGameId = null;
 
 // ── Catálogo de seleções (nome canônico PT-BR + código ISO) ──
 const TEAMS = [
@@ -2449,7 +2448,6 @@ const renderAdminGames = () => {
             <td>${statusBadge(g)}</td>
             <td>${placar(g)}</td>
             <td style="white-space:nowrap;display:flex;gap:.25rem;align-items:center">
-              <button class="btn btn--ghost btn--sm" data-action="editar-jogo" data-id="${g.id}"><i class="fa-solid fa-pen"></i> Editar</button>
               ${g.status !== 'finalizado'
                 ? `<button class="btn btn--ghost btn--sm" data-action="abrir-resultado" data-id="${g.id}" data-label="${g.time_casa} × ${g.time_fora}">Resultado</button>`
                 : ''}
@@ -2474,68 +2472,6 @@ const renderAdminGames = () => {
 
 const populateAdminSelect = () => renderAdminGames();
 
-const editGame = (id) => {
-  const g = (S.games || []).find(x => x.id === id);
-  if (!g) return;
-
-  editingGameId = id;
-
-  // Preenche times
-  const homeEl = document.getElementById('adminHome');
-  const awayEl = document.getElementById('adminAway');
-  if (homeEl) {
-    homeEl.value = g.bandeira_casa || '';
-    // fallback: tenta pelo nome
-    if (!homeEl.value) {
-      Array.from(homeEl.options).forEach(o => { if (o.dataset.name === g.time_casa) homeEl.value = o.value; });
-    }
-  }
-  if (awayEl) {
-    awayEl.value = g.bandeira_fora || '';
-    if (!awayEl.value) {
-      Array.from(awayEl.options).forEach(o => { if (o.dataset.name === g.time_fora) awayEl.value = o.value; });
-    }
-  }
-
-  // Dispara preview
-  ['adminHome', 'adminAway'].forEach(sid => document.getElementById(sid)?.dispatchEvent(new Event('change')));
-
-  // Data (converte 'YYYY-MM-DD HH:MM:SS' → 'YYYY-MM-DDTHH:MM')
-  const dateEl = document.getElementById('adminDate');
-  if (dateEl && g.data_hora) dateEl.value = g.data_hora.replace(' ', 'T').slice(0, 16);
-
-  // Status, valor_base, odd
-  const statusEl = document.getElementById('adminCreateStatus');
-  if (statusEl) statusEl.value = g.status || 'aberto';
-  const apiEl = document.getElementById('adminStatusApi');
-  if (apiEl) apiEl.value = g.status_api || '';
-  const oddEl = document.getElementById('adminCreateOdd');
-  if (oddEl) oddEl.value = parseFloat(g.odd || 0) > 1 ? g.odd : S.oddPadrao;
-
-  // Placar (placar_real = '2x1')
-  if (g.placar_real) {
-    const parts = g.placar_real.split('x');
-    const sh = document.getElementById('adminCreateScoreHome');
-    const sa = document.getElementById('adminCreateScoreAway');
-    if (sh) sh.value = parts[0] ?? '';
-    if (sa) sa.value = parts[1] ?? '';
-  } else {
-    document.getElementById('adminCreateScoreHome').value = '';
-    document.getElementById('adminCreateScoreAway').value = '';
-  }
-
-  // UI: muda título, botão e mostra cancelar
-  const titleEl  = document.getElementById('adminGameFormTitle');
-  const submitEl = document.getElementById('adminGameSubmitBtn');
-  const cancelEl = document.getElementById('btnCancelEditGame');
-  if (titleEl)  titleEl.textContent  = '\u270f\ufe0f Editar Jogo';
-  if (submitEl) submitEl.textContent = 'Salvar Altera\u00e7\u00f5es';
-  if (cancelEl) cancelEl.classList.remove('hidden');
-
-  // Scroll até o formulário
-  document.getElementById('adminGameForm')?.closest('.panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
-
 const deleteGame = async (id, label) => {
   const result = await Swal.fire({
     title: 'Excluir jogo?',
@@ -2555,28 +2491,6 @@ const deleteGame = async (id, label) => {
   } catch (err) {
     toast(err.message || 'Erro ao excluir jogo.', 'danger');
   }
-};
-
-const cancelEditGame = () => {
-  editingGameId = null;
-  document.getElementById('adminGameForm').reset();
-  const oddEl = document.getElementById('adminCreateOdd');
-  if (oddEl) oddEl.value = S.oddPadrao;
-  const apiEl = document.getElementById('adminStatusApi');
-  if (apiEl) apiEl.value = '';
-  const flagReset = '<i class="fa-regular fa-flag" style="font-size:1.4rem;opacity:.4"></i>';
-  ['prevFlagHome','prevFlagAway','gfFlagPreviewHome','gfFlagPreviewAway'].forEach(sid => {
-    const el = document.getElementById(sid); if (el) el.innerHTML = flagReset;
-  });
-  const el = (sid) => document.getElementById(sid);
-  if (el('prevNameHome')) el('prevNameHome').textContent = 'Casa';
-  if (el('prevNameAway')) el('prevNameAway').textContent = 'Fora';
-  const titleEl  = document.getElementById('adminGameFormTitle');
-  const submitEl = document.getElementById('adminGameSubmitBtn');
-  const cancelEl = document.getElementById('btnCancelEditGame');
-  if (titleEl)  titleEl.innerHTML  = '<i class="fa-solid fa-plus"></i> Cadastrar Jogo';
-  if (submitEl) submitEl.innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Jogo';
-  if (cancelEl) cancelEl.classList.add('hidden');
 };
 
 // ── Resultado em lote ─────────────────────────────────────────
@@ -2693,84 +2607,10 @@ const closeAdminResultado = () => {
   document.getElementById('modalAdminResultado').classList.add('hidden');
 };
 
-const submitAdminGame = async (e) => {
-  e.preventDefault();
-  const btn = e.target.querySelector('button[type=submit]');
-  const isEditing = editingGameId !== null;
-  btn.disabled = true; btn.textContent = isEditing ? 'Salvando...' : 'Cadastrando...';
-  try {
-    const homeOpt = document.getElementById('adminHome');
-    const awayOpt = document.getElementById('adminAway');
-    const homeCode = homeOpt.value;
-    const awayCode = awayOpt.value;
-    const payload = {
-      time_casa:     homeOpt.options[homeOpt.selectedIndex]?.dataset.name || '',
-      time_fora:     awayOpt.options[awayOpt.selectedIndex]?.dataset.name || '',
-      bandeira_casa: homeCode || 'br',
-      bandeira_fora: awayCode || 'br',
-      data_hora:     document.getElementById('adminDate').value,
-      status:        document.getElementById('adminCreateStatus').value,
-      status_api:    document.getElementById('adminStatusApi')?.value || '',
-      placar_casa:   document.getElementById('adminCreateScoreHome').value !== '' ? parseInt(document.getElementById('adminCreateScoreHome').value, 10) : null,
-      placar_fora:   document.getElementById('adminCreateScoreAway').value !== '' ? parseInt(document.getElementById('adminCreateScoreAway').value, 10) : null,
-      odd:           parseFloat(document.getElementById('adminCreateOdd').value),
-    };
-    if (isEditing) {
-      await api(`/api/admin/jogos/${editingGameId}`, 'PUT', payload);
-      toast('Jogo atualizado com sucesso!', 'success');
-    } else {
-      await api('/api/admin/jogos', 'POST', payload);
-      toast('Jogo cadastrado com sucesso!', 'success');
-    }
-    cancelEditGame();
-    await loadGames();
-    populateAdminSelect();
-  } catch (err) {
-    toast(err.message, 'danger');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = editingGameId !== null ? 'Salvar Alterações' : 'Cadastrar Jogo';
-  }
-};
-
-const populateTeamSelects = () => {
-  const opts = '<option value="">— selecione —</option>' +
-    TEAMS.map(t => `<option value="${t.code}" data-name="${t.name}" data-code="${t.code}">${flagEmoji(t.code)} ${t.name}</option>`).join('');
-  ['adminHome', 'adminAway'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.innerHTML = opts;
-  });
-};
-
 const flagImg = (code, size = '2rem') =>
   code && /^[a-z]{2}(-[a-z]+)?$/i.test(code)
     ? `<img src="${flagUrl(code)}" alt="" style="width:${size};height:auto;border-radius:3px;display:block" loading="lazy" />`
     : '<span style="font-size:1.4rem">&#127937;</span>';
-
-const setupGameFormPreview = () => {
-  const el = id => document.getElementById(id);
-  const codeOf = id => {
-    const sel = el(id);
-    return sel?.value || '';
-  };
-  const nameOf = id => {
-    const sel = el(id);
-    return sel?.options[sel.selectedIndex]?.dataset.name || (id === 'adminHome' ? 'Casa' : 'Fora');
-  };
-  const update = () => {
-    const homeCode = codeOf('adminHome');
-    const awayCode = codeOf('adminAway');
-    const nh = nameOf('adminHome');
-    const na = nameOf('adminAway');
-    if (el('prevFlagHome'))      el('prevFlagHome').innerHTML      = flagImg(homeCode, '1.6rem');
-    if (el('prevFlagAway'))      el('prevFlagAway').innerHTML      = flagImg(awayCode, '1.6rem');
-    if (el('prevNameHome'))      el('prevNameHome').textContent      = nh;
-    if (el('prevNameAway'))      el('prevNameAway').textContent      = na;
-    if (el('gfFlagPreviewHome')) el('gfFlagPreviewHome').innerHTML = flagImg(homeCode, '3rem');
-    if (el('gfFlagPreviewAway')) el('gfFlagPreviewAway').innerHTML = flagImg(awayCode, '3rem');
-  };
-  ['adminHome', 'adminAway'].forEach(id => el(id)?.addEventListener('change', update));
-};
 
 const importFromApi = async () => {
   const btn      = document.getElementById('btnImport');
@@ -3735,10 +3575,7 @@ const bind = () => {
   }
 
   // Admin forms
-  document.getElementById('adminGameForm').addEventListener('submit', submitAdminGame);
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
-  populateTeamSelects();
-  setupGameFormPreview();
 
   // Filtros da lista de jogos
   ['filterTeam', 'filterStatus', 'filterDateFrom', 'filterDateTo'].forEach(id => {
@@ -3780,8 +3617,6 @@ const bind = () => {
 
   // Admin games list — editar + resultado + paginação + seleção + excluir
   document.getElementById('adminGamesList')?.addEventListener('click', e => {
-    const editBtn = e.target.closest('[data-action="editar-jogo"]');
-    if (editBtn) { editGame(Number(editBtn.dataset.id)); return; }
     const btn = e.target.closest('[data-action="abrir-resultado"]');
     if (btn) openAdminResultado(Number(btn.dataset.id), btn.dataset.label);
     const delBtn = e.target.closest('[data-action="excluir-jogo"]');
@@ -3823,7 +3658,6 @@ const bind = () => {
     const all = document.getElementById('chkAllGames');
     if (all) all.checked = false;
   });
-  document.getElementById('btnCancelEditGame')?.addEventListener('click', cancelEditGame);
 
   // Lote de resultados
   const bulkPanel = document.getElementById('bulkResultPanel');
