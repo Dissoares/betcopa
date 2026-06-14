@@ -157,7 +157,8 @@ try {
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/desbloquear$/', 'POST', fn(int $id) => $adminCtrl->unblockUser($id));
 
         // ── Admin: Apostas ────────────────────────────────────
-        route('/api/admin/apostas', 'GET', fn() => $adminCtrl->listBets());
+        route('/api/admin/apostas',              'GET',  fn() => $adminCtrl->listBets());
+        route('/api/admin/apostas/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteBets($bets));
 
         // ── Config pública (mult range) ───────────────────────────
         route('/api/config/bets',  'GET',  fn() => $adminCtrl->betConfig());

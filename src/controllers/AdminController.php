@@ -102,6 +102,29 @@ class AdminController
         ]);
     }
 
+    public function bulkDeleteBets(BetRepository $bets): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $body = json_decode(file_get_contents('php://input'), true) ?: [];
+        $ids  = array_filter(array_map('intval', $body['ids'] ?? []), fn($id) => $id > 0);
+
+        if (empty($ids)) {
+            jsonResponse(['error' => 'Nenhuma aposta selecionada.'], 400);
+            return;
+        }
+
+        $deleted = $bets->deleteMany(array_values($ids));
+        $skipped = count($ids) - count($deleted);
+
+        Logger::info('Apostas excluídas em lote', ['excluidas' => count($deleted), 'ignoradas' => $skipped]);
+        jsonResponse([
+            'message'   => count($deleted) . ' aposta(s) excluída(s).' . ($skipped > 0 ? " {$skipped} ignorada(s) (pago/ganhou/perdido)." : ''),
+            'excluidas' => count($deleted),
+        ]);
+    }
+
     // ── Configurações ─────────────────────────────────────────
     public function getConfig(): void
     {

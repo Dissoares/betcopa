@@ -66,6 +66,27 @@ class BetRepository
         return $stmt->fetchAll();
     }
 
+    /**
+     * Exclui apostas em lote — ignora as que estão pago/ganhou/perdido.
+     * Retorna IDs efetivamente excluídos.
+     */
+    public function deleteMany(array $ids): array
+    {
+        if (empty($ids)) return [];
+        $ids = array_map('intval', $ids);
+        $ph  = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT id FROM apostas WHERE id IN ({$ph}) AND status NOT IN ('pago','ganhou','perdido')"
+        );
+        $stmt->execute($ids);
+        $allowed = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id');
+        if (empty($allowed)) return [];
+
+        $ph2 = implode(',', array_fill(0, count($allowed), '?'));
+        $this->db->prepare("DELETE FROM apostas WHERE id IN ({$ph2})")->execute($allowed);
+        return $allowed;
+    }
+
     public function recentWins(int $limit = 15): array
     {
         $stmt = $this->db->prepare(

@@ -3860,6 +3860,18 @@ const bind = () => {
     if (btn.dataset.action === 'bets-prev') fetchAdminBets(_adminBetsPage - 1);
     if (btn.dataset.action === 'bets-next') fetchAdminBets(_adminBetsPage + 1);
   });
+  document.getElementById('adminBetsList')?.addEventListener('change', e => {
+    const chk = e.target.closest('.bet-row-chk');
+    if (chk) _toggleBetSel(Number(chk.dataset.id), chk.checked);
+  });
+  document.getElementById('btnBulkDeleteBets')?.addEventListener('click', bulkDeleteBets);
+  document.getElementById('btnBulkClearBets')?.addEventListener('click', () => {
+    _selectedBets.clear();
+    _syncBetsBulkBar();
+    document.querySelectorAll('#adminBetsList .bet-row-chk').forEach(c => c.checked = false);
+    const all = document.getElementById('chkAllBets');
+    if (all) all.checked = false;
+  });
 
   // Paginação do dashboard
   document.getElementById('dashRecentes')?.addEventListener('click', e => {
@@ -4121,6 +4133,57 @@ const handleBlockUser = async (uid, block) => {
 };
 
 // ── Admin Apostas ─────────────────────────────────────────────
+const _selectedBets = new Set();
+const BET_DELETABLE = new Set(['pendente', 'confirmado']);
+
+const _syncBetsBulkBar = () => {
+  const bar     = document.getElementById('bulkBetsActionBar');
+  const countEl = document.getElementById('bulkBetsSelCount');
+  if (!bar) return;
+  bar.classList.toggle('hidden', _selectedBets.size === 0);
+  if (countEl) countEl.textContent = _selectedBets.size;
+};
+
+const _toggleBetSel = (id, checked) => {
+  checked ? _selectedBets.add(id) : _selectedBets.delete(id);
+  _syncBetsBulkBar();
+};
+
+const _selectAllBets = (checked) => {
+  document.querySelectorAll('#adminBetsList .bet-row-chk').forEach(chk => {
+    chk.checked = checked;
+    _toggleBetSel(Number(chk.dataset.id), checked);
+  });
+};
+
+const bulkDeleteBets = async () => {
+  if (!_selectedBets.size) return;
+  const ids = [..._selectedBets];
+  const ok  = await confirm({
+    title:        `Excluir ${ids.length} aposta(s)?`,
+    message:      'Apostas com status pago, ganhou ou perdido serão ignoradas. Esta ação não pode ser desfeita.',
+    confirmLabel: 'Excluir',
+    confirmColor: '#FF4757',
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btnBulkDeleteBets');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+  try {
+    const res = await api('/api/admin/apostas/excluir/lote', 'POST', { ids });
+    toast(res.message, 'success');
+    _selectedBets.clear();
+    _syncBetsBulkBar();
+    await fetchAdminBets(_adminBetsPage);
+  } catch (err) {
+    toast(err.message || 'Erro ao excluir.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir selecionadas';
+  }
+};
+
 let _adminBetsPage = 1;
 
 const loadAdminBets = async () => {
@@ -4155,11 +4218,19 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
     el.innerHTML = `
       <table class="admin-table">
         <thead>
-          <tr><th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Status</th></tr>
+          <tr>
+            <th style="width:2rem"><input type="checkbox" id="chkAllBets" title="Selecionar todos"></th>
+            <th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Status</th>
+          </tr>
         </thead>
         <tbody>
-          ${apostas.map(b => `
-            <tr>
+          ${apostas.map(b => {
+            const canDel = BET_DELETABLE.has(b.status);
+            return `<tr>
+              <td>${canDel
+                ? `<input type="checkbox" class="bet-row-chk" data-id="${b.id}" ${_selectedBets.has(b.id) ? 'checked' : ''}>`
+                : `<span title="Não pode ser excluída" style="opacity:.25;font-size:.8rem">—</span>`}
+              </td>
               <td>#${b.id}</td>
               <td>${b.usuario}</td>
               <td>${b.time_casa} × ${b.time_fora}</td>
@@ -4168,10 +4239,13 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
               <td>${parseFloat(b.multiplicador).toFixed(0)}×</td>
               <td>${fmtR$(b.possivel_ganho)}</td>
               <td>${statusPill(b.status)}</td>
-            </tr>`).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
       ${_pager(page, total, limit, 'bets')}`;
+
+    document.getElementById('chkAllBets')?.addEventListener('change', e => _selectAllBets(e.target.checked));
   } catch (err) {
     el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   }
