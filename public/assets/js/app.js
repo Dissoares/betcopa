@@ -459,7 +459,6 @@ const renderHeader = () => {
 
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = '');
     document.getElementById('btnNavLogin')?.remove();
-    if (isAdmin) document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = '');
     // Show bell and start notification polling
     document.getElementById('notifBell')?.classList.remove('hidden');
     if (!_notifPoll) startNotifPoll();
@@ -467,7 +466,6 @@ const renderHeader = () => {
     wrap.innerHTML = `<button class="btn btn--primary btn--sm" id="btnNavLogin">Entrar</button>`;
     document.getElementById('btnNavLogin').addEventListener('click', () => navigate('auth'));
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
-    document.querySelectorAll('.nav__btn--admin').forEach(b => b.style.display = 'none');
     // Hide bell and stop polling
     document.getElementById('notifBell')?.classList.add('hidden');
     stopNotifPoll();
@@ -3190,7 +3188,7 @@ const bind = () => {
     if (btn.dataset.nav === 'palpites')    loadBets(1);
     if (btn.dataset.nav === 'ganhadores')  renderRanking();
     if (btn.dataset.nav === 'resultados')  renderResultados();
-    if (btn.dataset.nav === 'admin')       populateAdminSelect();
+    if (btn.dataset.nav === 'admin')       { populateAdminSelect(); switchAdminTab('dashboard'); }
     closeMobileMenu();
     document.getElementById('userDropdown')?.classList.remove('udrop--open');
   });
@@ -3219,7 +3217,7 @@ const bind = () => {
     if (view === 'palpites')    loadBets(1);
     if (view === 'ganhadores')  renderRanking();
     if (view === 'resultados')  renderResultados();
-    if (view === 'admin')       populateAdminSelect();
+    if (view === 'admin')       { populateAdminSelect(); switchAdminTab('dashboard'); }
   });
 
   document.addEventListener('click', e => {
@@ -3877,7 +3875,6 @@ const bind = () => {
   };
 
   document.getElementById('btnRefreshPreview')?.addEventListener('click', () => renderLeaguePreview(true));
-  renderLeaguePreview();
 
   // Limpar cache
   document.getElementById('btnClearCache')?.addEventListener('click', async () => {
@@ -3928,7 +3925,7 @@ const switchAdminTab = (tab) => {
   if (tab === 'usuarios')  loadAdminUsers();
   if (tab === 'apostas')   loadAdminBets();
   if (tab === 'config')    loadAdminConfig();
-  if (tab === 'jogos')     populateAdminSelect();
+  if (tab === 'jogos')     { populateAdminSelect(); renderLeaguePreview(); }
   if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
   if (tab === 'online')    { loadAdminOnline(); _onlineInterval = setInterval(loadAdminOnline, 30000); }
 };

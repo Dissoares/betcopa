@@ -235,6 +235,9 @@ class GameController
             return;
         }
 
+        // Libera o lock de sessão antes das chamadas lentas à API externa
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+
         $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football_key'] ?? '');
         $timezone = $this->configRepo->get('api_football_timezone', 'America/Sao_Paulo');
 
