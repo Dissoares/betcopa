@@ -1801,6 +1801,7 @@ details[open].admin-import-panel summary::after { transform: rotate(90deg); }
 details[open].admin-import-panel summary { margin-bottom: .25rem; }
 .admin-import-body { padding-top: .25rem; }
 .admin-import-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; }
+.panel-divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
 
 
 /* Header da lista de jogos */
