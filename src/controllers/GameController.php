@@ -194,6 +194,30 @@ class GameController
         jsonResponse(['processados' => $processados, 'erros' => $erros]);
     }
 
+    /** POST /api/admin/jogos/excluir/lote */
+    public function bulkDelete(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $body = json_decode(file_get_contents('php://input'), true) ?: [];
+        $ids  = array_filter(array_map('intval', $body['ids'] ?? []), fn($id) => $id > 0);
+
+        if (empty($ids)) {
+            jsonResponse(['error' => 'Nenhum jogo selecionado.'], 400);
+            return;
+        }
+
+        $deleted = $this->repository->deleteMany(array_values($ids));
+        $skipped = count($ids) - count($deleted);
+
+        Logger::info('Exclusão em lote', ['excluidos' => count($deleted), 'ignorados' => $skipped]);
+        jsonResponse([
+            'message'  => count($deleted) . ' jogo(s) excluído(s).' . ($skipped > 0 ? " {$skipped} ignorado(s) (já finalizado(s))." : ''),
+            'excluidos' => count($deleted),
+        ]);
+    }
+
     /** DELETE /api/admin/jogos/:id */
     public function delete(int $id): void
     {

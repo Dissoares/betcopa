@@ -130,6 +130,7 @@ try {
         route('/api/admin/sync',                     'POST', fn() => $gameCtrl->sync());
         route('/api/admin/sync-images',              'POST', fn() => $gameCtrl->syncImages());
         route('/api/admin/jogos/resultado/lote',     'POST', fn() => $gameCtrl->bulkResult());
+        route('/api/admin/jogos/excluir/lote',       'POST', fn() => $gameCtrl->bulkDelete());
         routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'PUT',
             fn(int $id) => $gameCtrl->update($id));
         routePattern('/^\/api\/admin\/jogos\/(\d+)\/resultado$/', 'POST',

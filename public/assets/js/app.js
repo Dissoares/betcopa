@@ -2328,6 +2328,59 @@ const submitResetPassword = async (e) => {
 const ADMIN_PAGE_SIZE = 8;
 let adminGamesPage = 0;
 
+// ── Bulk delete de jogos ──────────────────────────────────────
+const _selectedGames = new Set();
+
+const _syncBulkBar = () => {
+  const bar     = document.getElementById('bulkActionBar');
+  const countEl = document.getElementById('bulkSelCount');
+  if (!bar) return;
+  const n = _selectedGames.size;
+  bar.classList.toggle('hidden', n === 0);
+  if (countEl) countEl.textContent = n;
+};
+
+const _toggleGameSel = (id, checked) => {
+  checked ? _selectedGames.add(id) : _selectedGames.delete(id);
+  _syncBulkBar();
+};
+
+const _selectAllGames = (checked) => {
+  document.querySelectorAll('#adminGamesList .game-row-chk').forEach(chk => {
+    chk.checked = checked;
+    _toggleGameSel(Number(chk.dataset.id), checked);
+  });
+};
+
+const bulkDeleteGames = async () => {
+  if (!_selectedGames.size) return;
+  const ids = [..._selectedGames];
+  const ok  = await confirm({
+    title:        `Excluir ${ids.length} jogo(s)?`,
+    message:      'Jogos já finalizados serão ignorados automaticamente. Esta ação não pode ser desfeita.',
+    confirmLabel: 'Excluir',
+    confirmColor: '#FF4757',
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btnBulkDelete');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+  try {
+    const res = await api('/api/admin/jogos/excluir/lote', 'POST', { ids });
+    toast(res.message, 'success');
+    _selectedGames.clear();
+    _syncBulkBar();
+    await loadGames();
+    renderAdminGames();
+  } catch (err) {
+    toast(err.message || 'Erro ao excluir.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir selecionados';
+  }
+};
+
 const renderAdminGames = () => {
   const listEl  = document.getElementById('adminGamesList');
   const pageEl  = document.getElementById('adminGamesPagination');
@@ -2380,6 +2433,7 @@ const renderAdminGames = () => {
   listEl.innerHTML = `
     <table class="admin-table">
       <thead><tr>
+        <th style="width:2rem"><input type="checkbox" id="chkAllGames" title="Selecionar todos"></th>
         <th>Confronto</th>
         <th>Data</th>
         <th>Status</th>
@@ -2389,6 +2443,7 @@ const renderAdminGames = () => {
       <tbody>
         ${page.map(g => `
           <tr>
+            <td><input type="checkbox" class="game-row-chk" data-id="${g.id}" ${_selectedGames.has(g.id) ? 'checked' : ''}></td>
             <td><strong>${flagThumb(g.bandeira_casa)}${g.time_casa} × ${flagThumb(g.bandeira_fora)}${g.time_fora}</strong></td>
             <td class="text--muted" style="font-size:.82rem;white-space:nowrap">${fmtDate(g.data_hora)}</td>
             <td>${statusBadge(g)}</td>
@@ -2403,6 +2458,8 @@ const renderAdminGames = () => {
           </tr>`).join('')}
       </tbody>
     </table>`;
+
+  document.getElementById('chkAllGames')?.addEventListener('change', e => _selectAllGames(e.target.checked));
 
   if (pageEl) {
     if (totalPages <= 1) { pageEl.innerHTML = ''; return; }
@@ -3721,7 +3778,7 @@ const bind = () => {
     if (btn) switchAdminTab(btn.dataset.adminTab);
   });
 
-  // Admin games list — editar + resultado + paginação + fechar modal
+  // Admin games list — editar + resultado + paginação + seleção + excluir
   document.getElementById('adminGamesList')?.addEventListener('click', e => {
     const editBtn = e.target.closest('[data-action="editar-jogo"]');
     if (editBtn) { editGame(Number(editBtn.dataset.id)); return; }
@@ -3729,6 +3786,18 @@ const bind = () => {
     if (btn) openAdminResultado(Number(btn.dataset.id), btn.dataset.label);
     const delBtn = e.target.closest('[data-action="excluir-jogo"]');
     if (delBtn) { deleteGame(Number(delBtn.dataset.id), delBtn.dataset.label); return; }
+  });
+  document.getElementById('adminGamesList')?.addEventListener('change', e => {
+    const chk = e.target.closest('.game-row-chk');
+    if (chk) _toggleGameSel(Number(chk.dataset.id), chk.checked);
+  });
+  document.getElementById('btnBulkDelete')?.addEventListener('click', bulkDeleteGames);
+  document.getElementById('btnBulkClear')?.addEventListener('click', () => {
+    _selectedGames.clear();
+    _syncBulkBar();
+    document.querySelectorAll('#adminGamesList .game-row-chk').forEach(c => c.checked = false);
+    const all = document.getElementById('chkAllGames');
+    if (all) all.checked = false;
   });
   document.getElementById('btnCancelEditGame')?.addEventListener('click', cancelEditGame);
 

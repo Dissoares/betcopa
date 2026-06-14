@@ -1876,6 +1876,23 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   margin-bottom: 1rem;
 }
 
+/* Barra de ação em massa */
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: rgba(255,71,87,.08);
+  border: 1px solid rgba(255,71,87,.25);
+  border-radius: var(--radius);
+  padding: .55rem 1rem;
+  margin-bottom: .75rem;
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--danger);
+  flex-wrap: wrap;
+}
+.bulk-action-bar .btn { font-size: .8rem; }
+
 /* Paginação */
 .admin-pagination { margin-top: .75rem; }
 .admin-pagination__inner {
