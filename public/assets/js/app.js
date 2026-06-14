@@ -289,9 +289,9 @@ const gameBadge = (g) => {
     return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em Breve</span>`;
   }
 
-  // 6. Apostas em breve: aberto + mais de 7 dias para começar
+  // 6. Palpites em breve: aberto + mais de 7 dias para começar
   if (s === 'aberto' && diff > 7 * 24 * 3600_000) {
-    return `<span class="badge badge--far"><i class="fa-solid fa-calendar"></i> Apostas em breve</span>`;
+    return `<span class="badge badge--far"><i class="fa-solid fa-calendar"></i> Palpites em breve</span>`;
   }
 
   // 7. aberto
@@ -533,7 +533,8 @@ const LEAGUE_SHORT = {
   'Brasileirão Série B':           'Série B',
   'Copa Libertadores':             'Libertadores',
   'Copa Sul-Americana':            'Sul-Americana',
-  'Copa do Mundo FIFA':            'Copa do Mundo',
+  'Copa do Mundo FIFA':            'Copa do Mundo 2026',
+  'FIFA World Cup':                'Copa do Mundo 2026',
   'UEFA Champions League':         'Champions',
   'UEFA Europa League':            'Europa League',
   'UEFA Europa Conference League': 'Conference',
@@ -548,6 +549,56 @@ const LEAGUE_SHORT = {
   'Copa América':                  'Copa América',
 };
 const leagueShortName = (name) => LEAGUE_SHORT[name] || name;
+
+const TEAM_NAMES_PT = {
+  // Seleções — Copa do Mundo 2026
+  'Afghanistan':'Afeganistão','Albania':'Albânia','Algeria':'Argélia',
+  'Andorra':'Andorra','Angola':'Angola','Argentina':'Argentina',
+  'Armenia':'Armênia','Australia':'Austrália','Austria':'Áustria',
+  'Azerbaijan':'Azerbaijão','Bahrain':'Bahrein','Bangladesh':'Bangladesh',
+  'Belgium':'Bélgica','Bolivia':'Bolívia','Bosnia and Herzegovina':'Bósnia e Herzegovina',
+  'Bosnia-Herzegovina':'Bósnia e Herzegovina','Brazil':'Brasil','Bulgaria':'Bulgária',
+  'Cameroon':'Camarões','Canada':'Canadá','Cape Verde':'Cabo Verde',
+  'Chile':'Chile','China':'China','Chinese Taipei':'Taipé Chinesa',
+  'Colombia':'Colômbia','Congo DR':'Congo','Costa Rica':'Costa Rica',
+  'Croatia':'Croácia','Cuba':'Cuba','Czech Republic':'República Tcheca',
+  'Czechia':'República Tcheca','Denmark':'Dinamarca','DR Congo':'Congo RD',
+  'Ecuador':'Equador','Egypt':'Egito','El Salvador':'El Salvador',
+  'England':'Inglaterra','Estonia':'Estônia','Ethiopia':'Etiópia',
+  'Finland':'Finlândia','France':'França','Georgia':'Geórgia',
+  'Germany':'Alemanha','Ghana':'Gana','Greece':'Grécia',
+  'Guatemala':'Guatemala','Guinea':'Guiné','Haiti':'Haiti',
+  'Honduras':'Honduras','Hungary':'Hungria','Iceland':'Islândia',
+  'India':'Índia','Indonesia':'Indonésia','Iran':'Irã',
+  'Iraq':'Iraque','Ireland':'Irlanda','Israel':'Israel',
+  'Italy':'Itália','Ivory Coast':'Costa do Marfim',"Côte d'Ivoire":'Costa do Marfim',
+  'Jamaica':'Jamaica','Japan':'Japão','Jordan':'Jordânia',
+  'Kazakhstan':'Cazaquistão','Kenya':'Quênia','Kosovo':'Kosovo',
+  'Kuwait':'Kuwait','Latvia':'Letônia','Libya':'Líbia',
+  'Lithuania':'Lituânia','Luxembourg':'Luxemburgo','Malaysia':'Malásia',
+  'Mali':'Mali','Malta':'Malta','Mexico':'México',
+  'Moldova':'Moldávia','Montenegro':'Montenegro','Morocco':'Marrocos',
+  'Mozambique':'Moçambique','Namibia':'Namíbia','Netherlands':'Holanda',
+  'New Zealand':'Nova Zelândia','Nicaragua':'Nicarágua','Nigeria':'Nigéria',
+  'North Korea':'Coreia do Norte','North Macedonia':'Macedônia do Norte',
+  'Norway':'Noruega','Oman':'Omã','Palestine':'Palestina',
+  'Panama':'Panamá','Paraguay':'Paraguai','Peru':'Peru',
+  'Philippines':'Filipinas','Poland':'Polônia','Portugal':'Portugal',
+  'Qatar':'Catar','Romania':'Romênia','Russia':'Rússia',
+  'Saudi Arabia':'Arábia Saudita','Scotland':'Escócia','Senegal':'Senegal',
+  'Serbia':'Sérvia','Slovakia':'Eslováquia','Slovenia':'Eslovênia',
+  'Somalia':'Somália','South Africa':'África do Sul','South Korea':'Coreia do Sul',
+  'Korea Republic':'Coreia do Sul','Rep. Korea':'Coreia do Sul',
+  'Spain':'Espanha','Sudan':'Sudão','Sweden':'Suécia',
+  'Switzerland':'Suíça','Syria':'Síria','Tanzania':'Tanzânia',
+  'Thailand':'Tailândia','Trinidad and Tobago':'Trinidad e Tobago',
+  'Tunisia':'Tunísia','Turkey':'Turquia','Türkiye':'Turquia',
+  'Uganda':'Uganda','Ukraine':'Ucrânia','United Arab Emirates':'Emirados Árabes',
+  'United States':'Estados Unidos','USA':'Estados Unidos','Uruguay':'Uruguai',
+  'Uzbekistan':'Uzbequistão','Venezuela':'Venezuela','Vietnam':'Vietnã',
+  'Wales':'País de Gales','Zambia':'Zâmbia','Zimbabwe':'Zimbábue',
+};
+const teamNamePt = (name) => TEAM_NAMES_PT[name] || name;
 
 // ── Game card renderer ────────────────────────────────────────
 const renderCard = (g) => {
@@ -604,7 +655,7 @@ const renderCard = (g) => {
   const btnLabel = isFinal
     ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
     : isTooFar
-    ? '<i class="fa-solid fa-calendar-xmark"></i> Apostas em breve'
+    ? '<i class="fa-solid fa-calendar-xmark"></i> Palpites em breve'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
   const ctaOdd = g.odd > 1 ? g.odd : S.oddPadrao;
@@ -619,7 +670,7 @@ const renderCard = (g) => {
   const betBlocked = isClosed || isTooFar;
   const footHtml = isLive
     ? `<button class="btn btn--ghost btn--full" disabled>
-         <i class="fa-solid fa-lock"></i> Apostas encerradas
+         <i class="fa-solid fa-lock"></i> Palpites encerrados
        </button>`
     : `<button class="btn ${!betBlocked ? 'btn--primary' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
@@ -948,7 +999,7 @@ const renderLeagueTabs = () => {
       `<button class="league-tab ${_activeLeague === liga ? 'league-tab--active' : ''}"
                data-league="${liga.replace(/"/g, '&quot;')}" role="tab"
                aria-selected="${_activeLeague === liga}">
-         ${liga} <span class="league-tab__count">${counts[liga]}</span>
+         ${leagueShortName(liga)} <span class="league-tab__count">${counts[liga]}</span>
        </button>`
     ),
   ].join('');
@@ -2819,7 +2870,12 @@ const loadGames = async () => {
   if (grid) grid.innerHTML = '';
   try {
     const r = await api('/api/jogos');
-    S.games = r.jogos;
+    S.games = (r.jogos || []).map(g => ({
+      ...g,
+      time_casa: teamNamePt(g.time_casa),
+      time_fora: teamNamePt(g.time_fora),
+      liga_nome: LEAGUE_SHORT[g.liga_nome] || g.liga_nome,
+    }));
   } catch {
     S.games = [];
   }
@@ -4663,7 +4719,12 @@ const loadGamesSilent = async () => {
   try {
     const r = await api('/api/jogos/live');
     if (r.jogos) {
-      const byId = Object.fromEntries(r.jogos.map(g => [g.id, g]));
+      const byId = Object.fromEntries(r.jogos.map(g => [g.id, {
+        ...g,
+        time_casa: teamNamePt(g.time_casa),
+        time_fora: teamNamePt(g.time_fora),
+        liga_nome: LEAGUE_SHORT[g.liga_nome] || g.liga_nome,
+      }]));
       S.games = S.games.map(g => byId[g.id] ?? g);
     }
     renderGames();
