@@ -93,6 +93,13 @@ class FootballDataService
         return empty($data) ? null : $data;
     }
 
+    /** Busca a tabela de grupos de uma competição */
+    public function fetchStandings(int $competitionId): array
+    {
+        $data = $this->get("/competitions/{$competitionId}/standings");
+        return $data['standings'] ?? [];
+    }
+
     /** Busca partidas ao vivo de uma competição */
     public function fetchLiveMatches(int $competitionId): array
     {

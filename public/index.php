@@ -123,8 +123,9 @@ try {
         route('/api/auth/reset',      'POST', fn() => $authCtrl->resetPassword());
 
         // ── Jogos ─────────────────────────────────────────────
-        route('/api/jogos',        'GET',  fn() => $gameCtrl->list());
-        route('/api/jogos/live',   'GET',  fn() => $gameCtrl->listLive());
+        route('/api/jogos',           'GET', fn() => $gameCtrl->list());
+        route('/api/jogos/live',      'GET', fn() => $gameCtrl->listLive());
+        route('/api/jogos/standings', 'GET', fn() => $gameCtrl->standings());
         route('/api/admin/jogos',  'POST', fn() => $gameCtrl->create());
         route('/api/admin/import', 'POST', fn() => $gameCtrl->import());
         route('/api/admin/sync',                     'POST', fn() => $gameCtrl->sync());

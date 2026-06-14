@@ -76,6 +76,7 @@
       <!-- Nav central -->
       <nav class="nav" id="mainNav">
         <button class="nav__btn nav__btn--active" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
+        <button class="nav__btn" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
         <button class="nav__btn" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="nav__btn" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none"><i class="fa-solid fa-list-check"></i> Meus Palpites</button>
@@ -241,6 +242,26 @@
         <h3 class="panel__title"><i class="fa-solid fa-bullseye"></i> Quase lá!</h3>
         <div id="rankingNear"><p class="text--muted">Nenhum palpite registrado ainda.</p></div>
       </div>
+    </div>
+  </main>
+
+  <!-- ===== VIEW: GRUPOS ===== -->
+  <main class="container view hidden" id="view-grupos">
+    <div class="grupos-toolbar">
+      <h2 class="grupos-title"><i class="fa-solid fa-table-cells"></i> Tabela de Grupos</h2>
+      <button class="btn btn--ghost btn--sm" id="btnRefreshGrupos" title="Atualizar">
+        <i class="fa-solid fa-rotate"></i>
+      </button>
+    </div>
+    <p class="grupos-cache-info hidden" id="gruposCacheInfo"></p>
+    <div id="gruposGrid"></div>
+    <p class="empty-state hidden" id="gruposEmpty">
+      <i class="fa-solid fa-table-cells" style="display:block;font-size:2.5rem;margin-bottom:.6rem;opacity:.25"></i>
+      Tabela de grupos não disponível ainda.
+    </p>
+    <div class="grupos-legend">
+      <span class="grupos-legend__item grupos-legend__item--q">Classificado</span>
+      <span class="grupos-legend__item grupos-legend__item--p">3º lugar (condicional)</span>
     </div>
   </main>
 

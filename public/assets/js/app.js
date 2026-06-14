@@ -357,6 +357,7 @@ const renderDrawer = () => {
       <div class="dr-sep"></div>
       <div class="dr-section">
         <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
+        <button class="dr-item" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
         <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
@@ -389,6 +390,7 @@ const renderDrawer = () => {
     body.innerHTML = `
       <div class="dr-section">
         <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+        <button class="dr-item" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
         <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="dr-item" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
@@ -1659,6 +1661,111 @@ const renderResultados = () => {
       </div>
       <div class="res-group__list">${gms.map(renderResultCard).join('')}</div>
     </div>`).join('');
+};
+
+// ── Tabela de Grupos ──────────────────────────────────────────
+const fmtGroupLabel = (g) => g
+  ? g.replace(/^Group /i, 'Grupo ').replace(/^GROUP_/, 'Grupo ')
+  : '';
+
+const renderGrupos = (standings) => {
+  const grid  = document.getElementById('gruposGrid');
+  const empty = document.getElementById('gruposEmpty');
+  if (!grid || !empty) return;
+
+  // A API pode retornar stage "GROUP_STAGE" ou "ALL" dependendo do torneio/fase
+  // Identificamos grupos pela presença do campo group com "Group X" ou "GROUP_X"
+  const groups = standings.filter(s => s.type === 'TOTAL' && s.group && /group/i.test(s.group));
+
+  if (!groups.length) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  grid.innerHTML = groups.map(group => {
+    const label = fmtGroupLabel(group.group);
+    const rows  = group.table.map((row, i) => {
+      const pos        = row.position ?? i + 1;
+      const cls        = pos <= 2 ? 'gt__row--qualified' : pos === 3 ? 'gt__row--playoff' : '';
+      const name       = teamNamePt(row.team?.shortName || row.team?.name || '?');
+      const crest      = row.team?.crest
+        ? `<img src="${row.team.crest}" class="gt__crest" alt="${name}" loading="lazy">`
+        : `<span class="gt__crest-ph"></span>`;
+      const gd         = row.goalDifference >= 0 ? `+${row.goalDifference}` : row.goalDifference;
+      return `
+        <tr class="gt__row ${cls}">
+          <td class="gt__pos">${pos}</td>
+          <td class="gt__team"><div class="gt__team-inner">${crest}<span>${name}</span></div></td>
+          <td>${row.playedGames ?? 0}</td>
+          <td>${row.won ?? 0}</td>
+          <td>${row.draw ?? 0}</td>
+          <td>${row.lost ?? 0}</td>
+          <td>${row.goalsFor ?? 0}</td>
+          <td>${row.goalsAgainst ?? 0}</td>
+          <td class="gt__gd">${gd}</td>
+          <td class="gt__pts">${row.points ?? 0}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <div class="gt">
+        <div class="gt__header">${label}</div>
+        <table class="gt__table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="gt__th-team">Seleção</th>
+              <th title="Jogos">J</th>
+              <th title="Vitórias">V</th>
+              <th title="Empates">E</th>
+              <th title="Derrotas">D</th>
+              <th title="Gols Pró">GP</th>
+              <th title="Gols Contra">GC</th>
+              <th title="Saldo de Gols">SG</th>
+              <th title="Pontos">PT</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+};
+
+const loadGrupos = async (force = false) => {
+  const grid  = document.getElementById('gruposGrid');
+  const empty = document.getElementById('gruposEmpty');
+  const info  = document.getElementById('gruposCacheInfo');
+  const btn   = document.getElementById('btnRefreshGrupos');
+  if (!grid) return;
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+  grid.innerHTML = '<p class="text--muted" style="padding:2rem;text-align:center"><i class="fa-solid fa-spinner fa-spin"></i> Carregando grupos…</p>';
+  empty?.classList.add('hidden');
+
+  try {
+    const url  = '/api/jogos/standings' + (force ? '?refresh=1' : '');
+    const data = await api(url);
+
+    if (data.warning && info) { info.textContent = '⚠ ' + data.warning; info.classList.remove('hidden'); }
+    else if (info) info.classList.add('hidden');
+
+    if (data.cached_at && info && !data.warning) {
+      const age = Math.round((Date.now() / 1000 - data.cached_at) / 60);
+      info.textContent = age < 2 ? 'Atualizado agora' : `Cache de ${age} min atrás`;
+      info.classList.remove('hidden');
+    }
+
+    renderGrupos(data.standings || []);
+  } catch (err) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    empty.querySelector('i').nextSibling.textContent = ' Erro ao carregar grupos.';
+    toast(err.message || 'Erro ao carregar tabela de grupos.', 'danger');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i>'; }
+  }
 };
 
 // ── Ranking ───────────────────────────────────────────────────
@@ -3297,6 +3404,7 @@ const bind = () => {
     if (btn.dataset.nav === 'palpites')    loadBets(1);
     if (btn.dataset.nav === 'ganhadores')  renderRanking();
     if (btn.dataset.nav === 'resultados')  renderResultados();
+    if (btn.dataset.nav === 'grupos')      loadGrupos();
     if (btn.dataset.nav === 'admin')       { populateAdminSelect(); switchAdminTab('dashboard'); }
     closeMobileMenu();
     document.getElementById('userDropdown')?.classList.remove('udrop--open');
@@ -3698,6 +3806,9 @@ const bind = () => {
     adminGamesPage = 0;
     renderAdminGames();
   });
+
+  // Grupos: botão refresh
+  document.getElementById('btnRefreshGrupos')?.addEventListener('click', () => loadGrupos(true));
 
   // Resultados: search with debounce
   let _resSearchTimer;
@@ -5117,11 +5228,12 @@ const init = async () => {
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
   } else if (hash) {
-    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel', 'suporte'];
+    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'grupos', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel', 'suporte'];
     if (validViews.includes(hash)) {
       navigate(hash);
       if (hash === 'ganhadores')  renderRanking();
       if (hash === 'resultados')  renderResultados();
+      if (hash === 'grupos')      loadGrupos();
     }
   }
 };

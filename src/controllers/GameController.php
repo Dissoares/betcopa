@@ -194,6 +194,56 @@ class GameController
         jsonResponse(['processados' => $processados, 'erros' => $erros]);
     }
 
+    /**
+     * GET /api/jogos/standings?league_id=2000&refresh=1
+     * Retorna tabela de grupos da competição com cache de 10 min.
+     */
+    public function standings(): void
+    {
+        $leagueId = (int) ($_GET['league_id'] ?? 2000);
+        $cacheKey = "standings_cache_{$leagueId}";
+        $tsKey    = "standings_cache_ts_{$leagueId}";
+
+        $cached   = $this->configRepo->get($cacheKey, '');
+        $cachedTs = (int) $this->configRepo->get($tsKey, '0');
+
+        if (empty($_GET['refresh']) && $cached && (time() - $cachedTs) < 600) {
+            jsonResponse(['standings' => json_decode($cached, true), 'cached_at' => $cachedTs]);
+            return;
+        }
+
+        $apiKey = $this->configRepo->get('api_football_key', $this->config['api_football']['key'] ?? '');
+        if (empty($apiKey)) {
+            if ($cached) {
+                jsonResponse(['standings' => json_decode($cached, true), 'cached_at' => $cachedTs, 'warning' => 'API key não configurada.']);
+                return;
+            }
+            jsonResponse(['error' => 'API key não configurada.'], 400);
+            return;
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+
+        $timezone = $this->configRepo->get('api_football_timezone', 'America/Sao_Paulo');
+        $api      = new FootballDataService($apiKey, $timezone);
+
+        try {
+            $standings = $api->fetchStandings($leagueId);
+        } catch (RuntimeException $e) {
+            if ($cached) {
+                jsonResponse(['standings' => json_decode($cached, true), 'cached_at' => $cachedTs, 'warning' => $e->getMessage()]);
+                return;
+            }
+            jsonResponse(['error' => $e->getMessage()], 500);
+            return;
+        }
+
+        $this->configRepo->set($cacheKey, json_encode($standings));
+        $this->configRepo->set($tsKey, (string) time());
+
+        jsonResponse(['standings' => $standings, 'cached_at' => time()]);
+    }
+
     /** GET /api/admin/jogos/contagem-por-liga */
     public function countByLeague(): void
     {
