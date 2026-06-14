@@ -2193,9 +2193,17 @@ button.copa-hero__stat:hover {
   font-size: .65rem; text-transform: uppercase;
   letter-spacing: .08em; color: rgba(255,255,255,.4);
 }
-.copa-hero__stat--live .copa-hero__stat-icon { color: var(--danger); }
-.copa-hero__stat--live strong               { color: var(--danger); }
 .copa-hero__live-dot { animation: livePulse 1.4s ease-in-out infinite; }
+.hero-live-pill {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .45rem .95rem; border-radius: 2rem;
+  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  color: #fff; font-size: .82rem; font-weight: 700; letter-spacing: .02em;
+  cursor: pointer; transition: background .18s, border-color .18s;
+  white-space: nowrap;
+}
+.hero-live-pill i { font-size: .5rem; color: var(--danger); }
+.hero-live-pill:hover { background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.55); }
 @keyframes livePulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: .35; }
