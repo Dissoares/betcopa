@@ -1775,73 +1775,99 @@ const renderRanking = async () => {
   let data;
   try { data = await api('/api/ranking'); } catch { return; }
 
-  const podiumEl = document.getElementById('rankingPodium');
-  const spot     = document.getElementById('rankingWinnerSpot');
-  const winsEl   = document.getElementById('rankingWinners');
-  const nearEl   = document.getElementById('rankingNear');
+  const podiumEl  = document.getElementById('rankingPodium');
+  const winsEl    = document.getElementById('rankingWinners');
+  const nearEl    = document.getElementById('rankingNear');
+  const countEl   = document.getElementById('rankingWinsCount');
+  document.getElementById('rankingWinnerSpot')?.classList.add('hidden');
 
-  const medals = [
-    '<i class="fa-solid fa-medal" style="color:#FFD700"></i>',
-    '<i class="fa-solid fa-medal" style="color:#C0C0C0"></i>',
-    '<i class="fa-solid fa-medal" style="color:#CD7F32"></i>',
-  ];
+  const MEDAL_EMOJI  = ['🥇', '🥈', '🥉'];
+  const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
-  if (data.vencedores && data.vencedores.length) {
-    spot.classList.add('hidden');
+  const teamImgs = (r) => {
+    const IS = 'class="hf-flag"';
+    const imgH = r.logo_casa   ? `<img src="${escHtml(r.logo_casa)}" ${IS} onerror="this.style.display='none'">`
+               : r.bandeira_casa ? `<img src="${escHtml(flagUrl(r.bandeira_casa))}" ${IS} onerror="this.style.display='none'">` : '';
+    const imgA = r.logo_fora   ? `<img src="${escHtml(r.logo_fora)}" ${IS} onerror="this.style.display='none'">`
+               : r.bandeira_fora ? `<img src="${escHtml(flagUrl(r.bandeira_fora))}" ${IS} onerror="this.style.display='none'">` : '';
+    const [tc, tf] = r.jogo.split(' x ');
+    return { imgH, imgA, tc: escHtml(tc), tf: escHtml(tf) };
+  };
 
-    // Pódio para os 3 primeiros
-    if (podiumEl) {
-      const top3 = data.vencedores.slice(0, 3);
-      // Ordena para exibição: 2º - 1º - 3º
-      const podiumOrder = top3.length >= 3
-        ? [top3[1], top3[0], top3[2]]
-        : top3.length === 2
-        ? [top3[1], top3[0]]
-        : [top3[0]];
+  const initial = (r) => (r.nome_real || r.nome || '?').charAt(0).toUpperCase();
 
-      podiumEl.innerHTML = podiumOrder.map((r, displayIdx) => {
-        const realPos = top3.indexOf(r); // posição real (0-indexed)
-        return `
-          <div class="podium-step podium-step--${realPos + 1}">
-            <div class="podium-step__medal">${medals[realPos] || ''}</div>
-            <div class="podium-step__name">${maskName(r.nome)}</div>
-            <div class="podium-step__game">${r.jogo}</div>
-            <div class="podium-step__val">${fmtMoney(r.ganho)}</div>
-          </div>`;
-      }).join('');
-    }
-
-    winsEl.innerHTML = data.vencedores.map((r, i) => `
-      <div class="ranking-row">
-        <span class="ranking-row__pos">${medals[i] || i + 1}</span>
-        <span class="ranking-row__name">${maskName(r.nome)}</span>
-        <span class="ranking-row__val">${fmtMoney(r.ganho)}</span>
-      </div>`).join('');
-  } else {
-    spot.classList.add('hidden');
-    if (podiumEl) podiumEl.innerHTML = '';
-    winsEl.innerHTML = '<p class="text--muted">Nenhum ganhador ainda.</p>';
+  // ── Pódio ──────────────────────────────────────────────────
+  if (data.vencedores?.length && podiumEl) {
+    const top3 = data.vencedores.slice(0, 3);
+    const displayOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]]
+                       : top3.length === 2 ? [top3[1], top3[0]] : [top3[0]];
+    podiumEl.innerHTML = displayOrder.map(r => {
+      const pos = top3.indexOf(r);
+      const { imgH, imgA, tc, tf } = teamImgs(r);
+      return `
+        <div class="podium-step podium-step--${pos + 1}">
+          <div class="podium-step__crown">${MEDAL_EMOJI[pos]}</div>
+          <div class="podium-step__avatar" style="border-color:${MEDAL_COLORS[pos]};color:${MEDAL_COLORS[pos]}">${initial(r)}</div>
+          <div class="podium-step__name">${escHtml(r.nome)}</div>
+          <div class="podium-step__game">${imgH}${tc} × ${imgA}${tf}</div>
+          <div class="podium-step__score">${(r.resultado||'').replace('x','×')}</div>
+          <div class="podium-step__val">${fmtMoney(r.ganho)}</div>
+        </div>`;
+    }).join('');
+  } else if (podiumEl) {
+    podiumEl.innerHTML = '';
   }
 
-  if (data.quase && data.quase.length) {
-    nearEl.innerHTML = data.quase.map((r, i) => `
-      <div class="ranking-row ranking-row--near">
-        <span class="ranking-row__pos">${i + 1}</span>
-        <div class="ranking-row__info">
-          <span class="ranking-row__name">${escHtml((() => { const n = r.nome_real || r.nome; return n.length <= 4 ? n : n.slice(0,3) + '*'.repeat(Math.max(1, n.length - 4)) + n.slice(-1); })())}</span>
-          ${(() => {
-              const IS = 'width:18px;height:18px;object-fit:contain;vertical-align:middle;border-radius:2px';
-              const imgH = r.logo_casa ? `<img src="${r.logo_casa}" style="${IS}" onerror="this.style.display='none'">` : r.bandeira_casa ? `<img src="${flagUrl(r.bandeira_casa)}" style="${IS}" onerror="this.style.display='none'">` : '';
-              const imgA = r.logo_fora  ? `<img src="${r.logo_fora}"  style="${IS}" onerror="this.style.display='none'">` : r.bandeira_fora ? `<img src="${flagUrl(r.bandeira_fora)}"  style="${IS}" onerror="this.style.display='none'">` : '';
-              const [tc, tf] = r.jogo.split(' x ');
-              return `<span class="ranking-row__palpite ranking-row__jogo">${imgH} ${tc} × ${imgA} ${tf}</span>
-                      <span class="ranking-row__palpite">Resultado: <strong style="color:var(--primary)">${(r.resultado||'').replace('x','×')}</strong> &nbsp;·&nbsp; Palpite: <strong style="color:var(--danger)">${r.aposta.replace('x','×')}</strong></span>`;
-            })()}
-        </div>
-        <span class="ranking-row__diff">${r.diferenca === 1 ? '1 gol' : r.diferenca + ' gols'} de diferença</span>
-      </div>`).join('');
+  // ── Ganhadores ─────────────────────────────────────────────
+  if (data.vencedores?.length) {
+    if (countEl) { countEl.textContent = data.vencedores.length; countEl.classList.remove('hidden'); }
+    winsEl.innerHTML = data.vencedores.map((r, i) => {
+      const { imgH, imgA, tc, tf } = teamImgs(r);
+      const medal = MEDAL_EMOJI[i] ?? `<span class="hf-row__num">${i + 1}</span>`;
+      return `
+        <div class="hf-row">
+          <span class="hf-row__pos">${medal}</span>
+          <div class="hf-row__avatar" style="${i < 3 ? `border-color:${MEDAL_COLORS[i]};color:${MEDAL_COLORS[i]}` : ''}">${initial(r)}</div>
+          <div class="hf-row__info">
+            <span class="hf-row__name">${escHtml(r.nome)}</span>
+            <span class="hf-row__game">${imgH}${tc} × ${imgA}${tf}
+              <span class="hf-row__sep">·</span>
+              <span class="hf-row__score">${(r.resultado||'').replace('x','×')}</span>
+            </span>
+          </div>
+          <span class="hf-row__amount">${fmtMoney(r.ganho)}</span>
+        </div>`;
+    }).join('');
   } else {
-    nearEl.innerHTML = '<p class="text--muted">Nenhum palpite registrado ainda.</p>';
+    if (countEl) countEl.classList.add('hidden');
+    if (podiumEl) podiumEl.innerHTML = '';
+    winsEl.innerHTML = '<p class="text--muted hf-empty">Nenhum ganhador ainda.</p>';
+  }
+
+  // ── Quase lá ───────────────────────────────────────────────
+  if (data.quase?.length) {
+    nearEl.innerHTML = data.quase.map((r, i) => {
+      const { imgH, imgA, tc, tf } = teamImgs(r);
+      const far = r.diferenca >= 2;
+      return `
+        <div class="near-row">
+          <span class="near-row__pos">${i + 1}</span>
+          <div class="near-row__body">
+            <div class="near-row__top">
+              <span class="near-row__name">${escHtml(r.nome)}</span>
+              <span class="near-row__badge${far ? ' near-row__badge--far' : ''}">${r.diferenca === 1 ? '1 gol' : r.diferenca + ' gols'}</span>
+            </div>
+            <div class="near-row__game">${imgH}${tc} × ${imgA}${tf}</div>
+            <div class="near-row__detail">
+              Resultado <strong class="near-row__real">${(r.resultado||'').replace('x','×')}</strong>
+              <span class="near-row__sep">·</span>
+              Palpite <strong class="near-row__guess">${r.aposta.replace('x','×')}</strong>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } else {
+    nearEl.innerHTML = '<p class="text--muted hf-empty">Nenhum palpite registrado ainda.</p>';
   }
 };
 

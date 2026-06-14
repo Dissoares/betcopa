@@ -237,15 +237,24 @@
       <h2><i class="fa-solid fa-trophy" style="color:var(--gold)"></i> Hall da Fama</h2>
     </div>
     <div id="rankingWinnerSpot" class="hidden"></div>
+
+    <!-- Pódio -->
     <div class="ranking-podium" id="rankingPodium"></div>
-    <div class="ranking-grid">
-      <div class="panel">
-        <h3 class="panel__title"><i class="fa-solid fa-medal" style="color:var(--gold)"></i> Ganhadores</h3>
-        <div id="rankingWinners"><p class="text--muted">Nenhum ganhador ainda.</p></div>
+
+    <!-- Grid: Ganhadores + Quase lá -->
+    <div class="hf-grid">
+      <div class="hf-section">
+        <div class="hf-section__header">
+          <span class="hf-section__title"><i class="fa-solid fa-medal"></i> Ganhadores</span>
+          <span class="hf-section__badge hidden" id="rankingWinsCount">0</span>
+        </div>
+        <div id="rankingWinners"><p class="text--muted hf-empty">Nenhum ganhador ainda.</p></div>
       </div>
-      <div class="panel">
-        <h3 class="panel__title"><i class="fa-solid fa-bullseye"></i> Quase lá!</h3>
-        <div id="rankingNear"><p class="text--muted">Nenhum palpite registrado ainda.</p></div>
+      <div class="hf-section">
+        <div class="hf-section__header">
+          <span class="hf-section__title"><i class="fa-solid fa-crosshairs"></i> Chegaram perto!</span>
+        </div>
+        <div id="rankingNear"><p class="text--muted hf-empty">Nenhum palpite registrado ainda.</p></div>
       </div>
     </div>
   </main>
