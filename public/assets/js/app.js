@@ -511,11 +511,13 @@ const isGameLive = (g) =>
   (g.status === 'aberto' && new Date(g.data_hora) <= Date.now());
 
 const updateHeroStats = () => {
-  const live = S.games.filter(isGameLive).length;
-  const open = S.games.filter(g => g.status === 'aberto' && !isGameLive(g)).length;
+  const live        = S.games.filter(isGameLive).length;
+  const open        = S.games.filter(g => g.status === 'aberto' && !isGameLive(g)).length;
+  const finalizados = S.games.filter(g => g.status === 'finalizado').length;
   const el = id => document.getElementById(id);
   if (el('heroStatGames')) el('heroStatGames').textContent = S.games.length;
   if (el('heroStatOpen'))  el('heroStatOpen').textContent  = open;
+  if (el('heroStatFinal')) el('heroStatFinal').textContent = finalizados;
   if (el('heroStatLive'))  el('heroStatLive').textContent  = live;
   el('heroStatLiveWrap')?.classList.toggle('hidden', live === 0);
   // Indicador ao vivo no nav
