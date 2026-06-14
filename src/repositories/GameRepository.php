@@ -238,15 +238,8 @@ class GameRepository
         $ids = array_map('intval', $ids);
         $ph  = implode(',', array_fill(0, count($ids), '?'));
         // Busca apenas os que podem ser excluídos
-        $stmt = $this->db->prepare(
-            "SELECT id FROM jogos WHERE id IN ({$ph}) AND status != 'finalizado'"
-        );
-        $stmt->execute($ids);
-        $allowed = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id');
-        if (empty($allowed)) return [];
-
-        $ph2  = implode(',', array_fill(0, count($allowed), '?'));
-        $this->db->prepare("DELETE FROM jogos WHERE id IN ({$ph2})")->execute($allowed);
-        return $allowed;
+        $ph2 = implode(',', array_fill(0, count($ids), '?'));
+        $this->db->prepare("DELETE FROM jogos WHERE id IN ({$ph2})")->execute($ids);
+        return $ids;
     }
 }

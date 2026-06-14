@@ -2357,7 +2357,7 @@ const bulkDeleteGames = async () => {
   const ids = [..._selectedGames];
   const ok  = await confirm({
     title:        `Excluir ${ids.length} jogo(s)?`,
-    message:      'Jogos já finalizados serão ignorados automaticamente. Esta ação não pode ser desfeita.',
+    message:      'Todos os jogos selecionados serão excluídos. Esta ação não pode ser desfeita.',
     confirmLabel: 'Excluir',
     confirmColor: '#FF4757',
   });
@@ -3886,6 +3886,12 @@ const bind = () => {
     if (btn.dataset.action === 'dash-games-prev') loadAdminDashboard({ gamesPage: _dashGamesPage - 1 });
     if (btn.dataset.action === 'dash-games-next') loadAdminDashboard({ gamesPage: _dashGamesPage + 1 });
   });
+  document.getElementById('dashPorJogo')?.addEventListener('change', e => {
+    const chk = e.target.closest('.dash-game-chk');
+    if (!chk) return;
+    chk.checked ? _selectedDashGames.add(Number(chk.dataset.id)) : _selectedDashGames.delete(Number(chk.dataset.id));
+    _syncDashGamesBulkBar();
+  });
 
   // Filtro de usuários (client-side)
   const applyUserFilter = () => {
@@ -3975,6 +3981,42 @@ const switchAdminTab = (tab) => {
   if (tab === 'online')    { loadAdminOnline(); _onlineInterval = setInterval(loadAdminOnline, 30000); }
 };
 
+// ── Dashboard bulk delete de jogos ────────────────────────────
+const _selectedDashGames = new Set();
+
+const _syncDashGamesBulkBar = () => {
+  const bar     = document.getElementById('bulkDashGamesBar');
+  const countEl = document.getElementById('bulkDashGamesCount');
+  if (!bar) return;
+  bar.classList.toggle('hidden', _selectedDashGames.size === 0);
+  if (countEl) countEl.textContent = _selectedDashGames.size;
+};
+
+const bulkDeleteDashGames = async () => {
+  if (!_selectedDashGames.size) return;
+  const ids = [..._selectedDashGames];
+  const ok  = await confirm({
+    title:        `Excluir ${ids.length} jogo(s)?`,
+    message:      'Todos os jogos selecionados serão excluídos. Esta ação não pode ser desfeita.',
+    confirmLabel: 'Excluir',
+    confirmColor: '#FF4757',
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btnBulkDeleteDashGames');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...'; }
+  try {
+    const res = await api('/api/admin/jogos/excluir/lote', 'POST', { ids });
+    toast(res.message, 'success');
+    _selectedDashGames.clear();
+    await loadGames();
+    loadAdminDashboard();
+  } catch (err) {
+    toast(err.message || 'Erro ao excluir.', 'danger');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir selecionados'; }
+  }
+};
+
 // ── Dashboard ─────────────────────────────────────────────────
 let _dashBetsPage  = 1;
 let _dashGamesPage = 1;
@@ -4032,21 +4074,51 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
       : '<p class="text--muted">Nenhuma aposta ainda.</p>';
 
     // Por jogo paginado
-    byGameEl.innerHTML = por_jogo.length
-      ? `<table class="admin-table">
-           <thead><tr><th>Jogo</th><th>Apostas</th><th>Arrecadado</th><th>Pago</th><th>Pendentes</th></tr></thead>
-           <tbody>${por_jogo.map(g => `
-             <tr>
+    if (por_jogo.length) {
+      byGameEl.innerHTML =
+        `<div class="bulk-action-bar hidden" id="bulkDashGamesBar">
+           <span id="bulkDashGamesCount">0</span> jogo(s) selecionado(s)
+           <button class="btn btn--danger btn--sm" id="btnBulkDeleteDashGames"><i class="fa-solid fa-trash"></i> Excluir selecionados</button>
+           <button class="btn btn--ghost btn--sm" id="btnBulkClearDashGames">Limpar</button>
+         </div>
+         <table class="admin-table">
+           <thead><tr>
+             <th style="width:2rem"><input type="checkbox" id="chkAllDashGames" title="Selecionar todos"></th>
+             <th>Jogo</th><th>Apostas</th><th>Arrecadado</th><th>Pago</th><th>Pendentes</th>
+           </tr></thead>
+           <tbody>${por_jogo.map(g => {
+              return `<tr>
+               <td><input type="checkbox" class="dash-game-chk" data-id="${g.id}" ${_selectedDashGames.has(g.id) ? 'checked' : ''}></td>
                <td>${g.time_casa} × ${g.time_fora}</td>
                <td>${g.total_apostas}</td>
                <td>${fmtR$(g.arrecadado)}</td>
                <td>${fmtR$(g.pago)}</td>
                <td>${g.pendentes > 0 ? `<span class="status-pill status-pill--pendente">${g.pendentes}</span>` : '0'}</td>
-             </tr>`).join('')}
+             </tr>`;
+           }).join('')}
            </tbody>
          </table>
-         ${_pager(gamesPage, total_jogos, limit, 'dash-games')}`
-      : '<p class="text--muted">Nenhum jogo cadastrado.</p>';
+         ${_pager(gamesPage, total_jogos, limit, 'dash-games')}`;
+
+      // Reanexa listeners após re-render
+      document.getElementById('chkAllDashGames')?.addEventListener('change', e => {
+        document.querySelectorAll('#dashPorJogo .dash-game-chk').forEach(chk => {
+          chk.checked = e.target.checked;
+          e.target.checked ? _selectedDashGames.add(Number(chk.dataset.id)) : _selectedDashGames.delete(Number(chk.dataset.id));
+        });
+        _syncDashGamesBulkBar();
+      });
+      document.getElementById('btnBulkDeleteDashGames')?.addEventListener('click', bulkDeleteDashGames);
+      document.getElementById('btnBulkClearDashGames')?.addEventListener('click', () => {
+        _selectedDashGames.clear();
+        _syncDashGamesBulkBar();
+        document.querySelectorAll('#dashPorJogo .dash-game-chk').forEach(c => c.checked = false);
+        const all = document.getElementById('chkAllDashGames');
+        if (all) all.checked = false;
+      });
+    } else {
+      byGameEl.innerHTML = '<p class="text--muted">Nenhum jogo cadastrado.</p>';
+    }
 
   } catch (err) {
     statsEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
