@@ -385,6 +385,7 @@ class GameController
     {
         Csrf::verify();
         ensureAdmin($this->adminEmail);
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
 
         $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football']['key'] ?? '');
         $timezone = $this->configRepo->get('api_football_timezone', $this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');
@@ -504,6 +505,7 @@ class GameController
     {
         Csrf::verify();
         ensureAdmin($this->adminEmail);
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
 
         $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football']['key'] ?? '');
         $timezone = $this->configRepo->get('api_football_timezone', $this->config['api_football']['timezone'] ?? 'America/Sao_Paulo');

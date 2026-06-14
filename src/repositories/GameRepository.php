@@ -73,23 +73,24 @@ class GameRepository
         $existing = $stmt->fetch();
 
         if ($existing) {
-            // Atualiza tudo exceto valor_base (não sobrescreve customização do admin)
-            $stmt = $this->db->prepare(
-                'UPDATE jogos SET
-                   time_casa    = :time_casa,
-                   time_fora    = :time_fora,
-                   logo_casa    = :logo_casa,
-                   logo_fora    = :logo_fora,
-                   data_hora    = :data_hora,
-                   liga_nome    = :liga_nome,
-                   liga_logo    = :liga_logo,
-                   estadio      = :estadio,
-                   rodada       = :rodada,
+            // Atualiza metadados; se finalizado, salva placar e status também
+            $isFinal = $data['status'] === 'finalizado';
+            $sql = 'UPDATE jogos SET
+                   time_casa     = :time_casa,
+                   time_fora     = :time_fora,
+                   logo_casa     = :logo_casa,
+                   logo_fora     = :logo_fora,
+                   data_hora     = :data_hora,
+                   liga_nome     = :liga_nome,
+                   liga_logo     = :liga_logo,
+                   estadio       = :estadio,
+                   rodada        = :rodada,
                    api_league_id = :api_league_id,
-                   status_api = :status_api
-                 WHERE id = :id'
-            );
-            $stmt->execute([
+                   status_api    = :status_api'
+                   . ($isFinal ? ', status = :status, placar_real = :placar_real' : '')
+                   . ' WHERE id = :id';
+
+            $params = [
                 'time_casa'     => $data['time_casa'],
                 'time_fora'     => $data['time_fora'],
                 'logo_casa'     => $data['logo_casa'],
@@ -102,7 +103,14 @@ class GameRepository
                 'api_league_id' => $data['api_league_id'] ?? null,
                 'status_api'    => $data['status_api'],
                 'id'            => $existing['id'],
-            ]);
+            ];
+            if ($isFinal) {
+                $params['status']      = 'finalizado';
+                $params['placar_real'] = $data['placar_real'] ?? null;
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return (int) $existing['id'];
         }
 
@@ -110,11 +118,11 @@ class GameRepository
             'INSERT INTO jogos
                (api_fixture_id, time_casa, time_fora, bandeira_casa, bandeira_fora,
                 logo_casa, logo_fora, data_hora, status, liga_nome, liga_logo,
-                estadio, rodada, odd, valor_base, status_api, api_league_id)
+                estadio, rodada, odd, valor_base, status_api, api_league_id, placar_real)
              VALUES
                (:api_fixture_id, :time_casa, :time_fora, :bandeira_casa, :bandeira_fora,
                 :logo_casa, :logo_fora, :data_hora, :status, :liga_nome, :liga_logo,
-                :estadio, :rodada, :odd, :valor_base, :status_api, :api_league_id)'
+                :estadio, :rodada, :odd, :valor_base, :status_api, :api_league_id, :placar_real)'
         );
         $stmt->execute([
             'api_fixture_id' => $data['api_fixture_id'],
@@ -134,6 +142,7 @@ class GameRepository
             'valor_base'     => $data['valor_base']    ?? 1.00,
             'status_api'     => $data['status_api'],
             'api_league_id'  => $data['api_league_id'] ?? null,
+            'placar_real'    => $data['placar_real']   ?? null,
         ]);
         return (int) $this->db->lastInsertId();
     }
@@ -173,7 +182,10 @@ class GameRepository
         $stmt = $this->db->query(
             "SELECT * FROM jogos
              WHERE api_fixture_id IS NOT NULL
-               AND status != 'finalizado'
+               AND (
+                 (status NOT IN ('finalizado') AND data_hora <= NOW())
+                 OR (status = 'finalizado' AND placar_real IS NULL AND data_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY))
+               )
              ORDER BY data_hora ASC"
         );
         return $stmt->fetchAll();

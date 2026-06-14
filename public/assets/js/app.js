@@ -1064,7 +1064,7 @@ const renderGames = () => {
   });
 
   const finished = games
-    .filter(g => g.status === 'finalizado' || g.status === 'encerrado')
+    .filter(g => !isGameLive(g) && (g.status === 'finalizado' || g.status === 'encerrado'))
     .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
 
   if (!live.length && !openSorted.length && !finished.length) {
@@ -2701,7 +2701,7 @@ const importFromApi = async () => {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       resultEl.innerHTML = `<div class="alert alert--${data.importados > 0 ? 'success' : 'warning'}">${data.message}</div>`;
-      if (data.importados > 0) { await loadGames(); populateAdminSelect(); refreshLeagueCounts(); }
+      if (data.importados > 0) { await loadGames(); populateAdminSelect(); ; }
       return;
     }
 
@@ -2740,7 +2740,7 @@ const importFromApi = async () => {
     resultEl.innerHTML = `<div class="alert alert--success"><i class="fa-solid fa-check"></i> ${count} partida(s) importada(s) com sucesso.</div>`;
     await loadGames();
     populateAdminSelect();
-    refreshLeagueCounts();
+    ;
   } catch (err) {
     resultEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
@@ -4014,7 +4014,7 @@ const bind = () => {
         meta.textContent = 'Clique em  para buscar da API';
       }
     } catch { _leagueCounts = {}; }
-    _renderLeagueBadges();
+    ;
   };
 
   document.getElementById('leaguePreviewBadges')?.addEventListener('click', async e => {
@@ -4026,7 +4026,7 @@ const bind = () => {
     try {
       const { count } = await api(`/api/admin/jogos/preview-league?id=${id}`);
       _leagueCounts[id] = count;
-      _renderLeagueBadges();
+      ;
       const meta = document.getElementById('leaguePreviewMeta');
       if (meta) meta.textContent = 'Atualizado agora';
     } catch (err) {
