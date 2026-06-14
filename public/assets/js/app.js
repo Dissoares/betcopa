@@ -2251,10 +2251,11 @@ const _selectPayMethod = (method) => {
   if (card) card.classList.add('pay-opt-card--active');
   const btn = document.getElementById('btnFinalizePayment');
   if (!btn) return;
+  const amt = fmtMoney(S.selectedBet?.valor ?? 0);
   if (method === 'saldo') {
-    btn.innerHTML = '<i class="fa-solid fa-wallet"></i> Pagar com Saldo';
+    btn.innerHTML = `<i class="fa-solid fa-wallet"></i> Pagar ${amt} com Saldo`;
   } else {
-    btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com PIX';
+    btn.innerHTML = `<i class="fa-brands fa-pix"></i> Pagar ${amt} com PIX`;
   }
 };
 
