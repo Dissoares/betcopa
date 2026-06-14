@@ -243,9 +243,13 @@ const fmtGameDate = (v) => {
 
 const maskName = (name) => {
   if (!name) return 'Usuário';
-  return name.split(' ').map((part, i) =>
-    i === 0 ? part[0] + '*'.repeat(Math.max(2, part.length - 1)) : part[0] + '***'
-  ).join(' ');
+  const parts  = name.trim().split(/\s+/);
+  const first  = parts[0];
+  const last   = parts.length > 1 ? parts[parts.length - 1] : null;
+  const mFirst = first.length > 3 ? first.slice(0, 3) + '***' : first;
+  if (!last) return mFirst;
+  const mLast  = last.length <= 2 ? last : last[0] + '***' + last[last.length - 1];
+  return mFirst + ' ' + mLast;
 };
 
 // ── Game status badge ─────────────────────────────────────────
@@ -1791,7 +1795,7 @@ const renderRanking = async () => {
     const imgA = r.logo_fora   ? `<img src="${escHtml(r.logo_fora)}" ${IS} onerror="this.style.display='none'">`
                : r.bandeira_fora ? `<img src="${escHtml(flagUrl(r.bandeira_fora))}" ${IS} onerror="this.style.display='none'">` : '';
     const [tc, tf] = r.jogo.split(' x ');
-    return { imgH, imgA, tc: escHtml(tc), tf: escHtml(tf) };
+    return { imgH, imgA, tc: escHtml(teamNamePt(tc)), tf: escHtml(teamNamePt(tf)) };
   };
 
   const initial = (r) => (r.nome_real || r.nome || '?').charAt(0).toUpperCase();
@@ -1808,7 +1812,7 @@ const renderRanking = async () => {
         <div class="podium-step podium-step--${pos + 1}">
           <div class="podium-step__crown">${MEDAL_EMOJI[pos]}</div>
           <div class="podium-step__avatar" style="border-color:${MEDAL_COLORS[pos]};color:${MEDAL_COLORS[pos]}">${initial(r)}</div>
-          <div class="podium-step__name">${escHtml(r.nome)}</div>
+          <div class="podium-step__name">${escHtml(maskName(r.nome_real || r.nome))}</div>
           <div class="podium-step__game">${imgH}${tc} × ${imgA}${tf}</div>
           <div class="podium-step__score">${(r.resultado||'').replace('x','×')}</div>
           <div class="podium-step__val">${fmtMoney(r.ganho)}</div>
@@ -1829,7 +1833,7 @@ const renderRanking = async () => {
           <span class="hf-row__pos">${medal}</span>
           <div class="hf-row__avatar" style="${i < 3 ? `border-color:${MEDAL_COLORS[i]};color:${MEDAL_COLORS[i]}` : ''}">${initial(r)}</div>
           <div class="hf-row__info">
-            <span class="hf-row__name">${escHtml(r.nome)}</span>
+            <span class="hf-row__name">${escHtml(maskName(r.nome_real || r.nome))}</span>
             <span class="hf-row__game">${imgH}${tc} × ${imgA}${tf}
               <span class="hf-row__sep">·</span>
               <span class="hf-row__score">${(r.resultado||'').replace('x','×')}</span>
@@ -1854,7 +1858,7 @@ const renderRanking = async () => {
           <span class="near-row__pos">${i + 1}</span>
           <div class="near-row__body">
             <div class="near-row__top">
-              <span class="near-row__name">${escHtml(r.nome)}</span>
+              <span class="near-row__name">${escHtml(maskName(r.nome_real || r.nome))}</span>
               <span class="near-row__badge${far ? ' near-row__badge--far' : ''}">${r.diferenca === 1 ? '1 gol' : r.diferenca + ' gols'}</span>
             </div>
             <div class="near-row__game">${imgH}${tc} × ${imgA}${tf}</div>
