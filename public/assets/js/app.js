@@ -2626,6 +2626,7 @@ const importFromApi = async () => {
     resultEl.innerHTML = `<div class="alert alert--success">${res.message}</div>`;
     await loadGames();
     populateAdminSelect();
+    refreshLeagueCounts();
   } catch (err) {
     resultEl.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   } finally {
@@ -3840,6 +3841,43 @@ const bind = () => {
   document.getElementById('btnImport')?.addEventListener('click', importFromApi);
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
   document.getElementById('btnSyncImages')?.addEventListener('click', syncImages);
+
+  const LEAGUE_NAMES = {
+    2000: 'Copa do Mundo',   2013: 'Brasileirão',      2001: 'Champions League',
+    2021: 'Premier League',  2014: 'La Liga',           2019: 'Serie A',
+    2002: 'Bundesliga',      2015: 'Ligue 1',           2003: 'Eredivisie',
+    2017: 'Primeira Liga',   2152: 'Libertadores',
+  };
+
+  const renderLeaguePreview = async (forceRefresh = false) => {
+    const el   = document.getElementById('leaguePreviewBadges');
+    const meta = document.getElementById('leaguePreviewMeta');
+    const btn  = document.getElementById('btnRefreshPreview');
+    if (!el) return;
+    el.innerHTML = '<span class="text--muted" style="font-size:.85rem">Consultando API…</span>';
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+    try {
+      const url = '/api/admin/jogos/preview-all' + (forceRefresh ? '?refresh=1' : '');
+      const { counts, cached_at, from_cache, error } = await api(url, 'GET');
+      if (error) { el.innerHTML = `<span class="text--muted">${error}</span>`; return; }
+      el.innerHTML = Object.entries(counts).map(([id, n]) => {
+        const name = LEAGUE_NAMES[Number(id)] || `Liga ${id}`;
+        if (n === null) return `<span class="league-badge league-badge--err" title="Erro ao consultar">${name} —</span>`;
+        return `<span class="league-badge ${n > 0 ? 'league-badge--ok' : 'league-badge--zero'}">${name} <strong>${n}</strong></span>`;
+      }).join('');
+      if (meta && cached_at) {
+        const age = Math.round((Date.now()/1000 - cached_at) / 60);
+        meta.textContent = from_cache ? `Cache de ${age} min atrás` : 'Atualizado agora';
+      }
+    } catch (err) {
+      el.innerHTML = `<span class="text--muted">Erro: ${err.message}</span>`;
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Atualizar'; }
+    }
+  };
+
+  document.getElementById('btnRefreshPreview')?.addEventListener('click', () => renderLeaguePreview(true));
+  renderLeaguePreview();
 
   // Limpar cache
   document.getElementById('btnClearCache')?.addEventListener('click', async () => {

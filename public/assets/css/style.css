@@ -1657,6 +1657,8 @@ select {
 }
 
 .admin-content { flex: 1; padding: 2rem; min-width: 0; }
+.admin-tab { display: flex; flex-direction: column; gap: 1.25rem; }
+.admin-tab.hidden { display: none; }
 .admin-tab__title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem; }
 
 /* Page header consistente para cada aba */
@@ -1801,7 +1803,37 @@ details[open].admin-import-panel summary::after { transform: rotate(90deg); }
 details[open].admin-import-panel summary { margin-bottom: .25rem; }
 .admin-import-body { padding-top: .25rem; }
 .admin-import-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; }
-.panel-divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+.import-result-area:empty { display: none; }
+.import-result-area { margin-top: .75rem; }
+
+/* League preview panel */
+.league-preview-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: .85rem;
+}
+.league-preview-badges {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+}
+.league-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .8rem; padding: .3rem .7rem;
+  border-radius: 999px; border: 1px solid transparent;
+  white-space: nowrap;
+}
+.league-badge--ok   { background: rgba(0,200,83,.1);  border-color: rgba(0,200,83,.25); color: var(--text); }
+.league-badge--ok strong { color: var(--primary); }
+.league-badge--zero { background: var(--surface-2); color: var(--text-muted); }
+.league-badge--err  { background: rgba(255,71,87,.08); color: var(--text-muted); }
+.league-preview-meta { font-size: .72rem; color: var(--text-muted); margin-top: .6rem; margin-bottom: 0; }
+.admin-toolbar-panel {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+  padding: .75rem 1rem;
+}
+.admin-toolbar-panel input,
+.admin-toolbar-panel select { flex: 1; min-width: 130px; }
 
 
 /* Header da lista de jogos */

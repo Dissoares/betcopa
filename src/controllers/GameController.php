@@ -194,6 +194,78 @@ class GameController
         jsonResponse(['processados' => $processados, 'erros' => $erros]);
     }
 
+    /** GET /api/admin/jogos/contagem-por-liga */
+    public function countByLeague(): void
+    {
+        ensureAdmin($this->adminEmail);
+        jsonResponse(['counts' => $this->repository->countAllByLeague()]);
+    }
+
+    /**
+     * GET /api/admin/jogos/preview-all?refresh=1
+     * Retorna { counts: {id: n, ...}, cached_at: ts, from_cache: bool }
+     * Cache de 60 min no config. refresh=1 força nova busca na API.
+     */
+    public function previewAll(): void
+    {
+        ensureAdmin($this->adminEmail);
+
+        $leagues = [
+            2000 => 'Copa do Mundo FIFA',
+            2013 => 'Brasileirão Série A',
+            2001 => 'UEFA Champions League',
+            2021 => 'Premier League',
+            2014 => 'La Liga',
+            2019 => 'Serie A (Itália)',
+            2002 => 'Bundesliga',
+            2015 => 'Ligue 1',
+            2003 => 'Eredivisie',
+            2017 => 'Primeira Liga',
+            2152 => 'Copa Libertadores',
+        ];
+
+        $cachedJson = $this->configRepo->get('league_preview_cache', '');
+        $cachedTs   = (int) $this->configRepo->get('league_preview_cache_ts', '0');
+        $forceRefresh = !empty($_GET['refresh']);
+        $cacheAge   = time() - $cachedTs;
+
+        if (!$forceRefresh && $cachedJson && $cacheAge < 3600) {
+            $counts = json_decode($cachedJson, true) ?: [];
+            jsonResponse(['counts' => $counts, 'cached_at' => $cachedTs, 'from_cache' => true]);
+            return;
+        }
+
+        $apiKey   = $this->configRepo->get('api_football_key', $this->config['api_football_key'] ?? '');
+        $timezone = $this->configRepo->get('api_football_timezone', 'America/Sao_Paulo');
+
+        if (empty($apiKey)) {
+            if ($cachedJson) {
+                $counts = json_decode($cachedJson, true) ?: [];
+                jsonResponse(['counts' => $counts, 'cached_at' => $cachedTs, 'from_cache' => true, 'warning' => 'API key não configurada, usando cache.']);
+                return;
+            }
+            jsonResponse(['error' => 'API key não configurada.'], 400);
+            return;
+        }
+
+        $api    = new FootballDataService($apiKey, $timezone);
+        $counts = [];
+        foreach ($leagues as $id => $name) {
+            try {
+                $matches = $api->fetchMatches($id, '');
+                $counts[$id] = count($matches);
+            } catch (RuntimeException) {
+                $counts[$id] = null;
+            }
+            usleep(300000); // 300ms entre chamadas para não bater no rate limit
+        }
+
+        $this->configRepo->set('league_preview_cache', json_encode($counts));
+        $this->configRepo->set('league_preview_cache_ts', (string) time());
+
+        jsonResponse(['counts' => $counts, 'cached_at' => time(), 'from_cache' => false]);
+    }
+
     /** POST /api/admin/jogos/excluir/todos */
     public function deleteAll(): void
     {
@@ -296,6 +368,7 @@ class GameController
                 if ($local) $normalized['logo_fora'] = $local;
             }
 
+            $normalized['api_league_id'] = $competitionId;
             $this->repository->upsertByApiId($normalized);
             $count++;
         }

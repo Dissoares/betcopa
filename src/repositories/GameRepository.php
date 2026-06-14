@@ -6,6 +6,9 @@ class GameRepository
     public function __construct(PDO $db)
     {
         $this->db = $db;
+        try {
+            $db->exec('ALTER TABLE jogos ADD COLUMN api_league_id INT DEFAULT NULL');
+        } catch (PDOException) {}
     }
 
     public function all(): array
@@ -73,30 +76,32 @@ class GameRepository
             // Atualiza tudo exceto valor_base (não sobrescreve customização do admin)
             $stmt = $this->db->prepare(
                 'UPDATE jogos SET
-                   time_casa = :time_casa,
-                   time_fora = :time_fora,
-                   logo_casa = :logo_casa,
-                   logo_fora = :logo_fora,
-                   data_hora = :data_hora,
-                   liga_nome = :liga_nome,
-                   liga_logo = :liga_logo,
-                   estadio   = :estadio,
-                   rodada    = :rodada,
+                   time_casa    = :time_casa,
+                   time_fora    = :time_fora,
+                   logo_casa    = :logo_casa,
+                   logo_fora    = :logo_fora,
+                   data_hora    = :data_hora,
+                   liga_nome    = :liga_nome,
+                   liga_logo    = :liga_logo,
+                   estadio      = :estadio,
+                   rodada       = :rodada,
+                   api_league_id = :api_league_id,
                    status_api = :status_api
                  WHERE id = :id'
             );
             $stmt->execute([
-                'time_casa'  => $data['time_casa'],
-                'time_fora'  => $data['time_fora'],
-                'logo_casa'  => $data['logo_casa'],
-                'logo_fora'  => $data['logo_fora'],
-                'data_hora'  => $data['data_hora'],
-                'liga_nome'  => $data['liga_nome'],
-                'liga_logo'  => $data['liga_logo'],
-                'estadio'    => $data['estadio'],
-                'rodada'     => $data['rodada'],
-                'status_api' => $data['status_api'],
-                'id'         => $existing['id'],
+                'time_casa'     => $data['time_casa'],
+                'time_fora'     => $data['time_fora'],
+                'logo_casa'     => $data['logo_casa'],
+                'logo_fora'     => $data['logo_fora'],
+                'data_hora'     => $data['data_hora'],
+                'liga_nome'     => $data['liga_nome'],
+                'liga_logo'     => $data['liga_logo'],
+                'estadio'       => $data['estadio'],
+                'rodada'        => $data['rodada'],
+                'api_league_id' => $data['api_league_id'] ?? null,
+                'status_api'    => $data['status_api'],
+                'id'            => $existing['id'],
             ]);
             return (int) $existing['id'];
         }
@@ -105,11 +110,11 @@ class GameRepository
             'INSERT INTO jogos
                (api_fixture_id, time_casa, time_fora, bandeira_casa, bandeira_fora,
                 logo_casa, logo_fora, data_hora, status, liga_nome, liga_logo,
-                estadio, rodada, odd, valor_base, status_api)
+                estadio, rodada, odd, valor_base, status_api, api_league_id)
              VALUES
                (:api_fixture_id, :time_casa, :time_fora, :bandeira_casa, :bandeira_fora,
                 :logo_casa, :logo_fora, :data_hora, :status, :liga_nome, :liga_logo,
-                :estadio, :rodada, :odd, :valor_base, :status_api)'
+                :estadio, :rodada, :odd, :valor_base, :status_api, :api_league_id)'
         );
         $stmt->execute([
             'api_fixture_id' => $data['api_fixture_id'],
@@ -128,6 +133,7 @@ class GameRepository
             'odd'            => $data['odd']           ?? 1.00,
             'valor_base'     => $data['valor_base']    ?? 1.00,
             'status_api'     => $data['status_api'],
+            'api_league_id'  => $data['api_league_id'] ?? null,
         ]);
         return (int) $this->db->lastInsertId();
     }
@@ -140,6 +146,18 @@ class GameRepository
     {
         $stmt = $this->db->query('SELECT * FROM jogos ORDER BY data_hora ASC');
         return $stmt->fetchAll();
+    }
+
+    public function countAllByLeague(): array
+    {
+        $stmt = $this->db->query(
+            'SELECT api_league_id, COUNT(*) AS total FROM jogos
+             WHERE api_league_id IS NOT NULL GROUP BY api_league_id'
+        );
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $map  = [];
+        foreach ($rows as $r) $map[(int)$r['api_league_id']] = (int)$r['total'];
+        return $map;
     }
 
     public function updateLogos(int $id, string $logoCasa, string $logoFora): void

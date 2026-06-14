@@ -408,7 +408,21 @@
             <p class="admin-page-header__sub">Importe, sincronize e gerencie os jogos disponíveis para apostas</p>
           </div>
 
-          <!-- Importador API + Filtros -->
+          <!-- Badges de preview da API -->
+          <div class="panel league-preview-panel">
+            <div class="league-preview-header">
+              <span class="panel__title" style="margin:0"><i class="fa-solid fa-globe"></i> Jogos disponíveis na API</span>
+              <button class="btn btn--ghost btn--sm" id="btnRefreshPreview" title="Atualizar">
+                <i class="fa-solid fa-rotate"></i> Atualizar
+              </button>
+            </div>
+            <div id="leaguePreviewBadges" class="league-preview-badges">
+              <span class="text--muted" style="font-size:.85rem">Carregando…</span>
+            </div>
+            <p id="leaguePreviewMeta" class="league-preview-meta"></p>
+          </div>
+
+          <!-- Importador API -->
           <div class="panel">
             <h3 class="panel__title"><i class="fa-solid fa-satellite-dish"></i> Importar e Sincronizar</h3>
             <div class="form-row" style="margin-top:.75rem">
@@ -443,22 +457,21 @@
               <button class="btn btn--ghost" id="btnSync"><i class="fa-solid fa-rotate"></i> Sincronizar Resultados</button>
               <button class="btn btn--ghost" id="btnSyncImages"><i class="fa-solid fa-images"></i> Sincronizar Imagens</button>
             </div>
-            <div id="importResult" style="margin-top:.75rem"></div>
+            <div id="importResult" class="import-result-area"></div>
+          </div>
 
-            <div class="panel-divider"></div>
-
-            <div class="admin-toolbar" style="margin-top:0">
-              <input id="filterTeam" type="search" placeholder="Buscar time…" />
-              <select id="filterStatus">
-                <option value="">Todos os status</option>
-                <option value="aberto">Aberto</option>
-                <option value="encerrado">Encerrado</option>
-                <option value="finalizado">Finalizado</option>
-              </select>
-              <input id="filterDateFrom" type="date" title="De" />
-              <input id="filterDateTo" type="date" title="Até" />
-              <button class="btn btn--ghost btn--sm" id="btnClearFilter" type="button"><i class="fa-solid fa-xmark"></i> Limpar</button>
-            </div>
+          <!-- Filtros -->
+          <div class="panel admin-toolbar-panel">
+            <input id="filterTeam" type="search" placeholder="Buscar time…" />
+            <select id="filterStatus">
+              <option value="">Todos os status</option>
+              <option value="aberto">Aberto</option>
+              <option value="encerrado">Encerrado</option>
+              <option value="finalizado">Finalizado</option>
+            </select>
+            <input id="filterDateFrom" type="date" title="De" />
+            <input id="filterDateTo" type="date" title="Até" />
+            <button class="btn btn--ghost btn--sm" id="btnClearFilter" type="button"><i class="fa-solid fa-xmark"></i> Limpar</button>
           </div>
 
           <!-- Lista de jogos -->
