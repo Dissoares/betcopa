@@ -4105,7 +4105,7 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
         if (all) all.checked = false;
       });
     } else {
-      byGameEl.innerHTML = '<p class="text--muted">Nenhum jogo cadastrado.</p>';
+      byGameEl.innerHTML = '<p class="text--muted">Nenhum jogo com palpites ainda.</p>';
     }
 
   } catch (err) {

@@ -117,8 +117,9 @@ class AdminRepository
               COALESCE(SUM(CASE WHEN a.status = 'ganhou' THEN a.possivel_ganho END), 0)                 AS pago,
               COALESCE(SUM(CASE WHEN a.status = 'pendente' THEN 1 END), 0)                              AS pendentes
             FROM jogos j
-            LEFT JOIN apostas a ON a.jogo_id = j.id
+            INNER JOIN apostas a ON a.jogo_id = j.id
             GROUP BY j.id
+            HAVING COUNT(a.id) > 0
             ORDER BY j.data_hora DESC
             LIMIT :limit OFFSET :offset
         ");
@@ -130,7 +131,9 @@ class AdminRepository
 
     public function countGames(): int
     {
-        return (int) $this->db->query("SELECT COUNT(*) FROM jogos")->fetchColumn();
+        return (int) $this->db->query(
+            "SELECT COUNT(DISTINCT j.id) FROM jogos j INNER JOIN apostas a ON a.jogo_id = j.id"
+        )->fetchColumn();
     }
 
     public function recentBets(int $limit = 10, int $offset = 0): array
