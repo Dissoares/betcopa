@@ -245,15 +245,71 @@ class GameController
             return;
         }
 
+        $downloader = new ImageDownloaderService();
         $count = 0;
         foreach ($matches as $match) {
             $normalized = $api->normalize($match);
+
+            // Baixa bandeiras e logos localmente
+            $downloader->downloadFlag($normalized['bandeira_casa'] ?? '');
+            $downloader->downloadFlag($normalized['bandeira_fora'] ?? '');
+            if (!empty($normalized['logo_casa'])) {
+                $local = $downloader->downloadLogo($normalized['logo_casa']);
+                if ($local) $normalized['logo_casa'] = $local;
+            }
+            if (!empty($normalized['logo_fora'])) {
+                $local = $downloader->downloadLogo($normalized['logo_fora']);
+                if ($local) $normalized['logo_fora'] = $local;
+            }
+
             $this->repository->upsertByApiId($normalized);
             $count++;
         }
 
         Logger::info('Import football-data.org', ['competition' => $competitionId, 'count' => $count]);
         jsonResponse(['message' => "{$count} partida(s) importada(s) com sucesso.", 'importados' => $count]);
+    }
+
+    /** POST /api/admin/sync-images — baixa/atualiza bandeiras e logos de todos os jogos */
+    public function syncImages(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        $games      = $this->repository->findAll();
+        $downloader = new ImageDownloaderService();
+        $flags      = 0;
+        $logos      = 0;
+
+        foreach ($games as $game) {
+            // Bandeiras
+            if (!empty($game['bandeira_casa'])) {
+                $r = $downloader->downloadFlag($game['bandeira_casa']);
+                if ($r) $flags++;
+            }
+            if (!empty($game['bandeira_fora'])) {
+                $r = $downloader->downloadFlag($game['bandeira_fora']);
+                if ($r) $flags++;
+            }
+
+            // Logos (só baixa se ainda for URL externa)
+            $lH = $game['logo_casa'] ?? '';
+            $lA = $game['logo_fora'] ?? '';
+            $newH = (!empty($lH) && !str_starts_with($lH, '/assets/')) ? $downloader->downloadLogo($lH) : $lH;
+            $newA = (!empty($lA) && !str_starts_with($lA, '/assets/')) ? $downloader->downloadLogo($lA) : $lA;
+
+            if (($newH !== $lH || $newA !== $lA) && ($newH || $newA)) {
+                $this->repository->updateLogos((int) $game['id'], $newH ?: $lH, $newA ?: $lA);
+                $logos++;
+            }
+        }
+
+        Logger::info('Sync de imagens', ['bandeiras' => $flags, 'logos' => $logos]);
+        jsonResponse([
+            'message' => "Sincronização concluída: {$flags} bandeira(s), {$logos} logo(s) de times atualizados.",
+            'bandeiras' => $flags,
+            'logos'     => $logos,
+        ]);
     }
 
     /** POST /api/admin/sync — sincroniza placares e status via football-data.org */

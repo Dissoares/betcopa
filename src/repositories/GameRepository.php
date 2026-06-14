@@ -136,6 +136,20 @@ class GameRepository
      * Retorna jogos importados da API que ainda não foram finalizados.
      * Usado pelo sync de resultados.
      */
+    public function findAll(): array
+    {
+        $stmt = $this->db->query('SELECT * FROM jogos ORDER BY data_hora ASC');
+        return $stmt->fetchAll();
+    }
+
+    public function updateLogos(int $id, string $logoCasa, string $logoFora): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE jogos SET logo_casa = :logo_casa, logo_fora = :logo_fora WHERE id = :id'
+        );
+        $stmt->execute(['logo_casa' => $logoCasa, 'logo_fora' => $logoFora, 'id' => $id]);
+    }
+
     public function findPendingSync(): array
     {
         $stmt = $this->db->query(

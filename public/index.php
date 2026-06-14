@@ -27,6 +27,7 @@ require_once __DIR__ . '/../src/repositories/PasswordResetRepository.php';
 require_once __DIR__ . '/../src/services/AuthService.php';
 require_once __DIR__ . '/../src/services/Mailer.php';
 require_once __DIR__ . '/../src/services/GameService.php';
+require_once __DIR__ . '/../src/services/ImageDownloaderService.php';
 require_once __DIR__ . '/../src/services/BetService.php';
 require_once __DIR__ . '/../src/services/FootballDataService.php';
 require_once __DIR__ . '/../src/services/EspnService.php';
@@ -127,6 +128,7 @@ try {
         route('/api/admin/jogos',  'POST', fn() => $gameCtrl->create());
         route('/api/admin/import', 'POST', fn() => $gameCtrl->import());
         route('/api/admin/sync',                     'POST', fn() => $gameCtrl->sync());
+        route('/api/admin/sync-images',              'POST', fn() => $gameCtrl->syncImages());
         route('/api/admin/jogos/resultado/lote',     'POST', fn() => $gameCtrl->bulkResult());
         routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'PUT',
             fn(int $id) => $gameCtrl->update($id));

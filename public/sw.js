@@ -24,7 +24,7 @@ self.addEventListener('activate', e => {
   );
 });
 
-// ── Fetch: network-first, cache fallback ──────────────────────
+// ── Fetch ─────────────────────────────────────────────────────
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
@@ -33,6 +33,25 @@ self.addEventListener('fetch', e => {
   // API calls: network only — never cache
   if (url.pathname.startsWith('/api/')) return;
 
+  // Imagens (bandeiras, logos): cache-first — servem do cache imediatamente
+  // após a primeira visita, sem esperar a rede
+  if (e.request.destination === 'image') {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return res;
+        }).catch(() => cached ?? new Response('', { status: 404 }));
+      })
+    );
+    return;
+  }
+
+  // Demais recursos: network-first, cache fallback
   e.respondWith(
     fetch(e.request)
       .then(res => {

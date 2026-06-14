@@ -1,11 +1,13 @@
 <?php
 class GameService
 {
-    private GameRepository $games;
+    private GameRepository        $games;
+    private ImageDownloaderService $images;
 
     public function __construct(GameRepository $games)
     {
-        $this->games = $games;
+        $this->games  = $games;
+        $this->images = new ImageDownloaderService();
     }
 
     public function listGames(): array
@@ -28,6 +30,10 @@ class GameService
         $data['valor_base'] = max(0.50, min(50.00, (float) ($data['valor_base'] ?? 1.00)));
         $data['bandeira_casa'] = mb_substr(trim($data['bandeira_casa'] ?? '⚽'), 0, 10);
         $data['bandeira_fora'] = mb_substr(trim($data['bandeira_fora'] ?? '⚽'), 0, 10);
+
+        // Pré-baixa as bandeiras localmente ao criar o jogo
+        $this->images->downloadFlag($data['bandeira_casa']);
+        $this->images->downloadFlag($data['bandeira_fora']);
 
         if ($data['status'] === 'finalizado') {
             $home = isset($data['placar_casa']) ? (int) $data['placar_casa'] : null;
@@ -59,6 +65,10 @@ class GameService
         $data['valor_base']    = max(0.50, min(50.00, (float) ($data['valor_base'] ?? 1.00)));
         $data['bandeira_casa'] = mb_substr(trim($data['bandeira_casa'] ?? '⚽'), 0, 10);
         $data['bandeira_fora'] = mb_substr(trim($data['bandeira_fora'] ?? '⚽'), 0, 10);
+
+        // Pré-baixa as bandeiras localmente ao atualizar o jogo
+        $this->images->downloadFlag($data['bandeira_casa']);
+        $this->images->downloadFlag($data['bandeira_fora']);
 
         $home = isset($data['placar_casa']) && $data['placar_casa'] !== '' ? (int) $data['placar_casa'] : null;
         $away = isset($data['placar_fora']) && $data['placar_fora'] !== '' ? (int) $data['placar_fora'] : null;

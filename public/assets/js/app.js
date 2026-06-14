@@ -98,7 +98,14 @@ const FLAGS = Object.fromEntries(
 
 const TEAM_NAMES = Object.fromEntries(TEAMS.map(t => [t.code, t.name]));
 
-const flagUrl = (code) => `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
+const flagUrl    = (code) => `/assets/flags/${code.toLowerCase()}.png`;
+const flagUrlCdn = (code) => `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
+// Gera atributos src + onerror com fallback para CDN caso a cópia local não exista
+const flagImgSrc = (code) => {
+  const c = code.toLowerCase();
+  return `src="/assets/flags/${c}.png" onerror="this.onerror=null;this.src='https://flagcdn.com/w80/${c}.png'"`;
+};
+
 
 const flagEmoji = code => {
   const c = (code || '').trim().toUpperCase().slice(0, 2);
@@ -119,7 +126,7 @@ const getEmblem = (game, side) => {
   // 2. Admin-stored ISO code (2-letter or subdivision like gb-eng)
   const stored = ((side === 'home' ? game.bandeira_casa : game.bandeira_fora) || '').trim();
   if (/^[a-z]{2}(-[a-z]+)?$/i.test(stored) && stored !== '') {
-    return `<img class="team-logo team-logo--flag" src="${flagUrl(stored)}" alt="${teamName}" loading="lazy" onerror="this.style.display='none'" />`;
+    return `<img class="team-logo team-logo--flag" alt="${teamName}" loading="lazy" ${flagImgSrc(stored)} />`;
   }
 
   // 3. Auto-detect by team name (normalize accents via simple map)
@@ -127,7 +134,7 @@ const getEmblem = (game, side) => {
     .normalize('NFD').replace(/[̀-ͯ]/g, '');
   const code = FLAGS[normalized] || FLAGS[teamName.toLowerCase().trim()];
   if (code) {
-    return `<img class="team-logo team-logo--flag" src="${flagUrl(code)}" alt="${teamName}" loading="lazy" onerror="this.style.display='none'" />`;
+    return `<img class="team-logo team-logo--flag" alt="${teamName}" loading="lazy" ${flagImgSrc(code)} />`;
   }
 
   // 4. Fallback
@@ -1207,11 +1214,18 @@ const loadAdminOnline = async () => {
 // ── Share bet helpers ─────────────────────────────────────────
 const loadImgCors = src => new Promise(resolve => {
   if (!src) return resolve(null);
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload  = () => resolve(img);
-  img.onerror = () => resolve(null);
-  img.src = src;
+  const load = (url, fallback) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => resolve(img);
+    img.onerror = () => fallback ? load(fallback, null) : resolve(null);
+    img.src = url;
+  };
+  // Se for cópia local de bandeira, tenta CDN como fallback
+  const cdn = src.startsWith('/assets/flags/')
+    ? flagUrlCdn(src.split('/').pop().replace('.png', ''))
+    : null;
+  load(src, cdn);
 });
 
 const rrect = (ctx, x, y, w, h, r) => {
@@ -2722,6 +2736,25 @@ const importFromApi = async () => {
   }
 };
 
+const syncImages = async () => {
+  const btn      = document.getElementById('btnSyncImages');
+  const resultEl = document.getElementById('importResult');
+
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Baixando imagens...';
+  if (resultEl) resultEl.innerHTML = '';
+
+  try {
+    const res = await api('/api/admin/sync-images', 'POST', {});
+    toast(res.message ?? 'Imagens sincronizadas!', 'success');
+    if (resultEl) resultEl.innerHTML = `<p class="text--muted" style="font-size:.85rem;margin-top:.5rem">${res.message}</p>`;
+    await loadGames();
+  } catch (err) {
+    toast(err.message, 'danger');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-images"></i> Sincronizar Imagens';
+  }
+};
+
 const syncResults = async () => {
   const btn      = document.getElementById('btnSync');
   const resultEl = document.getElementById('importResult');
@@ -2805,6 +2838,18 @@ const loadUser = async () => {
   renderHeroBonusBadge();
 };
 
+const prefetchGameImages = () => {
+  if (!S.games?.length) return;
+  const urls = new Set();
+  S.games.forEach(g => {
+    if (g.bandeira_casa) urls.add(flagUrl(g.bandeira_casa));
+    if (g.bandeira_fora) urls.add(flagUrl(g.bandeira_fora));
+    if (g.logo_casa)     urls.add(g.logo_casa);
+    if (g.logo_fora)     urls.add(g.logo_fora);
+  });
+  urls.forEach(src => { const i = new Image(); i.src = src; });
+};
+
 const loadGames = async () => {
   const skel = document.getElementById('gamesSkeletons');
   const grid = document.getElementById('gamesGrid');
@@ -2820,6 +2865,7 @@ const loadGames = async () => {
   if (skel) skel.classList.add('hidden');
   renderGames();
   if (!document.getElementById('view-resultados')?.classList.contains('hidden')) renderResultados();
+  prefetchGameImages();
 };
 
 let _betsPage  = 1;
@@ -3792,6 +3838,7 @@ const bind = () => {
   // Import / Sync (botões dentro da aba Jogos)
   document.getElementById('btnImport')?.addEventListener('click', importFromApi);
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
+  document.getElementById('btnSyncImages')?.addEventListener('click', syncImages);
 
   // Limpar cache
   document.getElementById('btnClearCache')?.addEventListener('click', async () => {
