@@ -629,7 +629,7 @@ const renderCard = (g) => {
     midHtml = `
         <div class="gc-score gc-score--live">
           <div class="gc-tv-bar">
-            <span class="gc-tv-bar__period" id="lvperiod-${g.id}">${liveShort ?? ''}</span>
+            <span class="gc-tv-bar__period" id="lvperiod-${g.id}">${livePeriod ?? ''}</span>
             <span class="gc-tv-bar__clock" id="lvclock-${g.id}">${clockStr ?? '—'}</span>
           </div>
           <span class="gc-score__val">${scoreStr ?? '0 × 0'}</span>
@@ -1148,10 +1148,10 @@ const startLiveClocks = () => {
     const perEl      = document.getElementById(`lvperiod-${g.id}`);
     const dateClkEl  = document.getElementById(`gcdateclock-${g.id}`);
     const tick = () => {
-      const { shortPeriod, clockStr } = fmtLiveClock(g);
+      const { period, shortPeriod, clockStr } = fmtLiveClock(g);
       el.textContent = clockStr ?? '—';
-      if (perEl)     perEl.textContent     = shortPeriod ?? '';
-      if (dateClkEl) dateClkEl.textContent = clockStr ?? shortPeriod ?? '';
+      if (perEl)     perEl.textContent     = period ?? '';
+      if (dateClkEl) dateClkEl.textContent = clockStr ?? period ?? '';
     };
     tick();
     S.timers.push(setInterval(tick, 1000));

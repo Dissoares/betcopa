@@ -2327,12 +2327,13 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 /* Barra de período + relógio estilo TV */
 .gc-tv-bar {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .45rem;
+  gap: .2rem;
 }
 .gc-tv-bar__period {
-  font-size: .55rem;
+  font-size: .6rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: .1em;
