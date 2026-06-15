@@ -189,7 +189,9 @@
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+/* overflow-x no html + body previne scroll horizontal E mantém
+   position:fixed relativo ao viewport (não ao body) */
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -5880,3 +5882,58 @@ input:focus, select:focus {
   background: rgba(0,200,83,.08);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   §44. SWEETALERT2 — dark theme + positioning fix
+   ═══════════════════════════════════════════════════════════════ */
+.swal2-container {
+  z-index: 99999 !important;
+  /* Garante que cobre a tela inteira mesmo com overflow-x:hidden no body */
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.swal2-popup {
+  background: var(--surface-2, #1c1e33) !important;
+  color: var(--text, #e2e8f0) !important;
+  border: 1px solid var(--border, rgba(255,255,255,.1)) !important;
+  border-radius: var(--radius-lg, 14px) !important;
+}
+.swal2-title {
+  color: var(--text, #e2e8f0) !important;
+  font-size: 1.1rem !important;
+}
+.swal2-html-container {
+  color: var(--text-muted, #94a3b8) !important;
+}
+.swal2-input,
+.swal2-textarea {
+  background: var(--surface-3, #252740) !important;
+  color: var(--text, #e2e8f0) !important;
+  border-color: var(--border, rgba(255,255,255,.12)) !important;
+  border-radius: var(--radius, 8px) !important;
+  box-shadow: none !important;
+}
+.swal2-input:focus,
+.swal2-textarea:focus {
+  border-color: var(--primary, #00c853) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(0,200,83,.2)) !important;
+}
+.swal2-input-label {
+  color: var(--text-muted, #94a3b8) !important;
+  font-size: .83rem !important;
+}
+.swal2-validation-message {
+  background: transparent !important;
+  color: var(--danger, #e74c3c) !important;
+  border: none !important;
+  font-size: .82rem !important;
+}
+.swal2-icon { border-color: var(--border, rgba(255,255,255,.15)) !important; }
+.swal2-icon.swal2-warning { color: #f39c12 !important; border-color: #f39c12 !important; }
+.swal2-icon.swal2-error   { color: var(--danger, #e74c3c) !important; border-color: var(--danger, #e74c3c) !important; }
+.swal2-icon.swal2-success  { color: var(--primary, #00c853) !important; border-color: var(--primary, #00c853) !important; }
+.swal2-icon.swal2-success .swal2-success-ring { border-color: var(--primary-glow, rgba(0,200,83,.3)) !important; }
+.swal2-icon.swal2-success [class^=swal2-success-line] { background: var(--primary, #00c853) !important; }
+.swal2-close { color: var(--text-muted, #94a3b8) !important; }
+.swal2-close:hover { color: var(--text, #e2e8f0) !important; }
