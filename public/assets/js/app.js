@@ -2114,7 +2114,7 @@ const fillTicket = (bet) => {
 
   // ID
   document.getElementById('ticketId').textContent = isGuest
-    ? 'Pré-visualização' : `#${String(bet.id).padStart(6, '0')}`;
+    ? 'Palpite' : `#${String(bet.id).padStart(6, '0')}`;
 
   // Jogo
   const gameLabel = game ? `${game.time_casa} × ${game.time_fora}` : '—';
