@@ -2097,7 +2097,7 @@ const submitBet = async () => {
 // ── Ticket modal ──────────────────────────────────────────────
 // Mapa de status → [classe CSS, ícone FA, texto]
 const TICKET_STATUS_MAP = {
-  preview:    ['preview',    'fa-eye',              'Pré-visualização'],
+  preview:    ['preview',    'fa-eye',              'Palpite'],
   pendente:   ['pendente',   'fa-clock',            'Aguardando Pagamento'],
   pago:       ['pago',       'fa-credit-card',      'Pago · Aguardando Jogo'],
   confirmado: ['confirmado', 'fa-circle-check',     'Confirmada'],
