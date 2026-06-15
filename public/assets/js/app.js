@@ -1712,10 +1712,8 @@ const renderBets = () => {
          </div>`
       : b.status === 'pago'
       ? `<div class="bet-card__actions">
-           <div class="bet-verify-wrap">
-             <span class="bet-verify-hint"><i class="fa-solid fa-circle-info"></i> Pague o PIX e clique para confirmar</span>
-             <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-rotate"></i> Verificar PIX</button>
-           </div>
+           <button class="btn btn--primary btn--sm" data-action="repay" data-id="${b.id}"><i class="fa-brands fa-pix"></i> Ver PIX</button>
+           <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-circle-check"></i> Já Paguei</button>
          </div>`
       : '';
 
@@ -3817,10 +3815,27 @@ const bind = () => {
     if (action === 'bet')   openBetModal(id);
     if (action === 'share') openShareModal(id);
     if (action === 'pay') {
-      const betId = Number(id);
-      const betData = S.bets?.find(b => b.id === betId);
-      S.selectedBet = { id: betId, valor: betData?.valor };
+      const betId   = Number(id);
+      const betData = S.bets?.find(b => Number(b.id) === betId);
+      if (!betData) return;
+      S.selectedBet  = betData;
+      S.selectedGame = S.games.find(g => Number(g.id) === Number(betData.jogo_id)) || {
+        time_casa: betData.time_casa, time_fora: betData.time_fora,
+        data_hora: betData.data_hora, liga_nome: betData.liga_nome,
+        bandeira_casa: betData.bandeira_casa, bandeira_fora: betData.bandeira_fora,
+        logo_casa: betData.logo_casa, logo_fora: betData.logo_fora,
+      };
+      fillTicket(betData);
       openModal('modalTicket');
+    }
+    if (action === 'repay') {
+      const betId   = Number(id);
+      const betData = S.bets?.find(b => Number(b.id) === betId);
+      if (!betData) return;
+      S.selectedBet = betData;
+      api(`/api/apostas/${betId}/pagar`, 'POST', {})
+        .then(data => openPixModal(data))
+        .catch(err => toast(err.message || 'Erro ao gerar PIX.', 'danger'));
     }
     if (action === 'confirm') {
       const betId = Number(id);
