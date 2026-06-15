@@ -308,8 +308,10 @@ const gameBadge = (g) => {
 // ── Navigation ────────────────────────────────────────────────
 const LEGAL_VIEWS = ['termos', 'privacidade', 'jogo-responsavel'];
 
+const _isAdmin = () => !!S.user && (S.user.email === S.adminEmail || !!S.user.is_admin);
+
 const navigate = (view) => {
-  if (view === 'admin' && (!S.user || S.user.email !== S.adminEmail)) {
+  if (view === 'admin' && !_isAdmin()) {
     view = S.user ? 'jogos' : 'auth';
   }
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
@@ -351,7 +353,7 @@ const renderDrawer = () => {
   if (S.user) {
     const initials = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const saldo    = parseFloat(S.user.saldo || 0);
-    const isAdmin  = S.user.email === S.adminEmail || !!S.user.is_admin;
+    const isAdmin  = _isAdmin();
 
     body.innerHTML = `
       <div class="dr-user">
@@ -6164,7 +6166,7 @@ const init = async () => {
   // Restaura rota do hash após tudo carregado
   const hash = location.hash.replace('#', '') || location.pathname.replace(/^\//, '');
   if (hash.startsWith('admin/') || hash === 'admin') {
-    if (!S.user || S.user.email !== S.adminEmail) {
+    if (!_isAdmin()) {
       navigate(S.user ? 'jogos' : 'auth');
     } else {
       const tab = hash.replace('admin/', '') || 'dashboard';
