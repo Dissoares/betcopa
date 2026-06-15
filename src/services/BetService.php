@@ -186,7 +186,6 @@ class BetService
                 // Se já aprovado localmente (pelo webhook), confirma direto
                 if (($payment['status'] ?? '') === 'approved') {
                     $this->bets->updateStatus($betId, 'confirmado');
-                    $this->transactions->create($userId, 'debito', (float) $bet['valor'], 'Aposta confirmada #' . $betId);
                     Logger::info('Pagamento confirmado (webhook)', ['bet_id' => $betId, 'gateway' => $gateway->getName()]);
                     return;
                 }
@@ -206,7 +205,6 @@ class BetService
         }
 
         $this->bets->updateStatus($betId, 'confirmado');
-        $this->transactions->create($userId, 'debito', (float) $bet['valor'], 'Aposta confirmada #' . $betId);
         Logger::info('Pagamento confirmado', ['bet_id' => $betId, 'gateway' => $gateway->getName()]);
     }
 

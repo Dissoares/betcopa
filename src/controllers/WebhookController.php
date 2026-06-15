@@ -64,12 +64,6 @@ class WebhookController
             $bet = $this->bets->find((int) $payment['aposta_id']);
             if ($bet && $bet['status'] === 'pago') {
                 $this->bets->updateStatus((int) $bet['id'], 'confirmado');
-                $this->transactions->create(
-                    (int) $bet['user_id'],
-                    'debito',
-                    (float) $bet['valor'],
-                    'Aposta confirmada via webhook #' . $bet['id']
-                );
                 Logger::info('Aposta confirmada via webhook MP', ['bet_id' => $bet['id']]);
             }
         } elseif (in_array($status, ['rejected', 'cancelled'], true)) {
@@ -196,12 +190,6 @@ class WebhookController
             $bet = $this->bets->find($betId);
             if ($bet && $bet['status'] === 'pago') {
                 $this->bets->updateStatus($betId, 'confirmado');
-                $this->transactions->create(
-                    (int) $bet['user_id'],
-                    'debito',
-                    (float) $bet['valor'],
-                    'Aposta confirmada via webhook ExPay #' . $betId
-                );
                 Logger::info('Aposta confirmada via webhook ExPay', ['bet_id' => $betId]);
             }
         } elseif ($status === 'rejected') {
