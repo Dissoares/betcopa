@@ -256,10 +256,11 @@ try {
         jsonResponse(['error' => 'Rota não encontrada'], 404);
     }
 
-    $db  = Database::connection();
-    $ver = (new ConfigRepository($db))->get('cache_version', '1');
-    $html = file_get_contents(__DIR__ . '/../public/template.html');
-    $html = preg_replace('/(\?v=)\d+/', '$1' . $ver, $html);
+    $cssVer = filemtime(__DIR__ . '/assets/css/style.css');
+    $jsVer  = filemtime(__DIR__ . '/assets/js/app.js');
+    $html   = file_get_contents(__DIR__ . '/template.html');
+    $html   = preg_replace('/style\.css\?v=\d+/', 'style.css?v=' . $cssVer, $html);
+    $html   = preg_replace('/app\.js\?v=\d+/',    'app.js?v='    . $jsVer,  $html);
     echo $html;
 
 } catch (Throwable $e) {
