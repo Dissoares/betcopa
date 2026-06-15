@@ -1343,7 +1343,7 @@ const isoToEmoji = code => {
 };
 
 const generateBetCard = async (bet) => {
-  const W = 600, H = 315;
+  const W = 600, H = 340;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const canvas = document.getElementById('shareCanvas');
   canvas.width  = W * dpr;
@@ -1351,11 +1351,15 @@ const generateBetCard = async (bet) => {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const game        = S.games.find(g => g.id === bet.jogo_id);
+  const game         = S.games.find(g => Number(g.id) === Number(bet.jogo_id));
   const bandeiraCasa = bet.bandeira_casa || game?.bandeira_casa || '';
   const bandeiraFora = bet.bandeira_fora || game?.bandeira_fora || '';
   const siteName     = S.siteName || 'BetCopa';
   const siteLogo     = S.siteLogo || null;
+  const ligaName     = bet.liga_nome || game?.liga_nome || '';
+  const nomeHome     = toPortuguese(bet.time_casa || '').toUpperCase();
+  const nomeAway     = toPortuguese(bet.time_fora || '').toUpperCase();
+  const cx           = W / 2;
 
   const [imgHome, imgAway, imgLogo] = await Promise.all([
     loadFlagForCanvas(bandeiraCasa),
@@ -1363,184 +1367,184 @@ const generateBetCard = async (bet) => {
     siteLogo ? loadImgCors(siteLogo) : Promise.resolve(null),
   ]);
 
-  // ── Background ────────────────────────────────────────────
-  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-  bgGrad.addColorStop(0,   '#080e1c');
-  bgGrad.addColorStop(0.5, '#0b1220');
-  bgGrad.addColorStop(1,   '#0d1625');
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  const glowGrad = ctx.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, 280);
-  glowGrad.addColorStop(0, 'rgba(0,200,83,.08)');
-  glowGrad.addColorStop(1, 'rgba(0,200,83,0)');
-  ctx.fillStyle = glowGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // ── Accent bars ───────────────────────────────────────────
-  const accentBar = () => {
+  // ── Helpers ───────────────────────────────────────────────
+  const accentGrad = () => {
     const g = ctx.createLinearGradient(0, 0, W, 0);
     g.addColorStop(0,   'rgba(0,200,83,0)');
-    g.addColorStop(0.2, '#00C853');
+    g.addColorStop(0.25,'#00C853');
     g.addColorStop(0.5, '#FFD700');
-    g.addColorStop(0.8, '#00C853');
+    g.addColorStop(0.75,'#00C853');
     g.addColorStop(1,   'rgba(0,200,83,0)');
     return g;
   };
-  ctx.fillStyle = accentBar(); ctx.fillRect(0, 0, W, 4);
 
-  // ── Star helper (drawn as canvas path — reliable on all platforms/OS) ──
   const drawStar = (x, y, r, color, alpha = 1) => {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.beginPath();
+    ctx.save(); ctx.globalAlpha = alpha; ctx.beginPath();
     for (let i = 0; i < 10; i++) {
-      const angle  = (i * Math.PI / 5) - Math.PI / 2;
-      const radius = i % 2 === 0 ? r : r * 0.42;
-      const px = x + radius * Math.cos(angle);
-      const py = y + radius * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      const a = (i * Math.PI / 5) - Math.PI / 2;
+      const rr = i % 2 === 0 ? r : r * 0.42;
+      i === 0 ? ctx.moveTo(x + rr * Math.cos(a), y + rr * Math.sin(a))
+              : ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a));
     }
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.restore();
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill(); ctx.restore();
   };
 
-  // ── Brand row (top-left) ──────────────────────────────────
-  const brandY  = 30;
-  const logoSz  = 26;
-  let brandTextX = 22;
-
-  if (imgLogo) {
+  // Bandeira genérica: retângulo colorido que funciona para QUALQUER time
+  // label = código ISO (2 letras) ou primeiras 2 letras do nome do time como fallback
+  const drawFlagGeneric = (label, x, y, fw, fh) => {
+    const text = (label || '??').toUpperCase().slice(0, 2);
+    const seed = text.charCodeAt(0) * 53 + (text.charCodeAt(1) || 0) * 29;
+    const hue  = seed % 360;
+    // Fundo degradê
     ctx.save();
-    ctx.beginPath();
-    ctx.arc(22 + logoSz / 2, brandY, logoSz / 2, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(imgLogo, 22, brandY - logoSz / 2, logoSz, logoSz);
+    rrect(ctx, x, y, fw, fh, 6);
+    const g = ctx.createLinearGradient(x, y, x + fw, y + fh);
+    g.addColorStop(0, `hsla(${hue},60%,30%,1)`);
+    g.addColorStop(1, `hsla(${hue},45%,18%,1)`);
+    ctx.fillStyle = g; ctx.fill();
+    // borda colorida
+    ctx.strokeStyle = `hsla(${hue},75%,55%,.45)`; ctx.lineWidth = 1.5; ctx.stroke();
+    // faixa horizontal central (simula listras de bandeira)
+    ctx.fillStyle = `hsla(${hue},85%,60%,.16)`;
+    ctx.fillRect(x + 1, y + fh * 0.35, fw - 2, fh * 0.30);
     ctx.restore();
-    brandTextX = 22 + logoSz + 8;
-  }
-  ctx.font      = 'bold 16px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = '#00C853';
-  ctx.textAlign = 'left';
-  ctx.fillText(siteName, brandTextX, brandY + 5);
+    // sigla centralizada
+    ctx.font = `bold ${Math.round(fh * 0.40)}px -apple-system,BlinkMacSystemFont,Arial,sans-serif`;
+    ctx.fillStyle = `hsla(${hue},90%,90%,1)`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + fw / 2, y + fh / 2);
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  };
 
-  // ── Status badge (top-right) ──────────────────────────────
-  if (bet.status === 'ganhou' || bet.status === 'perdido') {
-    const isWin    = bet.status === 'ganhou';
-    const label    = isWin ? 'GANHOU!' : 'Perdeu';
-    const badgeBg  = isWin ? 'rgba(0,200,83,.18)' : 'rgba(255,71,87,.15)';
-    const badgeTxt = isWin ? '#00C853' : '#FF4757';
-    ctx.font = 'bold 11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-    const tw = ctx.measureText(label).width;
-    rrect(ctx, W - tw - 38, brandY - 13, tw + 16, 22, 11);
-    ctx.fillStyle = badgeBg; ctx.fill();
-    ctx.strokeStyle = badgeTxt; ctx.globalAlpha = .35; ctx.lineWidth = 1; ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle  = badgeTxt;
-    ctx.textAlign  = 'right';
-    ctx.fillText(label, W - 26, brandY + 2);
-    ctx.textAlign  = 'left';
-  }
-
-  // ── Competition title (centered) with stars + decorative line ──
-  const ligaY = 64;
-  const ligaName = bet.liga_nome || game?.liga_nome || '';
-  if (ligaName) {
-    ctx.font      = '13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,.60)';
-    ctx.textAlign = 'center';
-    const tw = ctx.measureText(ligaName).width;
-    ctx.fillText(ligaName, W / 2, ligaY);
-    ctx.textAlign = 'left';
-
-    // Flanking stars (drawn as paths — no emoji rendering issues)
-    const gap   = 14;
-    const starR = 5;
-    drawStar(W / 2 - tw / 2 - gap - starR, ligaY - 4, starR, '#FFD700', 0.85);
-    drawStar(W / 2 + tw / 2 + gap + starR, ligaY - 4, starR, '#FFD700', 0.85);
-
-    // Thin golden underline
-    ctx.beginPath();
-    ctx.moveTo(W / 2 - 90, ligaY + 11);
-    ctx.lineTo(W / 2 + 90, ligaY + 11);
-    ctx.strokeStyle = 'rgba(255,215,0,.22)';
-    ctx.lineWidth   = 1;
-    ctx.stroke();
-  }
-
-  // ── Teams & flags ─────────────────────────────────────────
-  const teamY  = 152;
-  const flagSz = 52;
-  const cx     = W / 2;
-  const homeX  = cx - 128;
-  const awayX  = cx + 128;
-
-  const drawFlag = (img, code, x, y, sz) => {
+  const drawFlagImage = (img, code, teamName, x, y, fw, fh) => {
+    const fallbackLabel = code || (teamName || '').slice(0, 2);
     if (img) {
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(img, x - sz / 2, y - sz / 2, sz, sz);
+      rrect(ctx, x, y, fw, fh, 6); ctx.clip();
+      ctx.drawImage(img, x, y, fw, fh);
       ctx.restore();
-      ctx.beginPath();
-      ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,.12)';
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
+      ctx.save();
+      rrect(ctx, x, y, fw, fh, 6);
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.restore();
     } else {
-      ctx.beginPath();
-      ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
-      ctx.fillStyle   = 'rgba(255,255,255,.08)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.20)';
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
-      if (code) {
-        ctx.font      = `bold ${Math.round(sz * 0.3)}px -apple-system,BlinkMacSystemFont,Arial,sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(255,255,255,.6)';
-        ctx.fillText(code.toUpperCase().slice(0, 2), x, y + sz * 0.11);
-        ctx.textAlign = 'left';
-      }
+      drawFlagGeneric(fallbackLabel, x, y, fw, fh);
     }
   };
 
-  drawFlag(imgHome, game?.bandeira_casa, homeX, teamY, flagSz);
-  drawFlag(imgAway, game?.bandeira_fora, awayX, teamY, flagSz);
+  // ── Background ────────────────────────────────────────────
+  ctx.fillStyle = '#080f1e';
+  ctx.fillRect(0, 0, W, H);
 
-  ctx.font      = 'bold 13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.textAlign = 'center';
-  ctx.fillText(toPortuguese(bet.time_casa || '—').toUpperCase(), homeX, teamY + flagSz / 2 + 18);
-  ctx.fillText(toPortuguese(bet.time_fora || '—').toUpperCase(), awayX, teamY + flagSz / 2 + 18);
+  // Radial center glow
+  const glow = ctx.createRadialGradient(cx, H * 0.5, 0, cx, H * 0.5, 260);
+  glow.addColorStop(0, 'rgba(0,180,80,.10)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
-  ctx.font      = 'bold 14px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.22)';
-  ctx.fillText('VS', cx, teamY + 5);
-  ctx.textAlign = 'left';
+  // Subtle dot grid
+  ctx.save(); ctx.globalAlpha = 0.04; ctx.fillStyle = '#ffffff';
+  for (let gx = 12; gx < W; gx += 24)
+    for (let gy = 12; gy < H; gy += 24) {
+      ctx.beginPath(); ctx.arc(gx, gy, 1, 0, Math.PI * 2); ctx.fill();
+    }
+  ctx.restore();
+
+  // Top accent bar
+  ctx.fillStyle = accentGrad(); ctx.fillRect(0, 0, W, 5);
+
+  // ── Header section ────────────────────────────────────────
+  // Brand (top-left)
+  const logoSz = 26; let brandX = 18;
+  if (imgLogo) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(brandX + logoSz / 2, 28, logoSz / 2, 0, Math.PI * 2); ctx.clip();
+    ctx.drawImage(imgLogo, brandX, 28 - logoSz / 2, logoSz, logoSz);
+    ctx.restore();
+    brandX += logoSz + 8;
+  }
+  ctx.font = 'bold 15px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#00C853'; ctx.textAlign = 'left';
+  ctx.fillText(siteName, brandX, 34);
+
+  // Status badge (top-right)
+  if (bet.status === 'ganhou' || bet.status === 'perdido') {
+    const isWin = bet.status === 'ganhou';
+    const label = isWin ? 'GANHOU!' : 'PERDEU';
+    const bg    = isWin ? 'rgba(0,200,83,.20)' : 'rgba(255,71,87,.18)';
+    const col   = isWin ? '#00C853' : '#FF4757';
+    ctx.font = 'bold 11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    const tw = ctx.measureText(label).width + 20;
+    rrect(ctx, W - tw - 14, 18, tw, 22, 11);
+    ctx.fillStyle = bg; ctx.fill();
+    ctx.strokeStyle = col; ctx.globalAlpha = .5; ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = col; ctx.textAlign = 'right';
+    ctx.fillText(label, W - 24, 33); ctx.textAlign = 'left';
+  }
+
+  // Competition title (centered)
+  if (ligaName) {
+    const ligaUpper = ligaName.toUpperCase();
+    ctx.font = 'bold 17px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,215,0,.92)'; ctx.textAlign = 'center';
+    const tw = ctx.measureText(ligaUpper).width;
+    ctx.fillText(ligaUpper, cx, 64);
+    drawStar(cx - tw / 2 - 18, 59, 6, '#FFD700', 0.95);
+    drawStar(cx + tw / 2 + 18, 59, 6, '#FFD700', 0.95);
+    ctx.beginPath();
+    ctx.moveTo(cx - 110, 75); ctx.lineTo(cx + 110, 75);
+    ctx.strokeStyle = 'rgba(255,215,0,.22)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.textAlign = 'left';
+  }
+
+  // ── Teams section ─────────────────────────────────────────
+  const teamY   = 90;   // top of flag area
+  const flagW   = 90, flagH = 60; // flag rectangle (3:2 ratio)
+  const nameY   = teamY + flagH + 18;
+  const homeX   = cx - 155; // left edge of home flag
+  const awayX   = cx + 65;  // left edge of away flag
+
+  drawFlagImage(imgHome, bandeiraCasa, nomeHome, homeX, teamY, flagW, flagH);
+  drawFlagImage(imgAway, bandeiraFora, nomeAway, awayX, teamY, flagW, flagH);
+
+  // Team names
+  ctx.font = 'bold 14px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.textAlign = 'center';
+  ctx.fillText(nomeHome, homeX + flagW / 2, nameY);
+  ctx.fillText(nomeAway, awayX + flagW / 2, nameY);
+
+  // VS bubble in center
+  const vsX = cx, vsY = teamY + flagH / 2 + 2;
+  ctx.beginPath(); ctx.arc(vsX, vsY, 22, 0, Math.PI * 2);
+  ctx.fillStyle = '#0d1828'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.font = 'bold 13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.50)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('VS', vsX, vsY);
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
 
   // ── Score box ─────────────────────────────────────────────
-  const scoreY = 238;
-  const boxW = 160, boxH = 54;
-  rrect(ctx, cx - boxW / 2, scoreY, boxW, boxH, 12);
-  ctx.fillStyle   = 'rgba(0,200,83,.1)';  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,200,83,.4)';  ctx.lineWidth = 1.5; ctx.stroke();
+  const scoreY = nameY + 22;
+  const boxW = 200, boxH = 72;
+  rrect(ctx, cx - boxW / 2, scoreY, boxW, boxH, 14);
+  const sg = ctx.createLinearGradient(cx - boxW / 2, scoreY, cx + boxW / 2, scoreY + boxH);
+  sg.addColorStop(0, 'rgba(0,200,83,.18)');
+  sg.addColorStop(1, 'rgba(0,160,60,.08)');
+  ctx.fillStyle = sg; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,200,83,.50)'; ctx.lineWidth = 1.5; ctx.stroke();
 
-  ctx.font      = '10px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = '#00C853';
-  ctx.textAlign = 'center';
-  ctx.fillText('MEU PALPITE', cx, scoreY - 7);
+  ctx.font = '700 10px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#00C853'; ctx.textAlign = 'center';
+  ctx.fillText('MEU PALPITE', cx, scoreY + 18);
 
-  ctx.font      = 'bold 28px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`${bet.placar_casa}  x  ${bet.placar_fora}`, cx, scoreY + 38);
+  ctx.font = 'bold 36px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(`${bet.placar_casa}  ×  ${bet.placar_fora}`, cx, scoreY + 58);
   ctx.textAlign = 'left';
 
   // ── Bottom accent bar ─────────────────────────────────────
-  ctx.fillStyle = accentBar(); ctx.fillRect(0, H - 4, W, 4);
+  ctx.fillStyle = accentGrad(); ctx.fillRect(0, H - 5, W, 5);
 
   return canvas;
 };
