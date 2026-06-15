@@ -1245,18 +1245,98 @@ const getOrCreateSid = () => {
   return sid;
 };
 
+const _classifyReferrer = (ref) => {
+  if (!ref) return { source: 'direto', label: 'Direto' };
+  const u = ref.toLowerCase();
+  if (/google\./i.test(u))                      return { source: 'google',    label: 'Google' };
+  if (/facebook\.com|fb\.com|fb\.gg/i.test(u)) return { source: 'facebook',  label: 'Facebook' };
+  if (/instagram\.com/i.test(u))                return { source: 'instagram', label: 'Instagram' };
+  if (/twitter\.com|t\.co|x\.com/i.test(u))    return { source: 'twitter',   label: 'Twitter/X' };
+  if (/whatsapp\.com|wa\.me/i.test(u))          return { source: 'whatsapp', label: 'WhatsApp' };
+  if (/tiktok\.com/i.test(u))                   return { source: 'tiktok',   label: 'TikTok' };
+  if (/youtube\.com|youtu\.be/i.test(u))        return { source: 'youtube',  label: 'YouTube' };
+  if (/telegram\./i.test(u))                    return { source: 'telegram', label: 'Telegram' };
+  try { return { source: 'outro', label: new URL(ref).hostname }; } catch {}
+  return { source: 'outro', label: 'Outro' };
+};
+
+const _getOrCreateRefInfo = () => {
+  const stored = localStorage.getItem('bc_ref');
+  if (stored) { try { return JSON.parse(stored); } catch {} }
+  const ref  = document.referrer || '';
+  const info = _classifyReferrer(ref);
+  info.referrer = ref.substring(0, 300);
+  localStorage.setItem('bc_ref', JSON.stringify(info));
+  return info;
+};
+
+const _PAGE_LABELS = {
+  '': 'Início', 'jogos': 'Jogos', 'palpites': 'Meus Palpites',
+  'ranking': 'Ranking', 'ganhadores': 'Ganhadores', 'grupos': 'Grupos',
+  'perfil': 'Perfil', 'suporte': 'Suporte', 'resultados': 'Resultados',
+  'auth': 'Login/Cadastro', 'termos': 'Termos de Uso',
+  'privacidade': 'Privacidade', 'jogo-responsavel': 'Jogo Responsável',
+};
+
+const _getCurrentPageLabel = () => {
+  const hash = location.hash.replace('#', '').toLowerCase();
+  if (hash.startsWith('admin')) return 'Área Admin';
+  return _PAGE_LABELS[hash] || hash || 'Início';
+};
+
 const pingOnline = async () => {
-  try { await api('/api/ping', 'POST', { session_id: getOrCreateSid() }); } catch { /* ignore */ }
+  try {
+    const refInfo = _getOrCreateRefInfo();
+    await api('/api/ping', 'POST', {
+      session_id: getOrCreateSid(),
+      page:       _getCurrentPageLabel(),
+      source:     refInfo.source,
+      referrer:   refInfo.referrer,
+    });
+  } catch { /* ignore */ }
 };
 
 let _onlineInterval = null;
 
+const _SRC_META = {
+  google:    { label: 'Google',    icon: 'fa-brands fa-google' },
+  facebook:  { label: 'Facebook',  icon: 'fa-brands fa-facebook' },
+  instagram: { label: 'Instagram', icon: 'fa-brands fa-instagram' },
+  twitter:   { label: 'Twitter/X', icon: 'fa-brands fa-x-twitter' },
+  whatsapp:  { label: 'WhatsApp',  icon: 'fa-brands fa-whatsapp' },
+  tiktok:    { label: 'TikTok',    icon: 'fa-brands fa-tiktok' },
+  youtube:   { label: 'YouTube',   icon: 'fa-brands fa-youtube' },
+  telegram:  { label: 'Telegram',  icon: 'fa-brands fa-telegram' },
+  direto:    { label: 'Direto',    icon: 'fa-solid fa-link' },
+  outro:     { label: 'Outro',     icon: 'fa-solid fa-globe' },
+};
+
+const _fmtAgo = (last_seen) => {
+  const dt   = new Date(last_seen.replace(' ', 'T'));
+  const diff = Math.round((Date.now() - dt.getTime()) / 1000);
+  if (diff < 60)   return `${diff}s atrás`;
+  if (diff < 3600) return `${Math.round(diff / 60)}min atrás`;
+  return `${Math.round(diff / 3600)}h atrás`;
+};
+
 const loadAdminOnline = async () => {
   try {
-    const { stats, usuarios_online } = await api('/api/admin/online');
+    const { stats, sessoes_online } = await api('/api/admin/online');
 
     const statsEl = document.getElementById('onlineStats');
     if (statsEl) {
+      const srcCount = {};
+      (sessoes_online || []).forEach(s => {
+        const src = s.source || 'direto';
+        srcCount[src] = (srcCount[src] || 0) + 1;
+      });
+      const srcBadges = Object.entries(srcCount)
+        .sort((a, b) => b[1] - a[1])
+        .map(([src, n]) => {
+          const m = _SRC_META[src] || _SRC_META.outro;
+          return `<span class="online-src-mini online-src--${src}"><i class="${m.icon}"></i> ${m.label} <strong>${n}</strong></span>`;
+        }).join('');
+
       statsEl.innerHTML = `
         <div class="dash-card dash-card--green">
           <div class="dash-card__label">Total Online</div>
@@ -1269,22 +1349,41 @@ const loadAdminOnline = async () => {
         <div class="dash-card">
           <div class="dash-card__label">Visitantes</div>
           <div class="dash-card__value">${stats.visitantes}</div>
+        </div>
+        <div class="dash-card dash-card--wide">
+          <div class="dash-card__label">Por Origem</div>
+          <div class="online-src-bar">${srcBadges || '<span style="color:var(--text-muted);font-size:.8rem">—</span>'}</div>
         </div>`;
     }
 
     const listEl = document.getElementById('onlineUsersList');
     if (listEl) {
-      if (!usuarios_online.length) {
-        listEl.innerHTML = '<p class="text--muted" style="font-size:.88rem;padding:.5rem 0">Nenhum usuário logado online agora.</p>';
+      if (!sessoes_online || !sessoes_online.length) {
+        listEl.innerHTML = '<p class="text--muted" style="font-size:.88rem;padding:.5rem 0">Nenhuma sessão ativa no momento.</p>';
       } else {
-        listEl.innerHTML = usuarios_online.map(u => {
-          const dt   = new Date(u.last_seen.replace(' ', 'T'));
-          const diff = Math.round((Date.now() - dt.getTime()) / 1000);
-          const ago  = diff < 60 ? `${diff}s atrás` : `${Math.round(diff / 60)}min atrás`;
+        listEl.innerHTML = sessoes_online.map(s => {
+          const isUser  = !!s.user_id;
+          const nome    = isUser ? (s.nome || 'Usuário') : 'Visitante';
+          const email   = isUser ? `<span class="online-user-row__email">${s.email}</span>` : '';
+          const dotCls  = isUser ? 'online-dot' : 'online-dot online-dot--anon';
+          const nameCls = isUser ? 'online-user-row__name' : 'online-user-row__name online-user-row__name--anon';
+          const page    = s.page ? `<span class="online-user-row__page"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>` : '';
+          const src     = s.source || 'direto';
+          const meta    = _SRC_META[src] || _SRC_META.outro;
+          const srcLabel = src === 'outro' && s.referrer
+            ? (() => { try { return new URL(s.referrer).hostname; } catch { return meta.label; } })()
+            : meta.label;
+          const ago = _fmtAgo(s.last_seen);
           return `<div class="online-user-row">
-            <span class="online-dot"></span>
-            <span class="online-user-row__name">${u.nome}</span>
-            <span class="online-user-row__email">${u.email}</span>
+            <span class="${dotCls}"></span>
+            <div class="online-user-row__info">
+              <span class="${nameCls}">${nome}</span>
+              ${email}
+              ${page}
+            </div>
+            <span class="online-src online-src--${src}" title="${s.referrer || ''}">
+              <i class="${meta.icon}"></i> ${srcLabel}
+            </span>
             <span class="online-user-row__time">${ago}</span>
           </div>`;
         }).join('');

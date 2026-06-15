@@ -320,9 +320,10 @@ class AdminController
     public function online(): void
     {
         ensureAdmin($this->adminEmail);
-        $stats = $this->online ? $this->online->stats() : ['total' => 0, 'usuarios' => 0, 'visitantes' => 0];
-        $users = $this->online ? $this->online->listOnlineUsers() : [];
-        jsonResponse(['stats' => $stats, 'usuarios_online' => $users]);
+        $stats    = $this->online ? $this->online->stats()           : ['total' => 0, 'usuarios' => 0, 'visitantes' => 0];
+        $users    = $this->online ? $this->online->listOnlineUsers() : [];
+        $sessions = $this->online ? $this->online->listAllSessions() : [];
+        jsonResponse(['stats' => $stats, 'usuarios_online' => $users, 'sessoes_online' => $sessions]);
     }
 
     public function clearCache(): void

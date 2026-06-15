@@ -199,15 +199,18 @@ try {
 
         // ── Ping de presença (público) ─────────────────────────────────────────
         route('/api/ping', 'POST', function() use ($db) {
-            $body = json_decode(file_get_contents('php://input'), true) ?: [];
-            $sid  = (string) ($body['session_id'] ?? '');
+            $body     = json_decode(file_get_contents('php://input'), true) ?: [];
+            $sid      = (string) ($body['session_id'] ?? '');
             if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $sid)) {
                 jsonResponse(['ok' => false], 400);
                 return;
             }
+            $page     = mb_substr((string) ($body['page']     ?? ''), 0, 150);
+            $source   = mb_substr((string) ($body['source']   ?? ''), 0, 50);
+            $referrer = mb_substr((string) ($body['referrer'] ?? ''), 0, 500);
             if (session_status() === PHP_SESSION_NONE) session_start();
             $userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
-            (new OnlineRepository($db))->upsert($sid, $userId);
+            (new OnlineRepository($db))->upsert($sid, $userId, $page ?: null, $source ?: null, $referrer ?: null);
             jsonResponse(['ok' => true]);
         });
         // ── Admin: Saques ──────────────────────────────────────────────────
