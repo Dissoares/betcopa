@@ -103,6 +103,21 @@ class AdminController
         jsonResponse(['message' => $makeAdmin ? 'Usuário promovido a admin.' : 'Permissão de admin removida.']);
     }
 
+    public function changeUserPassword(int $id): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        $body  = json_decode(file_get_contents('php://input'), true) ?: [];
+        $senha = trim((string) ($body['senha'] ?? ''));
+        if (mb_strlen($senha) < 6) {
+            jsonResponse(['error' => 'A senha deve ter no mínimo 6 caracteres.'], 422);
+            return;
+        }
+        $this->users->updatePassword($id, password_hash($senha, PASSWORD_BCRYPT));
+        Logger::info('Senha alterada pelo admin', ['user_id' => $id]);
+        jsonResponse(['message' => 'Senha alterada com sucesso.']);
+    }
+
     // ── Apostas ───────────────────────────────────────────────
     public function listBets(): void
     {

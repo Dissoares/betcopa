@@ -4812,6 +4812,8 @@ const bind = () => {
       handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
     if (btn.dataset.action === 'make-admin' || btn.dataset.action === 'remove-admin')
       handleToggleAdmin(Number(btn.dataset.uid), btn.dataset.action === 'make-admin');
+    if (btn.dataset.action === 'change-password')
+      handleChangeUserPassword(Number(btn.dataset.uid), btn.dataset.nome || '');
   });
   document.getElementById('adminUsersList')?.addEventListener('change', e => {
     const chk = e.target.closest('.user-row-chk');
@@ -5307,6 +5309,7 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
                   ? `<button class="btn btn--ghost btn--sm" data-action="remove-admin" data-uid="${u.id}">Remover Admin</button>`
                   : `<button class="btn btn--warning btn--sm" data-action="make-admin"  data-uid="${u.id}">Tornar Admin</button>`
                 }
+                <button class="btn btn--ghost btn--sm" data-action="change-password" data-uid="${u.id}" data-nome="${u.nome}" title="Trocar senha"><i class="fa-solid fa-key"></i></button>
               </td>
             </tr>`).join('')}
         </tbody>
@@ -5360,6 +5363,29 @@ const handleToggleAdmin = async (uid, makeAdmin) => {
     loadAdminUsers();
   } catch (err) {
     toast(err.message, 'danger');
+  }
+};
+
+const handleChangeUserPassword = async (uid, nome) => {
+  const { value: senha, isConfirmed } = await Swal.fire({
+    title: `Trocar senha — ${nome}`,
+    input: 'password',
+    inputLabel: 'Nova senha (mín. 6 caracteres)',
+    inputPlaceholder: '••••••••',
+    inputAttributes: { autocomplete: 'new-password', minlength: 6 },
+    showCancelButton: true,
+    confirmButtonText: 'Salvar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#2ecc71',
+    reverseButtons: true,
+    inputValidator: (v) => (!v || v.length < 6) ? 'Mínimo 6 caracteres.' : null,
+  });
+  if (!isConfirmed || !senha) return;
+  try {
+    const r = await api(`/api/admin/usuarios/${uid}/senha`, 'POST', { senha });
+    toast(r.message, 'success');
+  } catch (err) {
+    toast(err.message || 'Erro ao trocar senha.', 'danger');
   }
 };
 
