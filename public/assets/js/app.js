@@ -1505,6 +1505,289 @@ const loadAdminOnline = async () => {
   } catch { /* ignore */ }
 };
 
+// ── Analytics de tráfego ─────────────────────────────────────
+let _analyticsPeriod = 'today';
+let _analyticsPage   = 1;
+
+const _BR_META = {
+  Chrome:   { cls: 'br--chrome',   icon: 'fa-brands fa-chrome' },
+  Firefox:  { cls: 'br--firefox',  icon: 'fa-brands fa-firefox' },
+  Safari:   { cls: 'br--safari',   icon: 'fa-brands fa-safari' },
+  Edge:     { cls: 'br--edge',     icon: 'fa-brands fa-edge' },
+  Opera:    { cls: 'br--opera',    icon: 'fa-brands fa-opera' },
+  Samsung:  { cls: 'br--samsung',  icon: 'fa-solid fa-mobile-screen' },
+  Chromium: { cls: 'br--chrome',   icon: 'fa-brands fa-chrome' },
+  IE:       { cls: 'br--ie',       icon: 'fa-brands fa-internet-explorer' },
+};
+const _OS_META = {
+  Windows:  { icon: 'fa-brands fa-windows' },
+  Android:  { icon: 'fa-brands fa-android' },
+  iOS:      { icon: 'fa-brands fa-apple' },
+  iPadOS:   { icon: 'fa-brands fa-apple' },
+  macOS:    { icon: 'fa-brands fa-apple' },
+  Linux:    { icon: 'fa-brands fa-linux' },
+  ChromeOS: { icon: 'fa-brands fa-chrome' },
+};
+
+const _brBadge = (browser, os) => {
+  const b   = _BR_META[browser] || { cls: 'br--other', icon: 'fa-solid fa-globe' };
+  const oMeta = _OS_META[os];
+  const oIcon = oMeta ? `<i class="${oMeta.icon}"></i>` : '';
+  return `<span class="an-br-badge ${b.cls}"><i class="${b.icon}"></i> ${browser || 'Outro'} ${oIcon} ${os || ''}</span>`;
+};
+
+const _fmtDuration2 = (sec) => {
+  if (!sec || sec < 0) return '< 1s';
+  if (sec < 60)  return `${sec}s`;
+  if (sec < 3600) return `${Math.round(sec/60)}min`;
+  return `${Math.floor(sec/3600)}h ${Math.round((sec%3600)/60)}min`;
+};
+
+const _fmtDateTime = (ts) => {
+  if (!ts) return '—';
+  const d = new Date(ts.replace(' ', 'T'));
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+};
+
+const _miniBar = (items, keyField, valField, maxVal) => {
+  const max = maxVal || Math.max(...items.map(i => +i[valField]), 1);
+  return items.map(i => {
+    const pct = Math.round((+i[valField] / max) * 100);
+    return `<div class="an-bar-row">
+      <span class="an-bar-label">${i[keyField] || '—'}</span>
+      <div class="an-bar-track"><div class="an-bar-fill" style="width:${pct}%"></div></div>
+      <span class="an-bar-val">${i[valField]}</span>
+    </div>`;
+  }).join('');
+};
+
+const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPage) => {
+  _analyticsPeriod = period;
+  _analyticsPage   = page;
+  _startOnlineCountdown();
+
+  // Marca botão de período ativo
+  document.querySelectorAll('.an-period-btn').forEach(b => {
+    b.classList.toggle('an-period-btn--active', b.dataset.period === period);
+  });
+
+  const root = document.getElementById('analyticsRoot');
+  if (!root) return;
+
+  try {
+    const url  = `/api/admin/analytics?period=${period}&page=${page}`;
+    const data = await api(url);
+    const { stats, online_now, by_source, by_country, by_device, by_browser, by_os, by_page, visits, total_visits, limit } = data;
+
+    // ── Stats cards ───────────────────────────────────────────
+    const totalPages  = Math.ceil(total_visits / limit);
+    const sessPerDay  = period === 'today' ? total_visits
+                      : period === 'week'  ? Math.round(total_visits / 7)
+                      : Math.round(total_visits / 30);
+
+    document.getElementById('anStatCards').innerHTML = `
+      <div class="an-stat-card">
+        <div class="an-stat-card__icon" style="background:rgba(99,102,241,.15);color:#6366f1"><i class="fa-solid fa-chart-line"></i></div>
+        <div><div class="an-stat-card__val">${(+stats.total_visits||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Total Visitas</div></div>
+      </div>
+      <div class="an-stat-card">
+        <div class="an-stat-card__icon" style="background:rgba(34,197,94,.15);color:#22c55e"><i class="fa-solid fa-users"></i></div>
+        <div><div class="an-stat-card__val">${(+stats.unique_ips||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Visitantes Únicos</div></div>
+      </div>
+      <div class="an-stat-card">
+        <div class="an-stat-card__icon" style="background:rgba(251,191,36,.15);color:#fbbf24"><i class="fa-solid fa-star"></i></div>
+        <div><div class="an-stat-card__val">${(+stats.novos||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Novos</div></div>
+      </div>
+      <div class="an-stat-card">
+        <div class="an-stat-card__icon" style="background:rgba(249,115,22,.15);color:#f97316"><i class="fa-solid fa-rotate-left"></i></div>
+        <div><div class="an-stat-card__val">${(+stats.retornaram||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Retornou</div></div>
+      </div>`;
+
+    // ── Mini charts (barras horizontais) ──────────────────────
+    const chartsEl = document.getElementById('anCharts');
+    if (chartsEl) {
+      const srcRows  = by_source.map(r => ({ source: r.source, cnt: +r.cnt }));
+      const maxSrc   = Math.max(...srcRows.map(r => r.cnt), 1);
+      const srcBars  = srcRows.map(r => {
+        const m = _SRC_META[r.source] || _SRC_META.outro;
+        const pct = Math.round((r.cnt / maxSrc) * 100);
+        return `<div class="an-bar-row">
+          <span class="online-src online-src--${r.source}" style="min-width:110px"><i class="${m.icon}"></i> ${m.label}</span>
+          <div class="an-bar-track"><div class="an-bar-fill an-bar-fill--src" style="width:${pct}%"></div></div>
+          <span class="an-bar-val">${r.cnt}</span>
+        </div>`;
+      }).join('');
+
+      const maxCtry = Math.max(...by_country.map(r => +r.cnt), 1);
+      const ctryBars = by_country.map(r => {
+        const pct  = Math.round((+r.cnt / maxCtry) * 100);
+        const flag = _countryFlag(r.country || '');
+        return `<div class="an-bar-row">
+          <span class="an-bar-label">${flag} ${r.country_name || r.country || '—'}</span>
+          <div class="an-bar-track"><div class="an-bar-fill" style="width:${pct}%"></div></div>
+          <span class="an-bar-val">${r.cnt}</span>
+        </div>`;
+      }).join('');
+
+      const maxBr  = Math.max(...by_browser.map(r => +r.cnt), 1);
+      const brBars = by_browser.map(r => {
+        const m   = _BR_META[r.browser] || { cls:'br--other', icon:'fa-solid fa-globe' };
+        const pct = Math.round((+r.cnt / maxBr) * 100);
+        return `<div class="an-bar-row">
+          <span class="an-bar-label"><span class="an-br-badge ${m.cls}" style="padding:.1rem .35rem"><i class="${m.icon}"></i></span> ${r.browser}</span>
+          <div class="an-bar-track"><div class="an-bar-fill" style="width:${pct}%"></div></div>
+          <span class="an-bar-val">${r.cnt}</span>
+        </div>`;
+      }).join('');
+
+      const devMap  = { mobile: 'Mobile', desktop: 'Desktop', tablet: 'Tablet' };
+      const devIcon = { mobile: 'fa-solid fa-mobile-screen', desktop: 'fa-solid fa-desktop', tablet: 'fa-solid fa-tablet-screen-button' };
+      const maxDev  = Math.max(...by_device.map(r => +r.cnt), 1);
+      const devBars = by_device.map(r => {
+        const pct = Math.round((+r.cnt / maxDev) * 100);
+        return `<div class="an-bar-row">
+          <span class="an-bar-label"><i class="${devIcon[r.device] || 'fa-solid fa-globe'}"></i> ${devMap[r.device] || r.device}</span>
+          <div class="an-bar-track"><div class="an-bar-fill" style="width:${pct}%"></div></div>
+          <span class="an-bar-val">${r.cnt}</span>
+        </div>`;
+      }).join('');
+
+      const maxPage = Math.max(...by_page.map(r => +r.cnt), 1);
+      const pgBars  = by_page.map(r => {
+        const pct = Math.round((+r.cnt / maxPage) * 100);
+        return `<div class="an-bar-row">
+          <span class="an-bar-label"><i class="fa-solid fa-location-dot"></i> ${r.page}</span>
+          <div class="an-bar-track"><div class="an-bar-fill an-bar-fill--page" style="width:${pct}%"></div></div>
+          <span class="an-bar-val">${r.cnt}</span>
+        </div>`;
+      }).join('');
+
+      chartsEl.innerHTML = `
+        <div class="an-charts-grid">
+          <div class="panel an-chart-panel">
+            <h4 class="an-chart-title"><i class="fa-solid fa-share-nodes"></i> Origem</h4>
+            ${srcBars  || '<p class="text--muted an-empty">—</p>'}
+          </div>
+          <div class="panel an-chart-panel">
+            <h4 class="an-chart-title"><i class="fa-solid fa-earth-americas"></i> Países</h4>
+            ${ctryBars || '<p class="text--muted an-empty">—</p>'}
+          </div>
+          <div class="panel an-chart-panel">
+            <h4 class="an-chart-title"><i class="fa-brands fa-chrome"></i> Navegador</h4>
+            ${brBars   || '<p class="text--muted an-empty">—</p>'}
+          </div>
+          <div class="panel an-chart-panel">
+            <h4 class="an-chart-title"><i class="fa-solid fa-mobile-screen"></i> Dispositivo</h4>
+            ${devBars  || '<p class="text--muted an-empty">—</p>'}
+          </div>
+          <div class="panel an-chart-panel an-chart-panel--wide">
+            <h4 class="an-chart-title"><i class="fa-solid fa-location-dot"></i> Páginas mais acessadas</h4>
+            ${pgBars   || '<p class="text--muted an-empty">—</p>'}
+          </div>
+        </div>`;
+    }
+
+    // ── Tabela de visitas ─────────────────────────────────────
+    const tableEl = document.getElementById('anVisitsTable');
+    if (!tableEl) return;
+
+    const pagerInfo = `${(+stats.total_pageviews||0).toLocaleString('pt-BR')} páginas · ${sessPerDay} sessões/dia · página ${page} de ${totalPages || 1}`;
+
+    if (!visits.length) {
+      tableEl.innerHTML = '<p class="text--muted an-empty">Nenhuma visita registrada para este período.</p>';
+      return;
+    }
+
+    const rows = visits.map((v, i) => {
+      const rowNum   = (page - 1) * limit + i + 1;
+      const isUser   = !!v.user_id;
+      const nome     = isUser ? (v.nome || 'Usuário') : 'Visitante';
+      const flag     = _countryFlag(v.country || '');
+      const geo      = [v.city, v.region ? v.region.substring(0,2) : ''].filter(Boolean).join(', ');
+      const geoFull  = [v.city, v.region, v.country_name].filter(Boolean).join(', ');
+      const statusBadge = v.is_new == 1
+        ? '<span class="an-status an-status--new"><i class="fa-solid fa-star"></i> Novo</span>'
+        : '<span class="an-status an-status--ret"><i class="fa-solid fa-rotate-left"></i> Retornou</span>';
+      const src      = v.source || 'direto';
+      const srcMeta  = _SRC_META[src] || _SRC_META.outro;
+      const srcLabel = src === 'outro' && v.referrer
+        ? (() => { try { return new URL(v.referrer).hostname; } catch { return srcMeta.label; } })()
+        : srcMeta.label;
+      const refUrl   = v.referrer
+        ? `<a class="an-ref-link" href="${v.referrer}" target="_blank" rel="noopener" title="${v.referrer}">${v.referrer.length > 60 ? v.referrer.substring(0,60)+'…' : v.referrer} <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`
+        : '—';
+      const devIco   = v.device === 'mobile' ? 'fa-solid fa-mobile-screen' : v.device === 'tablet' ? 'fa-solid fa-tablet-screen-button' : 'fa-solid fa-desktop';
+      const dt       = _fmtDateTime(v.last_seen);
+      const dur      = _fmtDuration2(+v.duration_sec || 0);
+      const ipVisits = +v.ip_total_visits || 1;
+
+      return `<tr>
+        <td class="an-td-num">${rowNum}</td>
+        <td class="an-td-visitor">
+          <div class="an-visitor-cell">
+            <div class="an-visitor-avatar${isUser ? '' : ' an-visitor-avatar--anon'}">${isUser ? (v.nome||'U').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '<i class="fa-solid fa-user-secret"></i>'}</div>
+            <div class="an-visitor-info">
+              <div class="an-visitor-name">${nome}${isUser && v.email ? ` <span class="an-visitor-email">${v.email}</span>` : ''}</div>
+              <div>${_brBadge(v.browser, v.os)}</div>
+              <div class="an-visitor-geo">${flag ? `${flag} ` : ''}${geo || v.country_name || ''} <code class="online-sc__ip">${v.ip || ''}</code></div>
+            </div>
+          </div>
+        </td>
+        <td class="an-td-center"><span class="an-pageviews">${v.page_views||1}×</span></td>
+        <td>${statusBadge}</td>
+        <td class="an-td-page">
+          <div class="an-page-cell">
+            <strong>${v.current_page || v.landing_page || '—'}</strong>
+          </div>
+        </td>
+        <td class="an-td-source">
+          <div class="an-source-cell">
+            <div><span class="online-src online-src--${src}"><i class="${srcMeta.icon}"></i> ${srcLabel}</span></div>
+            <div class="an-ref-wrap">${refUrl}</div>
+          </div>
+        </td>
+        <td class="an-td-time">
+          <div>${dt}</div>
+          <div class="an-dur">${dur} · <span title="Total de visitas deste IP">${ipVisits}× IP</span></div>
+        </td>
+        <td class="an-td-action">
+          <span title="${geoFull}\nDevice: ${v.device||'desktop'}\nDuração: ${dur}" class="an-eye-btn"><i class="fa-solid fa-circle-info"></i></span>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Paginação
+    const prev = page > 1 ? `<button class="btn btn--ghost btn--sm" onclick="loadAdminAnalytics('${period}', ${page-1})"><i class="fa-solid fa-chevron-left"></i></button>` : '';
+    const next = page < totalPages ? `<button class="btn btn--ghost btn--sm" onclick="loadAdminAnalytics('${period}', ${page+1})">Próxima <i class="fa-solid fa-chevron-right"></i></button>` : '';
+    const pager = `<div class="an-pager">${prev}<span class="an-pager-info">pág. ${page} / ${totalPages}</span>${next}</div>`;
+
+    tableEl.innerHTML = `
+      <div class="an-table-header">
+        <h3 class="panel__title" style="margin:0"><i class="fa-solid fa-list"></i> Registro de visitas</h3>
+        <span class="an-pager-summary">${pagerInfo}</span>
+      </div>
+      <div class="an-table-wrap">
+        <table class="admin-table an-visits-table">
+          <thead><tr>
+            <th>#</th>
+            <th><i class="fa-solid fa-user"></i> Visitante · Local · IP</th>
+            <th>Págs</th>
+            <th>Status</th>
+            <th><i class="fa-regular fa-file"></i> Última Página</th>
+            <th><i class="fa-solid fa-share-nodes"></i> Origem</th>
+            <th><i class="fa-regular fa-calendar"></i> Dia</th>
+            <th></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${pager}`;
+
+  } catch (err) {
+    document.getElementById('anStatCards').innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  }
+};
+
 // ── Share bet helpers ─────────────────────────────────────────
 const _flagCanvasCache = {};
 
@@ -4816,7 +5099,12 @@ const switchAdminTab = (tab) => {
   if (tab === 'config')    loadAdminConfig();
   if (tab === 'jogos')     { populateAdminSelect(); renderLeaguePreview(); }
   if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
-  if (tab === 'online')    { loadAdminOnline(); _onlineInterval = setInterval(loadAdminOnline, 30000); _startOnlineCountdown(); }
+  if (tab === 'online')    {
+    loadAdminAnalytics('today', 1);
+    loadAdminOnline();
+    _onlineInterval = setInterval(() => { loadAdminAnalytics(_analyticsPeriod, _analyticsPage); loadAdminOnline(); }, 30000);
+    _startOnlineCountdown();
+  }
 };
 
 // ── Dashboard bulk delete de jogos ────────────────────────────

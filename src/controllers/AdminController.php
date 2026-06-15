@@ -6,7 +6,8 @@ class AdminController
     private UserRepository    $users;
     private string            $adminEmail;
     private ?WithdrawalRepository $withdrawals = null;
-    private ?OnlineRepository $online = null;
+    private ?OnlineRepository     $online    = null;
+    private ?AnalyticsRepository  $analytics = null;
 
     public function __construct(
         AdminRepository  $admin,
@@ -28,6 +29,11 @@ class AdminController
     public function setOnlineRepository(OnlineRepository $repo): void
     {
         $this->online = $repo;
+    }
+
+    public function setAnalyticsRepository(AnalyticsRepository $repo): void
+    {
+        $this->analytics = $repo;
     }
 
     // ── Dashboard ─────────────────────────────────────────────
@@ -324,6 +330,35 @@ class AdminController
         $users    = $this->online ? $this->online->listOnlineUsers() : [];
         $sessions = $this->online ? $this->online->listAllSessions() : [];
         jsonResponse(['stats' => $stats, 'usuarios_online' => $users, 'sessoes_online' => $sessions]);
+    }
+
+    public function analyticsData(): void
+    {
+        ensureAdmin($this->adminEmail);
+        if (!$this->analytics) { jsonResponse(['error' => 'Analytics não disponível'], 503); return; }
+
+        $period = $_GET['period'] ?? 'today';
+        if (!in_array($period, ['today', 'week', 'month'], true)) $period = 'today';
+        $page  = max(1, (int) ($_GET['page']  ?? 1));
+        $limit = 50;
+
+        $online = $this->online ? $this->online->stats() : ['total' => 0, 'usuarios' => 0, 'visitantes' => 0];
+
+        jsonResponse([
+            'period'       => $period,
+            'online_now'   => $online,
+            'stats'        => $this->analytics->getStats($period),
+            'by_source'    => $this->analytics->getBySource($period),
+            'by_country'   => $this->analytics->getByCountry($period),
+            'by_device'    => $this->analytics->getByDevice($period),
+            'by_browser'   => $this->analytics->getByBrowser($period),
+            'by_os'        => $this->analytics->getByOS($period),
+            'by_page'      => $this->analytics->getByPage($period),
+            'visits'       => $this->analytics->getVisits($period, $page, $limit),
+            'total_visits' => $this->analytics->countVisits($period),
+            'page'         => $page,
+            'limit'        => $limit,
+        ]);
     }
 
     public function clearCache(): void

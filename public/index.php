@@ -44,6 +44,7 @@ require_once __DIR__ . '/../src/controllers/TicketController.php';
 require_once __DIR__ . '/../src/repositories/NotificationRepository.php';
 require_once __DIR__ . '/../src/controllers/NotificationController.php';
 require_once __DIR__ . '/../src/repositories/OnlineRepository.php';
+require_once __DIR__ . '/../src/repositories/AnalyticsRepository.php';
 require_once __DIR__ . '/../src/repositories/DepositRepository.php';
 require_once __DIR__ . '/../src/controllers/DepositController.php';
 
@@ -109,6 +110,7 @@ try {
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
         $adminCtrl->setWithdrawalRepository($withdrawals);
         $adminCtrl->setOnlineRepository(new OnlineRepository($db));
+        $adminCtrl->setAnalyticsRepository(new AnalyticsRepository($db));
         $notifCtrl    = new NotificationController($notifsRepo);
         $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
         $ticketCtrl->setNotificationRepository($notifsRepo);
@@ -196,6 +198,7 @@ try {
         route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
         route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
+        route('/api/admin/analytics',    'GET',  fn() => $adminCtrl->analyticsData());
 
         // ── Ping de presença (público) ─────────────────────────────────────────
         route('/api/ping', 'POST', function() use ($db) {
@@ -219,10 +222,15 @@ try {
             $ip = filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
             if (session_status() === PHP_SESSION_NONE) session_start();
             $userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
             (new OnlineRepository($db))->upsert(
                 $sid, $userId,
                 $page ?: null, $source ?: null, $referrer ?: null,
                 $device ?: null, $ip
+            );
+            (new AnalyticsRepository($db))->record(
+                $sid, $userId, $ip, $ua,
+                $page ?: null, $source ?: null, $referrer ?: null, $device ?: null
             );
             jsonResponse(['ok' => true]);
         });

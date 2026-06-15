@@ -955,23 +955,43 @@
           </div>
         </div>
 
-        <!-- ── ABA: ONLINE ── -->
+        <!-- ── ABA: TRÁFEGO / ANALYTICS ── -->
         <div class="admin-tab hidden" id="atab-online">
+
+          <!-- Header -->
           <div class="admin-page-header admin-page-header--actions">
             <div>
-              <h2 class="admin-page-header__title"><span class="online-dot"></span> Online Agora</h2>
-              <p class="admin-page-header__sub">Sessões ativas nos últimos 3 min — página, origem, IP, localização e dispositivo em tempo real</p>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-chart-line"></i> Análise de Tráfego</h2>
+              <p class="admin-page-header__sub">Auditoria de visitantes — IP, localização, browser, OS, origem e comportamento</p>
             </div>
             <div style="display:flex;align-items:center;gap:.65rem">
               <span class="online-countdown-badge" id="onlineCountdown">↻ 30s</span>
               <button class="btn btn--ghost btn--sm" id="btnRefreshOnline"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
             </div>
           </div>
-          <div class="dash-grid" id="onlineStats"><!-- JS --></div>
-          <div class="panel" style="margin-top:1.5rem">
-            <h3 class="panel__title"><i class="fa-solid fa-tower-broadcast"></i> Sessões ativas</h3>
-            <div id="onlineUsersList"></div>
+
+          <!-- Online agora (tempo real) -->
+          <div class="panel" style="margin-top:1rem">
+            <h3 class="panel__title"><span class="online-dot"></span> Online Agora (últimos 3 min)</h3>
+            <div class="dash-grid" id="onlineStats" style="margin-top:.75rem"><!-- JS --></div>
+            <div style="margin-top:.75rem" id="onlineUsersList"></div>
           </div>
+
+          <!-- Histórico: filtro de período -->
+          <div class="an-period-bar" style="margin-top:2rem">
+            <span style="font-size:.8rem;color:var(--text-muted);margin-right:.25rem;align-self:center">Histórico:</span>
+            <button class="an-period-btn an-period-btn--active" data-period="today"  onclick="loadAdminAnalytics('today',1)">Hoje</button>
+            <button class="an-period-btn"                        data-period="week"   onclick="loadAdminAnalytics('week',1)">Esta Semana</button>
+            <button class="an-period-btn"                        data-period="month"  onclick="loadAdminAnalytics('month',1)">Este Mês</button>
+          </div>
+
+          <!-- Root da área de analytics (JS preenche) -->
+          <div id="analyticsRoot">
+            <div class="an-stat-cards" id="anStatCards"><!-- JS --></div>
+            <div id="anCharts" style="margin-top:1.5rem"><!-- JS --></div>
+            <div class="panel" style="margin-top:1.5rem" id="anVisitsTable"><!-- JS --></div>
+          </div>
+
         </div>
 
       </div><!-- /admin-content -->
