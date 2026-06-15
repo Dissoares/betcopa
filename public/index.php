@@ -232,6 +232,26 @@ try {
         routePattern('/^\/api\/tickets\/(\d+)\/messages$/',          'POST', fn(int $id) => $ticketCtrl->sendMessage($id));
         routePattern('/^\/api\/admin\/tickets\/(\d+)\/status$/',     'POST', fn(int $id) => $ticketCtrl->updateStatus($id));
 
+        // ── Flag proxy (same-origin → canvas-safe) ───────────────────────
+        if ($method === 'GET' && preg_match('#^/api/flag/([a-zA-Z]{2})$#', $uri, $m)) {
+            $code  = strtolower($m[1]);
+            $local = __DIR__ . '/assets/flags/' . $code . '.png';
+            if (!file_exists($local)) {
+                $data = @file_get_contents('https://flagcdn.com/w80/' . $code . '.png');
+                if ($data !== false && strlen($data) > 100) {
+                    @file_put_contents($local, $data);
+                }
+            }
+            if (file_exists($local)) {
+                header('Content-Type: image/png');
+                header('Cache-Control: public, max-age=604800');
+                readfile($local);
+                exit;
+            }
+            http_response_code(404);
+            exit;
+        }
+
         // ── Feed público ─────────────────────────────────────────────────
         route('/api/feed', 'GET', function() use ($bets) {
             $wins = $bets->recentWins(15);

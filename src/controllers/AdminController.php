@@ -196,7 +196,7 @@ class AdminController
             'site_logo'        =>         $this->config->get('site_logo',          ''),
             'site_nome'        =>         $this->config->get('site_nome',          'BetCopa'),
             'site_title'       =>         $this->config->get('site_title',         'BetCopa | Acerte o Placar. Ganhe de Verdade.'),
-            'site_description' =>         $this->config->get('site_description',   'Faça seu palpite no placar exato, escolha seu multiplicador e leve o prêmio para casa. Copa do Mundo 2026 — rápido, seguro e confiável.'),
+            'site_description' =>         $this->config->get('site_description',   'Faça seu palpite e acerte o placar exato dos jogos da copa do mundo.'),
             'admin_email'      =>         $this->adminEmail,
             'bonus_cadastro'   => (float) $this->config->get('bonus_cadastro',     0),
         ]);

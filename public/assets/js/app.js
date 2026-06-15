@@ -1294,28 +1294,32 @@ const loadAdminOnline = async () => {
 };
 
 // ── Share bet helpers ─────────────────────────────────────────
-// Usa fetch+blob para evitar o conflito de cache CORS:
-// o browser cacheia <img> sem CORS headers — ao tentar drawImage no canvas
-// com crossOrigin='anonymous' o navegador bloqueia a mesma URL cacheada.
-// Blob URLs são always same-origin, sem restrição de canvas taint.
+const _flagCanvasCache = {};
+
+// Carrega bandeira via proxy same-origin (/api/flag/{code}) → sempre canvas-safe.
+const loadFlagForCanvas = code => {
+  if (!code) return Promise.resolve(null);
+  if (_flagCanvasCache[code]) return _flagCanvasCache[code];
+
+  _flagCanvasCache[code] = new Promise(resolve => {
+    const img = new Image();
+    img.onload  = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = `/api/flag/${code.toLowerCase()}`;
+  });
+
+  return _flagCanvasCache[code];
+};
+
 const loadImgCors = src => {
   if (!src) return Promise.resolve(null);
-
-  const code = src.startsWith('/assets/flags/')
-    ? src.split('/').pop().replace('.png', '')
-    : null;
-  const url = code ? flagUrlCdn(code) : src;
-
-  return fetch(url)
-    .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
-    .then(blob => new Promise(resolve => {
-      const blobUrl = URL.createObjectURL(blob);
-      const img = new Image();
-      img.onload  = () => { URL.revokeObjectURL(blobUrl); resolve(img); };
-      img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(null); };
-      img.src = blobUrl;
-    }))
-    .catch(() => Promise.resolve(null));
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src + (src.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  });
 };
 
 const rrect = (ctx, x, y, w, h, r) => {
@@ -1347,13 +1351,15 @@ const generateBetCard = async (bet) => {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const game     = S.games.find(g => g.id === bet.jogo_id);
-  const siteName = S.siteName || document.title || 'BetCopa';
-  const siteLogo = S.siteLogo || null;
+  const game        = S.games.find(g => g.id === bet.jogo_id);
+  const bandeiraCasa = bet.bandeira_casa || game?.bandeira_casa || '';
+  const bandeiraFora = bet.bandeira_fora || game?.bandeira_fora || '';
+  const siteName     = S.siteName || 'BetCopa';
+  const siteLogo     = S.siteLogo || null;
 
   const [imgHome, imgAway, imgLogo] = await Promise.all([
-    loadImgCors(game?.bandeira_casa ? flagUrl(game.bandeira_casa) : null),
-    loadImgCors(game?.bandeira_fora ? flagUrl(game.bandeira_fora) : null),
+    loadFlagForCanvas(bandeiraCasa),
+    loadFlagForCanvas(bandeiraFora),
     siteLogo ? loadImgCors(siteLogo) : Promise.resolve(null),
   ]);
 
@@ -1440,7 +1446,7 @@ const generateBetCard = async (bet) => {
 
   // ── Competition title (centered) with stars + decorative line ──
   const ligaY = 64;
-  const ligaName = game?.liga_nome || '';
+  const ligaName = bet.liga_nome || game?.liga_nome || '';
   if (ligaName) {
     ctx.font      = '13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,.60)';
@@ -1508,8 +1514,8 @@ const generateBetCard = async (bet) => {
   ctx.font      = 'bold 13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.85)';
   ctx.textAlign = 'center';
-  ctx.fillText(bet.time_casa || '—', homeX, teamY + flagSz / 2 + 18);
-  ctx.fillText(bet.time_fora || '—', awayX, teamY + flagSz / 2 + 18);
+  ctx.fillText(toPortuguese(bet.time_casa || '—').toUpperCase(), homeX, teamY + flagSz / 2 + 18);
+  ctx.fillText(toPortuguese(bet.time_fora || '—').toUpperCase(), awayX, teamY + flagSz / 2 + 18);
 
   ctx.font      = 'bold 14px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.22)';
@@ -1543,7 +1549,7 @@ let _shareBetId = null;
 
 const openShareModal = async (betId) => {
   _shareBetId = Number(betId);
-  const bet = S.bets.find(b => b.id === _shareBetId);
+  const bet = S.bets.find(b => Number(b.id) === _shareBetId);
   if (!bet) return;
 
   const overlay  = document.getElementById('modalShareOverlay');
@@ -1575,14 +1581,47 @@ const closeShareModal = () => {
   _shareBetId = null;
 };
 
+const _ptNames = {
+  'afghanistan':'Afeganistão','albania':'Albânia','algeria':'Argélia','angola':'Angola',
+  'argentina':'Argentina','australia':'Austrália','austria':'Áustria','bahrain':'Barein',
+  'belgium':'Bélgica','bolivia':'Bolívia','bosnia':'Bósnia','brazil':'Brasil',
+  'bulgaria':'Bulgária','cameroon':'Camarões','canada':'Canadá','cape verde':'Cabo Verde',
+  'chile':'Chile','china':'China','colombia':'Colômbia','congo':'Congo',
+  'costa rica':'Costa Rica','croatia':'Croácia','cuba':'Cuba','czech republic':'República Tcheca',
+  'denmark':'Dinamarca','dr congo':'RD Congo','ecuador':'Equador','egypt':'Egito',
+  'england':'Inglaterra','france':'França','germany':'Alemanha','ghana':'Gana',
+  'greece':'Grécia','guatemala':'Guatemala','guinea':'Guiné','honduras':'Honduras',
+  'hungary':'Hungria','iceland':'Islândia','india':'Índia','indonesia':'Indonésia',
+  'iran':'Irã','iraq':'Iraque','ireland':'Irlanda','israel':'Israel',
+  'italy':'Itália','ivory coast':'Costa do Marfim',"côte d'ivoire":'Costa do Marfim',
+  'jamaica':'Jamaica','japan':'Japão','jordan':'Jordânia','kenya':'Quênia',
+  'kuwait':'Kuwait','mexico':'México','morocco':'Marrocos','netherlands':'Países Baixos',
+  'new zealand':'Nova Zelândia','nigeria':'Nigéria','north korea':'Coreia do Norte',
+  'norway':'Noruega','panama':'Panamá','paraguay':'Paraguai','peru':'Peru',
+  'philippines':'Filipinas','poland':'Polônia','portugal':'Portugal','qatar':'Catar',
+  'romania':'Romênia','russia':'Rússia','saudi arabia':'Arábia Saudita','scotland':'Escócia',
+  'senegal':'Senegal','serbia':'Sérvia','slovakia':'Eslováquia','south africa':'África do Sul',
+  'south korea':'Coreia do Sul','spain':'Espanha','sweden':'Suécia','switzerland':'Suíça',
+  'thailand':'Tailândia','trinidad and tobago':'Trinidad e Tobago','tunisia':'Tunísia',
+  'turkey':'Turquia','ukraine':'Ucrânia','united arab emirates':'Emirados Árabes Unidos',
+  'united states':'Estados Unidos','usa':'EUA','uruguay':'Uruguai','venezuela':'Venezuela',
+  'wales':'País de Gales','zambia':'Zâmbia','zimbabwe':'Zimbábue',
+};
+const toPortuguese = name => {
+  if (!name) return name;
+  return _ptNames[name.toLowerCase()] || name;
+};
+
 const getShareText = (bet) => {
-  const game  = S.games.find(g => g.id === bet?.jogo_id);
+  const game  = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
   const fH = game?.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
   const fA = game?.bandeira_fora ? flagEmoji(game.bandeira_fora) + ' ' : '';
-  const match = bet ? `${fH}${bet.time_casa} × ${fA}${bet.time_fora}` : '';
-  const score = bet ? `${bet.placar_casa}-${bet.placar_fora}` : '';
-  const liga  = game?.liga_nome ? `${game.liga_nome} • ` : '';
-  return `🏆 Veja meu palpite no placar desse jogo!\n${liga}${match}\nPlacar: ${score}: https://placarjogos.online/`;
+  const nH = toPortuguese(bet?.time_casa).toUpperCase();
+  const nA = toPortuguese(bet?.time_fora).toUpperCase();
+  const match = bet ? `${fH}${nH} x ${fA}${nA}` : '';
+  const score = bet ? `${bet.placar_casa} x ${bet.placar_fora}` : '';
+  const liga  = game?.liga_nome ? `${game.liga_nome}` : '';
+  return `🏆 ${liga} 🏆\nMeu palpite para o jogo: ${match}\nAcho que vai ser de: ${score}, será que acerto?\nFaça seu palpite também, acesse! https://placarjogos.online/`;
 };
 
 const renderBets = () => {
@@ -1601,10 +1640,9 @@ const renderBets = () => {
     const isWin  = b.status === 'ganhou';
     const isLoss = b.status === 'perdido';
 
-    // Bandeiras: busca o jogo correspondente em S.games
-    const game = S.games.find(g => g.id === b.jogo_id);
-    const fHome = game?.bandeira_casa;
-    const fAway = game?.bandeira_fora;
+    const game  = S.games.find(g => g.id === b.jogo_id);
+    const fHome = b.bandeira_casa || game?.bandeira_casa;
+    const fAway = b.bandeira_fora || game?.bandeira_fora;
     const flagsHtml = (fHome || fAway)
       ? `<div class="bet-card__game-flags">
            ${fHome ? `<img src="${flagUrl(fHome)}" alt="${b.time_casa}" />` : ''}
@@ -1615,25 +1653,38 @@ const renderBets = () => {
          </div>`
       : `<div class="bet-card__game-name">${b.time_casa} × ${b.time_fora}</div>`;
 
-    const actionHtml = b.status === 'pendente'
-      ? `<button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}"><i class="fa-solid fa-credit-card"></i> Pagar PIX</button>`
-      : b.status === 'pago'
-      ? `<div class="bet-verify-wrap">
-           <span class="bet-verify-hint"><i class="fa-solid fa-circle-info"></i> Pague o PIX e clique para confirmar</span>
-           <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-rotate"></i> Verificar PIX</button>
-         </div>`
-      : b.status === 'confirmado'
+    // Badge de status aparece ao lado do nome do time
+    const statusBadge = b.status === 'confirmado'
       ? `<span class="badge badge--confirmed"><i class="fa-solid fa-futbol"></i> Concorrendo</span>`
       : isWin
       ? `<span class="badge badge--open"><i class="fa-solid fa-trophy"></i> Ganhou!</span>`
       : isLoss
       ? `<span class="badge badge--closed"><i class="fa-solid fa-x"></i> Perdeu</span>`
-      : `<span class="badge">${b.status}</span>`;
+      : b.status === 'pendente'
+      ? `<span class="badge badge--far">Pendente</span>`
+      : '';
+
+    // Ações de pagamento (apenas pendente/pago)
+    const payHtml = b.status === 'pendente'
+      ? `<div class="bet-card__actions">
+           <button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}"><i class="fa-solid fa-credit-card"></i> Pagar PIX</button>
+         </div>`
+      : b.status === 'pago'
+      ? `<div class="bet-card__actions">
+           <div class="bet-verify-wrap">
+             <span class="bet-verify-hint"><i class="fa-solid fa-circle-info"></i> Pague o PIX e clique para confirmar</span>
+             <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-rotate"></i> Verificar PIX</button>
+           </div>
+         </div>`
+      : '';
 
     return `
       <div class="bet-card ${isWin ? 'bet-card--win' : ''} ${isLoss ? 'bet-card--loss' : ''}">
         <div class="bet-card__game">
-          ${flagsHtml}
+          <div class="bet-card__game-header">
+            ${flagsHtml}
+            ${statusBadge}
+          </div>
           <div class="bet-card__palpite"><i class="fa-solid fa-bullseye" style="font-size:.75em;opacity:.6"></i> Palpite: ${b.placar_casa} × ${b.placar_fora}</div>
           ${betTimeline(b.status)}
         </div>
@@ -1653,14 +1704,21 @@ const renderBets = () => {
             </div>
           </div>
         </div>
-        <div class="bet-card__actions">
-          ${actionHtml}
-          <button class="btn-share-bet" data-action="share" data-id="${b.id}" title="Compartilhar palpite">
-            <i class="fa-solid fa-share-nodes"></i>
+        ${payHtml}
+        <div class="bet-card__share">
+          <button class="bet-card__share-btn" data-action="share" data-id="${b.id}">
+            <i class="fa-solid fa-share-nodes"></i> Compartilhar Palpite
           </button>
         </div>
       </div>`;
   }).join('') + _pager(_betsPage, _betsTotal, BETS_LIMIT, 'my-bets');
+
+  // Pré-aquece o cache de bandeiras em background — quando o usuário
+  // clicar em "Compartilhar" as imagens já estarão prontas
+  S.bets.forEach(b => {
+    if (b.bandeira_casa) loadFlagForCanvas(b.bandeira_casa);
+    if (b.bandeira_fora) loadFlagForCanvas(b.bandeira_fora);
+  });
 };
 
 // ── Resultados ────────────────────────────────────────────────
@@ -3915,7 +3973,7 @@ const bind = () => {
     if (e.target === document.getElementById('modalShareOverlay')) closeShareModal();
   });
   document.getElementById('btnShareWhatsApp')?.addEventListener('click', () => {
-    const bet    = S.bets.find(b => b.id === _shareBetId);
+    const bet    = S.bets.find(b => Number(b.id) === _shareBetId);
     const canvas = document.getElementById('shareCanvas');
     const text   = getShareText(bet);
     if (canvas && navigator.canShare) {
@@ -3931,13 +3989,13 @@ const bind = () => {
     }
   });
   document.getElementById('btnShareTwitter')?.addEventListener('click', () => {
-    const bet = S.bets.find(b => b.id === _shareBetId);
+    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
   });
   document.getElementById('btnShareDownload')?.addEventListener('click', () => {
     const canvas = document.getElementById('shareCanvas');
     if (!canvas) return;
-    const bet = S.bets.find(b => b.id === _shareBetId);
+    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
     const a = document.createElement('a');
     a.download = `palpite-betcopa-${bet?.id ?? 'bet'}.png`;
     a.href = canvas.toDataURL('image/png');
@@ -3945,7 +4003,7 @@ const bind = () => {
   });
   document.getElementById('btnShareNative')?.addEventListener('click', () => {
     const canvas = document.getElementById('shareCanvas');
-    const bet = S.bets.find(b => b.id === _shareBetId);
+    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
     if (!canvas || !navigator.share) return;
     canvas.toBlob(async blob => {
       try {

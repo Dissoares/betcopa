@@ -4890,22 +4890,48 @@ input:focus, select:focus {
 .share-btn--download { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
 .share-btn--native   { background: var(--primary);     color: #000; }
 
-/* ── Share icon on bet cards ─────────────────────────────── */
-.btn-share-bet {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  border-radius: 6px;
-  padding: .3rem .5rem;
-  font-size: .75rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: .25rem;
-  line-height: 1;
-  transition: border-color .15s, color .15s;
+/* ── Game header: team name row + status badge side-by-side ── */
+.bet-card__game-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-bottom: .15rem;
 }
-.btn-share-bet:hover { border-color: var(--primary); color: var(--primary); }
+.bet-card__game-header .badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Share row — full-width bottom of card ────────────────── */
+.bet-card__share {
+  flex-basis: 100%;       /* força nova linha no flex-row do desktop */
+  width: 100%;
+  padding-top: .65rem;
+  border-top: 1px solid var(--border);
+  margin-top: .1rem;
+}
+.bet-card__share-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.bet-card__share-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--tint-primary);
+}
 
 /* Verify-PIX hint inside bet card */
 .bet-verify-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; }

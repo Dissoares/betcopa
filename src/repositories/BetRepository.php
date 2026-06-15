@@ -25,7 +25,7 @@ class BetRepository
     public function listByUser(int $userId, int $page = 1, int $limit = 10): array
     {
         $offset = ($page - 1) * $limit;
-        $stmt   = $this->db->prepare('SELECT a.*, j.time_casa, j.time_fora, j.data_hora, j.status AS jogo_status FROM apostas a JOIN jogos j ON a.jogo_id = j.id WHERE a.user_id = :user_id ORDER BY a.criado_em DESC LIMIT :limit OFFSET :offset');
+        $stmt   = $this->db->prepare('SELECT a.*, j.time_casa, j.time_fora, j.data_hora, j.status AS jogo_status, j.bandeira_casa, j.bandeira_fora, j.logo_casa, j.logo_fora, j.liga_nome FROM apostas a JOIN jogos j ON a.jogo_id = j.id WHERE a.user_id = :user_id ORDER BY a.criado_em DESC LIMIT :limit OFFSET :offset');
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':limit',   $limit,  PDO::PARAM_INT);
         $stmt->bindValue(':offset',  $offset, PDO::PARAM_INT);
