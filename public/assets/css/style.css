@@ -388,7 +388,10 @@ body::before {
   font-size: .88rem; font-weight: 700; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.udrop__balance { font-size: .78rem; font-weight: 700; color: var(--primary); margin-top: .1rem; }
+.udrop__balance-row { display: flex; align-items: center; gap: .35rem; margin-top: .15rem; }
+.udrop__balance-label { font-size: .7rem; color: var(--text-muted); }
+.udrop__balance { font-size: .78rem; font-weight: 700; color: var(--primary); }
+.udrop__deposit-btn { padding: .2rem .55rem !important; font-size: .7rem !important; border-radius: 20px !important; line-height: 1.4; }
 
 /* Divider */
 .udrop__sep { height: 1px; background: var(--border); margin: .3rem 0; }
@@ -483,7 +486,10 @@ body.drawer-open { overflow: hidden; }
   font-size: .95rem; font-weight: 700; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dr-user__balance { font-size: .8rem; font-weight: 700; color: var(--primary); margin-top: .15rem; }
+.dr-user__balance-row { display: flex; align-items: center; gap: .4rem; margin-top: .15rem; flex-wrap: wrap; }
+.dr-user__balance-label { font-size: .72rem; color: var(--text-muted); }
+.dr-user__balance { font-size: .82rem; font-weight: 700; color: var(--primary); }
+.dr-deposit-btn { padding: .22rem .6rem !important; font-size: .72rem !important; border-radius: 20px !important; line-height: 1.4; }
 
 /* ── Separador ───────────────────────────────────────────────── */
 .dr-sep { height: 1px; background: rgba(255,255,255,.07); margin: .45rem 0; }

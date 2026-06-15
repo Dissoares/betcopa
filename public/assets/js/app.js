@@ -358,7 +358,13 @@ const renderDrawer = () => {
         <div class="user-chip__avatar user-chip__avatar--lg">${initials}</div>
         <div class="dr-user__info">
           <div class="dr-user__name">${S.user.nome}</div>
-          <div class="dr-user__balance">${fmtMoney(saldo)}</div>
+          <div class="dr-user__balance-row">
+            <span class="dr-user__balance-label">Saldo</span>
+            <span class="dr-user__balance">${fmtMoney(saldo)}</span>
+            <button class="btn btn--primary btn--xs dr-deposit-btn" id="drawerBtnDeposit">
+              <i class="fa-solid fa-plus"></i> Adicionar
+            </button>
+          </div>
         </div>
       </div>
       <div class="dr-sep"></div>
@@ -369,7 +375,6 @@ const renderDrawer = () => {
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="dr-item" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
-        <button class="dr-item" id="drawerBtnDeposit"><i class="fa-solid fa-wallet"></i> Adicionar Saldo</button>
       </div>
       ${isAdmin ? `
       <div class="dr-sep"></div>
@@ -439,7 +444,13 @@ const renderHeader = () => {
             <div class="user-chip__avatar user-chip__avatar--lg">${initials}</div>
             <div class="udrop__info-text">
               <div class="udrop__fullname">${S.user.nome}</div>
-              <div class="udrop__balance">${fmtMoney(saldo)}</div>
+              <div class="udrop__balance-row">
+                <span class="udrop__balance-label">Saldo</span>
+                <span class="udrop__balance">${fmtMoney(saldo)}</span>
+                <button class="btn btn--primary btn--xs udrop__deposit-btn" id="udropBtnDeposit">
+                  <i class="fa-solid fa-plus"></i> Adicionar
+                </button>
+              </div>
             </div>
           </div>
           <div class="udrop__sep"></div>
@@ -448,9 +459,6 @@ const renderHeader = () => {
           </button>
           <button class="udrop__item" data-udrop-nav="palpites">
             <i class="fa-solid fa-ticket"></i> Meus Palpites
-          </button>
-          <button class="udrop__item" id="udropBtnDeposit">
-            <i class="fa-solid fa-wallet"></i> Adicionar Saldo
           </button>
           <button class="udrop__item" id="udropBtnSaque">
             <i class="fa-solid fa-money-bill-transfer"></i> Solicitar Saque
@@ -529,8 +537,19 @@ const updateHeroStats = () => {
   if (el('heroStatGames')) el('heroStatGames').textContent = S.games.length;
   if (el('heroStatOpen'))  el('heroStatOpen').textContent  = open;
   if (el('heroStatFinal')) el('heroStatFinal').textContent = finalizados;
-  if (el('heroStatLive'))  el('heroStatLive').textContent  = live;
-  el('heroStatLiveWrap')?.classList.toggle('hidden', live === 0);
+  const liveGames = S.games.filter(isGameLive);
+  const wrap = el('heroStatLiveWrap');
+  if (wrap) {
+    wrap.classList.toggle('hidden', liveGames.length === 0);
+    if (liveGames.length === 1) {
+      const g  = liveGames[0];
+      const tc = teamNamePt(g.time_casa);
+      const tf = teamNamePt(g.time_fora);
+      wrap.innerHTML = `<i class="fa-solid fa-circle copa-hero__live-dot"></i> Ao Vivo · ${tc} x ${tf}`;
+    } else {
+      wrap.innerHTML = `<i class="fa-solid fa-circle copa-hero__live-dot"></i> <span id="heroStatLive">${liveGames.length}</span> Ao Vivo`;
+    }
+  }
   // Indicador ao vivo no nav
   document.querySelectorAll('.nav__btn[data-nav="jogos"], .dr-item[data-nav="jogos"]').forEach(btn => {
     const dot = btn.querySelector('.nav-live-dot');
