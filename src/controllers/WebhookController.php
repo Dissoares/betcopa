@@ -9,10 +9,11 @@ declare(strict_types=1);
 class WebhookController
 {
     public function __construct(
-        private readonly PaymentRepository $payments,
-        private readonly BetRepository     $bets,
+        private readonly PaymentRepository     $payments,
+        private readonly BetRepository         $bets,
         private readonly TransactionRepository $transactions,
-        private readonly ConfigRepository  $config
+        private readonly ConfigRepository      $config,
+        private readonly ?DepositRepository    $deposits = null
     ) {}
 
     public function mercadopago(): void
@@ -73,6 +74,21 @@ class WebhookController
             }
         } elseif (in_array($status, ['rejected', 'cancelled'], true)) {
             $this->payments->updateStatus((int) $payment['id'], $status);
+        }
+
+        // Verifica se é depósito (fallback: busca na tabela deposits por gateway_payment_id)
+        if ($this->deposits !== null) {
+            $deposit = $this->deposits->findByGatewayId($paymentId);
+            if ($deposit && $deposit['status'] === 'pago' && $status === 'approved') {
+                $this->deposits->updateStatus((int) $deposit['id'], 'confirmado');
+                $this->transactions->create(
+                    (int) $deposit['user_id'],
+                    'credito',
+                    (float) $deposit['valor'],
+                    'Depósito via webhook #' . $deposit['id']
+                );
+                Logger::info('Depósito confirmado via webhook MP', ['deposit_id' => $deposit['id']]);
+            }
         }
 
         http_response_code(200);
@@ -138,7 +154,27 @@ class WebhookController
         $status    = $result['status'];
         $invoiceId = $invoiceId ?: $result['invoice_id'];
 
-        // Extrai betId do invoice_id (formato: bet-{betId}-{userId})
+        // Detecta formato do invoice_id: deposit-{id}-{userId} ou bet-{id}-{userId}
+        if (preg_match('/^deposit-(\d+)-(\d+)$/', $invoiceId, $m)) {
+            $depositId = (int) $m[1];
+            if ($this->deposits !== null) {
+                $deposit = $this->deposits->findById($depositId);
+                if ($deposit && $deposit['status'] === 'pago' && $status === 'approved') {
+                    $this->deposits->updateStatus($depositId, 'confirmado');
+                    $this->transactions->create(
+                        (int) $deposit['user_id'],
+                        'credito',
+                        (float) $deposit['valor'],
+                        'Depósito via webhook ExPay #' . $depositId
+                    );
+                    Logger::info('Depósito confirmado via webhook ExPay', ['deposit_id' => $depositId]);
+                }
+            }
+            http_response_code(200);
+            echo json_encode(['ok' => true]);
+            return;
+        }
+
         if (!preg_match('/^bet-(\d+)-\d+$/', $invoiceId, $m)) {
             http_response_code(200);
             echo json_encode(['ok' => true, 'skip' => 'invoice_id_format']);

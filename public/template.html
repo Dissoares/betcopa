@@ -1896,7 +1896,44 @@
         <button class="btn btn--ghost btn--sm" id="btnPixCopyFull">
           <i class="fa-regular fa-copy"></i> Copiar código PIX
         </button>
-        <p class="pix-modal__hint">Após pagar, clique em <strong>Confirmar Pagamento</strong> na aba Meus Palpites.</p>
+        <p class="pix-modal__hint" id="pixModalHint">Após pagar, clique em <strong>Confirmar Pagamento</strong> na aba Meus Palpites.</p>
+        <button class="btn btn--primary btn--full hidden" id="btnDepositConfirm">
+          <i class="fa-solid fa-check"></i> Confirmar Depósito
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════════╗ -->
+  <!-- ║  Modal Depósito — Adicionar saldo via PIX               ║ -->
+  <!-- ╚══════════════════════════════════════════════════════════╝ -->
+  <div class="modal-overlay hidden" id="modalDepositOverlay" role="dialog" aria-modal="true">
+    <div class="modal-box deposit-modal">
+      <button class="modal-close" id="btnDepositClose" aria-label="Fechar">&times;</button>
+      <div class="deposit-modal__header">
+        <i class="fa-solid fa-wallet deposit-modal__icon"></i>
+        <h2 class="deposit-modal__title">Adicionar Saldo</h2>
+        <p class="deposit-modal__sub">O valor será creditado após a confirmação do PIX</p>
+      </div>
+      <div class="deposit-modal__body">
+        <label class="deposit-modal__label">Valor do depósito</label>
+        <div class="deposit-modal__input-wrap">
+          <span class="deposit-modal__currency">R$</span>
+          <input type="number" id="depositValor" class="deposit-modal__input"
+                 placeholder="0,00" min="5" max="10000" step="1">
+        </div>
+        <div class="deposit-modal__quick">
+          <button class="dq-btn" data-val="20">R$ 20</button>
+          <button class="dq-btn" data-val="50">R$ 50</button>
+          <button class="dq-btn" data-val="100">R$ 100</button>
+          <button class="dq-btn" data-val="200">R$ 200</button>
+          <button class="dq-btn" data-val="500">R$ 500</button>
+        </div>
+      </div>
+      <div class="deposit-modal__footer">
+        <button class="btn btn--primary btn--full btn--large" id="btnDepositSubmit">
+          <i class="fa-brands fa-pix"></i> Gerar PIX
+        </button>
       </div>
     </div>
   </div>

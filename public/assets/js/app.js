@@ -23,6 +23,8 @@ const S = {
   activeFilter:   'todos',   // filtro ativo nos cards de jogos
   bonusCadastro:  0,
   _payMethod:     'pix',     // método selecionado no modal de pagamento
+  _depositId:     null,
+  _depositAmt:    0,
 };
 
 
@@ -367,6 +369,7 @@ const renderDrawer = () => {
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="dr-item" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
+        <button class="dr-item" id="drawerBtnDeposit"><i class="fa-solid fa-wallet"></i> Adicionar Saldo</button>
       </div>
       ${isAdmin ? `
       <div class="dr-sep"></div>
@@ -445,6 +448,9 @@ const renderHeader = () => {
           </button>
           <button class="udrop__item" data-udrop-nav="palpites">
             <i class="fa-solid fa-ticket"></i> Meus Palpites
+          </button>
+          <button class="udrop__item" id="udropBtnDeposit">
+            <i class="fa-solid fa-wallet"></i> Adicionar Saldo
           </button>
           <button class="udrop__item" id="udropBtnSaque">
             <i class="fa-solid fa-money-bill-transfer"></i> Solicitar Saque
@@ -2181,8 +2187,9 @@ const openPixModal = (data) => {
   keyVal.textContent = pixKey || '—';
   keyRow.classList.toggle('hidden', !pixKey);
 
-  // Valor (pego do selectedBet que foi preenchido)
-  document.getElementById('pixAmount').textContent = fmtMoney(S.selectedBet?.valor || 0);
+  // Valor
+  const pixAmt = S._depositId ? (S._depositAmt || 0) : (S.selectedBet?.valor || 0);
+  document.getElementById('pixAmount').textContent = fmtMoney(pixAmt);
 
   // Status
   document.getElementById('pixStatusText').textContent = 'Aguardando pagamento…';
@@ -2215,9 +2222,31 @@ const openPixModal = (data) => {
     timerWrap.classList.toggle('pix-timer--urgent', left < 2 * 60 * 1000);
   }, 1000);
 
-  // Polling de status: a cada 5 s verifica se aposta mudou para 'confirmado'
+  // Modo depósito vs aposta: ajusta hint e botão de confirmar
+  const isDeposit      = !!S._depositId;
+  const hintEl         = document.getElementById('pixModalHint');
+  const depositConfBtn = document.getElementById('btnDepositConfirm');
+  if (hintEl) hintEl.textContent = isDeposit
+    ? 'Após pagar, o saldo é creditado automaticamente ou clique em Confirmar.'
+    : 'Após pagar, clique em Confirmar Pagamento na aba Meus Palpites.';
+  depositConfBtn?.classList.toggle('hidden', !isDeposit);
+
+  // Polling de status
   clearInterval(_pixPollingInterval);
-  if (S.selectedBet?.id) {
+  if (isDeposit) {
+    _pixPollingInterval = setInterval(async () => {
+      try {
+        const r = await api(`/api/user/depositar/${S._depositId}/status`);
+        if (r.status === 'confirmado') {
+          clearInterval(_pixPollingInterval);
+          clearInterval(_pixTimerInterval);
+          document.getElementById('pixStatusText').textContent = '✓ Depósito confirmado!';
+          await loadUser();
+          setTimeout(() => closePixModal(), 2000);
+        }
+      } catch { /* silencioso */ }
+    }, 5000);
+  } else if (S.selectedBet?.id) {
     _pixPollingInterval = setInterval(async () => {
       try {
         const r = await api('/api/apostas');
@@ -2229,7 +2258,7 @@ const openPixModal = (data) => {
           S.bets = r.apostas;
           await loadUser();
           renderBets();
-          setTimeout(() => closePixModal(), 2000);
+          setTimeout(() => { closePixModal(); navigate('palpites'); }, 2000);
         }
       } catch { /* silencioso */ }
     }, 5000);
@@ -2241,6 +2270,8 @@ const openPixModal = (data) => {
 const closePixModal = () => {
   clearInterval(_pixTimerInterval);
   clearInterval(_pixPollingInterval);
+  S._depositId  = null;
+  S._depositAmt = 0;
   document.getElementById('modalPixOverlay').classList.add('hidden');
 };
 
@@ -2285,9 +2316,9 @@ const confirmBalancePayment = async () => {
   try {
     await api(`/api/apostas/${S.selectedBet.id}/pagar-saldo`, 'POST', {});
     closeModal('modalPaymentOpts');
-    await loadUser();
-    await loadBets();
+    await Promise.all([loadUser(), loadBets()]);
     toast('Aposta confirmada! Saldo debitado.', 'success');
+    navigate('palpites');
   } catch (err) {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
@@ -3112,6 +3143,57 @@ const loadBets = async (page = _betsPage) => {
   renderBets();
 };
 
+// ── Depósito ───────────────────────────────────────────────────
+const openDepositModal = () => {
+  if (!S.user) { navigate('auth'); return; }
+  document.getElementById('depositValor').value = '';
+  document.querySelectorAll('.dq-btn').forEach(b => b.classList.remove('dq-btn--active'));
+  document.getElementById('modalDepositOverlay').classList.remove('hidden');
+};
+
+const closeDepositModal = () => {
+  document.getElementById('modalDepositOverlay').classList.add('hidden');
+};
+
+const submitDeposit = async () => {
+  const btn   = document.getElementById('btnDepositSubmit');
+  const valor = parseFloat(document.getElementById('depositValor').value);
+  if (!valor || valor < 5) { toast('Valor mínimo: R$ 5,00', 'danger'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PIX...';
+  try {
+    const data = await api('/api/user/depositar', 'POST', { valor });
+    closeDepositModal();
+    S._depositId  = data.deposit_id;
+    S._depositAmt = data.valor;
+    S.selectedBet = null;
+    openPixModal(data);
+  } catch (err) {
+    toast(err.message || 'Erro ao criar depósito.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-brands fa-pix"></i> Gerar PIX';
+  }
+};
+
+const confirmDeposit = async () => {
+  const btn = document.getElementById('btnDepositConfirm');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirmando...';
+  try {
+    const r = await api(`/api/user/depositar/${S._depositId}/confirmar`, 'POST', {});
+    document.getElementById('pixStatusText').textContent = '✓ ' + (r.message || 'Depósito confirmado!');
+    clearInterval(_pixPollingInterval);
+    clearInterval(_pixTimerInterval);
+    await loadUser();
+    setTimeout(() => closePixModal(), 2000);
+  } catch (err) {
+    toast(err.message || 'Pagamento ainda não confirmado.', 'danger');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Depósito';
+  }
+};
+
 // ── Saque ─────────────────────────────────────────────────────
 const openSaqueModal = async () => {
   const saldo = parseFloat(S.user?.saldo || 0);
@@ -3526,6 +3608,8 @@ const bind = () => {
 
   document.addEventListener('click', e => {
     if (e.target.closest('#dropdownLogout')) logout();
+    if (e.target.closest('#udropBtnDeposit')) { closeAllModals?.(); openDepositModal(); }
+    if (e.target.closest('#drawerBtnDeposit')) { closeMobileMenu(); openDepositModal(); }
     if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
   });
 
@@ -3643,6 +3727,21 @@ const bind = () => {
   document.getElementById('btnPixClose')?.addEventListener('click', closePixModal);
   document.getElementById('modalPixOverlay')?.addEventListener('click', e => {
     if (e.target === document.getElementById('modalPixOverlay')) closePixModal();
+  });
+
+  // Deposit modal
+  document.getElementById('btnDepositClose')?.addEventListener('click', closeDepositModal);
+  document.getElementById('modalDepositOverlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalDepositOverlay')) closeDepositModal();
+  });
+  document.getElementById('btnDepositSubmit')?.addEventListener('click', submitDeposit);
+  document.getElementById('btnDepositConfirm')?.addEventListener('click', confirmDeposit);
+  document.querySelectorAll('.dq-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('depositValor').value = btn.dataset.val;
+      document.querySelectorAll('.dq-btn').forEach(b => b.classList.remove('dq-btn--active'));
+      btn.classList.add('dq-btn--active');
+    });
   });
 
   // Saque modal

@@ -44,6 +44,8 @@ require_once __DIR__ . '/../src/controllers/TicketController.php';
 require_once __DIR__ . '/../src/repositories/NotificationRepository.php';
 require_once __DIR__ . '/../src/controllers/NotificationController.php';
 require_once __DIR__ . '/../src/repositories/OnlineRepository.php';
+require_once __DIR__ . '/../src/repositories/DepositRepository.php';
+require_once __DIR__ . '/../src/controllers/DepositController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -112,7 +114,9 @@ try {
         $ticketCtrl->setNotificationRepository($notifsRepo);
         $withdrawCtrl = new WithdrawalController($withdrawals, $transactions, $configRepo, $adminEmail);
         $withdrawCtrl->setMailer($mailer);
-        $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo);
+        $depositRepo  = new DepositRepository($db);
+        $depositCtrl  = new DepositController($depositRepo, $transactions, $configRepo);
+        $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo, $depositRepo);
 
         // ── Auth ──────────────────────────────────────────────
         route('/api/register',        'POST', fn() => $authCtrl->register());
@@ -148,6 +152,11 @@ try {
         route('/api/apostas', 'POST', fn() => $betCtrl->create());
         routePattern('/^\/api\/apostas\/(\d+)\/pagar$/',         'POST', fn(int $id) => $betCtrl->pay($id));
         routePattern('/^\/api\/apostas\/(\d+)\/pagar-saldo$/',   'POST', fn(int $id) => $betCtrl->payWithBalance($id));
+
+        // ── Depósitos ─────────────────────────────────────────
+        route('/api/user/depositar',                          'POST', fn() => $depositCtrl->create());
+        routePattern('/^\/api\/user\/depositar\/(\d+)\/confirmar$/', 'POST', fn(int $id) => $depositCtrl->confirm($id));
+        routePattern('/^\/api\/user\/depositar\/(\d+)\/status$/',    'GET',  fn(int $id) => $depositCtrl->status($id));
         routePattern('/^\/api\/apostas\/(\d+)\/confirmar$/',     'POST', fn(int $id) => $betCtrl->confirm($id));
 
         // ── User & Ranking ────────────────────────────────────
