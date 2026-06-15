@@ -1450,6 +1450,43 @@ const generateBetCard = async (bet) => {
     }
   ctx.restore();
 
+  // ── Soccer ball particles ─────────────────────────────────
+  const drawBall = (bx, by, r, alpha) => {
+    ctx.save(); ctx.globalAlpha = alpha;
+    // outer circle
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = r * 0.13; ctx.stroke();
+    // center pentagon patch
+    ctx.beginPath(); ctx.arc(bx, by, r * 0.32, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
+    // 5 outer patches at 72° intervals
+    for (let i = 0; i < 5; i++) {
+      const ang = (i * 2 * Math.PI / 5) - Math.PI / 2;
+      ctx.beginPath();
+      ctx.arc(bx + r * 0.62 * Math.cos(ang), by + r * 0.62 * Math.sin(ang), r * 0.20, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fill();
+    }
+    // connecting lines from center to patches
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const ang = (i * 2 * Math.PI / 5) - Math.PI / 2;
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx + r * 0.62 * Math.cos(ang), by + r * 0.62 * Math.sin(ang));
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = r * 0.09; ctx.stroke();
+    ctx.restore();
+  };
+  // deterministic scatter — same positions every render
+  const balls = [
+    [38,  22,  8,  .10], [558, 18,  6,  .08], [12,  160, 10, .09],
+    [582, 140, 7,  .07], [55,  300, 9,  .10], [570, 295, 8,  .08],
+    [100, 50,  5,  .07], [500, 55,  6,  .08], [20,  220, 6,  .06],
+    [578, 220, 5,  .06], [140, 315, 7,  .08], [460, 320, 6,  .07],
+    [280, 18,  5,  .05], [320, 325, 5,  .05], [75,  130, 4,  .05],
+    [525, 130, 4,  .05], [200, 330, 4,  .04], [400, 22,  4,  .04],
+  ];
+  balls.forEach(([bx, by, r, a]) => drawBall(bx, by, r, a));
+
   // Top accent bar
   ctx.fillStyle = accentGrad(); ctx.fillRect(0, 0, W, 5);
 
