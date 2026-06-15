@@ -208,9 +208,22 @@ try {
             $page     = mb_substr((string) ($body['page']     ?? ''), 0, 150);
             $source   = mb_substr((string) ($body['source']   ?? ''), 0, 50);
             $referrer = mb_substr((string) ($body['referrer'] ?? ''), 0, 500);
+            $device   = mb_substr((string) ($body['device']   ?? ''), 0, 10);
+            // Resolve IP real (suporte a proxy/Cloudflare)
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP']
+               ?? (isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+                    ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
+                    : null)
+               ?? $_SERVER['REMOTE_ADDR']
+               ?? '';
+            $ip = filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
             if (session_status() === PHP_SESSION_NONE) session_start();
             $userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
-            (new OnlineRepository($db))->upsert($sid, $userId, $page ?: null, $source ?: null, $referrer ?: null);
+            (new OnlineRepository($db))->upsert(
+                $sid, $userId,
+                $page ?: null, $source ?: null, $referrer ?: null,
+                $device ?: null, $ip
+            );
             jsonResponse(['ok' => true]);
         });
         // ── Admin: Saques ──────────────────────────────────────────────────

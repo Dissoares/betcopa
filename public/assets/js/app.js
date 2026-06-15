@@ -1270,6 +1270,17 @@ const _getOrCreateRefInfo = () => {
   return info;
 };
 
+const _getOrCreateDevice = () => {
+  const cached = localStorage.getItem('bc_dev');
+  if (cached) return cached;
+  const ua = navigator.userAgent;
+  const dev = /tablet|ipad|playbook|silk/i.test(ua)   ? 'tablet'
+            : /mobile|android|iphone|ipod|blackberry|opera mini|windows phone/i.test(ua) ? 'mobile'
+            : 'desktop';
+  localStorage.setItem('bc_dev', dev);
+  return dev;
+};
+
 const _PAGE_LABELS = {
   '': 'Início', 'jogos': 'Jogos', 'palpites': 'Meus Palpites',
   'ranking': 'Ranking', 'ganhadores': 'Ganhadores', 'grupos': 'Grupos',
@@ -1292,6 +1303,7 @@ const pingOnline = async () => {
       page:       _getCurrentPageLabel(),
       source:     refInfo.source,
       referrer:   refInfo.referrer,
+      device:     _getOrCreateDevice(),
     });
   } catch { /* ignore */ }
 };
@@ -1311,84 +1323,185 @@ const _SRC_META = {
   outro:     { label: 'Outro',     icon: 'fa-solid fa-globe' },
 };
 
-const _fmtAgo = (last_seen) => {
-  const dt   = new Date(last_seen.replace(' ', 'T'));
+const _fmtAgo = (ts) => {
+  if (!ts) return '';
+  const dt   = new Date(ts.replace(' ', 'T'));
   const diff = Math.round((Date.now() - dt.getTime()) / 1000);
   if (diff < 60)   return `${diff}s atrás`;
   if (diff < 3600) return `${Math.round(diff / 60)}min atrás`;
   return `${Math.round(diff / 3600)}h atrás`;
 };
 
+const _fmtDuration = (first_seen) => {
+  if (!first_seen) return '';
+  const dt   = new Date(first_seen.replace(' ', 'T'));
+  const diff = Math.round((Date.now() - dt.getTime()) / 1000);
+  if (diff < 60)   return `${diff}s na sessão`;
+  if (diff < 3600) return `${Math.round(diff / 60)}min na sessão`;
+  return `${Math.round(diff / 3600)}h na sessão`;
+};
+
+const _countryFlag = (code) => {
+  if (!code || code.length !== 2) return '';
+  try {
+    return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E0 + c.charCodeAt(0) - 65));
+  } catch { return ''; }
+};
+
+const _avatarColor = (str) => {
+  const cols = ['#4ade80','#60a5fa','#f59e0b','#f87171','#a78bfa','#34d399','#fb923c','#e879f9'];
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  return cols[Math.abs(h) % cols.length];
+};
+
+const _deviceIcon = (dev) => {
+  if (dev === 'mobile')  return '<i class="fa-solid fa-mobile-screen" title="Mobile"></i>';
+  if (dev === 'tablet')  return '<i class="fa-solid fa-tablet-screen-button" title="Tablet"></i>';
+  return '<i class="fa-solid fa-desktop" title="Desktop"></i>';
+};
+
+let _onlineCountdownVal = 30;
+let _onlineCountdownInterval = null;
+
+const _startOnlineCountdown = () => {
+  _onlineCountdownVal = 30;
+  clearInterval(_onlineCountdownInterval);
+  _onlineCountdownInterval = setInterval(() => {
+    _onlineCountdownVal = Math.max(0, _onlineCountdownVal - 1);
+    const el = document.getElementById('onlineCountdown');
+    if (el) el.textContent = `↻ ${_onlineCountdownVal}s`;
+    if (_onlineCountdownVal === 0) _onlineCountdownVal = 30;
+  }, 1000);
+};
+
 const loadAdminOnline = async () => {
+  _startOnlineCountdown();
   try {
     const { stats, sessoes_online } = await api('/api/admin/online');
+    const sessions = sessoes_online || [];
 
+    // ── Stats cards ──────────────────────────────────────────────
     const statsEl = document.getElementById('onlineStats');
     if (statsEl) {
+      const mobile  = sessions.filter(s => s.device === 'mobile').length;
+      const desktop = sessions.filter(s => s.device === 'desktop' || !s.device).length;
+      const tablet  = sessions.filter(s => s.device === 'tablet').length;
+
+      // Contagem por origem
       const srcCount = {};
-      (sessoes_online || []).forEach(s => {
-        const src = s.source || 'direto';
-        srcCount[src] = (srcCount[src] || 0) + 1;
-      });
-      const srcBadges = Object.entries(srcCount)
-        .sort((a, b) => b[1] - a[1])
-        .map(([src, n]) => {
-          const m = _SRC_META[src] || _SRC_META.outro;
-          return `<span class="online-src-mini online-src--${src}"><i class="${m.icon}"></i> ${m.label} <strong>${n}</strong></span>`;
-        }).join('');
+      sessions.forEach(s => { const k = s.source || 'direto'; srcCount[k] = (srcCount[k] || 0) + 1; });
+      const srcBadges = Object.entries(srcCount).sort((a,b) => b[1]-a[1]).map(([src, n]) => {
+        const m = _SRC_META[src] || _SRC_META.outro;
+        return `<span class="online-src-mini online-src--${src}"><i class="${m.icon}"></i> ${m.label} <strong>${n}</strong></span>`;
+      }).join('');
 
       statsEl.innerHTML = `
         <div class="dash-card dash-card--green">
-          <div class="dash-card__label">Total Online</div>
+          <div class="dash-card__label"><i class="fa-solid fa-circle-dot" style="color:var(--primary)"></i> Total Online</div>
           <div class="dash-card__value dash-card__value--green">${stats.total}</div>
         </div>
         <div class="dash-card dash-card--info">
-          <div class="dash-card__label">Usuários logados</div>
+          <div class="dash-card__label"><i class="fa-solid fa-user-check"></i> Usuários logados</div>
           <div class="dash-card__value dash-card__value--info">${stats.usuarios}</div>
         </div>
         <div class="dash-card">
-          <div class="dash-card__label">Visitantes</div>
+          <div class="dash-card__label"><i class="fa-solid fa-eye"></i> Visitantes</div>
           <div class="dash-card__value">${stats.visitantes}</div>
         </div>
+        <div class="dash-card">
+          <div class="dash-card__label"><i class="fa-solid fa-mobile-screen"></i> Mobile &nbsp;<i class="fa-solid fa-desktop" style="margin-left:.3rem"></i> Desktop</div>
+          <div class="dash-card__value" style="font-size:1.1rem;gap:.5rem;display:flex;align-items:baseline">
+            <span>${mobile}</span><span style="color:var(--text-muted);font-size:.8rem">/</span><span>${desktop}</span>
+            ${tablet ? `<span style="color:var(--text-muted);font-size:.8rem">tab:${tablet}</span>` : ''}
+          </div>
+        </div>
         <div class="dash-card dash-card--wide">
-          <div class="dash-card__label">Por Origem</div>
+          <div class="dash-card__label"><i class="fa-solid fa-share-nodes"></i> Origem do tráfego</div>
           <div class="online-src-bar">${srcBadges || '<span style="color:var(--text-muted);font-size:.8rem">—</span>'}</div>
         </div>`;
     }
 
+    // ── Lista unificada de sessões ────────────────────────────────
     const listEl = document.getElementById('onlineUsersList');
-    if (listEl) {
-      if (!sessoes_online || !sessoes_online.length) {
-        listEl.innerHTML = '<p class="text--muted" style="font-size:.88rem;padding:.5rem 0">Nenhuma sessão ativa no momento.</p>';
-      } else {
-        listEl.innerHTML = sessoes_online.map(s => {
-          const isUser  = !!s.user_id;
-          const nome    = isUser ? (s.nome || 'Usuário') : 'Visitante';
-          const email   = isUser ? `<span class="online-user-row__email">${s.email}</span>` : '';
-          const dotCls  = isUser ? 'online-dot' : 'online-dot online-dot--anon';
-          const nameCls = isUser ? 'online-user-row__name' : 'online-user-row__name online-user-row__name--anon';
-          const page    = s.page ? `<span class="online-user-row__page"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>` : '';
-          const src     = s.source || 'direto';
-          const meta    = _SRC_META[src] || _SRC_META.outro;
-          const srcLabel = src === 'outro' && s.referrer
-            ? (() => { try { return new URL(s.referrer).hostname; } catch { return meta.label; } })()
-            : meta.label;
-          const ago = _fmtAgo(s.last_seen);
-          return `<div class="online-user-row">
-            <span class="${dotCls}"></span>
-            <div class="online-user-row__info">
-              <span class="${nameCls}">${nome}</span>
-              ${email}
-              ${page}
-            </div>
-            <span class="online-src online-src--${src}" title="${s.referrer || ''}">
-              <i class="${meta.icon}"></i> ${srcLabel}
-            </span>
-            <span class="online-user-row__time">${ago}</span>
-          </div>`;
-        }).join('');
-      }
+    if (!listEl) return;
+
+    if (!sessions.length) {
+      listEl.innerHTML = '<p class="text--muted" style="padding:1.5rem 0;text-align:center">Nenhuma sessão ativa no momento.</p>';
+      return;
     }
+
+    listEl.innerHTML = sessions.map(s => {
+      const isUser = !!s.user_id;
+      const nome   = isUser ? (s.nome || 'Usuário') : 'Visitante anônimo';
+
+      // Avatar
+      const avatarContent = isUser
+        ? (s.nome || 'U').split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase()
+        : '<i class="fa-solid fa-user-secret"></i>';
+      const avatarBg = isUser ? _avatarColor(s.nome || 'U') : 'rgba(255,255,255,.08)';
+      const avatarHtml = `<div class="online-avatar" style="background:${avatarBg}">${avatarContent}</div>`;
+
+      // Geo
+      const flag = _countryFlag(s.country || '');
+      const geo  = [s.city, s.region, s.country_name].filter(Boolean).join(', ');
+      const geoHtml = (geo || s.ip)
+        ? `<span class="online-sc__geo">${flag ? flag + ' ' : ''}<span>${geo || ''}</span>${s.ip ? `<code class="online-sc__ip">${s.ip}</code>` : ''}</span>`
+        : '';
+
+      // Página atual
+      const pageHtml = s.page
+        ? `<span class="online-sc__page"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>`
+        : '';
+
+      // Origem
+      const src   = s.source || 'direto';
+      const meta  = _SRC_META[src] || _SRC_META.outro;
+      const srcLbl = src === 'outro' && s.referrer
+        ? (() => { try { return new URL(s.referrer).hostname; } catch { return meta.label; } })()
+        : meta.label;
+
+      // Referrer link
+      const refHtml = s.referrer
+        ? `<a class="online-sc__ref" href="${s.referrer}" target="_blank" rel="noopener" title="${s.referrer}">
+             <i class="fa-solid fa-arrow-up-right-from-square"></i> ${s.referrer.length > 55 ? s.referrer.substring(0,55) + '…' : s.referrer}
+           </a>`
+        : '';
+
+      // Email (só logado)
+      const emailHtml = isUser && s.email
+        ? `<span class="online-sc__email">${s.email}</span>`
+        : '';
+
+      // Dispositivo
+      const devHtml = `<span class="online-sc__device">${_deviceIcon(s.device)}</span>`;
+
+      // Tempos
+      const ago      = _fmtAgo(s.last_seen);
+      const duration = _fmtDuration(s.first_seen);
+
+      return `<div class="online-sc ${isUser ? 'online-sc--user' : 'online-sc--anon'}">
+        ${avatarHtml}
+        <div class="online-sc__body">
+          <div class="online-sc__row1">
+            <span class="online-sc__name">${nome}</span>
+            ${emailHtml}
+            <span class="online-src online-src--${src}"><i class="${meta.icon}"></i> ${srcLbl}</span>
+            ${devHtml}
+          </div>
+          <div class="online-sc__row2">
+            ${geoHtml}
+            ${pageHtml}
+          </div>
+          ${refHtml}
+        </div>
+        <div class="online-sc__times">
+          <span class="online-sc__ago">${ago}</span>
+          ${duration ? `<span class="online-sc__dur">${duration}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
   } catch { /* ignore */ }
 };
 
@@ -4687,6 +4800,7 @@ const statusPill = (s) => {
 // ── Admin tab navigation ──────────────────────────────────────
 const switchAdminTab = (tab) => {
   clearInterval(_onlineInterval); _onlineInterval = null;
+  clearInterval(_onlineCountdownInterval); _onlineCountdownInterval = null;
   document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.admin-nav__btn').forEach(btn => {
     btn.classList.toggle('admin-nav__btn--active', btn.dataset.adminTab === tab);
@@ -4702,7 +4816,7 @@ const switchAdminTab = (tab) => {
   if (tab === 'config')    loadAdminConfig();
   if (tab === 'jogos')     { populateAdminSelect(); renderLeaguePreview(); }
   if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
-  if (tab === 'online')    { loadAdminOnline(); _onlineInterval = setInterval(loadAdminOnline, 30000); }
+  if (tab === 'online')    { loadAdminOnline(); _onlineInterval = setInterval(loadAdminOnline, 30000); _startOnlineCountdown(); }
 };
 
 // ── Dashboard bulk delete de jogos ────────────────────────────

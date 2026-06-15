@@ -960,13 +960,16 @@
           <div class="admin-page-header admin-page-header--actions">
             <div>
               <h2 class="admin-page-header__title"><span class="online-dot"></span> Online Agora</h2>
-              <p class="admin-page-header__sub">Todas as sessões ativas nos últimos 3 minutos — página atual, origem e tipo de acesso</p>
+              <p class="admin-page-header__sub">Sessões ativas nos últimos 3 min — página, origem, IP, localização e dispositivo em tempo real</p>
             </div>
-            <button class="btn btn--ghost btn--sm" id="btnRefreshOnline"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
+            <div style="display:flex;align-items:center;gap:.65rem">
+              <span class="online-countdown-badge" id="onlineCountdown">↻ 30s</span>
+              <button class="btn btn--ghost btn--sm" id="btnRefreshOnline"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
+            </div>
           </div>
           <div class="dash-grid" id="onlineStats"><!-- JS --></div>
           <div class="panel" style="margin-top:1.5rem">
-            <h3 class="panel__title"><i class="fa-solid fa-users"></i> Sessões ativas</h3>
+            <h3 class="panel__title"><i class="fa-solid fa-tower-broadcast"></i> Sessões ativas</h3>
             <div id="onlineUsersList"></div>
           </div>
         </div>
