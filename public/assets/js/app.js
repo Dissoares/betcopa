@@ -293,12 +293,12 @@ const gameBadge = (g) => {
 
   // 5. Em Breve: aberto + menos de 1h para começar
   if (s === 'aberto' && diff > 0 && diff <= 3600000) {
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Em Breve</span>`;
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Daqui a Pouco</span>`;
   }
 
-  // 6. Palpites em breve: aberto + mais de 7 dias para começar
+  // 6. Em breve: aberto + mais de 7 dias para começar
   if (s === 'aberto' && diff > 7 * 24 * 3600_000) {
-    return `<span class="badge badge--far"><i class="fa-solid fa-calendar"></i> Palpites em breve</span>`;
+    return `<span class="badge badge--soon"><i class="fa-solid fa-calendar"></i> Em Breve</span>`;
   }
 
   // 7. aberto
@@ -689,7 +689,7 @@ const renderCard = (g) => {
   const btnLabel = isFinal
     ? '<i class="fa-solid fa-flag-checkered"></i> Finalizado'
     : isTooFar
-    ? '<i class="fa-solid fa-calendar-xmark"></i> Palpites em breve'
+    ? '<i class="fa-solid fa-calendar"></i> Em Breve'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
   const ctaOdd = g.odd > 1 ? g.odd : S.oddPadrao;
@@ -698,7 +698,7 @@ const renderCard = (g) => {
     : '';
 
   const urgencyHtml = isSoon
-    ? `<span class="gc-urgency"><i class="fa-solid fa-bolt"></i> Palpites encerram em breve!</span>`
+    ? `<span class="gc-urgency"><i class="fa-solid fa-bolt"></i> Faça seu palpite antes que encerre.</span>`
     : '';
 
   const betBlocked = isClosed || isTooFar;
@@ -837,7 +837,7 @@ const renderMatchBanner = () => {
       const ms     = new Date(g.data_hora) - Date.now();
       const isSoon = ms <= 3_600_000;
       pill   = isSoon
-        ? `<div class="mb-pill mb-pill--soon"><i class="fa-solid fa-bolt"></i> EM BREVE</div>`
+        ? `<div class="mb-pill mb-pill--soon"><i class="fa-solid fa-bolt"></i> DAQUI A POUCO</div>`
         : `<div class="mb-pill mb-pill--next"><i class="fa-solid fa-clock"></i> PRÓXIMO JOGO</div>`;
       center = `<div class="mb-label">COMEÇA EM</div>
                 <div class="mb-countdown" id="mbc-cd-${g.id}">${fmtCountdown(ms)}</div>`;
@@ -1110,7 +1110,7 @@ const renderGames = () => {
 
   let html = '';
   html += renderSection('live',     'Ao Vivo',     '<i class="fa-solid fa-circle fa-beat"></i>',  live,     'games-section--live');
-  html += renderSection('soon',     'Em Breve',    '<i class="fa-solid fa-bolt"></i>',             soon,     'games-section--soon');
+  html += renderSection('soon',     'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>',           soon,     'games-section--soon');
   html += renderSection('today',    'Hoje',        '<i class="fa-solid fa-sun"></i>',              today,    'games-section--today');
   html += renderSection('tomorrow', 'Amanhã',      '<i class="fa-solid fa-calendar-day"></i>',    tomorrow, 'games-section--tomorrow');
   weekSections.forEach(ws => {
@@ -1294,21 +1294,29 @@ const loadAdminOnline = async () => {
 };
 
 // ── Share bet helpers ─────────────────────────────────────────
-const loadImgCors = src => new Promise(resolve => {
-  if (!src) return resolve(null);
-  const load = (url, fallback) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload  = () => resolve(img);
-    img.onerror = () => fallback ? load(fallback, null) : resolve(null);
-    img.src = url;
-  };
-  // Se for cópia local de bandeira, tenta CDN como fallback
-  const cdn = src.startsWith('/assets/flags/')
-    ? flagUrlCdn(src.split('/').pop().replace('.png', ''))
+// Usa fetch+blob para evitar o conflito de cache CORS:
+// o browser cacheia <img> sem CORS headers — ao tentar drawImage no canvas
+// com crossOrigin='anonymous' o navegador bloqueia a mesma URL cacheada.
+// Blob URLs são always same-origin, sem restrição de canvas taint.
+const loadImgCors = src => {
+  if (!src) return Promise.resolve(null);
+
+  const code = src.startsWith('/assets/flags/')
+    ? src.split('/').pop().replace('.png', '')
     : null;
-  load(src, cdn);
-});
+  const url = code ? flagUrlCdn(code) : src;
+
+  return fetch(url)
+    .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
+    .then(blob => new Promise(resolve => {
+      const blobUrl = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload  = () => { URL.revokeObjectURL(blobUrl); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(null); };
+      img.src = blobUrl;
+    }))
+    .catch(() => Promise.resolve(null));
+};
 
 const rrect = (ctx, x, y, w, h, r) => {
   ctx.beginPath();
@@ -1331,24 +1339,25 @@ const isoToEmoji = code => {
 };
 
 const generateBetCard = async (bet) => {
-  const W = 600, H = 260;
+  const W = 600, H = 315;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const canvas = document.getElementById('shareCanvas');
   canvas.width  = W * dpr;
   canvas.height = H * dpr;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const game = S.games.find(g => g.id === bet.jogo_id);
+  const game     = S.games.find(g => g.id === bet.jogo_id);
+  const siteName = S.siteName || document.title || 'BetCopa';
+  const siteLogo = S.siteLogo || null;
 
-  const [imgHome, imgAway] = await Promise.all([
+  const [imgHome, imgAway, imgLogo] = await Promise.all([
     loadImgCors(game?.bandeira_casa ? flagUrl(game.bandeira_casa) : null),
     loadImgCors(game?.bandeira_fora ? flagUrl(game.bandeira_fora) : null),
+    siteLogo ? loadImgCors(siteLogo) : Promise.resolve(null),
   ]);
 
-  // Background
+  // ── Background ────────────────────────────────────────────
   const bgGrad = ctx.createLinearGradient(0, 0, W, H);
   bgGrad.addColorStop(0,   '#080e1c');
   bgGrad.addColorStop(0.5, '#0b1220');
@@ -1356,13 +1365,13 @@ const generateBetCard = async (bet) => {
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  const glowGrad = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, 280);
-  glowGrad.addColorStop(0, 'rgba(0,200,83,.10)');
+  const glowGrad = ctx.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, 280);
+  glowGrad.addColorStop(0, 'rgba(0,200,83,.08)');
   glowGrad.addColorStop(1, 'rgba(0,200,83,0)');
   ctx.fillStyle = glowGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // Accent bar helper (used top + bottom)
+  // ── Accent bars ───────────────────────────────────────────
   const accentBar = () => {
     const g = ctx.createLinearGradient(0, 0, W, 0);
     g.addColorStop(0,   'rgba(0,200,83,0)');
@@ -1374,106 +1383,158 @@ const generateBetCard = async (bet) => {
   };
   ctx.fillStyle = accentBar(); ctx.fillRect(0, 0, W, 4);
 
-  // Brand
-  ctx.font = 'bold 18px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = '#00C853';
-  ctx.fillText('BetCopa', 22, 30);
+  // ── Star helper (drawn as canvas path — reliable on all platforms/OS) ──
+  const drawStar = (x, y, r, color, alpha = 1) => {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const angle  = (i * Math.PI / 5) - Math.PI / 2;
+      const radius = i % 2 === 0 ? r : r * 0.42;
+      const px = x + radius * Math.cos(angle);
+      const py = y + radius * Math.sin(angle);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  };
 
-  // Liga name
-  if (game?.liga_nome) {
-    ctx.font = '12px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,.35)';
-    ctx.textAlign = 'right';
-    ctx.fillText(game.liga_nome, W - 22, 30);
-    ctx.textAlign = 'left';
+  // ── Brand row (top-left) ──────────────────────────────────
+  const brandY  = 30;
+  const logoSz  = 26;
+  let brandTextX = 22;
+
+  if (imgLogo) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(22 + logoSz / 2, brandY, logoSz / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(imgLogo, 22, brandY - logoSz / 2, logoSz, logoSz);
+    ctx.restore();
+    brandTextX = 22 + logoSz + 8;
   }
+  ctx.font      = 'bold 16px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = '#00C853';
+  ctx.textAlign = 'left';
+  ctx.fillText(siteName, brandTextX, brandY + 5);
 
-  // Status badge
+  // ── Status badge (top-right) ──────────────────────────────
   if (bet.status === 'ganhou' || bet.status === 'perdido') {
-    const isWin   = bet.status === 'ganhou';
-    const label   = isWin ? '🏆 GANHOU!' : '✕ Perdeu';
-    const badgeBg = isWin ? 'rgba(0,200,83,.18)' : 'rgba(255,71,87,.15)';
+    const isWin    = bet.status === 'ganhou';
+    const label    = isWin ? 'GANHOU!' : 'Perdeu';
+    const badgeBg  = isWin ? 'rgba(0,200,83,.18)' : 'rgba(255,71,87,.15)';
     const badgeTxt = isWin ? '#00C853' : '#FF4757';
     ctx.font = 'bold 11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
     const tw = ctx.measureText(label).width;
-    rrect(ctx, W - tw - 38, 40, tw + 16, 22, 11);
+    rrect(ctx, W - tw - 38, brandY - 13, tw + 16, 22, 11);
     ctx.fillStyle = badgeBg; ctx.fill();
     ctx.strokeStyle = badgeTxt; ctx.globalAlpha = .35; ctx.lineWidth = 1; ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.fillStyle = badgeTxt;
-    ctx.textAlign = 'right';
-    ctx.fillText(label, W - 26, 55);
-    ctx.textAlign = 'left';
+    ctx.fillStyle  = badgeTxt;
+    ctx.textAlign  = 'right';
+    ctx.fillText(label, W - 26, brandY + 2);
+    ctx.textAlign  = 'left';
   }
 
-  // Teams & flags
-  const teamY  = 100;
-  const flagSz = 40;
+  // ── Competition title (centered) with stars + decorative line ──
+  const ligaY = 64;
+  const ligaName = game?.liga_nome || '';
+  if (ligaName) {
+    ctx.font      = '13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.60)';
+    ctx.textAlign = 'center';
+    const tw = ctx.measureText(ligaName).width;
+    ctx.fillText(ligaName, W / 2, ligaY);
+    ctx.textAlign = 'left';
+
+    // Flanking stars (drawn as paths — no emoji rendering issues)
+    const gap   = 14;
+    const starR = 5;
+    drawStar(W / 2 - tw / 2 - gap - starR, ligaY - 4, starR, '#FFD700', 0.85);
+    drawStar(W / 2 + tw / 2 + gap + starR, ligaY - 4, starR, '#FFD700', 0.85);
+
+    // Thin golden underline
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - 90, ligaY + 11);
+    ctx.lineTo(W / 2 + 90, ligaY + 11);
+    ctx.strokeStyle = 'rgba(255,215,0,.22)';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+  }
+
+  // ── Teams & flags ─────────────────────────────────────────
+  const teamY  = 152;
+  const flagSz = 52;
   const cx     = W / 2;
-  const homeX  = cx - 120;
-  const awayX  = cx + 120;
+  const homeX  = cx - 128;
+  const awayX  = cx + 128;
 
   const drawFlag = (img, code, x, y, sz) => {
     if (img) {
       ctx.save();
       ctx.beginPath();
       ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
-      ctx.closePath();
       ctx.clip();
       ctx.drawImage(img, x - sz / 2, y - sz / 2, sz, sz);
       ctx.restore();
       ctx.beginPath();
       ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(255,255,255,.12)';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth   = 1.5;
       ctx.stroke();
     } else {
-      ctx.font = `${sz * .75}px serif`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255,255,255,.9)';
-      ctx.fillText(isoToEmoji(code) || '🏳', x, y + sz * .28);
-      ctx.textAlign = 'left';
+      ctx.beginPath();
+      ctx.arc(x, y, sz / 2, 0, Math.PI * 2);
+      ctx.fillStyle   = 'rgba(255,255,255,.08)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.20)';
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+      if (code) {
+        ctx.font      = `bold ${Math.round(sz * 0.3)}px -apple-system,BlinkMacSystemFont,Arial,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,.6)';
+        ctx.fillText(code.toUpperCase().slice(0, 2), x, y + sz * 0.11);
+        ctx.textAlign = 'left';
+      }
     }
   };
 
   drawFlag(imgHome, game?.bandeira_casa, homeX, teamY, flagSz);
   drawFlag(imgAway, game?.bandeira_fora, awayX, teamY, flagSz);
 
-  ctx.font = 'bold 14px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.font      = 'bold 13px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.85)';
   ctx.textAlign = 'center';
   ctx.fillText(bet.time_casa || '—', homeX, teamY + flagSz / 2 + 18);
   ctx.fillText(bet.time_fora || '—', awayX, teamY + flagSz / 2 + 18);
 
-  ctx.font = 'bold 16px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.25)';
-  ctx.fillText('VS', cx, teamY + 6);
+  ctx.font      = 'bold 14px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.22)';
+  ctx.fillText('VS', cx, teamY + 5);
   ctx.textAlign = 'left';
 
-  // Score box
-  const scoreY = 178;
-  const boxW = 160, boxH = 56;
+  // ── Score box ─────────────────────────────────────────────
+  const scoreY = 238;
+  const boxW = 160, boxH = 54;
   rrect(ctx, cx - boxW / 2, scoreY, boxW, boxH, 12);
-  ctx.fillStyle = 'rgba(0,200,83,.1)'; ctx.fill();
-  ctx.strokeStyle = 'rgba(0,200,83,.4)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle   = 'rgba(0,200,83,.1)';  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,200,83,.4)';  ctx.lineWidth = 1.5; ctx.stroke();
 
-  ctx.font = '11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.font      = '10px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
   ctx.fillStyle = '#00C853';
   ctx.textAlign = 'center';
-  ctx.fillText('MEU PALPITE', cx, scoreY - 8);
+  ctx.fillText('MEU PALPITE', cx, scoreY - 7);
 
-  ctx.font = 'bold 28px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.font      = 'bold 28px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
   ctx.fillStyle = '#fff';
-  ctx.fillText(`${bet.placar_casa}  ×  ${bet.placar_fora}`, cx, scoreY + 38);
+  ctx.fillText(`${bet.placar_casa}  x  ${bet.placar_fora}`, cx, scoreY + 38);
   ctx.textAlign = 'left';
 
-  // Bottom bar + domain
+  // ── Bottom accent bar ─────────────────────────────────────
   ctx.fillStyle = accentBar(); ctx.fillRect(0, H - 4, W, 4);
-  ctx.font = '11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.2)';
-  ctx.textAlign = 'right';
-  ctx.fillText('betcopa.com', W - 22, H - 10);
-  ctx.textAlign = 'left';
 
   return canvas;
 };
@@ -5316,8 +5377,10 @@ const loadBetConfig = async () => {
     S.oddPadrao = cfg.odd_padrao || 5;
     if (cfg.admin_email) S.adminEmail = cfg.admin_email;
     S.bonusCadastro = cfg.bonus_cadastro || 0;
-    applyBrandLogo(cfg.site_logo || '');
-    if (cfg.site_nome) applyBrandName(cfg.site_nome);
+    S.siteName = cfg.site_nome || 'BetCopa';
+    S.siteLogo = cfg.site_logo || '';
+    applyBrandLogo(S.siteLogo);
+    if (S.siteName) applyBrandName(S.siteName);
     renderHeroBonusBadge();
     // Atualiza title e meta description com valores do banco
     updateMetaTags(cfg.site_title || null, cfg.site_description || null);
