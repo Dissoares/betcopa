@@ -329,8 +329,8 @@ const navigate = (view) => {
   const bannerWrap = document.getElementById('matchBannerWrap');
   if (bannerWrap) bannerWrap.classList.toggle('hidden', view !== 'jogos');
 
-  // Páginas legais sempre abrem do topo
-  if (LEGAL_VIEWS.includes(view)) window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Auth e páginas legais sempre abrem do topo
+  if (view === 'auth' || LEGAL_VIEWS.includes(view)) window.scrollTo({ top: 0, behavior: 'smooth' });
 
   // Suporte: exige login
   if (view === 'suporte') {
@@ -2053,10 +2053,19 @@ const submitBet = async () => {
       scoreAway: S.scoreAway,
       stake:     S.stake,
     };
+    const g   = S.selectedGame;
+    const odd = parseFloat(g?.odd ?? S.oddPadrao ?? 5);
+    const previewBet = {
+      valor:          S.stake,
+      odd,
+      possivel_ganho: Math.round(S.stake * odd * 100) / 100,
+      placar_casa:    S.scoreHome,
+      placar_fora:    S.scoreAway,
+      status:         'pendente',
+    };
     closeModal('modalPalpite');
-    switchAuthTab('login');
-    navigate('auth');
-    showAlert('Entre ou crie uma conta para confirmar seu palpite — ele será retomado automaticamente!', 'info');
+    fillTicket(previewBet);
+    openModal('modalTicket');
     return;
   }
 

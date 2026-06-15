@@ -60,7 +60,7 @@ class AdminRepository
 
     public function listBets(int $jogoId = 0, string $status = '', int $page = 1, int $limit = 50): array
     {
-        $where  = [];
+        $where  = ["u.email NOT LIKE '%.seed@betcopa.local'"];
         $params = [];
 
         if ($jogoId) { $where[] = 'a.jogo_id = :jogo_id'; $params['jogo_id'] = $jogoId; }
@@ -77,7 +77,7 @@ class AdminRepository
             FROM apostas a
             JOIN users u ON u.id = a.user_id
             JOIN jogos  j ON j.id = a.jogo_id
-            " . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . "
+            WHERE " . implode(' AND ', $where) . "
             ORDER BY a.criado_em DESC
             LIMIT :limit OFFSET :offset
         ";
