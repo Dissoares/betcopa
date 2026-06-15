@@ -170,8 +170,9 @@ try {
         route('/api/admin/usuarios', 'GET', fn() => $adminCtrl->listUsers());
         route('/api/admin/usuarios/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteUsers());
         route('/api/admin/usuarios/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllUsers());
-        routePattern('/^\/api\/admin\/usuarios\/(\d+)\/bloquear$/',   'POST', fn(int $id) => $adminCtrl->blockUser($id));
+        routePattern('/^\/api\/admin\/usuarios\/(\d+)\/bloquear$/',    'POST', fn(int $id) => $adminCtrl->blockUser($id));
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/desbloquear$/', 'POST', fn(int $id) => $adminCtrl->unblockUser($id));
+        routePattern('/^\/api\/admin\/usuarios\/(\d+)\/toggle-admin$/', 'POST', fn(int $id) => $adminCtrl->toggleAdmin($id));
 
         // ── Admin: Apostas ────────────────────────────────────
         route('/api/admin/apostas',              'GET',  fn() => $adminCtrl->listBets());

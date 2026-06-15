@@ -39,6 +39,12 @@ class UserRepository
         $this->db->prepare('UPDATE users SET bloqueado = 0 WHERE id = :id')->execute(['id' => $id]);
     }
 
+    public function setAdmin(int $id, bool $value): void
+    {
+        $this->db->prepare('UPDATE users SET is_admin = :v WHERE id = :id')
+                 ->execute(['v' => $value ? 1 : 0, 'id' => $id]);
+    }
+
     /** Exclui usuários em lote, protegendo o admin pelo email. */
     public function deleteMany(array $ids, string $adminEmail): array
     {

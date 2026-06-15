@@ -351,7 +351,7 @@ const renderDrawer = () => {
   if (S.user) {
     const initials = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const saldo    = parseFloat(S.user.saldo || 0);
-    const isAdmin  = S.user.email === S.adminEmail;
+    const isAdmin  = S.user.email === S.adminEmail || !!S.user.is_admin;
 
     body.innerHTML = `
       <div class="dr-user">
@@ -429,7 +429,7 @@ const renderHeader = () => {
   if (S.user) {
     const initials  = S.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const saldo     = parseFloat(S.user.saldo || 0);
-    const isAdmin   = S.user.email === S.adminEmail;
+    const isAdmin   = S.user.email === S.adminEmail || !!S.user.is_admin;
     const firstName = S.user.nome.split(' ')[0];
 
     wrap.innerHTML = `
@@ -4136,7 +4136,10 @@ const bind = () => {
     if (!btn) return;
     if (btn.dataset.action === 'users-prev') { loadAdminUsers(_adminUsersPage - 1); return; }
     if (btn.dataset.action === 'users-next') { loadAdminUsers(_adminUsersPage + 1); return; }
-    if (btn.dataset.uid) handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
+    if (btn.dataset.action === 'block' || btn.dataset.action === 'unblock')
+      handleBlockUser(Number(btn.dataset.uid), btn.dataset.action === 'block');
+    if (btn.dataset.action === 'make-admin' || btn.dataset.action === 'remove-admin')
+      handleToggleAdmin(Number(btn.dataset.uid), btn.dataset.action === 'make-admin');
   });
   document.getElementById('adminUsersList')?.addEventListener('change', e => {
     const chk = e.target.closest('.user-row-chk');
@@ -4611,16 +4614,20 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
             <tr data-status="${u.bloqueado == 1 ? 'bloqueado' : 'ativo'}">
               <td><input type="checkbox" class="user-row-chk" data-id="${u.id}" ${_selectedUsers.has(u.id) ? 'checked' : ''}></td>
               <td>${u.id}</td>
-              <td>${u.nome}</td>
+              <td>${u.nome} ${u.is_admin == 1 ? '<span class="badge-admin">Admin</span>' : ''}</td>
               <td>${u.email}</td>
               <td>${fmtR$(u.saldo)}</td>
               <td>${u.total_apostas}</td>
               <td>${u.apostas_ganhas}</td>
               <td>${statusPill(u.bloqueado == 1 ? 'bloqueado' : 'ativo')}</td>
-              <td>
+              <td style="display:flex;gap:.35rem;flex-wrap:wrap">
                 ${u.bloqueado == 1
                   ? `<button class="btn btn--primary btn--sm" data-action="unblock" data-uid="${u.id}">Desbloquear</button>`
                   : `<button class="btn btn--danger  btn--sm" data-action="block"   data-uid="${u.id}">Bloquear</button>`
+                }
+                ${u.is_admin == 1
+                  ? `<button class="btn btn--ghost btn--sm" data-action="remove-admin" data-uid="${u.id}">Remover Admin</button>`
+                  : `<button class="btn btn--warning btn--sm" data-action="make-admin"  data-uid="${u.id}">Tornar Admin</button>`
                 }
               </td>
             </tr>`).join('')}
@@ -4651,6 +4658,27 @@ const handleBlockUser = async (uid, block) => {
   try {
     await api(`/api/admin/usuarios/${uid}/${action}`, 'POST', {});
     toast(block ? 'Usuário bloqueado.' : 'Usuário desbloqueado.', 'success');
+    loadAdminUsers();
+  } catch (err) {
+    toast(err.message, 'danger');
+  }
+};
+
+const handleToggleAdmin = async (uid, makeAdmin) => {
+  const ok = await confirm({
+    icon:        makeAdmin ? 'warning' : 'question',
+    title:       makeAdmin ? 'Tornar este usuário admin?' : 'Remover permissão de admin?',
+    html:        makeAdmin
+      ? 'O usuário terá <b>acesso total ao painel administrativo</b>.'
+      : 'O usuário perderá o acesso ao painel administrativo.',
+    confirmText:  makeAdmin ? 'Tornar Admin' : 'Remover Admin',
+    cancelText:  'Cancelar',
+    confirmColor: makeAdmin ? '#f59e0b' : '#6b7280',
+  });
+  if (!ok) return;
+  try {
+    const r = await api(`/api/admin/usuarios/${uid}/toggle-admin`, 'POST', { is_admin: makeAdmin });
+    toast(r.message, 'success');
     loadAdminUsers();
   } catch (err) {
     toast(err.message, 'danger');

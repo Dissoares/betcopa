@@ -1743,6 +1743,9 @@ select {
 .pay-opt-card--active .pay-opt-card__name { color: var(--primary); }
 .pay-opt-card--soon { opacity: .35; cursor: not-allowed; }
 .pay-opt-card:disabled { opacity: .35; cursor: not-allowed; }
+.badge-admin { display:inline-block; font-size:.65rem; font-weight:700; padding:.1rem .4rem; border-radius:4px; background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.3); vertical-align:middle; margin-left:.3rem; }
+.btn--warning { background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+.btn--warning:hover { background:rgba(245,158,11,.25); }
 .pay-opts__footer { padding: 0 1.5rem 1.5rem; }
 
 /* Modal de resultado */

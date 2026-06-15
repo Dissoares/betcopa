@@ -35,7 +35,9 @@ function ensureAdmin(string $adminEmail): void
     if (empty($_SESSION['user_id'])) {
         jsonResponse(['error' => 'Acesso não autorizado'], 401);
     }
-    if (empty($_SESSION['user_email']) || $_SESSION['user_email'] !== $adminEmail) {
+    $isSuperAdmin = !empty($_SESSION['user_email']) && $_SESSION['user_email'] === $adminEmail;
+    $isAdmin      = !empty($_SESSION['is_admin']);
+    if (!$isSuperAdmin && !$isAdmin) {
         jsonResponse(['error' => 'Acesso restrito ao administrador'], 403);
     }
 }

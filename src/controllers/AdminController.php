@@ -86,6 +86,17 @@ class AdminController
         jsonResponse(['message' => 'Usuário desbloqueado.']);
     }
 
+    public function toggleAdmin(int $id): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        $body    = json_decode(file_get_contents('php://input'), true) ?: [];
+        $makeAdmin = !empty($body['is_admin']);
+        $this->users->setAdmin($id, $makeAdmin);
+        Logger::info($makeAdmin ? 'Usuário promovido a admin' : 'Admin removido', ['id' => $id]);
+        jsonResponse(['message' => $makeAdmin ? 'Usuário promovido a admin.' : 'Permissão de admin removida.']);
+    }
+
     // ── Apostas ───────────────────────────────────────────────
     public function listBets(): void
     {

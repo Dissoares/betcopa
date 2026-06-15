@@ -34,7 +34,7 @@ class AdminRepository
         $offset = ($page - 1) * $limit;
         $stmt   = $this->db->prepare("
             SELECT
-              u.id, u.nome, u.email, u.bloqueado, u.criado_em,
+              u.id, u.nome, u.email, u.bloqueado, u.is_admin, u.criado_em,
               COUNT(a.id)                                   AS total_apostas,
               COALESCE(SUM(CASE WHEN a.status='ganhou' THEN 1 END), 0) AS apostas_ganhas,
               COALESCE(
