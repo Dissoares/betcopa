@@ -842,7 +842,7 @@ const renderMatchBanner = () => {
     }
 
     return `
-      <div class="mb-slide${idx === 0 ? ' mb-slide--active' : ''}" data-slide="${idx}">
+      <div class="mb-slide mb-slide--c${idx % 5}${idx === 0 ? ' mb-slide--active' : ''}" data-slide="${idx}">
         ${pill}
         <div class="mb-match">
           <div class="mb-team">${logoH}<span class="mb-name">${g.time_casa}</span></div>
@@ -896,13 +896,9 @@ const renderMatchBanner = () => {
     setThemeClass(slides[current]);
 
     const strip = document.getElementById('mbStrip');
-    if (isDesktop()) {
-      const card = strip.children[current];
-      if (card) strip.scrollTo({ left: card.offsetLeft - strip.offsetLeft, behavior: 'smooth' });
-      strip.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === current));
-    } else {
-      strip.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === current));
-    }
+    const card = strip.children[current];
+    if (card) strip.scrollTo({ left: card.offsetLeft - strip.offsetLeft, behavior: 'smooth' });
+    strip.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === current));
   };
 
   const advance   = () => goTo((current + 1) % slides.length);
