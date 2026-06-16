@@ -331,8 +331,7 @@ const navigate = (view) => {
   const bannerWrap = document.getElementById('matchBannerWrap');
   if (bannerWrap) bannerWrap.classList.toggle('hidden', view !== 'jogos');
 
-  // Auth e páginas legais sempre abrem do topo
-  if (view === 'auth' || LEGAL_VIEWS.includes(view)) window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'instant' });
 
   // Suporte: exige login
   if (view === 'suporte') {
@@ -1345,9 +1344,8 @@ const _fmtDuration = (first_seen) => {
 
 const _countryFlag = (code) => {
   if (!code || code.length !== 2) return '';
-  try {
-    return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E0 + c.charCodeAt(0) - 65));
-  } catch { return ''; }
+  const c = code.toLowerCase();
+  return `<img src="https://flagcdn.com/w40/${c}.png" alt="${code.toUpperCase()}" style="height:14px;width:auto;vertical-align:middle;border-radius:2px" loading="lazy">`;
 };
 
 const _avatarColor = (str) => {
@@ -2582,10 +2580,10 @@ const renderScore = (elId, val) => {
   const el = document.getElementById(elId);
   if (!el) return;
   if (val === null) {
-    el.textContent = '×';
+    el.value = '';
     el.classList.add('score-value--empty');
   } else {
-    el.textContent = val;
+    el.value = val;
     el.classList.remove('score-value--empty');
   }
 };
@@ -2608,8 +2606,8 @@ const openBetModal = (gameId, pending = null) => {
   }
   const lblMin = document.getElementById('stakeLabelMin');
   const lblMax = document.getElementById('stakeLabelMax');
-  if (lblMin) lblMin.textContent = fmtMoney(S.stakeMin);
-  if (lblMax) lblMax.textContent = fmtMoney(S.stakeMax);
+  if (lblMin) lblMin.textContent = 'Mín';
+  if (lblMax) lblMax.textContent = 'Máx';
   const effectiveOdd = parseFloat(game.odd || 0) > 1 ? parseFloat(game.odd) : S.oddPadrao;
   const oddEl = document.getElementById('gameOddDisplay');
   if (oddEl) oddEl.textContent = `${Number.isInteger(effectiveOdd) ? effectiveOdd : effectiveOdd.toFixed(1)}×`;
@@ -2682,7 +2680,7 @@ const updateBetPreview = () => {
       hintEl.textContent = '';
     } else {
       hintEl.classList.remove('hidden');
-      hintEl.textContent = `Seu palpite é ${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}, você ganhará ${fmtMoney(premio)} se acertar o placar exato.`;
+      // hintEl.textContent = `Seu palpite é ${game.time_casa} ${S.scoreHome} × ${S.scoreAway} ${game.time_fora}, você ganhará ${fmtMoney(premio)}.`;
     }
   }
 
@@ -2767,9 +2765,10 @@ const fillTicket = (bet) => {
   const oddFmt  = oddRaw > 0 ? (Number.isInteger(oddRaw) ? `${oddRaw}×` : `${oddRaw.toFixed(1)}×`) : '—';
   const status  = isGuest ? 'preview' : (bet.status ?? 'pendente');
 
-  // ID
-  document.getElementById('ticketId').textContent = isGuest
-    ? 'Palpite' : `#${String(bet.id).padStart(6, '0')}`;
+  // Resetar seção de pagamento
+  document.getElementById('tkFooterConfirm')?.classList.remove('hidden');
+  document.getElementById('tkPaySection')?.classList.add('hidden');
+
 
   // Jogo
   const gameLabel = game ? `${game.time_casa} × ${game.time_fora}` : '—';
@@ -2844,7 +2843,7 @@ const fillTicket = (bet) => {
     payBtn.style.display = paid ? 'none' : '';
     payBtn.innerHTML = isGuest
       ? '<i class="fa-solid fa-lock"></i> Entrar para confirmar'
-      : 'Confirmar e pagar <i class="fa-solid fa-arrow-right"></i>';
+      : 'Confirmar palpite <i class="fa-solid fa-arrow-right"></i>';
   }
 };
 
@@ -2980,8 +2979,6 @@ const simulatePay = () => {
     navigate('auth');
     return;
   }
-  const amountEl = document.getElementById('payOptsAmount');
-  if (amountEl) amountEl.textContent = fmtMoney(S.selectedBet?.valor ?? 0);
   const saldo = parseFloat(S.user?.saldo ?? 0);
   const saldoEl = document.getElementById('payOptSaldoDisp');
   if (saldoEl) saldoEl.textContent = fmtMoney(saldo) + ' disponível';
@@ -2989,8 +2986,8 @@ const simulatePay = () => {
   const betValor  = S.selectedBet?.valor ?? 0;
   if (saldoCard) saldoCard.disabled = saldo < betValor;
   _selectPayMethod('pix');
-  closeModal('modalTicket');
-  openModal('modalPaymentOpts');
+  document.getElementById('tkFooterConfirm')?.classList.add('hidden');
+  document.getElementById('tkPaySection')?.classList.remove('hidden');
 };
 
 const confirmBalancePayment = async () => {
@@ -2998,7 +2995,7 @@ const confirmBalancePayment = async () => {
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
     await api(`/api/apostas/${S.selectedBet.id}/pagar-saldo`, 'POST', {});
-    closeModal('modalPaymentOpts');
+    closeModal('modalTicket');
     await Promise.all([loadUser(), loadBets()]);
     toast('Aposta confirmada! Saldo debitado.', 'success');
     navigate('palpites');
@@ -3015,7 +3012,7 @@ const confirmPixPayment = async () => {
   try {
     const data = await api(`/api/apostas/${S.selectedBet.id}/pagar`, 'POST', {});
     S.selectedBet.valor = S.selectedBet.valor || data.valor;
-    closeModal('modalPaymentOpts');
+    closeModal('modalTicket');
     openPixModal(data);
     await loadBets();
   } catch (err) {
@@ -4391,7 +4388,7 @@ const bind = () => {
 
   // Score counter buttons
   const stepScore = (val, dir) => {
-    if (val === null) return dir > 0 ? 0 : null;
+    if (val === null) return dir > 0 ? 0 : 10;
     if (val === 0 && dir < 0) return null;
     return Math.max(0, val + dir);
   };
@@ -4403,6 +4400,17 @@ const bind = () => {
     if (btn.dataset.score === 'away') S.scoreAway = stepScore(S.scoreAway, dir);
     renderScore('scoreHome', S.scoreHome);
     renderScore('scoreAway', S.scoreAway);
+    updateBetPreview();
+  });
+
+  document.getElementById('modalPalpite').addEventListener('input', e => {
+    const inp = e.target;
+    if (!inp.classList.contains('score-value')) return;
+    const raw = inp.value.replace(/\D/g, '');
+    const n   = raw === '' ? null : Math.min(99, Math.max(0, parseInt(raw, 10)));
+    if (inp.id === 'scoreHome') S.scoreHome = n;
+    if (inp.id === 'scoreAway') S.scoreAway = n;
+    inp.classList.toggle('score-value--empty', n === null);
     updateBetPreview();
   });
 
@@ -5086,6 +5094,7 @@ const statusPill = (s) => {
 
 // ── Admin tab navigation ──────────────────────────────────────
 const switchAdminTab = (tab) => {
+  window.scrollTo({ top: 0, behavior: 'instant' });
   clearInterval(_onlineInterval); _onlineInterval = null;
   clearInterval(_onlineCountdownInterval); _onlineCountdownInterval = null;
   document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));

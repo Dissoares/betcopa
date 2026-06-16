@@ -1422,7 +1422,7 @@ select {
   max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .bm__vs {
-  font-size: 2rem; font-weight: 900;
+  font-size: 5rem; font-weight: 900;
   color: var(--text-muted); padding: 0 .25rem;
   align-self: flex-start; margin-top: .6rem;
 }
@@ -1450,9 +1450,20 @@ select {
   box-shadow: 0 0 12px rgba(0,200,83,.08) inset;
 }
 .bm__score-box .score-value {
-  font-size: 2rem; line-height: 1; width: auto;
+  font-size: 2rem; line-height: 1; width: 2.6rem;
   transition: color .15s;
 }
+.bm__score-box input.score-value {
+  background: none; border: none; outline: none;
+  text-align: center; color: inherit;
+  font-weight: 900; font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield; appearance: textfield;
+  padding: 0;
+}
+.bm__score-box input.score-value::-webkit-outer-spin-button,
+.bm__score-box input.score-value::-webkit-inner-spin-button { -webkit-appearance: none; }
+.bm__score-box input.score-value::placeholder { color: var(--danger); opacity: 1; }
 .bm__score-box .score-value--empty {
   color: var(--danger); font-size: 1.6rem; font-weight: 900;
 }
@@ -1575,28 +1586,23 @@ select {
   padding: 1.4rem 1.5rem 1.2rem;
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
+  text-align: center;
 }
 .tk__header-top {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: .75rem;
+  display: flex; justify-content: center; align-items: center;
+  margin-bottom: .6rem;
 }
 .tk__label {
   font-size: .7rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: .1em; color: var(--text-muted);
 }
 .tk__label i { color: var(--primary); margin-right: .25rem; }
-.tk__id {
-  font-family: 'Courier New', monospace; font-size: .75rem;
-  color: var(--text-muted); background: var(--surface);
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: .12rem .5rem;
-}
 .tk__game {
-  font-size: 1.15rem; font-weight: 800;
+  font-size: 1.2rem; font-weight: 800;
   margin-bottom: .3rem; color: var(--text);
 }
 .tk__meta {
-  display: flex; align-items: center; gap: .35rem;
+  display: flex; align-items: center; justify-content: center; gap: .35rem;
   font-size: .74rem; color: var(--text-muted);
 }
 .tk__meta-sep { opacity: .35; }
@@ -1662,6 +1668,10 @@ select {
 .tk__perf::after  { right: -9px; }
 
 .tk__footer { padding: 1.25rem 1.5rem 1.5rem; }
+.tk__pay-section { border-top: 1px solid var(--border); }
+.tk__pay-section .pay-opts__section-label { padding: .9rem 1.5rem .4rem; }
+.tk__pay-section .pay-opts__methods { padding: 0 1.5rem .75rem; }
+.tk__pay-section .tk__footer { padding-top: 0; }
 
 /* Matchup no ticket */
 .tk__matchup {

@@ -1480,19 +1480,19 @@
           <span class="bet-team__flag" id="betFlagHome"></span>
           <span class="bm__team-name" id="betNameHome"></span>
           <div class="bm__score-group">
-            <button class="score-btn" data-score="home" data-dir="1"><i class="fa-solid fa-chevron-up"></i></button>
-            <div class="bm__score-box"><span class="score-value" id="scoreHome">0</span></div>
-            <button class="score-btn" data-score="home" data-dir="-1"><i class="fa-solid fa-chevron-down"></i></button>
+            <button class="score-btn" data-score="home" data-dir="-1"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="bm__score-box"><input type="number" class="score-value" id="scoreHome" min="0" max="99" placeholder="?" inputmode="numeric"></div>
+            <button class="score-btn" data-score="home" data-dir="1"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
         </div>
-        <span class="bm__vs">×</span>
+        <span class="bm__vs">X</span>
         <div class="bm__team">
           <span class="bet-team__flag" id="betFlagAway"></span>
           <span class="bm__team-name" id="betNameAway"></span>
           <div class="bm__score-group">
-            <button class="score-btn" data-score="away" data-dir="1"><i class="fa-solid fa-chevron-up"></i></button>
-            <div class="bm__score-box"><span class="score-value" id="scoreAway">0</span></div>
-            <button class="score-btn" data-score="away" data-dir="-1"><i class="fa-solid fa-chevron-down"></i></button>
+            <button class="score-btn" data-score="away" data-dir="-1"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="bm__score-box"><input type="number" class="score-value" id="scoreAway" min="0" max="99" placeholder="?" inputmode="numeric"></div>
+            <button class="score-btn" data-score="away" data-dir="1"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
         </div>
       </div>
@@ -1500,7 +1500,7 @@
       <!-- Valor da aposta -->
       <div class="bm__stake">
         <div class="bm__stake-header">
-          <span class="bm__stake-label">Selecione o valor do seu palpite</span>
+          <span class="bm__stake-label">Valor da aposta</span>
           <span class="bm__stake-val" id="stakeDisplay">R$ 50,00</span>
         </div>
         <input class="stake-slider" id="stakeSlider" type="range" min="5" max="500" value="50" step="5" />
@@ -1512,12 +1512,8 @@
 
       <!-- Resumo -->
       <div class="bm__summary">
-        <div class="bm__summary-pay">
-          <span class="bm__summary-odd-label">Multiplicador do jogo</span>
-          <span class="bm__mult-badge" id="gameOddDisplay">5×</span>
-        </div>
         <div class="bm__summary-prize">
-          <span class="bm__prize-label"><i class="fa-solid fa-trophy"></i> Você ganha se acertar:</span>
+          <span class="bm__prize-label"><i class="fa-solid fa-trophy"></i> Você ganha:</span>
           <span class="bm__prize-amount" id="betWinAmount">R$ 250,00</span>
         </div>
       </div>
@@ -1539,7 +1535,6 @@
       <div class="tk__header">
         <div class="tk__header-top">
           <span class="tk__label"><i class="fa-solid fa-circle-check"></i> Confirmação</span>
-          <span class="tk__id" id="ticketId"></span>
         </div>
         <div class="tk__game" id="ticketGame">—</div>
         <div class="tk__meta">
@@ -1591,43 +1586,31 @@
         <span class="tk__stake-bar-amount" id="ticketValor">—</span>
       </div>
 
-      <div class="tk__footer">
+      <div class="tk__footer" id="tkFooterConfirm">
         <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay">
-          Confirmar <i class="fa-solid fa-arrow-right"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== MODAL: OPÇÕES DE PAGAMENTO ===== -->
-  <div class="modal hidden" id="modalPaymentOpts">
-    <div class="modal__backdrop" data-close="modalPaymentOpts"></div>
-    <div class="modal__box pay-opts">
-      <button class="modal__close" data-close="modalPaymentOpts">×</button>
-
-      <div class="pay-opts__header">
-        <h3 class="pay-opts__title"><i class="fa-solid fa-lock"></i> Finalizar pagamento</h3>
-      </div>
-
-      <p class="pay-opts__section-label">Forma de pagamento</p>
-
-      <div class="pay-opts__methods">
-        <button class="pay-opt-card pay-opt-card--active" data-method="pix" id="payOptPix">
-          <i class="fa-brands fa-pix pay-opt-card__icon"></i>
-          <span class="pay-opt-card__name">PIX</span>
-          <span class="pay-opt-card__sub">Aprovação imediata</span>
-        </button>
-        <button class="pay-opt-card" data-method="saldo" id="payOptSaldo">
-          <i class="fa-solid fa-wallet pay-opt-card__icon"></i>
-          <span class="pay-opt-card__name">Saldo</span>
-          <span class="pay-opt-card__sub" id="payOptSaldoDisp">R$ 0,00 disponível</span>
+          Confirmar palpite <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>
 
-      <div class="pay-opts__footer">
-        <button class="btn btn--primary btn--full btn--large" id="btnFinalizePayment">
-          <i class="fa-brands fa-pix"></i> Pagar com PIX
-        </button>
+      <div class="tk__pay-section hidden" id="tkPaySection">
+        <p class="pay-opts__section-label">Forma de pagamento</p>
+        <div class="pay-opts__methods">
+          <button class="pay-opt-card pay-opt-card--active" data-method="pix" id="payOptPix">
+            <i class="fa-brands fa-pix pay-opt-card__icon"></i>
+            <span class="pay-opt-card__name">PIX</span>
+            <span class="pay-opt-card__sub">Aprovação imediata</span>
+          </button>
+          <button class="pay-opt-card" data-method="saldo" id="payOptSaldo">
+            <i class="fa-solid fa-wallet pay-opt-card__icon"></i>
+            <span class="pay-opt-card__name">Saldo</span>
+            <span class="pay-opt-card__sub" id="payOptSaldoDisp">R$ 0,00 disponível</span>
+          </button>
+        </div>
+        <div class="tk__footer">
+          <button class="btn btn--primary btn--full btn--large" id="btnFinalizePayment">
+            <i class="fa-brands fa-pix"></i> Pagar com PIX
+          </button>
+        </div>
       </div>
     </div>
   </div>
