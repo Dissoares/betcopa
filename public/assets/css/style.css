@@ -240,6 +240,47 @@ body::before {
   border-bottom: 1px solid var(--border);
 }
 
+/* ── Ticker bar ──────────────────────────────────────────── */
+.ticker-bar {
+  display: flex; align-items: center;
+  height: 28px; overflow: hidden;
+  border-top: 1px solid rgba(0,200,83,.18);
+  background: rgba(0,0,0,.25);
+}
+.ticker-bar__tag {
+  flex-shrink: 0;
+  background: var(--primary); color: #000;
+  font-size: .62rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  padding: 0 .75rem; height: 100%;
+  display: flex; align-items: center; gap: .3rem;
+}
+.ticker-bar__track { flex: 1; overflow: hidden; }
+.ticker-bar__inner {
+  display: inline-flex; align-items: center;
+  white-space: nowrap;
+  animation: ticker-scroll 50s linear infinite;
+}
+.ticker-bar__inner:hover { animation-play-state: paused; }
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-item {
+  font-size: .7rem; color: #00c853;
+  text-shadow: 0 0 8px rgba(0,200,83,.5);
+  padding: 0 1.5rem; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: .35rem;
+}
+.ticker-item--live { color: var(--primary); font-weight: 700; }
+.ticker-item--live .ticker-live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #f87171;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+.ticker-item--result { color: var(--text); }
+.ticker-sep { color: rgba(255,255,255,.15); font-size: .55rem; padding: 0 .25rem; }
+
 .header__inner {
   display: flex;
   align-items: stretch;
@@ -476,6 +517,9 @@ body.drawer-open { overflow: hidden; }
   flex: 1;
   overflow-y: auto;
   gap: .1rem;
+}
+.drawer__footer {
+  flex-shrink: 0;
 }
 
 /* ── User info block ─────────────────────────────────────────── */

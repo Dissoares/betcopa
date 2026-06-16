@@ -130,6 +130,14 @@
         </button>
       </div>
     </div>
+
+    <!-- Ticker de jogos -->
+    <div class="ticker-bar" id="tickerBar">
+      <span class="ticker-bar__tag"><i class="fa-solid fa-satellite-dish"></i> Jogos</span>
+      <div class="ticker-bar__track">
+        <div class="ticker-bar__inner" id="tickerInner"></div>
+      </div>
+    </div>
   </header>
 
   <div class="drawer" id="mobileDrawer">
@@ -143,6 +151,7 @@
         <button class="drawer__close" data-action="close-mobile-menu" aria-label="Fechar menu">×</button>
       </div>
       <div class="drawer__body" id="drawerBody"></div>
+      <div class="drawer__footer" id="drawerFooter"></div>
     </div>
   </div>
 
@@ -413,11 +422,6 @@
           <button class="admin-nav__btn" data-admin-tab="suporte"><i class="fa-solid fa-headset"></i> Suporte <span class="admin-nav__badge hidden" id="adminTicketBadge">0</span></button>
           <button class="admin-nav__btn" data-admin-tab="online"><i class="fa-solid fa-signal"></i> Online</button>
         </nav>
-        <div class="admin-sidebar__footer">
-          <button class="btn btn--ghost btn--icon btn-theme-toggle" aria-label="Alternar tema">
-            <i class="fa-solid fa-moon theme-icon"></i>
-          </button>
-        </div>
       </aside>
 
       <!-- Content -->

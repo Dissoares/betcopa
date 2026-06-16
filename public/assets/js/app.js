@@ -388,15 +388,6 @@ const renderDrawer = () => {
         <button class="dr-item dr-item--danger" id="drawerLogout">
           <i class="fa-solid fa-right-from-bracket"></i> Sair
         </button>
-      </div>
-      <div class="dr-bottom">
-        <div class="dr-sep"></div>
-        <p class="dr-section-label">TEMA</p>
-        <div class="dr-section">
-          <button class="dr-item btn-theme-toggle">
-            <i class="fa-solid fa-moon theme-icon"></i> Alternar Modo
-          </button>
-        </div>
       </div>`;
 
     document.getElementById('drawerLogout')?.addEventListener('click', () => { closeMobileMenu(); logout(); });
@@ -412,15 +403,18 @@ const renderDrawer = () => {
       <div class="dr-sep"></div>
       <button class="btn btn--primary btn--full" data-nav="auth">
         <i class="fa-solid fa-right-to-bracket"></i> Entrar
-      </button>
-      <div class="dr-bottom">
-        <div class="dr-sep"></div>
-        <p class="dr-section-label">TEMA</p>
-        <div class="dr-section">
-          <button class="dr-item btn-theme-toggle">
-            <i class="fa-solid fa-moon theme-icon"></i> Alternar Modo
-          </button>
-        </div>
+      </button>`;
+  }
+
+  const footer = document.getElementById('drawerFooter');
+  if (footer) {
+    footer.innerHTML = `
+      <div class="dr-sep"></div>
+      <p class="dr-section-label">TEMA</p>
+      <div class="dr-section">
+        <button class="dr-item btn-theme-toggle">
+          <i class="fa-solid fa-moon theme-icon"></i> Alternar Modo
+        </button>
       </div>`;
   }
 };
@@ -1040,6 +1034,38 @@ const renderLeagueTabs = () => {
   ].join('');
 
   bar.classList.remove('hidden');
+};
+
+const renderTicker = () => {
+  const inner = document.getElementById('tickerInner');
+  if (!inner || !S.games.length) return;
+
+  const fmtDt = (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const items = S.games.map(g => {
+    const live = isGameLive(g);
+    if (live) {
+      const sc = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
+      return `<span class="ticker-item ticker-item--live"><span class="ticker-live-dot"></span> ${g.time_casa} ${sc} ${g.time_fora}</span>`;
+    }
+    if (g.status === 'encerrado' && g.placar_real) {
+      const sc = g.placar_real.replace('x', ' × ');
+      return `<span class="ticker-item ticker-item--result"><i class="fa-solid fa-flag-checkered"></i> ${g.time_casa} ${sc} ${g.time_fora}</span>`;
+    }
+    return `<span class="ticker-item"><i class="fa-solid fa-futbol"></i> ${g.time_casa} × ${g.time_fora} · ${fmtDt(g.data_hora)}</span>`;
+  }).join('<span class="ticker-sep">✦</span>');
+
+  // Duplicar para loop contínuo sem corte
+  inner.innerHTML = items + '<span class="ticker-sep">✦</span>' + items;
+
+  // Ajustar velocidade proporcional ao conteúdo
+  const totalW = inner.scrollWidth / 2;
+  const dur = Math.max(20, Math.round(totalW / 80));
+  inner.style.animationDuration = dur + 's';
 };
 
 const renderGames = () => {
@@ -3774,6 +3800,7 @@ const loadGames = async () => {
   _activeLeague = 'all'; // reset filter on full reload
   if (skel) skel.classList.add('hidden');
   renderGames();
+  renderTicker();
   if (!document.getElementById('view-resultados')?.classList.contains('hidden')) renderResultados();
   prefetchGameImages();
 };
