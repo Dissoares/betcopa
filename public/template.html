@@ -170,61 +170,64 @@
       <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
       <div class="copa-hero__content">
 
-        <!-- Esquerda: tagline + CTA -->
-        <div class="copa-hero__left">
-          <div class="copa-hero__eyebrow"><i class="fa-solid fa-futbol"></i> Apostas Esportivas</div>
-          <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
-          <p class="copa-hero__sub">Faça seu palpite nos melhores jogos, escolha seu multiplicador e leve o prêmio para casa.</p>
-          <div class="copa-hero__actions">
-            <button class="btn btn--primary btn--lg copa-hero__cta" id="btnHeroCta">
-              <i class="fa-solid fa-bolt"></i> Fazer palpite
-            </button>
-            <button class="hero-live-pill hidden" id="heroStatLiveWrap" data-nav="jogos">
-              <i class="fa-solid fa-circle copa-hero__live-dot"></i>
-              <span id="heroStatLive">0</span> Ao Vivo
-            </button>
-            <div id="heroBonusBadge" class="hero-bonus hidden">
-              <i class="fa-solid fa-gift"></i>
-              <span>Bônus de <strong id="heroBonusAmt">R$50</strong> no cadastro</span>
-              <button class="btn btn--primary btn--sm" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+        <!-- Linha superior: tagline | stats -->
+        <div class="copa-hero__top">
+
+          <div class="copa-hero__left">
+            <div class="copa-hero__eyebrow"><i class="fa-solid fa-futbol"></i> Apostas Esportivas</div>
+            <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
+            <p class="copa-hero__sub">Faça seu palpite, escolha seu multiplicador e leve o prêmio para casa.</p>
+            <div class="copa-hero__actions">
+              <button class="btn btn--primary btn--lg copa-hero__cta" id="btnHeroCta">
+                <i class="fa-solid fa-bolt"></i> Fazer palpite
+              </button>
+              <button class="hero-live-pill hidden" id="heroStatLiveWrap" data-nav="jogos">
+                <i class="fa-solid fa-circle copa-hero__live-dot"></i>
+                <span id="heroStatLive">0</span> Ao Vivo
+              </button>
+              <div id="heroBonusBadge" class="hero-bonus hidden">
+                <i class="fa-solid fa-gift"></i>
+                <span>Bônus de <strong id="heroBonusAmt">R$50</strong> no cadastro</span>
+                <button class="btn btn--primary btn--sm" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+              </div>
             </div>
           </div>
 
-          <!-- Urgency bar: próximo jogo -->
-          <div class="hero-urgency hidden" id="heroUrgency">
-            <span class="hero-urgency__dot"></span>
-            <div class="hero-urgency__info">
-              <span class="hero-urgency__label">Próximo jogo</span>
-              <span class="hero-urgency__teams" id="heroUrgencyTeams">—</span>
+          <div class="copa-hero__right">
+            <div class="copa-hero__stats">
+              <button class="copa-hero__stat" data-nav="jogos">
+                <div class="copa-hero__stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                <strong id="heroStatGames">—</strong>
+                <span>Jogos</span>
+              </button>
+              <button class="copa-hero__stat" data-nav="jogos">
+                <div class="copa-hero__stat-icon"><i class="fa-solid fa-lock-open"></i></div>
+                <strong id="heroStatOpen">—</strong>
+                <span>Abertos</span>
+              </button>
+              <button class="copa-hero__stat" data-nav="resultados">
+                <div class="copa-hero__stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                <strong id="heroStatFinal">—</strong>
+                <span>Finalizados</span>
+              </button>
             </div>
-            <div class="hero-urgency__timer">
-              <span class="hero-urgency__starts">começa em</span>
-              <span class="hero-urgency__countdown" id="heroUrgencyCd">—</span>
-            </div>
-            <button class="hero-urgency__btn" id="heroUrgencyBtn">Apostar →</button>
+            <div class="hero-field-deco" aria-hidden="true"></div>
           </div>
+
         </div>
 
-        <!-- Direita: stats -->
-        <div class="copa-hero__right">
-          <div class="copa-hero__stats">
-            <button class="copa-hero__stat" data-nav="jogos">
-              <div class="copa-hero__stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
-              <strong id="heroStatGames">—</strong>
-              <span>Jogos</span>
-            </button>
-            <button class="copa-hero__stat" data-nav="jogos">
-              <div class="copa-hero__stat-icon"><i class="fa-solid fa-lock-open"></i></div>
-              <strong id="heroStatOpen">—</strong>
-              <span>Abertos</span>
-            </button>
-            <button class="copa-hero__stat" data-nav="resultados">
-              <div class="copa-hero__stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
-              <strong id="heroStatFinal">—</strong>
-              <span>Finalizados</span>
-            </button>
+        <!-- Urgency bar — largura total, abaixo das colunas -->
+        <div class="hero-urgency hidden" id="heroUrgency">
+          <span class="hero-urgency__dot"></span>
+          <div class="hero-urgency__info">
+            <span class="hero-urgency__label">Próximo jogo</span>
+            <span class="hero-urgency__teams" id="heroUrgencyTeams">—</span>
           </div>
-          <div class="hero-field-deco" aria-hidden="true"></div>
+          <div class="hero-urgency__timer">
+            <span class="hero-urgency__starts">começa em</span>
+            <span class="hero-urgency__countdown" id="heroUrgencyCd">—</span>
+          </div>
+          <button class="hero-urgency__btn" id="heroUrgencyBtn">Apostar →</button>
         </div>
 
       </div>

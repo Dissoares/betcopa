@@ -2319,6 +2319,9 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 /* ── Two-column layout ─────────────────────────── */
 .copa-hero__content {
   position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 1.1rem;
+}
+.copa-hero__top {
   display: flex; align-items: center; gap: 2rem;
 }
 .copa-hero__left  { flex: 1 1 0; min-width: 0; }
@@ -2377,17 +2380,15 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   border: 1px solid rgba(255,109,0,.28);
   border-left: 3px solid var(--uc);
   border-radius: var(--radius);
-  padding: .6rem 1rem;
-  margin-top: .5rem;
+  padding: .65rem 1.1rem;
   font-size: .8rem;
   animation: urgencyIn .4s cubic-bezier(.22,1,.36,1);
-  max-width: 480px;
 }
 @keyframes urgencyIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.hero-urgency--hot { --uc: #ff4757; border-color: rgba(255,71,87,.35); background: rgba(255,71,87,.08); }
+.hero-urgency--hot { --uc: #FF4500; border-color: rgba(255,69,0,.35); background: rgba(255,69,0,.08); }
 .hero-urgency__dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--uc); flex-shrink: 0;
@@ -2495,7 +2496,8 @@ button.copa-hero__stat:hover {
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 680px) {
   .copa-hero { padding: 2rem 1.25rem 1.75rem; }
-  .copa-hero__content { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+  .copa-hero__content { gap: 1rem; }
+  .copa-hero__top { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
   .copa-hero__right { align-items: flex-start; width: 100%; }
   .copa-hero__stats { justify-content: flex-start; }
   .hero-field-deco  { display: none; }
