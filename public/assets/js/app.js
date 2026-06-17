@@ -1902,7 +1902,13 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
         </td>
         <td class="an-td-time">
           <div>${dt}</div>
-          <div class="an-dur">${dur} · <span title="Total de visitas deste IP">${ipVisits}× IP</span></div>
+          <div class="an-dur an-dur--time">
+            <span class="an-dur-badge ${+v.duration_sec >= 300 ? 'an-dur--long' : +v.duration_sec >= 60 ? 'an-dur--mid' : 'an-dur--short'}" title="Tempo no site">
+              <i class="fa-regular fa-clock"></i> ${dur}
+            </span>
+            <span style="color:var(--text-muted);font-size:.7rem" title="Há quanto tempo saiu">saiu ${_fmtAgo(v.last_seen)}</span>
+            <span title="Total de visitas deste IP" style="color:var(--text-muted);font-size:.7rem">${ipVisits}× IP</span>
+          </div>
         </td>
         <td class="an-td-action">
           <button class="an-eye-btn" data-sid="${v.session_id||''}" data-nome="${nome}" title="Ver histórico da sessão">

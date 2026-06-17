@@ -33,8 +33,8 @@ class MigrationController
     {
         $files = glob($this->sqlDir . '/migration_*.sql');
         if (!$files) return [];
-        sort($files); // alphabetical = chronological for migration_v2, v3... + migration_referral
-        return array_map('basename', $files);
+        natsort($files); // natural sort: v10 after v9
+        return array_map('basename', array_values($files));
     }
 
     private function getRan(): array

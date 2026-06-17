@@ -4403,6 +4403,11 @@ button.copa-hero__stat:hover {
 
 /* Time cell */
 .an-dur { color: var(--text-muted); font-size: .72rem; margin-top: .15rem; }
+.an-dur--time { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.an-dur-badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .72rem; font-weight: 600; padding: .15rem .45rem; border-radius: 99px; }
+.an-dur--short { background: rgba(239,68,68,.12);  color: #f87171; }
+.an-dur--mid   { background: rgba(251,191,36,.12); color: #fbbf24; }
+.an-dur--long  { background: rgba(52,211,153,.12); color: #34d399; }
 
 /* Eye / info button */
 .an-eye-btn {
