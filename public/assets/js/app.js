@@ -1333,7 +1333,22 @@ const _PAGE_LABELS = {
 };
 
 const _getCurrentPageLabel = () => {
+  const visible = (id) => !document.getElementById(id)?.classList.contains('hidden');
+  if (visible('modalPixOverlay'))   return 'Aguardando pagamento PIX';
+  if (visible('modalTicket')) {
+    if (document.getElementById('flowStep3')?.classList.contains('flow-step--active'))
+      return 'Escolhendo forma de pagamento';
+    return 'Confirmando palpite';
+  }
+  if (visible('modalPalpite'))      return 'Fazendo palpite';
+  if (visible('modalDepositOverlay')) return 'Realizando depósito';
+  if (visible('modalPreLogin'))     return 'Login rápido (pré-aposta)';
+  if (visible('modalReferral'))     return 'Programa de indicação';
   const hash = location.hash.replace('#', '').toLowerCase();
+  if (hash === 'auth') {
+    const regTab = document.querySelector('#authTabs .auth-tab--active, .tab--active[data-tab="register"]');
+    return regTab?.dataset?.tab === 'register' ? 'Formulário de cadastro' : 'Formulário de login';
+  }
   if (hash.startsWith('admin')) return 'Área Admin';
   return _PAGE_LABELS[hash] || hash || 'Início';
 };
@@ -1534,9 +1549,18 @@ const loadAdminOnline = async () => {
       return;
     }
 
+    const _sessionStatus = (lastSeen) => {
+      const ago = (Date.now() - new Date(lastSeen).getTime()) / 1000;
+      if (ago < 60)  return 'active';
+      if (ago < 150) return 'idle';
+      return 'leaving';
+    };
+    const _statusLabel = { active: 'Online', idle: 'Inativo', leaving: 'Saindo' };
+
     listEl.innerHTML = sessions.map(s => {
       const isUser = !!s.user_id;
       const nome   = isUser ? (s.nome || 'Usuário') : 'Visitante anônimo';
+      const status = _sessionStatus(s.last_seen);
 
       // Avatar
       const avatarContent = isUser
@@ -1583,10 +1607,12 @@ const loadAdminOnline = async () => {
       const ago      = _fmtAgo(s.last_seen);
       const duration = _fmtDuration(s.first_seen);
 
+      const dotHtml = `<span class="online-status-dot online-status-dot--${status}" title="${_statusLabel[status]}"></span>`;
       return `<div class="online-sc ${isUser ? 'online-sc--user' : 'online-sc--anon'}">
         ${avatarHtml}
         <div class="online-sc__body">
           <div class="online-sc__row1">
+            ${dotHtml}
             <span class="online-sc__name">${nome}</span>
             ${emailHtml}
             <span class="online-src online-src--${src}"><i class="${meta.icon}"></i> ${srcLbl}</span>
@@ -2674,8 +2700,8 @@ const renderRanking = async () => {
 };
 
 // ── Modals ────────────────────────────────────────────────────
-const openModal  = (id) => document.getElementById(id)?.classList.remove('hidden');
-const closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
+const openModal  = (id) => { document.getElementById(id)?.classList.remove('hidden'); pingOnline(); };
+const closeModal = (id) => { document.getElementById(id)?.classList.add('hidden');    pingOnline(); };
 const closeAllModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 
 // ── Referral modal (global — called from renderDrawer and event handlers) ──
