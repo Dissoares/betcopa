@@ -45,6 +45,7 @@ require_once __DIR__ . '/../src/repositories/NotificationRepository.php';
 require_once __DIR__ . '/../src/controllers/NotificationController.php';
 require_once __DIR__ . '/../src/repositories/OnlineRepository.php';
 require_once __DIR__ . '/../src/repositories/AnalyticsRepository.php';
+require_once __DIR__ . '/../src/repositories/SessionEventRepository.php';
 require_once __DIR__ . '/../src/repositories/DepositRepository.php';
 require_once __DIR__ . '/../src/controllers/DepositController.php';
 require_once __DIR__ . '/../src/controllers/ReferralController.php';
@@ -248,6 +249,28 @@ try {
             );
             jsonResponse(['ok' => true]);
         });
+        route('/api/track', 'POST', function() use ($db) {
+            $body  = json_decode(file_get_contents('php://input'), true) ?: [];
+            $sid   = (string) ($body['session_id'] ?? '');
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $sid)) {
+                jsonResponse(['ok' => false], 400); return;
+            }
+            $events = $body['events'] ?? [];
+            if (!is_array($events) || empty($events)) { jsonResponse(['ok' => true]); return; }
+            $repo = new SessionEventRepository($db);
+            foreach (array_slice($events, 0, 50) as $ev) {
+                $type  = mb_substr((string)($ev['type']  ?? 'action'), 0, 40);
+                $label = mb_substr((string)($ev['label'] ?? ''),       0, 200);
+                if ($label !== '') $repo->insert($sid, $type, $label);
+            }
+            jsonResponse(['ok' => true]);
+        });
+        if ($method === 'GET' && preg_match('/^\/api\/admin\/sessions\/([0-9a-f\-]{36})\/events$/i', $uri, $_sm)) {
+            ensureAdmin($adminEmail);
+            $events = (new SessionEventRepository($db))->getBySession($_sm[1]);
+            jsonResponse(['events' => $events]);
+            exit;
+        }
         // ── Admin: Saques ──────────────────────────────────────────────────
         route('/api/admin/saques', 'GET', fn() => $adminCtrl->listWithdrawals());
         routePattern('/^\/api\/admin\/saques\/(\d+)\/aprovar$/', 'POST',  fn(int $id) => $withdrawCtrl->approve($id));

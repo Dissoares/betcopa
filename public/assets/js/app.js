@@ -310,10 +310,17 @@ const LEGAL_VIEWS = ['termos', 'privacidade', 'jogo-responsavel'];
 
 const _isAdmin = () => !!S.user && (S.user.email === S.adminEmail || !!S.user.is_admin);
 
+const _NAV_LABELS = {
+  jogos: 'Jogos', auth: 'Login/Cadastro', palpites: 'Meus Palpites',
+  ranking: 'Ranking', ganhadores: 'Ganhadores', grupos: 'Grupos',
+  perfil: 'Perfil', suporte: 'Suporte', resultados: 'Resultados',
+};
 const navigate = (view) => {
   if (view === 'admin' && !_isAdmin()) {
     view = S.user ? 'jogos' : 'auth';
   }
+  const navLbl = _NAV_LABELS[view];
+  if (navLbl) trackEvent('navigate', `Navegou para: ${navLbl}`);
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   const target = document.getElementById(`view-${view}`);
   if (target) {
@@ -1353,6 +1360,24 @@ const _getCurrentPageLabel = () => {
   return _PAGE_LABELS[hash] || hash || 'Início';
 };
 
+// ── Session event tracking ────────────────────────────────────
+let _evtQueue = [];
+let _evtFlushTimer = null;
+
+const trackEvent = (type, label) => {
+  _evtQueue.push({ type, label });
+  clearTimeout(_evtFlushTimer);
+  _evtFlushTimer = setTimeout(_flushEvents, 1500);
+};
+
+const _flushEvents = async () => {
+  if (!_evtQueue.length) return;
+  const batch = _evtQueue.splice(0, 50);
+  try {
+    await api('/api/track', 'POST', { session_id: getOrCreateSid(), events: batch });
+  } catch { _evtQueue.unshift(...batch); }
+};
+
 const pingOnline = async () => {
   try {
     const refInfo = _getOrCreateRefInfo();
@@ -1880,7 +1905,9 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
           <div class="an-dur">${dur} · <span title="Total de visitas deste IP">${ipVisits}× IP</span></div>
         </td>
         <td class="an-td-action">
-          <span title="${geoFull}\nDevice: ${v.device||'desktop'}\nDuração: ${dur}" class="an-eye-btn"><i class="fa-solid fa-circle-info"></i></span>
+          <button class="an-eye-btn" data-sid="${v.session_id||''}" data-nome="${nome}" title="Ver histórico da sessão">
+            <i class="fa-solid fa-eye"></i>
+          </button>
         </td>
       </tr>`;
     }).join('');
@@ -2700,8 +2727,28 @@ const renderRanking = async () => {
 };
 
 // ── Modals ────────────────────────────────────────────────────
-const openModal  = (id) => { document.getElementById(id)?.classList.remove('hidden'); pingOnline(); };
-const closeModal = (id) => { document.getElementById(id)?.classList.add('hidden');    pingOnline(); };
+const _MODAL_LABELS = {
+  modalPalpite:       'Modal de palpite',
+  modalTicket:        'Modal de confirmação/pagamento',
+  modalPixOverlay:    'Modal de pagamento PIX',
+  modalDepositOverlay:'Modal de depósito',
+  modalPreLogin:      'Modal de login rápido',
+  modalReferral:      'Modal de indicação',
+  modalResultado:     'Modal de resultado',
+  modalPalpiteAno:    'Modal de palpite anterior',
+};
+const openModal  = (id) => {
+  document.getElementById(id)?.classList.remove('hidden');
+  const lbl = _MODAL_LABELS[id];
+  if (lbl) trackEvent('modal_open', `Abriu: ${lbl}`);
+  pingOnline();
+};
+const closeModal = (id) => {
+  document.getElementById(id)?.classList.add('hidden');
+  const lbl = _MODAL_LABELS[id];
+  if (lbl) trackEvent('modal_close', `Fechou: ${lbl}`);
+  pingOnline();
+};
 const closeAllModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 
 // ── Referral modal (global — called from renderDrawer and event handlers) ──
@@ -2946,6 +2993,7 @@ const updateBetPreview = () => {
 };
 
 const submitBet = async () => {
+  trackEvent('action', 'Clicou em Confirmar Palpite');
   if (S.scoreHome === null || S.scoreAway === null) {
     toast('Selecione o placar antes de confirmar o palpite.', 'danger');
     document.querySelector('.bm__matchup')?.classList.add('bm__scoreboard--shake');
@@ -3257,6 +3305,7 @@ const openPreLogin = () => {
 };
 
 const simulatePay = () => {
+  trackEvent('action', 'Avançou para pagamento');
   if (!S.user) {
     openPreLogin();
     return;
@@ -3278,6 +3327,7 @@ const simulatePay = () => {
 };
 
 const confirmBalancePayment = async () => {
+  trackEvent('action', 'Tentou pagar com Bônus');
   const saldo    = parseFloat(S.user?.saldo ?? 0);
   const betValor = S.selectedBet?.valor ?? 0;
   if (saldo < betValor) {
@@ -3302,6 +3352,7 @@ const confirmBalancePayment = async () => {
 };
 
 const confirmPixPayment = async () => {
+  trackEvent('action', 'Iniciou pagamento PIX');
   const btn = document.getElementById('btnFinalizePayment');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
@@ -3318,6 +3369,7 @@ const confirmPixPayment = async () => {
 };
 
 const confirmExpayPayment = async () => {
+  trackEvent('action', 'Iniciou pagamento ExPay');
   const btn = document.getElementById('btnFinalizePayment');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
@@ -3389,6 +3441,7 @@ const showResultado = (bet, won) => {
 // ── Auth ──────────────────────────────────────────────────────
 const submitLogin = async (e) => {
   e.preventDefault();
+  trackEvent('form', 'Enviou formulário de login');
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Entrando...';
   try {
@@ -3436,6 +3489,7 @@ const submitLogin = async (e) => {
 
 const submitRegister = async (e) => {
   e.preventDefault();
+  trackEvent('form', 'Enviou formulário de cadastro');
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Criando conta...';
   try {
@@ -4744,6 +4798,7 @@ const bind = () => {
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
   const _handleEditBet = async () => {
+    trackEvent('action', 'Clicou em Alterar Palpite');
     if (S.selectedBet?.id && S.selectedBet.status === 'pendente') {
       try { await api(`/api/apostas/${S.selectedBet.id}/cancelar`, 'POST', {}); } catch { /* ignora */ }
     }
@@ -5321,6 +5376,54 @@ const bind = () => {
   // Botão refresh dashboard
   document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);
   document.getElementById('btnRefreshOnline')?.addEventListener('click', loadAdminOnline);
+
+  // Session events modal
+  document.getElementById('anVisitsTable')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.an-eye-btn[data-sid]');
+    if (!btn || !btn.dataset.sid) return;
+    const sid  = btn.dataset.sid;
+    const nome = btn.dataset.nome || 'Visitante';
+    const listEl = document.getElementById('sessionEventsList');
+    const subtitle = document.getElementById('sessionEventsSubtitle');
+    if (subtitle) subtitle.textContent = `${nome} · ${sid.substring(0,8)}…`;
+    if (listEl) listEl.innerHTML = '<p class="text--muted">Carregando…</p>';
+    document.getElementById('modalSessionEvents')?.classList.remove('hidden');
+    try {
+      const { events } = await api(`/api/admin/sessions/${sid}/events`);
+      if (!listEl) return;
+      if (!events.length) {
+        listEl.innerHTML = '<p class="text--muted" style="text-align:center;padding:2rem 0">Nenhum evento registrado para esta sessão.</p>';
+        return;
+      }
+      const _EVT_ICON = {
+        navigate:    { icon: 'fa-solid fa-arrow-right',       color: '#60a5fa' },
+        modal_open:  { icon: 'fa-solid fa-window-maximize',   color: '#34d399' },
+        modal_close: { icon: 'fa-solid fa-window-minimize',   color: '#f87171' },
+        action:      { icon: 'fa-solid fa-bolt',               color: '#fbbf24' },
+        form:        { icon: 'fa-solid fa-pen-to-square',      color: '#a78bfa' },
+      };
+      listEl.innerHTML = `<div class="se-timeline">${events.map((ev, i) => {
+        const m = _EVT_ICON[ev.event_type] || { icon: 'fa-solid fa-circle', color: '#888' };
+        const t = new Date(ev.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        return `<div class="se-item">
+          <div class="se-dot" style="background:${m.color}"><i class="${m.icon}"></i></div>
+          ${i < events.length - 1 ? '<div class="se-line"></div>' : ''}
+          <div class="se-body">
+            <span class="se-label">${ev.label}</span>
+            <span class="se-time">${t}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+    } catch (err) {
+      if (listEl) listEl.innerHTML = `<p class="text--muted">${err.message}</p>`;
+    }
+  });
+  document.getElementById('btnSessionEventsClose')?.addEventListener('click', () =>
+    document.getElementById('modalSessionEvents')?.classList.add('hidden')
+  );
+  document.getElementById('modalSessionEventsBackdrop')?.addEventListener('click', () =>
+    document.getElementById('modalSessionEvents')?.classList.add('hidden')
+  );
   document.getElementById('btnRunAllMigrations')?.addEventListener('click', runAllPendingMigrations);
   document.getElementById('btnRefreshSaques')?.addEventListener('click', loadAdminSaques);
 

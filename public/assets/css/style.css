@@ -4406,12 +4406,20 @@ button.copa-hero__stat:hover {
 
 /* Eye / info button */
 .an-eye-btn {
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: .95rem;
-  transition: color .15s;
+  background: none; border: none;
+  color: var(--text-muted); cursor: pointer;
+  font-size: .95rem; padding: .3rem .5rem;
+  border-radius: 6px; transition: color .15s, background .15s;
 }
-.an-eye-btn:hover { color: var(--primary); }
+.an-eye-btn:hover { color: var(--primary); background: rgba(0,200,83,.08); }
+/* Timeline de eventos de sessão */
+.se-timeline { display: flex; flex-direction: column; gap: 0; }
+.se-item     { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: auto auto; column-gap: .75rem; }
+.se-dot      { grid-row: 1; grid-column: 1; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .65rem; color: #fff; flex-shrink: 0; z-index: 1; }
+.se-line     { grid-row: 2; grid-column: 1; width: 2px; min-height: 12px; background: var(--border); margin: 0 auto; }
+.se-body     { grid-row: 1; grid-column: 2; display: flex; justify-content: space-between; align-items: flex-start; padding: .3rem 0 .6rem; gap: .5rem; }
+.se-label    { font-size: .82rem; color: var(--text); line-height: 1.4; }
+.se-time     { font-size: .7rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; margin-top: .1rem; }
 
 /* Pager */
 .an-pager {
