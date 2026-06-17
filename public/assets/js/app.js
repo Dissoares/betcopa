@@ -2730,7 +2730,7 @@ const submitBet = async () => {
       stake:     S.stake,
     };
     const g   = S.selectedGame;
-    const odd = parseFloat(g?.odd ?? S.oddPadrao ?? 5);
+    const odd = parseFloat(g?.odd || 0) > 1 ? parseFloat(g.odd) : (S.oddPadrao ?? 9);
     const previewBet = {
       valor:          S.stake,
       odd,
@@ -3000,11 +3000,31 @@ const _selectPayMethod = (method) => {
   }
 };
 
+const openPreLogin = () => {
+  const g  = S.selectedGame;
+  const pb = S.pendingBet;
+  if (!g || !pb) { navigate('auth'); return; }
+
+  document.getElementById('plTeamHome').textContent = g.time_casa ?? '—';
+  document.getElementById('plTeamAway').textContent = g.time_fora ?? '—';
+  document.getElementById('plScore').textContent    = `${pb.scoreHome} × ${pb.scoreAway}`;
+  // Lê o prêmio já calculado corretamente pelo updateBetPreview
+  const prizeText = document.getElementById('betWinAmount')?.textContent;
+  document.getElementById('plPrize').textContent = prizeText || fmtMoney(pb.stake);
+
+  const mkFlag = (logo, code, name) => logo
+    ? `<img src="${logo}" alt="${name}">`
+    : (code ? `<img src="https://flagcdn.com/w40/${code.toLowerCase()}.png" alt="${name}">` : '');
+  document.getElementById('plFlagHome').innerHTML = mkFlag(g.logo_casa, g.bandeira_casa, g.time_casa);
+  document.getElementById('plFlagAway').innerHTML = mkFlag(g.logo_fora, g.bandeira_fora, g.time_fora);
+
+  closeModal('modalTicket');
+  openModal('modalPreLogin');
+};
+
 const simulatePay = () => {
   if (!S.user) {
-    closeModal('modalTicket');
-    showAlert('Entre ou cadastre-se para continuar — seu palpite será retomado!', 'info');
-    navigate('auth');
+    openPreLogin();
     return;
   }
   const saldo = parseFloat(S.user?.saldo ?? 0);
@@ -4621,6 +4641,18 @@ const bind = () => {
   });
   document.getElementById('guestBetLoginBtn')?.addEventListener('click', () => {
     closeGuestBetModal();
+    switchAuthTab('login');
+    navigate('auth');
+  });
+
+  // ── Pre-login prize preview modal ─────────────────────────
+  document.getElementById('plBtnRegister')?.addEventListener('click', () => {
+    closeModal('modalPreLogin');
+    switchAuthTab('register');
+    navigate('auth');
+  });
+  document.getElementById('plBtnLogin')?.addEventListener('click', () => {
+    closeModal('modalPreLogin');
     switchAuthTab('login');
     navigate('auth');
   });

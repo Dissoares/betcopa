@@ -1681,6 +1681,44 @@
     </div>
   </div>
 
+  <!-- ===== MODAL: PRÉ-LOGIN PRIZE PREVIEW ===== -->
+  <div class="modal hidden" id="modalPreLogin">
+    <div class="modal__backdrop" data-close="modalPreLogin"></div>
+    <div class="modal__box pl-box">
+
+      <div class="pl__trophy">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+
+      <h2 class="pl__title">Seu palpite está<br>quase pronto!</h2>
+
+      <div class="pl__game">
+        <span class="pl__flag" id="plFlagHome"></span>
+        <div class="pl__game-center">
+          <span class="pl__team-name" id="plTeamHome">—</span>
+          <span class="pl__score" id="plScore">— × —</span>
+          <span class="pl__team-name" id="plTeamAway">—</span>
+        </div>
+        <span class="pl__flag" id="plFlagAway"></span>
+      </div>
+
+      <div class="pl__prize-box">
+        <span class="pl__prize-label">Você pode ganhar</span>
+        <span class="pl__prize-amount" id="plPrize">R$ 0,00</span>
+      </div>
+
+      <p class="pl__note">Crie sua conta grátis e garanta o prêmio agora.</p>
+
+      <button class="pl__btn-primary" id="plBtnRegister">
+        <i class="fa-solid fa-user-plus"></i> Criar conta grátis
+      </button>
+      <button class="pl__btn-ghost" id="plBtnLogin">
+        Já tenho conta — Entrar
+      </button>
+
+    </div>
+  </div>
+
   <!-- ===== MODAL: ADMIN — REGISTRAR RESULTADO ===== -->
   <div class="modal hidden" id="modalAdminResultado">
     <div class="modal__backdrop" data-close="modalAdminResultado"></div>
