@@ -73,10 +73,20 @@ class AdminRepository
               a.id, a.status, a.valor, a.odd AS multiplicador, a.possivel_ganho,
               a.placar_casa, a.placar_fora, a.criado_em,
               u.nome AS usuario, u.email AS usuario_email,
-              j.time_casa, j.time_fora, j.data_hora, j.placar_real
+              j.time_casa, j.time_fora, j.data_hora, j.placar_real,
+              COALESCE(
+                p.gateway,
+                CASE WHEN EXISTS (
+                  SELECT 1 FROM transacoes t
+                  WHERE t.user_id = a.user_id
+                    AND t.tipo = 'debito'
+                    AND t.descricao = CONCAT('Aposta (saldo) #', a.id)
+                ) THEN 'saldo' ELSE NULL END
+              ) AS metodo_pagamento
             FROM apostas a
             JOIN users u ON u.id = a.user_id
             JOIN jogos  j ON j.id = a.jogo_id
+            LEFT JOIN pagamentos p ON p.aposta_id = a.id
             WHERE " . implode(' AND ', $where) . "
             ORDER BY a.criado_em DESC
             LIMIT :limit OFFSET :offset

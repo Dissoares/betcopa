@@ -5430,6 +5430,18 @@ const bind = () => {
 // ── Admin helpers ─────────────────────────────────────────────
 const fmtR$ = (n) => `R$ ${parseFloat(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+const _payMethodBadge = (method) => {
+  if (!method) return '<span style="color:var(--text-muted);font-size:.75rem">—</span>';
+  const map = {
+    mercadopago: { icon: 'fa-brands fa-pix',   label: 'PIX',   color: '#00bfa5' },
+    expay:       { icon: 'fa-solid fa-bolt',    label: 'ExPay', color: '#1565c0' },
+    saldo:       { icon: 'fa-solid fa-wallet',  label: 'Bônus', color: '#f59e0b' },
+  };
+  const m = map[method] || { icon: 'fa-solid fa-credit-card', label: method, color: '#888' };
+  return `<span style="display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;font-weight:600;color:${m.color}">
+    <i class="${m.icon}"></i>${m.label}</span>`;
+};
+
 const statusPill = (s) => {
   const labels = {
     pendente: 'Pendente', pago: 'Pago', confirmado: 'Confirmado',
@@ -5945,7 +5957,7 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
         <thead>
           <tr>
             <th style="width:2rem"><input type="checkbox" id="chkAllBets" title="Selecionar todos"></th>
-            <th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Status</th>
+            <th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Pagamento</th><th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -5963,6 +5975,7 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
               <td>${fmtR$(b.valor)}</td>
               <td>${parseFloat(b.multiplicador).toFixed(0)}×</td>
               <td>${fmtR$(b.possivel_ganho)}</td>
+              <td>${_payMethodBadge(b.metodo_pagamento)}</td>
               <td>${statusPill(b.status)}</td>
             </tr>`;
           }).join('')}
