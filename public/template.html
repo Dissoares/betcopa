@@ -91,9 +91,9 @@
       <!-- Nav central -->
       <nav class="nav" id="mainNav">
         <button class="nav__btn nav__btn--active" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
-        <button class="nav__btn" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
-        <button class="nav__btn" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
+        <button class="nav__btn" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Placar</button>
         <button class="nav__btn" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
+        <button class="nav__btn" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
         <button class="nav__btn nav__btn--auth" data-nav="palpites" style="display:none"><i class="fa-solid fa-list-check"></i> Meus Palpites</button>
         <button class="nav__btn" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
       </nav>
@@ -2267,6 +2267,37 @@
           <i class="fa-solid fa-share"></i> Compartilhar
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ EXIT INTENT MODAL ══════════════════════════════════════ -->
+  <div id="modalExitIntent" class="exit-modal hidden" role="dialog" aria-modal="true" aria-label="Oferta especial">
+    <div class="exit-modal__overlay" id="exitModalOverlay"></div>
+    <div class="exit-modal__card">
+      <button class="exit-modal__x" id="exitModalX" aria-label="Fechar">✕</button>
+      <div class="exit-modal__trophy">🏆</div>
+      <h2 class="exit-modal__headline">Espera! Não saia ainda</h2>
+      <p class="exit-modal__sub">Você está a um clique de uma chance que pode mudar sua semana.</p>
+      <div class="exit-modal__offer">
+        <div class="exit-modal__offer-row">
+          <span class="exit-modal__offer-label">Aposte apenas</span>
+          <span class="exit-modal__offer-price">R$ 1,00</span>
+        </div>
+        <div class="exit-modal__offer-sep">e concorra a</div>
+        <div class="exit-modal__prize">R$ 1.000</div>
+      </div>
+      <div class="exit-modal__social">
+        <span class="exit-modal__social-dot"></span>
+        <span id="exitModalCount">247</span>&nbsp;pessoas apostaram nos últimos 15 minutos
+      </div>
+      <div class="exit-modal__timer-wrap">
+        <span class="exit-modal__timer-label">⏱ Oferta expira em</span>
+        <span class="exit-modal__timer" id="exitModalTimer">10:00</span>
+      </div>
+      <button class="exit-modal__cta" id="exitModalCta">
+        QUERO ESSA CHANCE AGORA →
+      </button>
+      <button class="exit-modal__dismiss" id="exitModalDismiss">não, prefiro não ter essa chance</button>
     </div>
   </div>
 

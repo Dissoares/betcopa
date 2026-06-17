@@ -6787,6 +6787,7 @@ const init = async () => {
   }
   pingOnline();
   setInterval(pingOnline, 30000);
+  _exitIntentInit();
 
   // Inicializa botões Google com o client_id público da API
   try {
@@ -6836,5 +6837,114 @@ const init = async () => {
     }
   }
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   EXIT INTENT — gatilho de saída psicológico
+   ═══════════════════════════════════════════════════════════════ */
+function _exitIntentInit() {
+  const SHOWN_KEY = '_eiShown';
+  if (sessionStorage.getItem(SHOWN_KEY)) return;
+  if (_isAdmin()) return;
+
+  let fired = false;
+  let armed = false;
+
+  // Só ativa após 5s (evita disparos falsos ao carregar a página)
+  setTimeout(() => { armed = true; }, 5000);
+
+  function _fire() {
+    if (fired || !armed) return;
+    fired = true;
+    sessionStorage.setItem(SHOWN_KEY, '1');
+
+    // Timer de 10 min — persiste no session para não reiniciar se modal reabrir
+    const EXP_KEY = '_eiExp';
+    let exp = parseInt(sessionStorage.getItem(EXP_KEY) || '0');
+    if (!exp || exp < Date.now()) {
+      exp = Date.now() + 10 * 60 * 1000;
+      sessionStorage.setItem(EXP_KEY, String(exp));
+    }
+
+    // Contagem social estável na sessão (evita números diferentes a cada clique)
+    const CNT_KEY = '_eiCnt';
+    let cnt = sessionStorage.getItem(CNT_KEY);
+    if (!cnt) {
+      cnt = String(180 + Math.floor(Math.random() * 140));
+      sessionStorage.setItem(CNT_KEY, cnt);
+    }
+    document.getElementById('exitModalCount').textContent = cnt;
+
+    // Mostra modal com animação de entrada
+    const modal = document.getElementById('modalExitIntent');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('exit-modal--in')));
+
+    // Contador regressivo
+    const timerEl = document.getElementById('exitModalTimer');
+    (function tick() {
+      const rem = Math.max(0, exp - Date.now());
+      const m = Math.floor(rem / 60000);
+      const s = Math.floor((rem % 60000) / 1000);
+      timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      if (rem <= 60000) timerEl.classList.add('exit-modal__timer--urgent');
+      if (rem > 0) setTimeout(tick, 500);
+    })();
+
+    // Incrementa sutilmente o contador social a cada ~20s (efeito "live")
+    setInterval(() => {
+      const el = document.getElementById('exitModalCount');
+      if (el) el.textContent = String(parseInt(el.textContent) + 1);
+    }, 22000);
+  }
+
+  function _close() {
+    const modal = document.getElementById('modalExitIntent');
+    modal.classList.remove('exit-modal--in');
+    setTimeout(() => modal.classList.add('hidden'), 350);
+  }
+
+  // ── Desktop: cursor sai pelo topo (rumbo à barra do navegador) ──
+  document.addEventListener('mouseleave', e => {
+    if (e.clientY < 5) _fire();
+  });
+
+  // ── Mobile: scroll rápido para cima quando já está no topo ──
+  let _prevY = window.scrollY;
+  let _prevT = Date.now();
+  window.addEventListener('scroll', () => {
+    const now = Date.now();
+    const dy  = window.scrollY - _prevY;
+    const dt  = now - _prevT;
+    // Scroll up veloz (>60px em <400ms) estando perto do topo
+    if (dy < -60 && dt < 400 && window.scrollY < 120) _fire();
+    _prevY = window.scrollY;
+    _prevT = now;
+  }, { passive: true });
+
+  // ── Botão voltar (SPA): intercepta popstate sem quebrar o roteamento ──
+  // Injeta um estado "sentinela" sem mudar a URL
+  history.pushState({ _eiSentinel: true }, '', location.href);
+  window.addEventListener('popstate', e => {
+    if (!sessionStorage.getItem(SHOWN_KEY)) {
+      _fire();
+      // Reinsere o sentinela para continuar capturando se o usuário não fechou
+      history.pushState({ _eiSentinel: true }, '', location.href);
+    }
+  });
+
+  // ── Listeners dos botões do modal ──
+  document.getElementById('exitModalX').addEventListener('click', _close);
+  document.getElementById('exitModalOverlay').addEventListener('click', _close);
+  document.getElementById('exitModalDismiss').addEventListener('click', _close);
+  document.getElementById('exitModalCta').addEventListener('click', () => {
+    _close();
+    if (!S.user) {
+      navigate('auth');
+      setTimeout(() => switchAuthTab('register'), 150);
+    } else {
+      navigate('jogos');
+    }
+  });
+}
 
 document.addEventListener('DOMContentLoaded', init);
