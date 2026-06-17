@@ -3559,6 +3559,9 @@ const googleCallback = async (response) => {
     await loadUser();
     await loadBets();
 
+    // Fecha qualquer modal de login rápido/pré-login aberto
+    closeModal('modalPreLogin');
+
     if (S.pendingBet) {
       const pb = S.pendingBet;
       clearPendingBet();

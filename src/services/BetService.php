@@ -67,12 +67,12 @@ class BetService
         $odd           = $gameOdd > 1 ? $gameOdd : max(1.00, $oddPadrao);
         $possivelGanho = round($valor * $odd, 2);
 
-        if ($valor <= 0 || $valor > $this->config['limits']['max_bet_value']) {
-            throw new InvalidArgumentException('Valor da aposta fora do limite permitido');
-        }
-        if ($possivelGanho > $this->config['limits']['max_gain_per_bet']) {
-            throw new InvalidArgumentException('Ganho potencial excede o limite por aposta');
-        }
+        // if ($valor <= 0 || $valor > $this->config['limits']['max_bet_value']) {
+        //     throw new InvalidArgumentException('Valor da aposta fora do limite permitido');
+        // }
+        // if ($possivelGanho > $this->config['limits']['max_gain_per_bet']) {
+        //     throw new InvalidArgumentException('Ganho potencial excede o limite por aposta');
+        // }
 
         $id = $this->bets->create([
             'user_id'        => $userId,
