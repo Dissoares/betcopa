@@ -458,6 +458,7 @@
           <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
           <button class="admin-nav__btn" data-admin-tab="suporte"><i class="fa-solid fa-headset"></i> Suporte <span class="admin-nav__badge hidden" id="adminTicketBadge">0</span></button>
           <button class="admin-nav__btn" data-admin-tab="online"><i class="fa-solid fa-signal"></i> Online</button>
+          <button class="admin-nav__btn" data-admin-tab="migrations"><i class="fa-solid fa-database"></i> Migrations</button>
         </nav>
       </aside>
 
@@ -1033,6 +1034,26 @@
             <div class="panel" style="margin-top:1.5rem" id="anVisitsTable"><!-- JS --></div>
           </div>
 
+        </div>
+
+        <!-- ── ABA: MIGRATIONS ── -->
+        <div class="admin-tab hidden" id="atab-migrations">
+          <div class="admin-page-header admin-page-header--actions">
+            <div>
+              <h2 class="admin-page-header__title"><i class="fa-solid fa-database"></i> Migrations</h2>
+              <p class="admin-page-header__sub">Execute scripts SQL na ordem correta. Migrations já executadas são ignoradas automaticamente.</p>
+            </div>
+            <button class="btn btn--primary btn--sm" id="btnRunAllMigrations">
+              <i class="fa-solid fa-play"></i> Executar Pendentes
+            </button>
+          </div>
+          <div class="panel" style="margin-top:1rem;padding:0;overflow:hidden">
+            <div id="migrationsList">
+              <div class="empty-state" style="padding:2rem">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem;opacity:.4"></i>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div><!-- /admin-content -->

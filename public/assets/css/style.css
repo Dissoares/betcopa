@@ -6318,6 +6318,62 @@ input:focus, select:focus {
 .swal2-close:hover { color: var(--text, #e2e8f0) !important; }
 
 /* ════════════════════════════════════════════════════════════
+   §MIGRATIONS — admin tab
+   ════════════════════════════════════════════════════════════ */
+.migration-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+.migration-row:last-child { border-bottom: none; }
+.migration-row:hover { background: var(--surface-2); }
+.migration-row__num {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 1.8rem;
+  flex-shrink: 0;
+}
+.migration-row__file {
+  flex: 1;
+  font-size: .85rem;
+  font-family: 'Courier New', monospace;
+  color: var(--text);
+  word-break: break-all;
+}
+.migration-row__status { flex-shrink: 0; }
+.migration-row__action { flex-shrink: 0; }
+.migration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: .22rem .6rem;
+  border-radius: 20px;
+}
+.migration-badge--ok {
+  background: rgba(0,200,83,.12);
+  color: var(--primary);
+  border: 1px solid rgba(0,200,83,.25);
+}
+.migration-badge--pending {
+  background: rgba(255,152,0,.12);
+  color: #FF9800;
+  border: 1px solid rgba(255,152,0,.3);
+}
+@media (max-width: 600px) {
+  .migration-row { flex-wrap: wrap; gap: .5rem; }
+  .migration-row__file { width: 100%; order: 2; }
+  .migration-row__num  { order: 1; }
+  .migration-row__status { order: 3; }
+  .migration-row__action { order: 4; margin-left: auto; }
+}
+
+/* ════════════════════════════════════════════════════════════
    §REFERRAL BANNER — banner inline na home
    ════════════════════════════════════════════════════════════ */
 .referral-banner {

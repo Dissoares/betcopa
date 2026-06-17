@@ -17,8 +17,7 @@ class ReferralController
 
     public function info(): void
     {
-        requireLogin();
-        $userId = (int) $_SESSION['user_id'];
+        $userId = ensureLogged();
 
         $code     = $this->users->ensureReferralCode($userId);
         $count    = $this->users->countReferrals($userId);

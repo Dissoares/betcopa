@@ -48,6 +48,7 @@ require_once __DIR__ . '/../src/repositories/AnalyticsRepository.php';
 require_once __DIR__ . '/../src/repositories/DepositRepository.php';
 require_once __DIR__ . '/../src/controllers/DepositController.php';
 require_once __DIR__ . '/../src/controllers/ReferralController.php';
+require_once __DIR__ . '/../src/controllers/MigrationController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -112,7 +113,8 @@ try {
         $adminCtrl->setWithdrawalRepository($withdrawals);
         $adminCtrl->setOnlineRepository(new OnlineRepository($db));
         $adminCtrl->setAnalyticsRepository(new AnalyticsRepository($db));
-        $referralCtrl = new ReferralController($users, $transactions, $configRepo);
+        $referralCtrl   = new ReferralController($users, $transactions, $configRepo);
+        $migrationCtrl  = new MigrationController($db, $adminEmail);
         $notifCtrl    = new NotificationController($notifsRepo);
         $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
         $ticketCtrl->setNotificationRepository($notifsRepo);
@@ -203,6 +205,10 @@ try {
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
         route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
         route('/api/admin/analytics',    'GET',  fn() => $adminCtrl->analyticsData());
+
+        // ── Migrations ────────────────────────────────────────
+        route('/api/admin/migrations',       'GET',  fn() => $migrationCtrl->list());
+        route('/api/admin/migrations/run',   'POST', fn() => $migrationCtrl->run());
 
         // ── Ping de presença (público) ─────────────────────────────────────────
         route('/api/ping', 'POST', function() use ($db) {

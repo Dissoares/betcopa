@@ -1417,6 +1417,67 @@ const _startOnlineCountdown = () => {
   }, 1000);
 };
 
+// ── Migrations ──────────────────────────────────────────────────
+const loadMigrations = async () => {
+  const el = document.getElementById('migrationsList');
+  if (!el) return;
+  el.innerHTML = `<div class="empty-state" style="padding:2rem"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem;opacity:.4"></i></div>`;
+  try {
+    const list = await api('/api/admin/migrations');
+    if (!list.length) {
+      el.innerHTML = `<p style="padding:1.5rem;text-align:center;color:var(--text-muted)">Nenhuma migration encontrada na pasta sql/</p>`;
+      return;
+    }
+    el.innerHTML = list.map((m, i) => `
+      <div class="migration-row" id="mrow-${i}">
+        <div class="migration-row__num">${String(i + 1).padStart(2, '0')}</div>
+        <div class="migration-row__file">${m.filename}</div>
+        <div class="migration-row__status">
+          ${m.status === 'executado'
+            ? `<span class="migration-badge migration-badge--ok"><i class="fa-solid fa-check"></i> Executado</span>`
+            : `<span class="migration-badge migration-badge--pending"><i class="fa-solid fa-clock"></i> Pendente</span>`}
+        </div>
+        <div class="migration-row__action">
+          ${m.status === 'pendente'
+            ? `<button class="btn btn--primary btn--xs" onclick="runMigration('${m.filename}', ${i})"><i class="fa-solid fa-play"></i> Executar</button>`
+            : `<button class="btn btn--ghost btn--xs" disabled><i class="fa-solid fa-check"></i> Feito</button>`}
+        </div>
+      </div>`).join('');
+  } catch { el.innerHTML = `<p style="padding:1.5rem;color:var(--danger)">Erro ao carregar migrations.</p>`; }
+};
+
+const runMigration = async (filename, idx) => {
+  const btn = document.querySelector(`#mrow-${idx} button`);
+  if (btn) { btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Executando...`; }
+  try {
+    const res = await api('/api/admin/migrations/run', 'POST', { filename });
+    toast(res.message || 'Executado!', 'success');
+    await loadMigrations();
+  } catch(e) {
+    toast(e.message || 'Erro ao executar migration', 'danger');
+    if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-play"></i> Executar`; }
+  }
+};
+
+const runAllPendingMigrations = async () => {
+  const btn = document.getElementById('btnRunAllMigrations');
+  if (btn) { btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Executando...`; }
+  try {
+    const list = await api('/api/admin/migrations');
+    const pending = list.filter(m => m.status === 'pendente');
+    if (!pending.length) { toast('Nenhuma migration pendente.', 'info'); }
+    for (const m of pending) {
+      const res = await api('/api/admin/migrations/run', 'POST', { filename: m.filename });
+      toast(res.message, 'success');
+    }
+    await loadMigrations();
+  } catch(e) {
+    toast(e.message || 'Erro ao executar migrations', 'danger');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-play"></i> Executar Pendentes`; }
+  }
+};
+
 const loadAdminOnline = async () => {
   _startOnlineCountdown();
   try {
@@ -5170,6 +5231,7 @@ const bind = () => {
   // Botão refresh dashboard
   document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);
   document.getElementById('btnRefreshOnline')?.addEventListener('click', loadAdminOnline);
+  document.getElementById('btnRunAllMigrations')?.addEventListener('click', runAllPendingMigrations);
   document.getElementById('btnRefreshSaques')?.addEventListener('click', loadAdminSaques);
 
   // Filtro de status de saques
@@ -5313,6 +5375,7 @@ const switchAdminTab = (tab) => {
     _onlineInterval = setInterval(() => { loadAdminAnalytics(_analyticsPeriod, _analyticsPage); loadAdminOnline(); }, 30000);
     _startOnlineCountdown();
   }
+  if (tab === 'migrations') loadMigrations();
 };
 
 // ── Dashboard bulk delete de jogos ────────────────────────────
