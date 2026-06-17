@@ -6852,8 +6852,11 @@ function _exitIntentInit() {
   let fired = false;
   let armed = false;
 
-  // Só ativa após 5s (evita disparos falsos ao carregar a página)
-  setTimeout(() => { armed = true; }, 5000);
+  // Arma no primeiro movimento real do mouse (sem delay artificial)
+  // Evita falso disparo no carregamento mas reage imediatamente após qualquer interação
+  document.addEventListener('mousemove', () => { armed = true; }, { once: true });
+  document.addEventListener('scroll',    () => { armed = true; }, { once: true });
+  document.addEventListener('click',     () => { armed = true; }, { once: true });
 
   function _fire() {
     if (fired || !armed) return;
