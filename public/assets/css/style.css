@@ -1419,6 +1419,18 @@ select {
 .bet-summary__amount   { font-weight: 700; }
 .bet-summary__win      { color: var(--primary); font-size: 1.1rem; font-weight: 900; }
 
+/* ── Pending bet countdown bar (auth page) ───────────────── */
+.pending-bet-bar {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .7rem 1rem; margin-bottom: 1.25rem;
+  background: rgba(255,160,0,.1);
+  border: 1px solid rgba(255,160,0,.3);
+  border-radius: var(--radius-sm);
+  font-size: .85rem; font-weight: 600; color: #FFA000;
+}
+.pending-bet-bar i { animation: pulse-dot 1.5s ease-in-out infinite; }
+.pending-bet-bar strong { font-variant-numeric: tabular-nums; margin-left: .2rem; }
+
 /* ── Pre-login prize preview ─────────────────────────────── */
 .pl-box {
   text-align: center;

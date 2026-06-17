@@ -336,6 +336,13 @@
   <!-- ===== VIEW: AUTH ===== -->
   <main class="container view hidden" id="view-auth">
     <div class="auth-container">
+
+      <!-- Pending bet countdown -->
+      <div class="pending-bet-bar hidden" id="pendingBetBar">
+        <i class="fa-solid fa-hourglass-half"></i>
+        <span>Seu palpite está guardado por <strong id="pendingBetTimer">15:00</strong></span>
+      </div>
+
       <div class="auth-tabs">
         <button class="auth-tab auth-tab--active" data-auth-tab="login">Entrar</button>
         <button class="auth-tab" data-auth-tab="register">Criar conta</button>

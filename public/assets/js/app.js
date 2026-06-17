@@ -333,6 +333,11 @@ const navigate = (view) => {
 
   window.scrollTo({ top: 0, behavior: 'instant' });
 
+  // Pending bet timer na página de auth
+  if (view === 'auth' && S.pendingBet) {
+    setTimeout(startPendingBetTimer, 80);
+  }
+
   // Suporte: exige login
   if (view === 'suporte') {
     if (!S.user) { navigate('auth'); return; }
@@ -2657,6 +2662,47 @@ const openBetModal = (gameId, pending = null) => {
   openModal('modalPalpite');
 };
 
+// ── Pending bet timer (auth page) ────────────────────────────
+let _pendingBetTimerRef = null;
+const PENDING_BET_TTL = 15 * 60 * 1000; // 15 minutos
+
+const startPendingBetTimer = () => {
+  const bar     = document.getElementById('pendingBetBar');
+  const display = document.getElementById('pendingBetTimer');
+  if (!bar || !display) return;
+
+  let expiry = parseInt(sessionStorage.getItem('pendingBetExpiry') || '0');
+  if (!expiry || expiry <= Date.now()) {
+    expiry = Date.now() + PENDING_BET_TTL;
+    sessionStorage.setItem('pendingBetExpiry', String(expiry));
+  }
+
+  bar.classList.remove('hidden');
+  if (_pendingBetTimerRef) clearInterval(_pendingBetTimerRef);
+
+  const tick = () => {
+    const remaining = Math.max(0, expiry - Date.now());
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    display.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    if (remaining <= 0) {
+      clearInterval(_pendingBetTimerRef);
+      _pendingBetTimerRef = null;
+      S.pendingBet = null;
+      sessionStorage.removeItem('pendingBetExpiry');
+      bar.classList.add('hidden');
+    }
+  };
+  tick();
+  _pendingBetTimerRef = setInterval(tick, 1000);
+};
+
+const stopPendingBetTimer = () => {
+  if (_pendingBetTimerRef) { clearInterval(_pendingBetTimerRef); _pendingBetTimerRef = null; }
+  sessionStorage.removeItem('pendingBetExpiry');
+  document.getElementById('pendingBetBar')?.classList.add('hidden');
+};
+
 let _betCountdownTimer = null;
 const startBetCountdown = (gameDate) => {
   if (_betCountdownTimer) { clearInterval(_betCountdownTimer); _betCountdownTimer = null; }
@@ -3142,6 +3188,7 @@ const submitLogin = async (e) => {
     await loadBets();
 
     if (S.pendingBet) {
+      stopPendingBetTimer();
       const pb = S.pendingBet;
       S.pendingBet = null;
       navigate('jogos');
@@ -3224,6 +3271,7 @@ const googleCallback = async (response) => {
     await loadBets();
 
     if (S.pendingBet) {
+      stopPendingBetTimer();
       const pb = S.pendingBet;
       S.pendingBet = null;
       navigate('jogos');
