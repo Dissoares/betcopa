@@ -4154,10 +4154,12 @@ button.copa-hero__stat:hover {
   font-family: monospace;
   color: var(--text-muted);
 }
-.online-sc__page {
-  white-space: nowrap;
-}
+.online-sc__page { white-space: nowrap; }
 .online-sc__page i { font-size: .72rem; }
+.online-sc__page--path { display: inline-flex; align-items: center; gap: .3rem; flex-wrap: wrap; white-space: normal; }
+.online-sc__crumb { font-size: .75rem; }
+.online-sc__crumb--prev { color: var(--text-muted); }
+.online-sc__crumb--cur  { color: var(--text); font-weight: 600; }
 .online-sc__ref {
   font-size: .75rem;
   color: var(--text-muted);

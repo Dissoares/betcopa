@@ -320,7 +320,7 @@ const navigate = (view) => {
     view = S.user ? 'jogos' : 'auth';
   }
   const navLbl = _NAV_LABELS[view];
-  if (navLbl) trackEvent('navigate', `Navegou para: ${navLbl}`);
+  if (navLbl) { trackEvent('navigate', `Navegou para: ${navLbl}`); _pushNav(navLbl); }
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   const target = document.getElementById(`view-${view}`);
   if (target) {
@@ -1360,6 +1360,15 @@ const _getCurrentPageLabel = () => {
   return _PAGE_LABELS[hash] || hash || 'Início';
 };
 
+// ── Navigation history (breadcrumb for admin) ────────────────
+const _navHistory = [];
+const _pushNav = (label) => {
+  if (!label) return;
+  if (_navHistory[_navHistory.length - 1] === label) return;
+  _navHistory.push(label);
+  if (_navHistory.length > 4) _navHistory.shift();
+};
+
 // ── Session event tracking ────────────────────────────────────
 let _evtQueue = [];
 let _evtFlushTimer = null;
@@ -1383,7 +1392,7 @@ const pingOnline = async () => {
     const refInfo = _getOrCreateRefInfo();
     await api('/api/ping', 'POST', {
       session_id: getOrCreateSid(),
-      page:       _getCurrentPageLabel(),
+      page:       _navHistory.length > 1 ? _navHistory.join(' › ') : _getCurrentPageLabel(),
       source:     refInfo.source,
       referrer:   refInfo.referrer,
       device:     _getOrCreateDevice(),
@@ -1601,10 +1610,18 @@ const loadAdminOnline = async () => {
         ? `<span class="online-sc__geo">${flag ? flag + ' ' : ''}<span>${geo || ''}</span>${s.ip ? `<code class="online-sc__ip">${s.ip}</code>` : ''}</span>`
         : '';
 
-      // Página atual
-      const pageHtml = s.page
-        ? `<span class="online-sc__page"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>`
-        : '';
+      // Página atual (com breadcrumb se tiver › )
+      const pageHtml = s.page ? (() => {
+        const steps = s.page.split(' › ');
+        if (steps.length <= 1)
+          return `<span class="online-sc__page"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>`;
+        return `<span class="online-sc__page online-sc__page--path">
+          ${steps.map((step, i) => i < steps.length - 1
+            ? `<span class="online-sc__crumb online-sc__crumb--prev">${step}</span><i class="fa-solid fa-chevron-right" style="font-size:.55rem;opacity:.4"></i>`
+            : `<span class="online-sc__crumb online-sc__crumb--cur">${step}</span>`
+          ).join('')}
+        </span>`;
+      })() : '';
 
       // Origem
       const src   = s.source || 'direto';
@@ -2746,7 +2763,7 @@ const _MODAL_LABELS = {
 const openModal  = (id) => {
   document.getElementById(id)?.classList.remove('hidden');
   const lbl = _MODAL_LABELS[id];
-  if (lbl) trackEvent('modal_open', `Abriu: ${lbl}`);
+  if (lbl) { trackEvent('modal_open', `Abriu: ${lbl}`); _pushNav(lbl); }
   pingOnline();
 };
 const closeModal = (id) => {
