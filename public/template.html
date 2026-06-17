@@ -259,6 +259,19 @@
       <i class="fa-solid fa-futbol" style="display:block;font-size:2.5rem;margin-bottom:.6rem;opacity:.25"></i>
       Nenhum jogo encontrado para este filtro.
     </p>
+
+    <!-- ── Referral banner ── -->
+    <div class="referral-banner" id="referralBanner">
+      <div class="referral-banner__icon">🎁</div>
+      <div class="referral-banner__text">
+        <strong>Indique um amigo e ganhe R$10 de bônus</strong>
+        <span>Para cada amigo que se cadastrar pelo seu link, você recebe R$10 na conta.</span>
+      </div>
+      <button class="btn btn--referral-banner" id="heroBtnReferral">
+        Compartilhar agora
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
   </main>
 
   <!-- ===== VIEW: MEUS PALPITES ===== -->
@@ -1688,6 +1701,68 @@
     <div class="modal__backdrop"></div>
     <div class="modal__box modal__box--resultado">
       <div id="resultadoContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: REFERRAL / COMPARTILHE E GANHE ===== -->
+  <div class="modal hidden" id="modalReferral">
+    <div class="modal__backdrop" data-close="modalReferral"></div>
+    <div class="modal__box ref-box">
+
+      <button class="modal__close" data-close="modalReferral">×</button>
+
+      <div class="ref__hero">
+        <div class="ref__icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        <h2 class="ref__title">Convide. Ganhe.<br>Repita.</h2>
+        <p class="ref__sub">Cada amigo que se cadastrar pelo seu link<br>te dá bônus <strong>na hora</strong>.</p>
+      </div>
+
+      <div class="ref__reward">
+        <span class="ref__reward-amount" id="refBonusAmount">+R$ 10,00</span>
+        <span class="ref__reward-label">por amigo confirmado</span>
+      </div>
+
+      <div class="ref__stats">
+        <div class="ref__stat">
+          <strong id="refCount">0</strong>
+          <span>Amigos</span>
+        </div>
+        <div class="ref__stat-divider"></div>
+        <div class="ref__stat">
+          <strong id="refEarned">R$ 0,00</strong>
+          <span>Ganhos</span>
+        </div>
+      </div>
+
+      <div class="ref__progress-wrap">
+        <div class="ref__progress-bar"><div class="ref__progress-fill" id="refProgressFill"></div></div>
+        <span class="ref__progress-label" id="refProgressLabel">0 de 5 para bônus especial</span>
+      </div>
+
+      <div class="ref__link-wrap">
+        <span class="ref__link-label">Seu link exclusivo</span>
+        <div class="ref__link-row">
+          <span class="ref__link-url" id="refLinkDisplay">betcopa.online/?ref=…</span>
+          <button class="ref__copy-btn" id="refCopyBtn" title="Copiar link">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="ref__actions">
+        <button class="ref__btn-whatsapp" id="refBtnWhatsApp">
+          <i class="fa-brands fa-whatsapp"></i> Compartilhar no WhatsApp
+        </button>
+        <div class="ref__actions-row">
+          <button class="ref__btn-secondary" id="refBtnCopy">
+            <i class="fa-solid fa-link"></i> Copiar link
+          </button>
+          <button class="ref__btn-secondary" id="refBtnTelegram">
+            <i class="fa-brands fa-telegram"></i> Telegram
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 

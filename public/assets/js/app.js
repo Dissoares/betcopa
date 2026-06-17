@@ -390,12 +390,21 @@ const renderDrawer = () => {
       </div>` : ''}
       <div class="dr-sep"></div>
       <div class="dr-section">
+        <button class="dr-item dr-item--referral" id="drawerBtnReferral">
+          <i class="fa-solid fa-gift"></i> Convide e Ganhe Bônus
+          <span class="dr-badge-bonus">+R$10</span>
+        </button>
+      </div>
+      <div class="dr-sep"></div>
+      <div class="dr-section">
         <button class="dr-item dr-item--danger" id="drawerLogout">
           <i class="fa-solid fa-right-from-bracket"></i> Sair
         </button>
       </div>`;
 
     document.getElementById('drawerLogout')?.addEventListener('click', () => { closeMobileMenu(); logout(); });
+    document.getElementById('drawerBtnDeposit')?.addEventListener('click', () => { closeMobileMenu(); openModal('modalDeposit'); });
+    document.getElementById('drawerBtnReferral')?.addEventListener('click', () => { closeMobileMenu(); openReferralModal(); });
   } else {
     body.innerHTML = `
       <div class="dr-section">
@@ -471,6 +480,11 @@ const renderHeader = () => {
           <button class="udrop__item" data-udrop-nav="admin">
             <i class="fa-solid fa-shield-halved"></i> Painel Admin
           </button>` : ''}
+          <div class="udrop__sep"></div>
+          <button class="udrop__item udrop__item--referral" id="udropBtnReferral">
+            <i class="fa-solid fa-gift"></i> Convide e Ganhe Bônus
+            <span class="dr-badge-bonus">+R$10</span>
+          </button>
           <div class="udrop__sep"></div>
           <button class="udrop__item udrop__item--danger" id="dropdownLogout">
             <i class="fa-solid fa-right-from-bracket"></i> Sair
@@ -3250,9 +3264,10 @@ const submitRegister = async (e) => {
   btn.disabled = true; btn.textContent = 'Criando conta...';
   try {
     await api('/api/register', 'POST', {
-      nome:  document.getElementById('registerName').value,
-      email: document.getElementById('registerEmail').value,
-      senha: document.getElementById('registerPassword').value,
+      nome:          document.getElementById('registerName').value,
+      email:         document.getElementById('registerEmail').value,
+      senha:         document.getElementById('registerPassword').value,
+      referral_code: sessionStorage.getItem('refCode') || '',
     });
     showAlert(S.pendingBet ? 'Conta criada! Faça login para confirmar seu palpite.' : 'Conta criada! Faça login para começar.', 'success');
     switchAuthTab('login');
@@ -4413,6 +4428,8 @@ const bind = () => {
     if (e.target.closest('#udropBtnDeposit')) { closeAllModals?.(); openDepositModal(); }
     if (e.target.closest('#drawerBtnDeposit')) { closeMobileMenu(); openDepositModal(); }
     if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
+    if (e.target.closest('#udropBtnReferral')) { closeDropdown?.(); openReferralModal(); }
+    if (e.target.closest('#heroBtnReferral')) { openReferralModal(); }
   });
 
   // Paginação "Meus Palpites"
@@ -4712,6 +4729,50 @@ const bind = () => {
     switchAuthTab('login');
     navigate('auth');
   });
+
+  // ── Referral modal ────────────────────────────────────────
+  const openReferralModal = async () => {
+    if (!S.user) { switchAuthTab('register'); navigate('auth'); return; }
+    openModal('modalReferral');
+    try {
+      const data = await api('/api/referral');
+      const baseUrl = `${location.protocol}//${location.host}`;
+      const link    = `${baseUrl}/?ref=${data.code}`;
+
+      document.getElementById('refBonusAmount').textContent = `+${fmtMoney(data.bonus_per)}`;
+      document.getElementById('refCount').textContent       = data.referral_count;
+      document.getElementById('refEarned').textContent      = fmtMoney(data.total_earned);
+      document.getElementById('refLinkDisplay').textContent = link.replace(/^https?:\/\//, '');
+
+      // Barra de progresso (meta: 5 amigos para bônus especial)
+      const meta = 5;
+      const pct  = Math.min(100, Math.round((data.referral_count / meta) * 100));
+      document.getElementById('refProgressFill').style.width  = `${pct}%`;
+      document.getElementById('refProgressLabel').textContent =
+        data.referral_count >= meta
+          ? '🎉 Bônus especial desbloqueado!'
+          : `${data.referral_count} de ${meta} para bônus especial`;
+
+      const waMsg = encodeURIComponent(
+        `Oi! Tô ganhando dinheiro acertando o placar dos jogos da Copa 🏆⚽\n\n` +
+        `Se cadastra pelo meu link e já ganha bônus no cadastro:\n${link}\n\nNão perde essa! ⏰`
+      );
+      const tgMsg = encodeURIComponent(`🏆 Acerte o placar e ganhe prêmios reais! ${link}`);
+
+      document.getElementById('refBtnWhatsApp').onclick = () =>
+        window.open(`https://wa.me/?text=${waMsg}`, '_blank');
+      document.getElementById('refBtnTelegram').onclick = () =>
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${tgMsg}`, '_blank');
+
+      const copyLink = () => {
+        navigator.clipboard.writeText(link).then(() => toast('Link copiado!', 'success'));
+      };
+      document.getElementById('refBtnCopy').onclick  = copyLink;
+      document.getElementById('refCopyBtn').onclick  = copyLink;
+    } catch { toast('Erro ao carregar dados de indicação.', 'danger'); }
+  };
+
+  document.getElementById('refBtnCopy')?.addEventListener('click', () => {});
 
   // ── Pre-login prize preview modal ─────────────────────────
   document.getElementById('plBtnRegister')?.addEventListener('click', () => {
@@ -6389,6 +6450,10 @@ const init = async () => {
       }
     }
   } catch { /* silencioso — login com Google simplesmente não aparece */ }
+
+  // Captura código de indicação da URL (?ref=CODE)
+  const refCode = new URLSearchParams(location.search).get('ref');
+  if (refCode) sessionStorage.setItem('refCode', refCode.toUpperCase());
 
   // Detecção de link de reset de senha (?reset=TOKEN na query string)
   const resetToken = new URLSearchParams(location.search).get('reset');

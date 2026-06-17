@@ -22,10 +22,11 @@ class AuthController
         if (!empty($_SERVER['HTTP_X_CSRF_TOKEN']) || !empty($body['csrf']) || !empty($body['csrf_token'])) {
             Csrf::verify();
         }
-        $nome = trim($body['nome'] ?? '');
-        $email = trim($body['email'] ?? '');
-        $senha = trim($body['senha'] ?? '');
-        $user = $this->service->register($nome, $email, $senha);
+        $nome         = trim($body['nome'] ?? '');
+        $email        = trim($body['email'] ?? '');
+        $senha        = trim($body['senha'] ?? '');
+        $referralCode = trim($body['referral_code'] ?? '');
+        $user = $this->service->register($nome, $email, $senha, $referralCode ?: null);
         jsonResponse(['user' => $user]);
     }
 

@@ -12,7 +12,7 @@ class AuthService
         $this->config       = $config;
     }
 
-    public function register(string $nome, string $email, string $senha): array
+    public function register(string $nome, string $email, string $senha, ?string $referralCode = null): array
     {
         if (strlen($nome) < 3) {
             throw new InvalidArgumentException('Nome muito curto');
@@ -29,6 +29,26 @@ class AuthService
 
         $hash   = password_hash($senha, PASSWORD_DEFAULT);
         $userId = $this->users->create($nome, $email, $hash);
+
+        // Gera código de indicação para o novo usuário
+        $this->users->ensureReferralCode($userId);
+
+        // Aplica bônus ao indicador (se veio com referral_code válido)
+        if ($referralCode) {
+            $referrer = $this->users->findByReferralCode($referralCode);
+            if ($referrer && (int)$referrer['id'] !== $userId) {
+                $this->users->setReferredBy($userId, (int)$referrer['id']);
+                $bonusRef = (float) $this->config->get('bonus_indicacao', '10');
+                if ($bonusRef > 0) {
+                    $this->transactions->create(
+                        (int)$referrer['id'],
+                        'credito',
+                        $bonusRef,
+                        'Bônus de indicação — novo amigo cadastrado'
+                    );
+                }
+            }
+        }
 
         $bonus = (float) $this->config->get('bonus_cadastro', '0');
         if ($bonus > 0) {

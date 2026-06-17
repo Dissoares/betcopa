@@ -112,4 +112,55 @@ class UserRepository
         ]);
         return (int) $this->db->lastInsertId();
     }
+
+    // ── Referral ──────────────────────────────────────────────
+
+    public function findByReferralCode(string $code): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM users WHERE referral_code = :code');
+        $stmt->execute(['code' => strtoupper($code)]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function setReferralCode(int $id, string $code): void
+    {
+        $this->db->prepare('UPDATE users SET referral_code = :code WHERE id = :id')
+                 ->execute(['code' => $code, 'id' => $id]);
+    }
+
+    public function setReferredBy(int $id, int $referrerId): void
+    {
+        $this->db->prepare('UPDATE users SET referred_by = :ref WHERE id = :id')
+                 ->execute(['ref' => $referrerId, 'id' => $id]);
+    }
+
+    public function countReferrals(int $id): int
+    {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM users WHERE referred_by = :id');
+        $stmt->execute(['id' => $id]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function generateUniqueCode(): string
+    {
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        do {
+            $code = '';
+            for ($i = 0; $i < 8; $i++) {
+                $code .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        } while ($this->findByReferralCode($code));
+        return $code;
+    }
+
+    public function ensureReferralCode(int $id): string
+    {
+        $user = $this->findById($id);
+        if ($user && !empty($user['referral_code'])) {
+            return $user['referral_code'];
+        }
+        $code = $this->generateUniqueCode();
+        $this->setReferralCode($id, $code);
+        return $code;
+    }
 }

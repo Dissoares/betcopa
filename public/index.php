@@ -47,6 +47,7 @@ require_once __DIR__ . '/../src/repositories/OnlineRepository.php';
 require_once __DIR__ . '/../src/repositories/AnalyticsRepository.php';
 require_once __DIR__ . '/../src/repositories/DepositRepository.php';
 require_once __DIR__ . '/../src/controllers/DepositController.php';
+require_once __DIR__ . '/../src/controllers/ReferralController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -111,6 +112,7 @@ try {
         $adminCtrl->setWithdrawalRepository($withdrawals);
         $adminCtrl->setOnlineRepository(new OnlineRepository($db));
         $adminCtrl->setAnalyticsRepository(new AnalyticsRepository($db));
+        $referralCtrl = new ReferralController($users, $transactions, $configRepo);
         $notifCtrl    = new NotificationController($notifsRepo);
         $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
         $ticketCtrl->setNotificationRepository($notifsRepo);
@@ -122,6 +124,7 @@ try {
 
         // ── Auth ──────────────────────────────────────────────
         route('/api/register',        'POST', fn() => $authCtrl->register());
+        route('/api/referral',        'GET',  fn() => $referralCtrl->info());
         route('/api/login',           'POST', fn() => $authCtrl->login());
         route('/api/logout',          'POST', fn() => $authCtrl->logout());
         route('/api/auth/google',     'POST', fn() => $authCtrl->googleLogin());
