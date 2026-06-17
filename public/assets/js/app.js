@@ -3260,7 +3260,7 @@ const initGoogleButtons = (clientId) => {
     client_id: clientId,
     callback:  googleCallback,
   });
-  ['googleBtnLogin', 'googleBtnRegister'].forEach(id => {
+  ['googleBtnLogin', 'googleBtnRegister', 'googleBtnPreLogin'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.innerHTML = '';
@@ -3268,7 +3268,7 @@ const initGoogleButtons = (clientId) => {
       theme: 'filled_black',
       size:  'large',
       width: el.parentElement?.offsetWidth || 320,
-      text:  id === 'googleBtnRegister' ? 'signup_with' : 'signin_with',
+      text:  id === 'googleBtnRegister' || id === 'googleBtnPreLogin' ? 'signup_with' : 'signin_with',
       locale: 'pt-BR',
     });
   });

@@ -1467,6 +1467,13 @@ select {
   font-size: .78rem; color: var(--text-muted); line-height: 1.5;
   margin-bottom: 1.25rem;
 }
+.pl__divider {
+  display: flex; align-items: center; gap: .5rem;
+  margin: .5rem 0; color: var(--text-muted); font-size: .75rem;
+}
+.pl__divider::before, .pl__divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
 .pl__btn-primary {
   display: flex; align-items: center; justify-content: center; gap: .4rem;
   width: 100%; padding: .85rem; margin-bottom: .6rem;
