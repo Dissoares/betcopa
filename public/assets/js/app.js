@@ -1961,7 +1961,7 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
     const tableEl = document.getElementById('anVisitsTable');
     if (!tableEl) return;
 
-    const pagerInfo = `${(+stats.total_pageviews||0).toLocaleString('pt-BR')} páginas · ${sessPerDay} sessões/dia · página ${page} de ${totalPages || 1}`;
+    const pagerInfo = `${(+stats.total_pageviews||0).toLocaleString('pt-BR')} páginas · ${sessPerDay} sessões/dia · ${(+data.total_visits||0)} IPs únicos · pág. ${page}/${totalPages || 1}`;
 
     if (!visits.length) {
       tableEl.innerHTML = '<p class="text--muted an-empty">Nenhuma visita registrada para este período.</p>';
@@ -1969,12 +1969,17 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
     }
 
     const rows = visits.map((v, i) => {
-      const rowNum   = (page - 1) * limit + i + 1;
-      const isUser   = !!v.user_id;
-      const nome     = isUser ? (v.nome || 'Usuário') : 'Visitante';
-      const flag     = _countryFlag(v.country || '');
-      const geo      = [v.city, v.region ? v.region.substring(0,2) : ''].filter(Boolean).join(', ');
-      const geoFull  = [v.city, v.region, v.country_name].filter(Boolean).join(', ');
+      const rowNum    = (page - 1) * limit + i + 1;
+      const isUser    = !!v.user_id;
+      const nome      = isUser ? (v.nome || 'Usuário') : 'Visitante';
+      const flag      = _countryFlag(v.country || '');
+      const geo       = [v.city, v.region ? v.region.substring(0,2) : ''].filter(Boolean).join(', ');
+      const totalSess = +v.total_sessions || 1;
+      const loggedN   = +v.logged_sessions || 0;
+      const anonN     = +v.anon_sessions   || 0;
+      const sessLabel = totalSess > 1
+        ? `<span class="ip-sess-badge">${totalSess} sessões${loggedN ? ` · ${loggedN} logada` : ''}${anonN > 1 || (anonN && loggedN) ? ` · ${anonN} anon` : ''}</span>`
+        : '';
       const statusBadge = v.is_new == 1
         ? '<span class="an-status an-status--new"><i class="fa-solid fa-star"></i> Novo</span>'
         : '<span class="an-status an-status--ret"><i class="fa-solid fa-rotate-left"></i> Retornou</span>';
@@ -1986,10 +1991,8 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
       const refUrl   = v.referrer
         ? `<a class="an-ref-link" href="${v.referrer}" target="_blank" rel="noopener" title="${v.referrer}">${v.referrer.length > 60 ? v.referrer.substring(0,60)+'…' : v.referrer} <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`
         : '—';
-      const devIco   = v.device === 'mobile' ? 'fa-solid fa-mobile-screen' : v.device === 'tablet' ? 'fa-solid fa-tablet-screen-button' : 'fa-solid fa-desktop';
-      const dt       = _fmtDateTime(v.last_seen);
-      const dur      = _fmtDuration2(+v.duration_sec || 0);
-      const ipVisits = +v.ip_total_visits || 1;
+      const dt  = _fmtDateTime(v.last_seen);
+      const dur = _fmtDuration2(+v.duration_sec || 0);
 
       return `<tr>
         <td class="an-td-num">${rowNum}</td>
@@ -1997,13 +2000,13 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
           <div class="an-visitor-cell">
             <div class="an-visitor-avatar${isUser ? '' : ' an-visitor-avatar--anon'}">${isUser ? (v.nome||'U').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '<i class="fa-solid fa-user-secret"></i>'}</div>
             <div class="an-visitor-info">
-              <div class="an-visitor-name">${nome}${isUser && v.email ? ` <span class="an-visitor-email">${v.email}</span>` : ''}</div>
+              <div class="an-visitor-name">${nome}${isUser && v.email ? ` <span class="an-visitor-email">${v.email}</span>` : ''} ${sessLabel}</div>
               <div>${_brBadge(v.browser, v.os)}</div>
               <div class="an-visitor-geo">${flag ? `${flag} ` : ''}${geo || v.country_name || ''} <code class="online-sc__ip">${v.ip || ''}</code></div>
             </div>
           </div>
         </td>
-        <td class="an-td-center"><span class="an-pageviews">${v.page_views||1}×</span></td>
+        <td class="an-td-center"><span class="an-pageviews">${v.total_page_views||1}×</span></td>
         <td>${statusBadge}</td>
         <td class="an-td-page">
           <div class="an-page-cell">
@@ -2022,12 +2025,11 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
             <span class="an-dur-badge ${+v.duration_sec >= 300 ? 'an-dur--long' : +v.duration_sec >= 60 ? 'an-dur--mid' : 'an-dur--short'}" title="Tempo no site">
               <i class="fa-regular fa-clock"></i> ${dur}
             </span>
-            <span style="color:var(--text-muted);font-size:.7rem" title="Há quanto tempo saiu">saiu há:  ${_fmtAgo(v.last_seen)}</span>
-            <span title="Total de visitas deste IP" style="color:var(--text-muted);font-size:.7rem">${ipVisits}× IP</span>
+            <span style="color:var(--text-muted);font-size:.7rem" title="Saiu">saiu há: ${_fmtAgo(v.last_seen)}</span>
           </div>
         </td>
         <td class="an-td-action">
-          <button class="an-eye-btn" data-sid="${v.session_id||''}" data-nome="${nome}" title="Ver histórico da sessão">
+          <button class="an-eye-btn" data-ip="${v.ip||''}" title="Ver histórico do IP">
             <i class="fa-solid fa-eye"></i>
           </button>
         </td>
@@ -2049,7 +2051,7 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
           <thead><tr>
             <th>#</th>
             <th><i class="fa-solid fa-user"></i> Visitante · Local · IP</th>
-            <th>Págs</th>
+            <th><i class="fa-solid fa-file-lines"></i> Págs</th>
             <th>Status</th>
             <th><i class="fa-regular fa-file"></i> Última Página</th>
             <th><i class="fa-solid fa-share-nodes"></i> Origem</th>
@@ -5502,52 +5504,117 @@ const bind = () => {
   document.getElementById('btnRefreshDash')?.addEventListener('click', loadAdminDashboard);
   document.getElementById('btnRefreshOnline')?.addEventListener('click', loadAdminOnline);
 
-  // Session events modal
+  // IP history modal
   document.getElementById('anVisitsTable')?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.an-eye-btn[data-sid]');
-    if (!btn || !btn.dataset.sid) return;
-    const sid  = btn.dataset.sid;
-    const nome = btn.dataset.nome || 'Visitante';
-    const listEl = document.getElementById('sessionEventsList');
-    const subtitle = document.getElementById('sessionEventsSubtitle');
-    if (subtitle) subtitle.textContent = `${nome} · ${sid.substring(0,8)}…`;
+    const btn = e.target.closest('.an-eye-btn[data-ip]');
+    if (!btn || !btn.dataset.ip) return;
+    const ip     = btn.dataset.ip;
+    const listEl = document.getElementById('ipHistoryList');
+    const sub    = document.getElementById('ipHistorySubtitle');
+    if (sub)    sub.textContent = ip;
     if (listEl) listEl.innerHTML = '<p class="text--muted">Carregando…</p>';
-    document.getElementById('modalSessionEvents')?.classList.remove('hidden');
+    document.getElementById('modalIPHistory')?.classList.remove('hidden');
     try {
-      const { events } = await api(`/api/admin/sessions/${sid}/events`);
+      const { sessions } = await api(`/api/admin/analytics/ip?ip=${encodeURIComponent(ip)}`);
       if (!listEl) return;
-      if (!events.length) {
-        listEl.innerHTML = '<p class="text--muted" style="text-align:center;padding:2rem 0">Nenhum evento registrado para esta sessão.</p>';
+      if (!sessions || !sessions.length) {
+        listEl.innerHTML = '<p class="text--muted" style="text-align:center;padding:2rem 0">Nenhuma sessão encontrada.</p>';
         return;
       }
-      const _EVT_ICON = {
-        navigate:    { icon: 'fa-solid fa-arrow-right',       color: '#60a5fa' },
-        modal_open:  { icon: 'fa-solid fa-window-maximize',   color: '#34d399' },
-        modal_close: { icon: 'fa-solid fa-window-minimize',   color: '#f87171' },
-        action:      { icon: 'fa-solid fa-bolt',               color: '#fbbf24' },
-        form:        { icon: 'fa-solid fa-pen-to-square',      color: '#a78bfa' },
+      const s0   = sessions[0];
+      const flag = _countryFlag(s0.country || '');
+      const geo  = [s0.city, s0.region, s0.country_name].filter(Boolean).join(', ');
+      if (sub) sub.textContent = `${ip}${geo ? '  ·  ' + flag + ' ' + geo : ''}`;
+
+      const logged = sessions.filter(s => s.user_id);
+      const anon   = sessions.filter(s => !s.user_id);
+
+      const _EVT_IC = {
+        navigate:    { icon: 'fa-solid fa-arrow-right',     color: '#60a5fa' },
+        modal_open:  { icon: 'fa-solid fa-window-maximize', color: '#34d399' },
+        modal_close: { icon: 'fa-solid fa-window-minimize', color: '#f87171' },
+        action:      { icon: 'fa-solid fa-bolt',             color: '#fbbf24' },
+        form:        { icon: 'fa-solid fa-pen-to-square',    color: '#a78bfa' },
       };
-      listEl.innerHTML = `<div class="se-timeline">${events.map((ev, i) => {
-        const m = _EVT_ICON[ev.event_type] || { icon: 'fa-solid fa-circle', color: '#888' };
-        const t = new Date(ev.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-        return `<div class="se-item">
-          <div class="se-dot" style="background:${m.color}"><i class="${m.icon}"></i></div>
-          ${i < events.length - 1 ? '<div class="se-line"></div>' : ''}
-          <div class="se-body">
-            <span class="se-label">${ev.label}</span>
-            <span class="se-time">${t}</span>
-          </div>
+
+      const renderEventsTimeline = (events, sess) => {
+        if (!events || !events.length) return '';
+
+        const steps = events.map((ev, idx) => {
+          const m    = _EVT_IC[ev.event_type] || { icon: 'fa-solid fa-circle', color: '#9ca3af' };
+          const ts   = new Date(ev.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+          const isLast = idx === events.length - 1;
+
+          // delta para o próximo evento
+          let delta = '';
+          if (!isLast) {
+            const diffMs = new Date(events[idx + 1].created_at).getTime() - new Date(ev.created_at).getTime();
+            const diffS  = Math.round(diffMs / 1000);
+            delta = diffS < 60
+              ? `+${diffS}s`
+              : `+${Math.floor(diffS/60)}m${diffS%60 ? String(diffS%60).padStart(2,'0')+'s' : ''}`;
+          }
+
+          return `<div class="evts-step${isLast ? ' evts-step--last' : ''}">
+            <div class="evts-step__left">
+              <div class="evts-step__icon" style="--ic:${m.color}"><i class="${m.icon}"></i></div>
+              ${!isLast ? `<div class="evts-step__line"></div>` : ''}
+            </div>
+            <div class="evts-step__body">
+              <span class="evts-step__label">${ev.label}</span>
+              <span class="evts-step__ts">${ts}</span>
+            </div>
+            ${delta ? `<span class="evts-step__delta">${delta}</span>` : ''}
+          </div>`;
+        }).join('');
+
+        return `<div class="ip-evts-path">
+          <div class="ip-evts-path__hdr"><i class="fa-solid fa-route"></i> Caminho · ${events.length} ações</div>
+          ${steps}
         </div>`;
-      }).join('')}</div>`;
+      };
+
+      const renderGroup = (title, iconCls, items) => {
+        if (!items.length) return '';
+        return `<div class="ip-hist-group">
+          <h4 class="ip-hist-group__title"><i class="${iconCls}"></i> ${title} <span class="ip-hist-group__cnt">${items.length}</span></h4>
+          ${items.map(s => {
+            const dur  = _fmtDuration2(+s.duration_sec || 0);
+            const dt   = _fmtDateTime(s.last_seen);
+            const stBadge = s.is_new == 1
+              ? '<span class="an-status an-status--new"><i class="fa-solid fa-star"></i> Novo</span>'
+              : '<span class="an-status an-status--ret"><i class="fa-solid fa-rotate-left"></i> Retornou</span>';
+            return `<div class="ip-hist-row">
+              <div class="ip-hist-row__head">
+                ${s.nome ? `<strong class="ip-hist-row__nome">${s.nome}</strong>` : ''}
+                ${_brBadge(s.browser, s.os)}
+                ${stBadge}
+                <span class="ip-hist-row__page"><i class="fa-solid fa-location-dot" style="opacity:.5"></i> ${s.current_page || s.landing_page || '—'}</span>
+              </div>
+              <div class="ip-hist-row__meta">
+                <span class="ip-hist-row__date">${dt}</span>
+                <span class="ip-hist-row__dur"><i class="fa-regular fa-clock"></i> ${dur}</span>
+                <span class="ip-hist-row__pv">${s.page_views||1}× págs</span>
+              </div>
+              ${renderEventsTimeline(s.events, s)}
+            </div>`;
+          }).join('')}
+        </div>`;
+      };
+
+      listEl.innerHTML = `<div class="ip-hist-cols">
+        <div class="ip-hist-col">${renderGroup('Logado', 'fa-solid fa-user-check', logged)}</div>
+        <div class="ip-hist-col">${renderGroup('Anônimo', 'fa-solid fa-user-secret', anon)}</div>
+      </div>`;
     } catch (err) {
       if (listEl) listEl.innerHTML = `<p class="text--muted">${err.message}</p>`;
     }
   });
-  document.getElementById('btnSessionEventsClose')?.addEventListener('click', () =>
-    document.getElementById('modalSessionEvents')?.classList.add('hidden')
+  document.getElementById('btnIPHistoryClose')?.addEventListener('click', () =>
+    document.getElementById('modalIPHistory')?.classList.add('hidden')
   );
-  document.getElementById('modalSessionEventsBackdrop')?.addEventListener('click', () =>
-    document.getElementById('modalSessionEvents')?.classList.add('hidden')
+  document.getElementById('modalIPHistoryBackdrop')?.addEventListener('click', () =>
+    document.getElementById('modalIPHistory')?.classList.add('hidden')
   );
   document.getElementById('btnRunAllMigrations')?.addEventListener('click', runAllPendingMigrations);
   document.getElementById('btnRefreshSaques')?.addEventListener('click', loadAdminSaques);

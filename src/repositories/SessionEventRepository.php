@@ -41,6 +41,20 @@ class SessionEventRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getBySessionIds(array $sessionIds): array
+    {
+        if (empty($sessionIds)) return [];
+        $placeholders = implode(',', array_fill(0, count($sessionIds), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT session_id, event_type, label, created_at
+             FROM session_events
+             WHERE session_id IN ($placeholders)
+             ORDER BY created_at ASC"
+        );
+        $stmt->execute($sessionIds);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function purgeOlderThan(int $days = 30): void
     {
         $this->db->exec("DELETE FROM session_events WHERE created_at < NOW() - INTERVAL {$days} DAY");

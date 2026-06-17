@@ -4238,6 +4238,108 @@ button.copa-hero__stat:hover {
 .an-stat-card__val   { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
 .an-stat-card__label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-top: .15rem; }
 
+/* Sessions badge (IP grouped table) */
+.ip-sess-badge {
+  display: inline-flex; align-items: center;
+  font-size: .68rem; font-weight: 500;
+  background: rgba(99,102,241,.15); border: 1px solid rgba(99,102,241,.3);
+  color: #a5b4fc; border-radius: 20px;
+  padding: .1rem .52rem; white-space: nowrap; vertical-align: middle;
+}
+
+/* IP History modal */
+.ip-hist-group { margin-bottom: 1.25rem; }
+.ip-hist-group__title {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--text-muted); margin: 0 0 .6rem;
+  display: flex; align-items: center; gap: .35rem;
+  border-bottom: 1px solid var(--border); padding-bottom: .4rem;
+}
+.ip-hist-group__cnt {
+  font-size: .72rem; background: var(--surface-3);
+  border-radius: 20px; padding: .05rem .45rem;
+  color: var(--text); font-weight: 600;
+}
+.ip-hist-row {
+  padding: .55rem 0; border-bottom: 1px solid rgba(255,255,255,.05);
+  display: flex; flex-direction: column; gap: .3rem;
+}
+.ip-hist-row:last-child { border-bottom: none; }
+.ip-hist-row__head {
+  display: flex; align-items: center; flex-wrap: wrap; gap: .35rem;
+  font-size: .78rem;
+}
+.ip-hist-row__nome { font-size: .82rem; }
+.ip-hist-row__page { font-size: .74rem; color: var(--text-muted); }
+.ip-hist-row__meta {
+  display: flex; align-items: center; gap: .65rem;
+  font-size: .72rem; color: var(--text-muted);
+}
+.ip-hist-row__date { color: var(--text); }
+
+/* IP History 2-col layout */
+.ip-hist-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.ip-hist-col:empty { display: none; }
+.ip-hist-cols:has(.ip-hist-col:empty) { grid-template-columns: 1fr; }
+
+/* Journey path timeline */
+.ip-evts-path {
+  margin-top: .55rem;
+  border-top: 1px dashed rgba(255,255,255,.08);
+  padding-top: .5rem;
+}
+.ip-evts-path__hdr {
+  font-size: .67rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-muted); margin-bottom: .55rem;
+  display: flex; align-items: center; gap: .28rem;
+}
+.evts-step {
+  display: flex; align-items: flex-start; gap: .5rem;
+  position: relative; min-height: 28px;
+}
+.evts-step__left {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0; width: 22px;
+}
+.evts-step__icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: color-mix(in srgb, var(--ic) 18%, transparent);
+  border: 1.5px solid var(--ic);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.evts-step__icon i { font-size: .58rem; color: var(--ic); }
+.evts-step__line {
+  width: 1.5px; flex: 1; min-height: 10px;
+  background: var(--border);
+  margin: 2px 0 2px;
+}
+.evts-step__body {
+  flex: 1; display: flex; flex-direction: column;
+  padding-top: 2px; padding-bottom: 6px;
+  min-width: 0;
+}
+.evts-step__label {
+  font-size: .78rem; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.evts-step__ts { font-size: .66rem; color: var(--text-muted); margin-top: 1px; }
+.evts-step__delta {
+  font-size: .63rem; color: var(--text-muted);
+  background: var(--surface-3); border-radius: 10px;
+  padding: .1rem .38rem; white-space: nowrap;
+  align-self: center; flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .ip-hist-cols { grid-template-columns: 1fr; }
+}
+
 /* Mini bar charts */
 .an-charts-grid {
   display: grid;
@@ -4245,7 +4347,7 @@ button.copa-hero__stat:hover {
   gap: 1rem;
 }
 .an-chart-panel { padding: 1rem !important; }
-.an-chart-panel--wide { grid-column: 1 / -1; }
+.an-chart-panel--wide { }
 .an-chart-title {
   font-size: .8rem;
   font-weight: 600;

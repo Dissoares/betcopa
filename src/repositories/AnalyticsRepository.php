@@ -263,31 +263,80 @@ class AnalyticsRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ── Lista de visitas paginada ─────────────────────────────────
-    public function getVisits(string $period, int $page = 1, int $limit = 50): array
+    // ── Lista agrupada por IP (1 linha por IP) ────────────────────
+    public function getVisitsGroupedByIP(string $period, int $page = 1, int $limit = 50): array
     {
         $w      = $this->periodWhere($period);
         $offset = ($page - 1) * $limit;
         $stmt   = $this->db->query("
             SELECT
-                av.*,
-                u.nome, u.email,
-                TIMESTAMPDIFF(SECOND, av.first_seen, av.last_seen)  AS duration_sec,
-                (SELECT COUNT(*) FROM analytics_visits av2
-                 WHERE av2.ip = av.ip) AS ip_total_visits
-            FROM analytics_visits av
+                g.ip,
+                g.total_sessions,
+                g.total_page_views,
+                g.logged_sessions,
+                g.anon_sessions,
+                g.last_seen,
+                g.first_seen,
+                ANY_VALUE(av.country)      AS country,
+                ANY_VALUE(av.country_name) AS country_name,
+                ANY_VALUE(av.city)         AS city,
+                ANY_VALUE(av.region)       AS region,
+                ANY_VALUE(av.browser)      AS browser,
+                ANY_VALUE(av.os)           AS os,
+                ANY_VALUE(av.device)       AS device,
+                ANY_VALUE(av.source)       AS source,
+                ANY_VALUE(av.referrer)     AS referrer,
+                ANY_VALUE(av.user_id)      AS user_id,
+                ANY_VALUE(av.current_page) AS current_page,
+                ANY_VALUE(av.landing_page) AS landing_page,
+                ANY_VALUE(av.is_new)       AS is_new,
+                ANY_VALUE(u.nome)          AS nome,
+                ANY_VALUE(u.email)         AS email,
+                TIMESTAMPDIFF(SECOND, g.first_seen, g.last_seen) AS duration_sec
+            FROM (
+                SELECT
+                    ip,
+                    COUNT(DISTINCT session_id) AS total_sessions,
+                    SUM(page_views)            AS total_page_views,
+                    SUM(user_id IS NOT NULL)   AS logged_sessions,
+                    SUM(user_id IS NULL)       AS anon_sessions,
+                    MAX(last_seen)             AS last_seen,
+                    MIN(first_seen)            AS first_seen
+                FROM analytics_visits
+                WHERE $w AND ip IS NOT NULL
+                GROUP BY ip
+                ORDER BY last_seen DESC
+                LIMIT {$limit} OFFSET {$offset}
+            ) g
+            JOIN analytics_visits av ON av.ip = g.ip AND av.last_seen = g.last_seen
             LEFT JOIN users u ON av.user_id = u.id
-            WHERE $w
-            ORDER BY av.last_seen DESC
-            LIMIT {$limit} OFFSET {$offset}
+            GROUP BY g.ip
+            ORDER BY g.last_seen DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function countVisits(string $period): int
+    public function countVisitsByIP(string $period): int
     {
         $w    = $this->periodWhere($period);
-        $stmt = $this->db->query("SELECT COUNT(*) FROM analytics_visits WHERE $w");
+        $stmt = $this->db->query("SELECT COUNT(DISTINCT ip) FROM analytics_visits WHERE $w AND ip IS NOT NULL");
         return (int) $stmt->fetchColumn();
+    }
+
+    // ── Todas as sessões de um IP específico ──────────────────────
+    public function getSessionsByIP(string $ip): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT av.*,
+                   u.nome, u.email,
+                   TIMESTAMPDIFF(SECOND, av.first_seen, av.last_seen) AS duration_sec
+            FROM analytics_visits av
+            LEFT JOIN users u ON av.user_id = u.id
+            WHERE av.ip = ?
+            ORDER BY av.last_seen DESC
+            LIMIT 100
+        ");
+        $stmt->execute([$ip]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

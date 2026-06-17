@@ -115,6 +115,7 @@ try {
         $adminCtrl->setWithdrawalRepository($withdrawals);
         $adminCtrl->setOnlineRepository(new OnlineRepository($db));
         $adminCtrl->setAnalyticsRepository(new AnalyticsRepository($db));
+        $adminCtrl->setSessionEventRepository(new SessionEventRepository($db));
         $referralCtrl   = new ReferralController($users, $transactions, $configRepo);
         $migrationCtrl  = new MigrationController($db, $adminEmail);
         $notifCtrl    = new NotificationController($notifsRepo);
@@ -210,6 +211,7 @@ try {
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
         route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
         route('/api/admin/analytics',    'GET',  fn() => $adminCtrl->analyticsData());
+        route('/api/admin/analytics/ip', 'GET',  fn() => $adminCtrl->analyticsIPHistory());
 
         // ── Migrations ────────────────────────────────────────
         route('/api/admin/migrations',       'GET',  fn() => $migrationCtrl->list());

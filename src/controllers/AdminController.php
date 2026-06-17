@@ -8,7 +8,8 @@ class AdminController
     private ?WithdrawalRepository   $withdrawals  = null;
     private ?OnlineRepository       $online       = null;
     private ?AnalyticsRepository    $analytics    = null;
-    private ?TransactionRepository  $transactions = null;
+    private ?TransactionRepository  $transactions  = null;
+    private ?SessionEventRepository $sessionEvents = null;
 
     public function __construct(
         AdminRepository  $admin,
@@ -35,6 +36,11 @@ class AdminController
     public function setOnlineRepository(OnlineRepository $repo): void
     {
         $this->online = $repo;
+    }
+
+    public function setSessionEventRepository(SessionEventRepository $repo): void
+    {
+        $this->sessionEvents = $repo;
     }
 
     public function setAnalyticsRepository(AnalyticsRepository $repo): void
@@ -399,11 +405,36 @@ class AdminController
             'by_browser'   => $this->analytics->getByBrowser($period),
             'by_os'        => $this->analytics->getByOS($period),
             'by_page'      => $this->analytics->getByPage($period),
-            'visits'       => $this->analytics->getVisits($period, $page, $limit),
-            'total_visits' => $this->analytics->countVisits($period),
+            'visits'       => $this->analytics->getVisitsGroupedByIP($period, $page, $limit),
+            'total_visits' => $this->analytics->countVisitsByIP($period),
             'page'         => $page,
             'limit'        => $limit,
         ]);
+    }
+
+    public function analyticsIPHistory(): void
+    {
+        ensureAdmin($this->adminEmail);
+        if (!$this->analytics) { jsonResponse(['error' => 'Analytics não disponível'], 503); return; }
+        $ip = trim($_GET['ip'] ?? '');
+        if (!$ip) { jsonResponse(['error' => 'IP não informado'], 400); return; }
+
+        $sessions   = $this->analytics->getSessionsByIP($ip);
+        $sessionIds = array_column($sessions, 'session_id');
+
+        if ($sessionIds && $this->sessionEvents) {
+            $allEvts = $this->sessionEvents->getBySessionIds($sessionIds);
+            $evtMap  = [];
+            foreach ($allEvts as $ev) {
+                $evtMap[$ev['session_id']][] = $ev;
+            }
+            foreach ($sessions as &$s) {
+                $s['events'] = $evtMap[$s['session_id']] ?? [];
+            }
+            unset($s);
+        }
+
+        jsonResponse(['sessions' => $sessions]);
     }
 
     public function clearCache(): void
