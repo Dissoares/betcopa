@@ -1387,20 +1387,36 @@ const _flushEvents = async () => {
   } catch { _evtQueue.unshift(...batch); }
 };
 
+// Captura UTM da URL e persiste no sessionStorage (só precisa rodar uma vez por visita)
+const _captureUTM = () => {
+  const p = new URLSearchParams(location.search);
+  const src = p.get('utm_source'), med = p.get('utm_medium'), cam = p.get('utm_campaign');
+  if (src) sessionStorage.setItem('_utm_source',   src);
+  if (med) sessionStorage.setItem('_utm_medium',   med);
+  if (cam) sessionStorage.setItem('_utm_campaign', cam);
+};
+_captureUTM();
+
 const pingOnline = async () => {
   try {
     const refInfo = _getOrCreateRefInfo();
     await api('/api/ping', 'POST', {
-      session_id: getOrCreateSid(),
-      page:       _navHistory.length > 1 ? _navHistory.join(' › ') : _getCurrentPageLabel(),
-      source:     refInfo.source,
-      referrer:   refInfo.referrer,
-      device:     _getOrCreateDevice(),
+      session_id:   getOrCreateSid(),
+      page:         _navHistory.length > 1 ? _navHistory.join(' › ') : _getCurrentPageLabel(),
+      source:       refInfo.source,
+      referrer:     refInfo.referrer,
+      device:       _getOrCreateDevice(),
+      utm_source:   sessionStorage.getItem('_utm_source')   || undefined,
+      utm_medium:   sessionStorage.getItem('_utm_medium')   || undefined,
+      utm_campaign: sessionStorage.getItem('_utm_campaign') || undefined,
+      screen:       `${screen.width}x${screen.height}`,
+      lang:         navigator.language || undefined,
     });
   } catch { /* ignore */ }
 };
 
-let _onlineInterval = null;
+let _onlineInterval   = null;
+let _liveAgoInterval  = null;
 
 const _SRC_META = {
   google:    { label: 'Google',    icon: 'fa-brands fa-google' },
@@ -1422,6 +1438,20 @@ const _fmtAgo = (ts) => {
   if (diff < 60)   return `${diff}s atrás`;
   if (diff < 3600) return `${Math.round(diff / 60)}min atrás`;
   return `${Math.round(diff / 3600)}h atrás`;
+};
+
+// Versões que recebem segundos diretamente do servidor (sem problema de timezone)
+const _fmtSeconds = (sec) => {
+  if (sec < 0)    return 'agora';
+  if (sec < 60)   return `${sec}s atrás`;
+  if (sec < 3600) return `${Math.round(sec / 60)}min atrás`;
+  return `${Math.round(sec / 3600)}h atrás`;
+};
+const _fmtSessionDuration = (sec) => {
+  if (sec < 0)    return '';
+  if (sec < 60)   return `${sec}s na sessão`;
+  if (sec < 3600) return `${Math.round(sec / 60)}min na sessão`;
+  return `${Math.round(sec / 3600)}h na sessão`;
 };
 
 const _fmtDuration = (first_seen) => {
@@ -1583,95 +1613,164 @@ const loadAdminOnline = async () => {
       return;
     }
 
-    const _sessionStatus = (lastSeen) => {
-      const ago = (Date.now() - new Date(lastSeen).getTime()) / 1000;
-      if (ago < 60)  return 'active';
-      if (ago < 150) return 'idle';
-      return 'leaving';
-    };
     const _statusLabel = { active: 'Online', idle: 'Inativo', leaving: 'Saindo' };
+    const _statusColor = { active: 'var(--green,#00c853)', idle: '#ff9800', leaving: '#f44336' };
 
+    // Render cards
     listEl.innerHTML = sessions.map(s => {
-      const isUser = !!s.user_id;
-      const nome   = isUser ? (s.nome || 'Usuário') : 'Visitante anônimo';
-      const status = _sessionStatus(s.last_seen);
+      const isUser  = !!s.user_id;
+      const nome    = isUser ? (s.nome || 'Usuário') : 'Visitante anônimo';
+      const agoSec  = parseInt(s.ago_seconds      ?? 0);
+      const durSec  = parseInt(s.duration_seconds ?? 0);
+      const status  = agoSec < 60 ? 'active' : agoSec < 150 ? 'idle' : 'leaving';
+      const sid     = s.session_id || '';
 
-      // Avatar
+      // ── Avatar ──────────────────────────────────────────────────
       const avatarContent = isUser
         ? (s.nome || 'U').split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase()
         : '<i class="fa-solid fa-user-secret"></i>';
       const avatarBg = isUser ? _avatarColor(s.nome || 'U') : 'rgba(255,255,255,.08)';
-      const avatarHtml = `<div class="online-avatar" style="background:${avatarBg}">${avatarContent}</div>`;
 
-      // Geo
+      // ── Geo ─────────────────────────────────────────────────────
       const flag = _countryFlag(s.country || '');
       const geo  = [s.city, s.region, s.country_name].filter(Boolean).join(', ');
-      const geoHtml = (geo || s.ip)
-        ? `<span class="online-sc__geo">${flag ? flag + ' ' : ''}<span>${geo || ''}</span>${s.ip ? `<code class="online-sc__ip">${s.ip}</code>` : ''}</span>`
-        : '';
 
-      // Página atual (com breadcrumb se tiver › )
-      const pageHtml = s.page ? (() => {
-        const steps = s.page.split(' › ');
-        if (steps.length <= 1)
-          return `<span class="online-sc__page"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>`;
-        return `<span class="online-sc__page online-sc__page--path">
-          ${steps.map((step, i) => i < steps.length - 1
-            ? `<span class="online-sc__crumb online-sc__crumb--prev">${step}</span><i class="fa-solid fa-chevron-right" style="font-size:.55rem;opacity:.4"></i>`
-            : `<span class="online-sc__crumb online-sc__crumb--cur">${step}</span>`
-          ).join('')}
-        </span>`;
-      })() : '';
-
-      // Origem
-      const src   = s.source || 'direto';
-      const meta  = _SRC_META[src] || _SRC_META.outro;
+      // ── Source ──────────────────────────────────────────────────
+      const src    = s.source || 'direto';
+      const meta   = _SRC_META[src] || _SRC_META.outro;
       const srcLbl = src === 'outro' && s.referrer
         ? (() => { try { return new URL(s.referrer).hostname; } catch { return meta.label; } })()
         : meta.label;
 
-      // Referrer link
+      // ── UTM (tráfego pago / rastreado) ──────────────────────────
+      const utmParts = [
+        s.utm_source   ? `source=${s.utm_source}`   : '',
+        s.utm_medium   ? `medium=${s.utm_medium}`   : '',
+        s.utm_campaign ? `campaign=${s.utm_campaign}` : '',
+      ].filter(Boolean);
+      const utmHtml = utmParts.length
+        ? `<div class="ol-card__utm"><i class="fa-solid fa-chart-line"></i> ${utmParts.join(' · ')}</div>`
+        : '';
+
+      // ── Referrer ─────────────────────────────────────────────────
       const refHtml = s.referrer
-        ? `<a class="online-sc__ref" href="${s.referrer}" target="_blank" rel="noopener" title="${s.referrer}">
-             <i class="fa-solid fa-arrow-up-right-from-square"></i> ${s.referrer.length > 55 ? s.referrer.substring(0,55) + '…' : s.referrer}
-           </a>`
+        ? `<div class="ol-card__ref">
+             <i class="fa-solid fa-turn-up fa-rotate-90" style="opacity:.5"></i>
+             <a href="${s.referrer}" target="_blank" rel="noopener" title="${s.referrer}">
+               ${s.referrer.length > 70 ? s.referrer.substring(0,70) + '…' : s.referrer}
+             </a>
+           </div>`
         : '';
 
-      // Email (só logado)
-      const emailHtml = isUser && s.email
-        ? `<span class="online-sc__email">${s.email}</span>`
-        : '';
+      // ── Página atual ─────────────────────────────────────────────
+      const pageHtml = s.page ? (() => {
+        const steps = s.page.split(' › ');
+        if (steps.length <= 1)
+          return `<span class="ol-card__page-cur"><i class="fa-solid fa-location-dot"></i> ${s.page}</span>`;
+        return `<div class="ol-card__breadcrumb">
+          <i class="fa-solid fa-location-dot" style="opacity:.5;font-size:.7rem"></i>
+          ${steps.map((step, i) => i < steps.length - 1
+            ? `<span class="ol-card__crumb ol-card__crumb--prev">${step}</span><i class="fa-solid fa-chevron-right ol-card__crumb-sep"></i>`
+            : `<span class="ol-card__crumb ol-card__crumb--cur">${step}</span>`
+          ).join('')}
+        </div>`;
+      })() : '';
 
-      // Dispositivo
-      const devHtml = `<span class="online-sc__device">${_deviceIcon(s.device)}</span>`;
+      // ── Browser + OS badges ──────────────────────────────────────
+      const bMeta = _BR_META[s.browser] || { cls: 'br--other', icon: 'fa-solid fa-globe' };
+      const oMeta = _OS_META[s.os];
+      const techHtml = `<span class="ol-card__tech ${bMeta.cls}">
+        <i class="${bMeta.icon}"></i> ${s.browser || 'Outro'}
+        ${oMeta ? `<i class="${oMeta.icon}"></i> ${s.os}` : ''}
+      </span>`;
 
-      // Tempos
-      const ago      = _fmtAgo(s.last_seen);
-      const duration = _fmtDuration(s.first_seen);
+      // ── Extras (tela + idioma) ───────────────────────────────────
+      const extrasHtml = [
+        s.screen ? `<span class="ol-card__extra"><i class="fa-solid fa-display" style="opacity:.4"></i> ${s.screen}</span>` : '',
+        s.lang   ? `<span class="ol-card__extra"><i class="fa-solid fa-language" style="opacity:.4"></i> ${s.lang}</span>`   : '',
+      ].filter(Boolean).join('');
 
-      const dotHtml = `<span class="online-status-dot online-status-dot--${status}" title="${_statusLabel[status]}"></span>`;
-      return `<div class="online-sc ${isUser ? 'online-sc--user' : 'online-sc--anon'}">
-        ${avatarHtml}
-        <div class="online-sc__body">
-          <div class="online-sc__row1">
-            ${dotHtml}
-            <span class="online-sc__name">${nome}</span>
-            ${emailHtml}
-            <span class="online-src online-src--${src}"><i class="${meta.icon}"></i> ${srcLbl}</span>
-            ${devHtml}
+      // ── Eventos recentes ─────────────────────────────────────────
+      const eventsHtml = (() => {
+        if (!s.recent_events) return '';
+        const evts = s.recent_events.split('~').slice(0, 4).map(raw => {
+          const [type, label, sec] = raw.split('|');
+          const icon = type === 'navigate' ? 'fa-route'
+                     : type === 'modal_open'  || type === 'modal_close' ? 'fa-window-maximize'
+                     : type === 'form'   ? 'fa-paper-plane'
+                     : type === 'click'  ? 'fa-arrow-pointer'
+                     : 'fa-bolt';
+          return `<div class="ol-card__evt">
+            <i class="fa-solid ${icon} ol-card__evt-icon"></i>
+            <span class="ol-card__evt-label">${label || type}</span>
+            <span class="ol-card__evt-ago">${_fmtSeconds(parseInt(sec||0))}</span>
+          </div>`;
+        }).join('');
+        return `<div class="ol-card__events">
+          <div class="ol-card__events-title"><i class="fa-solid fa-bolt"></i> Ações recentes</div>
+          ${evts}
+        </div>`;
+      })();
+
+      return `<div class="ol-card" data-sid="${sid}">
+        <div class="ol-card__left">
+          <div class="ol-card__avatar" style="background:${avatarBg}">
+            ${avatarContent}
+            <span class="ol-card__dot ol-card__dot--${status}" title="${_statusLabel[status]}"></span>
           </div>
-          <div class="online-sc__row2">
-            ${geoHtml}
-            ${pageHtml}
-          </div>
-          ${refHtml}
         </div>
-        <div class="online-sc__times">
-          <span class="online-sc__ago">${ago}</span>
-          ${duration ? `<span class="online-sc__dur">${duration}</span>` : ''}
+
+        <div class="ol-card__body">
+          <!-- Linha 1: nome + email + source + device -->
+          <div class="ol-card__row ol-card__row--head">
+            <strong class="ol-card__name">${nome}</strong>
+            ${isUser && s.email ? `<span class="ol-card__email">${s.email}</span>` : ''}
+            <span class="ol-card__src online-src--${src}"><i class="${meta.icon}"></i> ${srcLbl}</span>
+            <span class="ol-card__device">${_deviceIcon(s.device)}</span>
+          </div>
+
+          <!-- Linha 2: tech (browser + OS + screen + lang) -->
+          <div class="ol-card__row ol-card__row--tech">
+            ${techHtml}
+            ${s.screen ? `<span class="ol-card__pill"><i class="fa-solid fa-display"></i> ${s.screen}</span>` : ''}
+            ${s.lang   ? `<span class="ol-card__pill"><i class="fa-solid fa-language"></i> ${s.lang}</span>`   : ''}
+          </div>
+
+          <!-- Linha 3: geo -->
+          <div class="ol-card__row ol-card__row--meta">
+            <span class="ol-card__geo">
+              ${flag ? flag + ' ' : '<i class="fa-solid fa-location-dot" style="opacity:.35"></i> '}
+              ${geo || 'Localização desconhecida'}
+              ${s.ip ? `<code class="online-sc__ip">${s.ip}</code>` : ''}
+            </span>
+          </div>
+
+          <!-- Linha 4: referrer + UTM (só se tiver) -->
+          ${(s.referrer || utmParts.length) ? `<div class="ol-card__row ol-card__row--origin">
+            ${refHtml}${utmHtml}
+          </div>` : ''}
+
+          <!-- Linha 5: eventos recentes (só se tiver) -->
+          ${eventsHtml}
+        </div>
+
+        <div class="ol-card__times">
+          <span class="ol-card__ago" data-ago="${agoSec}">${_fmtSeconds(agoSec)}</span>
+          <span class="ol-card__dur">${_fmtSessionDuration(durSec)}</span>
+          ${s.page ? `<span class="ol-card__page-wrap">${pageHtml}</span>` : ''}
         </div>
       </div>`;
     }).join('');
+
+    // ── Live counter: atualiza os "X atrás" a cada segundo sem re-fetch ──
+    clearInterval(_liveAgoInterval);
+    _liveAgoInterval = setInterval(() => {
+      document.querySelectorAll('.ol-card__ago[data-ago]').forEach(el => {
+        const sec = parseInt(el.dataset.ago) + 1;
+        el.dataset.ago = sec;
+        el.textContent = _fmtSeconds(sec);
+      });
+    }, 1000);
 
   } catch { /* ignore */ }
 };
@@ -1923,7 +2022,7 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
             <span class="an-dur-badge ${+v.duration_sec >= 300 ? 'an-dur--long' : +v.duration_sec >= 60 ? 'an-dur--mid' : 'an-dur--short'}" title="Tempo no site">
               <i class="fa-regular fa-clock"></i> ${dur}
             </span>
-            <span style="color:var(--text-muted);font-size:.7rem" title="Há quanto tempo saiu">saiu ${_fmtAgo(v.last_seen)}</span>
+            <span style="color:var(--text-muted);font-size:.7rem" title="Há quanto tempo saiu">saiu há:  ${_fmtAgo(v.last_seen)}</span>
             <span title="Total de visitas deste IP" style="color:var(--text-muted);font-size:.7rem">${ipVisits}× IP</span>
           </div>
         </td>
@@ -5583,8 +5682,9 @@ const statusPill = (s) => {
 // ── Admin tab navigation ──────────────────────────────────────
 const switchAdminTab = (tab) => {
   window.scrollTo({ top: 0, behavior: 'instant' });
-  clearInterval(_onlineInterval); _onlineInterval = null;
+  clearInterval(_onlineInterval);        _onlineInterval        = null;
   clearInterval(_onlineCountdownInterval); _onlineCountdownInterval = null;
+  clearInterval(_liveAgoInterval);       _liveAgoInterval       = null;
   document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.admin-nav__btn').forEach(btn => {
     btn.classList.toggle('admin-nav__btn--active', btn.dataset.adminTab === tab);

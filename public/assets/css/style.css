@@ -6495,6 +6495,132 @@ input:focus, select:focus {
 }
 
 /* ════════════════════════════════════════════════════════════
+   §ONLINE CARD — painel de visitantes em tempo real
+   ════════════════════════════════════════════════════════════ */
+.ol-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .75rem 1rem .75rem .85rem;
+  margin-bottom: .45rem;
+  display: flex; align-items: flex-start; gap: .75rem;
+  transition: border-color .15s;
+}
+.ol-card:hover { border-color: var(--border-strong); }
+
+/* Avatar col */
+.ol-card__left { flex-shrink: 0; padding-top: .1rem; }
+.ol-card__avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700; color: #fff;
+  position: relative;
+}
+.ol-card__dot {
+  position: absolute; bottom: -1px; right: -1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--surface-2);
+}
+.ol-card__dot--active  { background: #00c853; box-shadow: 0 0 5px #00c853; animation: dot-pulse 1.5s ease-in-out infinite; }
+.ol-card__dot--idle    { background: #ff9800; }
+.ol-card__dot--leaving { background: #f44336; }
+
+/* Body col — cresce */
+.ol-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .28rem; }
+
+/* Rows genéricos */
+.ol-card__row { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
+
+/* Linha 1 — identidade */
+.ol-card__row--head { gap: .4rem; }
+.ol-card__name   { font-size: .88rem; font-weight: 700; }
+.ol-card__email  { font-size: .71rem; color: var(--text-muted); }
+.ol-card__src    { font-size: .71rem; color: var(--text-muted);
+                   display: inline-flex; align-items: center; gap: .18rem; }
+.ol-card__device { font-size: .82rem; opacity: .45; }
+
+/* Linha 2 — tech */
+.ol-card__row--tech { gap: .3rem; }
+.ol-card__tech {
+  display: inline-flex; align-items: center; gap: .22rem;
+  font-size: .7rem; color: var(--text-muted);
+  background: var(--surface-3); border-radius: 4px;
+  padding: .12rem .42rem; white-space: nowrap;
+}
+.ol-card__pill {
+  display: inline-flex; align-items: center; gap: .2rem;
+  font-size: .68rem; color: var(--text-muted);
+  opacity: .7;
+}
+
+/* Linha 3 — geo */
+.ol-card__geo {
+  display: flex; align-items: center; gap: .3rem;
+  font-size: .73rem; color: var(--text-muted);
+  min-width: 0;
+}
+.ol-card__breadcrumb {
+  display: flex; align-items: center; gap: .18rem;
+  font-size: .73rem; flex-wrap: nowrap;
+}
+.ol-card__page-cur   { font-size: .73rem; color: var(--text-muted); }
+.ol-card__crumb--prev { color: var(--text-muted); font-size: .71rem; }
+.ol-card__crumb--cur  { color: var(--text); font-weight: 600; font-size: .73rem; }
+.ol-card__crumb-sep   { font-size: .5rem; opacity: .35; }
+
+/* Linha 4 — origin / referrer / UTM */
+.ol-card__row--origin { gap: .5rem; flex-wrap: wrap; }
+.ol-card__ref {
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-size: .71rem;
+}
+.ol-card__ref a { color: var(--primary); text-decoration: none; word-break: break-all; }
+.ol-card__ref a:hover { text-decoration: underline; }
+.ol-card__utm {
+  font-size: .69rem;
+  background: rgba(255,152,0,.1); border: 1px solid rgba(255,152,0,.22);
+  color: #ff9800; border-radius: 4px; padding: .12rem .45rem;
+  display: inline-flex; align-items: center; gap: .25rem;
+}
+
+/* Eventos recentes */
+.ol-card__events {
+  border-top: 1px solid var(--border);
+  padding-top: .42rem; margin-top: .1rem;
+}
+.ol-card__events-title {
+  font-size: .66rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-muted); margin-bottom: .3rem;
+  display: flex; align-items: center; gap: .28rem;
+}
+.ol-card__evt {
+  display: flex; align-items: baseline; gap: .38rem;
+  font-size: .73rem; padding: .1rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ol-card__evt:last-child { border-bottom: none; }
+.ol-card__evt-icon  { opacity: .4; font-size: .68rem; width: 11px; text-align: center; flex-shrink: 0; }
+.ol-card__evt-label { flex: 1; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ol-card__evt-ago   { color: var(--text-muted); font-size: .68rem; flex-shrink: 0; }
+
+/* Times col */
+.ol-card__times {
+  display: flex; flex-direction: column; align-items: flex-end;
+  flex-shrink: 0; gap: .08rem; padding-top: .1rem; min-width: 92px;
+}
+.ol-card__ago { font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.ol-card__dur { font-size: .68rem; color: var(--text-muted); white-space: nowrap; }
+.ol-card__times .ol-card__page-wrap { margin-top: .3rem; text-align: right; }
+.ol-card__page-cur {
+  font-size: .71rem; color: var(--text-muted);
+  display: inline-flex; align-items: center; gap: .22rem; white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ol-card__times { min-width: 72px; }
+}
+
+/* ════════════════════════════════════════════════════════════
    §EXIT INTENT MODAL — gatilho de saída
    ════════════════════════════════════════════════════════════ */
 .exit-modal {

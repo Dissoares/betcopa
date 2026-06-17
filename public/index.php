@@ -223,10 +223,15 @@ try {
                 jsonResponse(['ok' => false], 400);
                 return;
             }
-            $page     = mb_substr((string) ($body['page']     ?? ''), 0, 150);
-            $source   = mb_substr((string) ($body['source']   ?? ''), 0, 50);
-            $referrer = mb_substr((string) ($body['referrer'] ?? ''), 0, 500);
-            $device   = mb_substr((string) ($body['device']   ?? ''), 0, 10);
+            $page        = mb_substr((string) ($body['page']         ?? ''), 0, 150);
+            $source      = mb_substr((string) ($body['source']       ?? ''), 0, 50);
+            $referrer    = mb_substr((string) ($body['referrer']     ?? ''), 0, 500);
+            $device      = mb_substr((string) ($body['device']       ?? ''), 0, 10);
+            $utmSource   = mb_substr((string) ($body['utm_source']   ?? ''), 0, 100) ?: null;
+            $utmMedium   = mb_substr((string) ($body['utm_medium']   ?? ''), 0, 100) ?: null;
+            $utmCampaign = mb_substr((string) ($body['utm_campaign'] ?? ''), 0, 200) ?: null;
+            $screen      = mb_substr((string) ($body['screen']       ?? ''), 0, 20)  ?: null;
+            $lang        = mb_substr((string) ($body['lang']         ?? ''), 0, 20)  ?: null;
             // Resolve IP real (suporte a proxy/Cloudflare)
             $ip = $_SERVER['HTTP_CF_CONNECTING_IP']
                ?? (isset($_SERVER['HTTP_X_FORWARDED_FOR'])
@@ -240,8 +245,8 @@ try {
             $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
             (new OnlineRepository($db))->upsert(
                 $sid, $userId,
-                $page ?: null, $source ?: null, $referrer ?: null,
-                $device ?: null, $ip
+                $page ?: null, $source ?: null, $referrer ?: null, $device ?: null,
+                $ip, $ua, $utmSource, $utmMedium, $utmCampaign, $screen, $lang
             );
             (new AnalyticsRepository($db))->record(
                 $sid, $userId, $ip, $ua,
