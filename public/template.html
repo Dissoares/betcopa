@@ -1476,7 +1476,27 @@
   <div class="modal hidden" id="modalPalpite">
     <div class="modal__backdrop" data-close="modalPalpite"></div>
     <div class="modal__box bm">
-      <button class="modal__close" data-close="modalPalpite">×</button>
+
+      <!-- Stepper header -->
+      <div class="flow-header">
+        <div class="flow-steps">
+          <div class="flow-step flow-step--active">
+            <span class="flow-step__badge">1</span>
+            <span class="flow-step__name">Palpite</span>
+          </div>
+          <div class="flow-step__line"></div>
+          <div class="flow-step">
+            <span class="flow-step__badge">2</span>
+            <span class="flow-step__name">Confirmar</span>
+          </div>
+          <div class="flow-step__line"></div>
+          <div class="flow-step">
+            <span class="flow-step__badge">3</span>
+            <span class="flow-step__name">Pagamento</span>
+          </div>
+        </div>
+        <button class="flow-close" data-close="modalPalpite" aria-label="Fechar">×</button>
+      </div>
 
       <!-- Liga + data -->
       <div class="bm__meta">
@@ -1547,7 +1567,27 @@
   <div class="modal hidden" id="modalTicket">
     <div class="modal__backdrop" data-close="modalTicket"></div>
     <div class="modal__box tk">
-      <button class="modal__close" data-close="modalTicket">×</button>
+
+      <!-- Stepper header -->
+      <div class="flow-header">
+        <div class="flow-steps">
+          <div class="flow-step flow-step--done">
+            <span class="flow-step__badge">✓</span>
+            <span class="flow-step__name">Palpite</span>
+          </div>
+          <div class="flow-step__line flow-step__line--done"></div>
+          <div class="flow-step flow-step--active" id="flowStep2">
+            <span class="flow-step__badge">2</span>
+            <span class="flow-step__name">Confirmar</span>
+          </div>
+          <div class="flow-step__line" id="flowLine3"></div>
+          <div class="flow-step" id="flowStep3">
+            <span class="flow-step__badge">3</span>
+            <span class="flow-step__name">Pagamento</span>
+          </div>
+        </div>
+        <button class="flow-close" data-close="modalTicket" aria-label="Fechar">×</button>
+      </div>
 
       <!-- Header: jogo em destaque -->
       <div class="tk__header">

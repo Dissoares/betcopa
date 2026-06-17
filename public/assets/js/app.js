@@ -2788,9 +2788,14 @@ const fillTicket = (bet) => {
   const oddFmt  = oddRaw > 0 ? (Number.isInteger(oddRaw) ? `${oddRaw}×` : `${oddRaw.toFixed(1)}×`) : '—';
   const status  = isGuest ? 'preview' : (bet.status ?? 'pendente');
 
-  // Resetar seção de pagamento
+  // Resetar seção de pagamento e stepper
   document.getElementById('tkFooterConfirm')?.classList.remove('hidden');
   document.getElementById('tkPaySection')?.classList.add('hidden');
+  const _s2 = document.getElementById('flowStep2');
+  if (_s2) { _s2.className = 'flow-step flow-step--active'; _s2.querySelector('.flow-step__badge').textContent = '2'; }
+  document.getElementById('flowLine3')?.classList.remove('flow-step__line--done');
+  const _s3 = document.getElementById('flowStep3');
+  if (_s3) _s3.className = 'flow-step';
 
 
   // Jogo
@@ -3011,6 +3016,11 @@ const simulatePay = () => {
   _selectPayMethod('pix');
   document.getElementById('tkFooterConfirm')?.classList.add('hidden');
   document.getElementById('tkPaySection')?.classList.remove('hidden');
+  // Avança stepper para passo 3
+  const _s2p = document.getElementById('flowStep2');
+  if (_s2p) { _s2p.className = 'flow-step flow-step--done'; _s2p.querySelector('.flow-step__badge').textContent = '✓'; }
+  document.getElementById('flowLine3')?.classList.add('flow-step__line--done');
+  document.getElementById('flowStep3')?.classList.add('flow-step--active');
 };
 
 const confirmBalancePayment = async () => {
