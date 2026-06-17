@@ -44,7 +44,7 @@ class AdminRepository
             FROM users u
             LEFT JOIN apostas a ON a.user_id = u.id
             GROUP BY u.id
-            ORDER BY u.criado_em DESC
+            ORDER BY u.is_admin DESC, u.criado_em DESC
             LIMIT :limit OFFSET :offset
         ");
         $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);

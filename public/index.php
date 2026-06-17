@@ -110,6 +110,7 @@ try {
         $userCtrl    = new UserController($users, $transactions);
         $rankCtrl    = new RankingController($bets);
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
+        $adminCtrl->setTransactionRepository($transactions);
         $adminCtrl->setWithdrawalRepository($withdrawals);
         $adminCtrl->setOnlineRepository(new OnlineRepository($db));
         $adminCtrl->setAnalyticsRepository(new AnalyticsRepository($db));
@@ -183,6 +184,7 @@ try {
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/desbloquear$/', 'POST', fn(int $id) => $adminCtrl->unblockUser($id));
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/toggle-admin$/', 'POST', fn(int $id) => $adminCtrl->toggleAdmin($id));
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/senha$/',        'POST', fn(int $id) => $adminCtrl->changeUserPassword($id));
+        routePattern('/^\/api\/admin\/usuarios\/(\d+)\/bonus$/',        'POST', fn(int $id) => $adminCtrl->adjustBonus($id));
 
         // ── Admin: Apostas ────────────────────────────────────
         route('/api/admin/apostas',              'GET',  fn() => $adminCtrl->listBets());

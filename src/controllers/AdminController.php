@@ -5,9 +5,10 @@ class AdminController
     private ConfigRepository  $config;
     private UserRepository    $users;
     private string            $adminEmail;
-    private ?WithdrawalRepository $withdrawals = null;
-    private ?OnlineRepository     $online    = null;
-    private ?AnalyticsRepository  $analytics = null;
+    private ?WithdrawalRepository   $withdrawals  = null;
+    private ?OnlineRepository       $online       = null;
+    private ?AnalyticsRepository    $analytics    = null;
+    private ?TransactionRepository  $transactions = null;
 
     public function __construct(
         AdminRepository  $admin,
@@ -19,6 +20,11 @@ class AdminController
         $this->config     = $config;
         $this->users      = $users;
         $this->adminEmail = $adminEmail;
+    }
+
+    public function setTransactionRepository(TransactionRepository $repo): void
+    {
+        $this->transactions = $repo;
     }
 
     public function setWithdrawalRepository(WithdrawalRepository $repo): void
@@ -116,6 +122,30 @@ class AdminController
         $this->users->updatePassword($id, password_hash($senha, PASSWORD_BCRYPT));
         Logger::info('Senha alterada pelo admin', ['user_id' => $id]);
         jsonResponse(['message' => 'Senha alterada com sucesso.']);
+    }
+
+    public function adjustBonus(int $id): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        if ($this->transactions === null) {
+            jsonResponse(['error' => 'Serviço de transações não disponível.'], 500); return;
+        }
+        $body  = json_decode(file_get_contents('php://input'), true) ?: [];
+        $valor = round((float) ($body['valor'] ?? 0), 2);
+        $obs   = trim((string) ($body['obs'] ?? ''));
+        if ($valor === 0.0) {
+            jsonResponse(['error' => 'Informe um valor diferente de zero.'], 422); return;
+        }
+        $user = $this->users->findById($id);
+        if (!$user) { jsonResponse(['error' => 'Usuário não encontrado.'], 404); return; }
+
+        $tipo     = $valor > 0 ? 'credito' : 'debito';
+        $descricao = ($valor > 0 ? 'Bônus adicionado' : 'Bônus removido') . ' pelo admin'
+                   . ($obs !== '' ? ": {$obs}" : '');
+        $this->transactions->create($id, $tipo, abs($valor), $descricao);
+        Logger::info('Bônus ajustado pelo admin', ['user_id' => $id, 'valor' => $valor]);
+        jsonResponse(['message' => 'Saldo ajustado com sucesso.']);
     }
 
     // ── Apostas ───────────────────────────────────────────────

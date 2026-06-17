@@ -5140,6 +5140,8 @@ const bind = () => {
       handleToggleAdmin(Number(btn.dataset.uid), btn.dataset.action === 'make-admin');
     if (btn.dataset.action === 'change-password')
       handleChangeUserPassword(Number(btn.dataset.uid), btn.dataset.nome || '');
+    if (btn.dataset.action === 'adjust-bonus')
+      handleUserBonus(Number(btn.dataset.uid), btn.dataset.nome || '');
   });
   document.getElementById('adminUsersList')?.addEventListener('change', e => {
     const chk = e.target.closest('.user-row-chk');
@@ -5639,6 +5641,7 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
                   : `<button class="btn btn--warning btn--sm" data-action="make-admin"  data-uid="${u.id}">Tornar Admin</button>`
                 }
                 <button class="btn btn--ghost btn--sm" data-action="change-password" data-uid="${u.id}" data-nome="${u.nome}" title="Trocar senha"><i class="fa-solid fa-key"></i></button>
+                <button class="btn btn--ghost btn--sm" data-action="adjust-bonus" data-uid="${u.id}" data-nome="${u.nome}" title="Ajustar bônus"><i class="fa-solid fa-coins"></i></button>
               </td>
             </tr>`).join('')}
         </tbody>
@@ -5715,6 +5718,64 @@ const handleChangeUserPassword = async (uid, nome) => {
     toast(r.message, 'success');
   } catch (err) {
     toast(err.message || 'Erro ao trocar senha.', 'danger');
+  }
+};
+
+const handleUserBonus = async (uid, nome) => {
+  const { value: formValues, isConfirmed } = await Swal.fire({
+    title: `Ajustar bônus — ${nome}`,
+    html: `
+      <div style="display:flex;flex-direction:column;gap:.75rem;text-align:left;margin-top:.5rem">
+        <label style="font-size:.85rem;color:#aaa">Tipo de ajuste</label>
+        <div style="display:flex;gap:.5rem">
+          <button type="button" id="bonusTipoAdd" class="btn btn--primary btn--sm" style="flex:1">+ Adicionar</button>
+          <button type="button" id="bonusTipoRem" class="btn btn--ghost btn--sm" style="flex:1">− Remover</button>
+        </div>
+        <label style="font-size:.85rem;color:#aaa">Valor (R$)</label>
+        <input id="bonusValor" type="number" min="0.01" step="0.01" placeholder="0,00"
+          style="width:100%;padding:.5rem .75rem;background:#1e1e2e;border:1px solid #333;border-radius:8px;color:#fff;font-size:1rem">
+        <label style="font-size:.85rem;color:#aaa">Observação (opcional)</label>
+        <input id="bonusObs" type="text" placeholder="Ex: bônus de boas-vindas"
+          style="width:100%;padding:.5rem .75rem;background:#1e1e2e;border:1px solid #333;border-radius:8px;color:#fff;font-size:.9rem">
+      </div>`,
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#2ecc71',
+    reverseButtons: true,
+    didOpen: () => {
+      let tipo = 'add';
+      const btnAdd = document.getElementById('bonusTipoAdd');
+      const btnRem = document.getElementById('bonusTipoRem');
+      btnAdd.addEventListener('click', () => {
+        tipo = 'add';
+        btnAdd.classList.replace('btn--ghost', 'btn--primary');
+        btnRem.classList.replace('btn--primary', 'btn--ghost');
+        btnAdd._tipo = tipo;
+      });
+      btnRem.addEventListener('click', () => {
+        tipo = 'rem';
+        btnRem.classList.replace('btn--ghost', 'btn--primary');
+        btnAdd.classList.replace('btn--primary', 'btn--ghost');
+        btnAdd._tipo = tipo;
+      });
+      btnAdd._tipo = 'add';
+    },
+    preConfirm: () => {
+      const valor = parseFloat(document.getElementById('bonusValor').value);
+      const obs   = document.getElementById('bonusObs').value.trim();
+      const tipo  = document.getElementById('bonusTipoAdd')._tipo ?? 'add';
+      if (!valor || valor <= 0) { Swal.showValidationMessage('Informe um valor válido.'); return false; }
+      return { valor: tipo === 'rem' ? -valor : valor, obs };
+    },
+  });
+  if (!isConfirmed || !formValues) return;
+  try {
+    const r = await api(`/api/admin/usuarios/${uid}/bonus`, 'POST', formValues);
+    toast(r.message, 'success');
+    loadAdminUsers(_adminUsersPage);
+  } catch (err) {
+    toast(err.message || 'Erro ao ajustar bônus.', 'danger');
   }
 };
 
