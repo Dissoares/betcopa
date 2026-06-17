@@ -2739,7 +2739,7 @@ const openBetModal = (gameId, pending = null) => {
   S.selectedGame = game;
   S.scoreHome    = pending?.scoreHome ?? 0;
   S.scoreAway    = pending?.scoreAway ?? 0;
-  S.stake        = pending?.stake ?? S.stakeMin;
+  S.stake        = pending?.stake ?? Math.round((S.stakeMin + S.stakeMax) / 2);
 
   const slider = document.getElementById('stakeSlider');
   if (slider) {
@@ -2776,6 +2776,27 @@ const openBetModal = (gameId, pending = null) => {
 
   updateBetPreview();
   openModal('modalPalpite');
+
+  if (slider) {
+    const _nudge = () => {
+      const orig = parseFloat(slider.value);
+      const max  = parseFloat(slider.max);
+      const peak = Math.min(orig + (max - orig) * 0.4, max);
+      const fire = (v) => { slider.value = v; slider.dispatchEvent(new Event('input')); };
+      const animate = (from, to, duration, done) => {
+        const start = performance.now();
+        const step  = (now) => {
+          const t   = Math.min((now - start) / duration, 1);
+          const ease = t < .5 ? 2*t*t : -1+(4-2*t)*t;
+          fire(from + (to - from) * ease);
+          if (t < 1) requestAnimationFrame(step); else done?.();
+        };
+        requestAnimationFrame(step);
+      };
+      animate(orig, peak, 900, () => animate(peak, orig, 700));
+    };
+    setTimeout(_nudge, 700);
+  }
 };
 
 // ── Pending bet timer (auth page) ────────────────────────────
@@ -4696,13 +4717,15 @@ const bind = () => {
 
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
-  document.getElementById('btnEditBet')?.addEventListener('click', async () => {
+  const _handleEditBet = async () => {
     if (S.selectedBet?.id && S.selectedBet.status === 'pendente') {
       try { await api(`/api/apostas/${S.selectedBet.id}/cancelar`, 'POST', {}); } catch { /* ignora */ }
     }
     closeModal('modalTicket');
     openBetModal(S.selectedGame.id);
-  });
+  };
+  document.getElementById('btnEditBet')?.addEventListener('click', _handleEditBet);
+  document.getElementById('btnEditBetPay')?.addEventListener('click', _handleEditBet);
   document.getElementById('btnFinalizePayment')?.addEventListener('click', () => {
     if (S._payMethod === 'saldo') confirmBalancePayment();
     else if (S._payMethod === 'expay') confirmExpayPayment();
