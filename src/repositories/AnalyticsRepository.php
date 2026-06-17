@@ -277,21 +277,10 @@ class AnalyticsRepository
                 g.anon_sessions,
                 g.last_seen,
                 g.first_seen,
-                ANY_VALUE(av.country)      AS country,
-                ANY_VALUE(av.country_name) AS country_name,
-                ANY_VALUE(av.city)         AS city,
-                ANY_VALUE(av.region)       AS region,
-                ANY_VALUE(av.browser)      AS browser,
-                ANY_VALUE(av.os)           AS os,
-                ANY_VALUE(av.device)       AS device,
-                ANY_VALUE(av.source)       AS source,
-                ANY_VALUE(av.referrer)     AS referrer,
-                ANY_VALUE(av.user_id)      AS user_id,
-                ANY_VALUE(av.current_page) AS current_page,
-                ANY_VALUE(av.landing_page) AS landing_page,
-                ANY_VALUE(av.is_new)       AS is_new,
-                ANY_VALUE(u.nome)          AS nome,
-                ANY_VALUE(u.email)         AS email,
+                av.country, av.country_name, av.city, av.region,
+                av.browser, av.os, av.device, av.source, av.referrer,
+                av.user_id, av.current_page, av.landing_page, av.is_new,
+                u.nome, u.email,
                 TIMESTAMPDIFF(SECOND, g.first_seen, g.last_seen) AS duration_sec
             FROM (
                 SELECT
@@ -301,16 +290,16 @@ class AnalyticsRepository
                     SUM(user_id IS NOT NULL)   AS logged_sessions,
                     SUM(user_id IS NULL)       AS anon_sessions,
                     MAX(last_seen)             AS last_seen,
-                    MIN(first_seen)            AS first_seen
+                    MIN(first_seen)            AS first_seen,
+                    MAX(id)                    AS latest_id
                 FROM analytics_visits
                 WHERE $w AND ip IS NOT NULL
                 GROUP BY ip
                 ORDER BY last_seen DESC
                 LIMIT {$limit} OFFSET {$offset}
             ) g
-            JOIN analytics_visits av ON av.ip = g.ip AND av.last_seen = g.last_seen
+            JOIN analytics_visits av ON av.id = g.latest_id
             LEFT JOIN users u ON av.user_id = u.id
-            GROUP BY g.ip
             ORDER BY g.last_seen DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -321,6 +310,14 @@ class AnalyticsRepository
         $w    = $this->periodWhere($period);
         $stmt = $this->db->query("SELECT COUNT(DISTINCT ip) FROM analytics_visits WHERE $w AND ip IS NOT NULL");
         return (int) $stmt->fetchColumn();
+    }
+
+    // ── Apaga todo o histórico de um IP ───────────────────────────
+    public function deleteByIP(string $ip): int
+    {
+        $stmt = $this->db->prepare("DELETE FROM analytics_visits WHERE ip = ?");
+        $stmt->execute([$ip]);
+        return $stmt->rowCount();
     }
 
     // ── Todas as sessões de um IP específico ──────────────────────

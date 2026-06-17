@@ -412,6 +412,16 @@ class AdminController
         ]);
     }
 
+    public function analyticsDeleteIP(): void
+    {
+        ensureAdmin($this->adminEmail);
+        if (!$this->analytics) { jsonResponse(['error' => 'Analytics não disponível'], 503); return; }
+        $ip = trim($_GET['ip'] ?? '');
+        if (!$ip) { jsonResponse(['error' => 'IP não informado'], 400); return; }
+        $deleted = $this->analytics->deleteByIP($ip);
+        jsonResponse(['ok' => true, 'deleted' => $deleted]);
+    }
+
     public function analyticsIPHistory(): void
     {
         ensureAdmin($this->adminEmail);

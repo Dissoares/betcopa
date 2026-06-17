@@ -5505,10 +5505,12 @@ const bind = () => {
   document.getElementById('btnRefreshOnline')?.addEventListener('click', loadAdminOnline);
 
   // IP history modal
+  let _ipHistoryCurrent = '';
   document.getElementById('anVisitsTable')?.addEventListener('click', async (e) => {
     const btn = e.target.closest('.an-eye-btn[data-ip]');
     if (!btn || !btn.dataset.ip) return;
     const ip     = btn.dataset.ip;
+    _ipHistoryCurrent = ip;
     const listEl = document.getElementById('ipHistoryList');
     const sub    = document.getElementById('ipHistorySubtitle');
     if (sub)    sub.textContent = ip;
@@ -5540,37 +5542,51 @@ const bind = () => {
       const renderEventsTimeline = (events, sess) => {
         if (!events || !events.length) return '';
 
-        const steps = events.map((ev, idx) => {
-          const m    = _EVT_IC[ev.event_type] || { icon: 'fa-solid fa-circle', color: '#9ca3af' };
-          const ts   = new Date(ev.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-          const isLast = idx === events.length - 1;
+        // colapsa eventos consecutivos com mesmo label
+        const collapsed = events.reduce((acc, ev) => {
+          const last = acc[acc.length - 1];
+          if (last && last.label === ev.label && last.event_type === ev.event_type) {
+            last._count = (last._count || 1) + 1;
+            last._last_at = ev.created_at;
+          } else {
+            acc.push({ ...ev, _count: 1 });
+          }
+          return acc;
+        }, []);
 
-          // delta para o próximo evento
+        const steps = collapsed.map((ev, idx) => {
+          const m      = _EVT_IC[ev.event_type] || { icon: 'fa-solid fa-circle', color: '#9ca3af' };
+          const ts     = new Date(ev.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+          const isLast = idx === collapsed.length - 1;
+          const countBadge = ev._count > 1 ? `<span class="evts-flow__count">×${ev._count}</span>` : '';
+
           let delta = '';
           if (!isLast) {
-            const diffMs = new Date(events[idx + 1].created_at).getTime() - new Date(ev.created_at).getTime();
-            const diffS  = Math.round(diffMs / 1000);
+            const diffS = Math.round((new Date(collapsed[idx + 1].created_at) - new Date(ev._last_at || ev.created_at)) / 1000);
             delta = diffS < 60
               ? `+${diffS}s`
-              : `+${Math.floor(diffS/60)}m${diffS%60 ? String(diffS%60).padStart(2,'0')+'s' : ''}`;
+              : `+${Math.floor(diffS / 60)}m${diffS % 60 ? String(diffS % 60).padStart(2, '0') + 's' : ''}`;
           }
 
-          return `<div class="evts-step${isLast ? ' evts-step--last' : ''}">
-            <div class="evts-step__left">
-              <div class="evts-step__icon" style="--ic:${m.color}"><i class="${m.icon}"></i></div>
-              ${!isLast ? `<div class="evts-step__line"></div>` : ''}
+          const step = `<div class="evts-flow__step">
+            <div class="evts-flow__icon" style="--ic:${m.color}"><i class="${m.icon}"></i>${countBadge}</div>
+            <div class="evts-flow__info">
+              <span class="evts-flow__label">${ev.label}</span>
+              <span class="evts-flow__ts">${ts}</span>
             </div>
-            <div class="evts-step__body">
-              <span class="evts-step__label">${ev.label}</span>
-              <span class="evts-step__ts">${ts}</span>
-            </div>
-            ${delta ? `<span class="evts-step__delta">${delta}</span>` : ''}
           </div>`;
+
+          const arrow = !isLast
+            ? `<div class="evts-flow__arrow"><span class="evts-flow__delta">${delta}</span><i class="fa-solid fa-chevron-right"></i></div>`
+            : '';
+
+          return step + arrow;
         }).join('');
 
+        const collapseInfo = collapsed.length < events.length ? ` · ${events.length} total` : '';
         return `<div class="ip-evts-path">
-          <div class="ip-evts-path__hdr"><i class="fa-solid fa-route"></i> Caminho · ${events.length} ações</div>
-          ${steps}
+          <div class="ip-evts-path__hdr"><i class="fa-solid fa-route"></i> Caminho · ${collapsed.length} passos${collapseInfo}</div>
+          <div class="evts-flow">${steps}</div>
         </div>`;
       };
 
@@ -5602,10 +5618,9 @@ const bind = () => {
         </div>`;
       };
 
-      listEl.innerHTML = `<div class="ip-hist-cols">
-        <div class="ip-hist-col">${renderGroup('Logado', 'fa-solid fa-user-check', logged)}</div>
-        <div class="ip-hist-col">${renderGroup('Anônimo', 'fa-solid fa-user-secret', anon)}</div>
-      </div>`;
+      listEl.innerHTML =
+        renderGroup('Logado', 'fa-solid fa-user-check', logged) +
+        renderGroup('Anônimo', 'fa-solid fa-user-secret', anon);
     } catch (err) {
       if (listEl) listEl.innerHTML = `<p class="text--muted">${err.message}</p>`;
     }
@@ -5616,6 +5631,26 @@ const bind = () => {
   document.getElementById('modalIPHistoryBackdrop')?.addEventListener('click', () =>
     document.getElementById('modalIPHistory')?.classList.add('hidden')
   );
+  document.getElementById('btnIPHistoryDelete')?.addEventListener('click', async () => {
+    if (!_ipHistoryCurrent) return;
+    const confirmed = await Swal.fire({
+      title: 'Excluir histórico?',
+      html: `Todo o histórico de visitas do IP <code>${_ipHistoryCurrent}</code> será removido permanentemente.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#ef4444',
+    });
+    if (!confirmed.isConfirmed) return;
+    try {
+      await api(`/api/admin/analytics/ip?ip=${encodeURIComponent(_ipHistoryCurrent)}`, 'DELETE');
+      document.getElementById('modalIPHistory')?.classList.add('hidden');
+      loadAdminAnalytics();
+    } catch (err) {
+      Swal.fire('Erro', err.message, 'error');
+    }
+  });
   document.getElementById('btnRunAllMigrations')?.addEventListener('click', runAllPendingMigrations);
   document.getElementById('btnRefreshSaques')?.addEventListener('click', loadAdminSaques);
 
