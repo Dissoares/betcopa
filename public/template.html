@@ -80,6 +80,10 @@
   <!-- HEADER -->
   <header class="header">
     <div class="container header__inner">
+      <!-- Botão tema (mobile esquerdo) -->
+      <button class="btn-theme-toggle header__theme-btn" aria-label="Alternar tema">
+        <i class="fa-solid fa-moon theme-icon"></i>
+      </button>
       <!-- Logo -->
       <a class="logo" href="#" data-nav="jogos">
         <img id="brandLogoHeader" class="brand-logo-img hidden" src="" alt="Logo" />
@@ -153,6 +157,7 @@
         </a>
         <button class="drawer__close" data-action="close-mobile-menu" aria-label="Fechar menu">×</button>
       </div>
+      <div class="dr-sep"></div>
       <div class="drawer__body" id="drawerBody"></div>
       <div class="drawer__footer" id="drawerFooter"></div>
     </div>
@@ -227,7 +232,7 @@
             <span class="hero-urgency__teams" id="heroUrgencyTeams">—</span>
           </div>
           <div class="hero-urgency__timer">
-            <span class="hero-urgency__starts">começa em</span>
+            <span class="hero-urgency__starts">O jogo começa em</span>
             <span class="hero-urgency__countdown" id="heroUrgencyCd">—</span>
           </div>
           <button class="hero-urgency__btn" id="heroUrgencyBtn">Apostar →</button>
@@ -363,8 +368,8 @@
       </div>
 
       <div class="auth-tabs">
-        <button class="auth-tab auth-tab--active" data-auth-tab="login">Entrar</button>
-        <button class="auth-tab" data-auth-tab="register">Criar conta</button>
+        <button class="auth-tab auth-tab--active" data-auth-tab="login"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
+        <button class="auth-tab" data-auth-tab="register"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
       </div>
       <div id="authLogin">
         <form id="loginForm">
@@ -2019,7 +2024,7 @@
         <div class="site-footer__col">
           <h4>Plataforma</h4>
           <a href="#" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</a>
-          <a href="#" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</a>
+          <a href="#" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Placar</a>
           <a href="#" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</a>
           <a href="#" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ranking</a>
         </div>

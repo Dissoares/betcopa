@@ -431,10 +431,9 @@ const renderDrawer = () => {
   if (footer) {
     footer.innerHTML = `
       <div class="dr-sep"></div>
-      <p class="dr-section-label">TEMA</p>
       <div class="dr-section">
         <button class="dr-item btn-theme-toggle">
-          <i class="fa-solid fa-moon theme-icon"></i> Alternar Modo
+          <i class="fa-solid fa-moon theme-icon"></i>Modo
         </button>
       </div>`;
   }
@@ -515,14 +514,35 @@ const renderHeader = () => {
   renderDrawer();
 };
 
+// ── Scroll lock (funciona no iOS com position:fixed) ─────────
+let _scrollLockY    = 0;
+let _scrollLockCount = 0;
+
+const lockScroll = () => {
+  if (_scrollLockCount++ > 0) return;
+  _scrollLockY = window.scrollY;
+  document.body.style.top = `-${_scrollLockY}px`;
+  document.body.classList.add('scroll-locked');
+};
+
+const unlockScroll = () => {
+  _scrollLockCount = Math.max(0, _scrollLockCount - 1);
+  if (_scrollLockCount > 0) return;
+  document.body.classList.remove('scroll-locked');
+  document.body.style.top = '';
+  window.scrollTo(0, _scrollLockY);
+};
+
 const openMobileMenu = () => {
   document.getElementById('mobileDrawer')?.classList.add('drawer--open');
   document.body.classList.add('drawer-open');
+  lockScroll();
 };
 
 const closeMobileMenu = () => {
   document.getElementById('mobileDrawer')?.classList.remove('drawer--open');
   document.body.classList.remove('drawer-open');
+  unlockScroll();
 };
 
 const setTheme = (theme) => {
@@ -540,7 +560,7 @@ const toggleTheme = () => {
 
 const loadTheme = () => {
   const stored = localStorage.getItem('betcopaTheme');
-  setTheme(stored === 'light' ? 'light' : 'dark');
+  setTheme(stored === 'dark' ? 'dark' : 'light');
 };
 
 // ── Game helpers ──────────────────────────────────────────────
@@ -727,7 +747,7 @@ const renderCard = (g) => {
     ? `<button class="btn btn--ghost btn--full" disabled>
          <i class="fa-solid fa-lock"></i> Palpites encerrados
        </button>`
-    : `<button class="btn ${!betBlocked ? 'btn--primary' : 'btn--ghost'} btn--full"
+    : `<button class="btn ${!betBlocked ? 'btn--bet' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
          ${!betBlocked ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
        </button>
@@ -862,7 +882,7 @@ const renderMatchBanner = () => {
         : `<div class="mb-pill mb-pill--next"><i class="fa-solid fa-clock"></i> PRÓXIMO JOGO</div>`;
       center = `<div class="mb-label">COMEÇA EM</div>
                 <div class="mb-countdown" id="mbc-cd-${g.id}">${fmtCountdown(ms)}</div>`;
-      cta    = `<button class="btn btn--primary btn--sm mb-cta-btn" data-action="bet" data-id="${g.id}">
+      cta    = `<button class="btn btn--bet btn--sm mb-cta-btn" data-action="bet" data-id="${g.id}">
                   <i class="fa-solid fa-bullseye"></i> Fazer Palpite
                 </button>`;
     }
@@ -1086,7 +1106,7 @@ const renderTicker = () => {
         <span style="color:#f97316;font-weight:600">${g.time_casa}</span>
         <span class="ticker-score">${goalsHome} × ${goalsAway}</span>
         <span style="color:#f97316;font-weight:600">${g.time_fora}</span>
-        <span class="ticker-draw">empatou</span>
+        <span class="ticker-draw">empatou!</span>
       </span>`;
     }
 
@@ -2892,17 +2912,23 @@ const _MODAL_LABELS = {
 };
 const openModal  = (id) => {
   document.getElementById(id)?.classList.remove('hidden');
+  lockScroll();
   const lbl = _MODAL_LABELS[id];
   if (lbl) { trackEvent('modal_open', `Abriu: ${lbl}`); _pushNav(lbl); }
   pingOnline();
 };
 const closeModal = (id) => {
   document.getElementById(id)?.classList.add('hidden');
+  unlockScroll();
   const lbl = _MODAL_LABELS[id];
   if (lbl) trackEvent('modal_close', `Fechou: ${lbl}`);
   pingOnline();
 };
-const closeAllModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+const closeAllModals = () => {
+  const openCount = document.querySelectorAll('.modal:not(.hidden)').length;
+  document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+  for (let i = 0; i < openCount; i++) unlockScroll();
+};
 
 // ── Referral modal (global — called from renderDrawer and event handlers) ──
 const openReferralModal = async () => {
@@ -3111,7 +3137,7 @@ const startBetCountdown = (gameDate) => {
       : h > 0
         ? `${h}h ${String(m).padStart(2,'0')}m ${String(sc).padStart(2,'0')}s`
         : `${String(m).padStart(2,'0')}m ${String(sc).padStart(2,'0')}s`;
-    cdEl.textContent = `Começa em ${label}`;
+    cdEl.textContent = `O jogo começa em ${label}`;
     rowEl.className  = diff <= 3_600_000 ? 'bm__meta-row2 bm__meta-row2--soon' : 'bm__meta-row2';
   };
   tick();
