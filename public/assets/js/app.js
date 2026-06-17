@@ -2678,6 +2678,47 @@ const openModal  = (id) => document.getElementById(id)?.classList.remove('hidden
 const closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
 const closeAllModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 
+// ── Referral modal (global — called from renderDrawer and event handlers) ──
+const openReferralModal = async () => {
+  if (!S.user) { switchAuthTab('register'); navigate('auth'); return; }
+  openModal('modalReferral');
+  try {
+    const data = await api('/api/referral');
+    const baseUrl = `${location.protocol}//${location.host}`;
+    const link    = `${baseUrl}/?ref=${data.code}`;
+
+    document.getElementById('refBonusAmount').textContent = `+${fmtMoney(data.bonus_per)}`;
+    document.getElementById('refCount').textContent       = data.referral_count;
+    document.getElementById('refEarned').textContent      = fmtMoney(data.total_earned);
+    document.getElementById('refLinkDisplay').textContent = link.replace(/^https?:\/\//, '');
+
+    const meta = 5;
+    const pct  = Math.min(100, Math.round((data.referral_count / meta) * 100));
+    document.getElementById('refProgressFill').style.width  = `${pct}%`;
+    document.getElementById('refProgressLabel').textContent =
+      data.referral_count >= meta
+        ? '🎉 Bônus especial desbloqueado!'
+        : `${data.referral_count} de ${meta} para bônus especial`;
+
+    const waMsg = encodeURIComponent(
+      `Oi! Tô ganhando dinheiro acertando o placar dos jogos da Copa 🏆⚽\n\n` +
+      `Se cadastra pelo meu link e já ganha bônus no cadastro:\n${link}\n\nNão perde essa! ⏰`
+    );
+    const tgMsg = encodeURIComponent(`🏆 Acerte o placar e ganhe prêmios reais! ${link}`);
+
+    document.getElementById('refBtnWhatsApp').onclick = () =>
+      window.open(`https://wa.me/?text=${waMsg}`, '_blank');
+    document.getElementById('refBtnTelegram').onclick = () =>
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${tgMsg}`, '_blank');
+
+    const copyLink = () => {
+      navigator.clipboard.writeText(link).then(() => toast('Link copiado!', 'success'));
+    };
+    document.getElementById('refBtnCopy').onclick  = copyLink;
+    document.getElementById('refCopyBtn').onclick  = copyLink;
+  } catch { toast('Erro ao carregar dados de indicação.', 'danger'); }
+};
+
 // ── Bet modal ─────────────────────────────────────────────────
 const renderScore = (elId, val) => {
   const el = document.getElementById(elId);
@@ -4489,7 +4530,10 @@ const bind = () => {
     if (e.target.closest('#udropBtnDeposit')) { closeAllModals?.(); openDepositModal(); }
     if (e.target.closest('#drawerBtnDeposit')) { closeMobileMenu(); openDepositModal(); }
     if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
-    if (e.target.closest('#udropBtnReferral')) { closeDropdown?.(); openReferralModal(); }
+    if (e.target.closest('#udropBtnReferral')) {
+      document.getElementById('userDropdown')?.classList.remove('udrop--open');
+      openReferralModal();
+    }
     if (e.target.closest('#heroBtnReferral')) { openReferralModal(); }
   });
 
@@ -4790,48 +4834,6 @@ const bind = () => {
     switchAuthTab('login');
     navigate('auth');
   });
-
-  // ── Referral modal ────────────────────────────────────────
-  const openReferralModal = async () => {
-    if (!S.user) { switchAuthTab('register'); navigate('auth'); return; }
-    openModal('modalReferral');
-    try {
-      const data = await api('/api/referral');
-      const baseUrl = `${location.protocol}//${location.host}`;
-      const link    = `${baseUrl}/?ref=${data.code}`;
-
-      document.getElementById('refBonusAmount').textContent = `+${fmtMoney(data.bonus_per)}`;
-      document.getElementById('refCount').textContent       = data.referral_count;
-      document.getElementById('refEarned').textContent      = fmtMoney(data.total_earned);
-      document.getElementById('refLinkDisplay').textContent = link.replace(/^https?:\/\//, '');
-
-      // Barra de progresso (meta: 5 amigos para bônus especial)
-      const meta = 5;
-      const pct  = Math.min(100, Math.round((data.referral_count / meta) * 100));
-      document.getElementById('refProgressFill').style.width  = `${pct}%`;
-      document.getElementById('refProgressLabel').textContent =
-        data.referral_count >= meta
-          ? '🎉 Bônus especial desbloqueado!'
-          : `${data.referral_count} de ${meta} para bônus especial`;
-
-      const waMsg = encodeURIComponent(
-        `Oi! Tô ganhando dinheiro acertando o placar dos jogos da Copa 🏆⚽\n\n` +
-        `Se cadastra pelo meu link e já ganha bônus no cadastro:\n${link}\n\nNão perde essa! ⏰`
-      );
-      const tgMsg = encodeURIComponent(`🏆 Acerte o placar e ganhe prêmios reais! ${link}`);
-
-      document.getElementById('refBtnWhatsApp').onclick = () =>
-        window.open(`https://wa.me/?text=${waMsg}`, '_blank');
-      document.getElementById('refBtnTelegram').onclick = () =>
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${tgMsg}`, '_blank');
-
-      const copyLink = () => {
-        navigator.clipboard.writeText(link).then(() => toast('Link copiado!', 'success'));
-      };
-      document.getElementById('refBtnCopy').onclick  = copyLink;
-      document.getElementById('refCopyBtn').onclick  = copyLink;
-    } catch { toast('Erro ao carregar dados de indicação.', 'danger'); }
-  };
 
   document.getElementById('refBtnCopy')?.addEventListener('click', () => {});
 
