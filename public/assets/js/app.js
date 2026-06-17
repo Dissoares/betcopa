@@ -6845,33 +6845,29 @@ const init = async () => {
    EXIT INTENT — gatilho de saída psicológico
    ═══════════════════════════════════════════════════════════════ */
 function _exitIntentInit() {
-  const SHOWN_KEY = '_eiShown';
-  if (sessionStorage.getItem(SHOWN_KEY)) return;
   if (_isAdmin()) return;
 
   let fired = false;
   let armed = false;
 
   // Arma no primeiro movimento real do mouse (sem delay artificial)
-  // Evita falso disparo no carregamento mas reage imediatamente após qualquer interação
   document.addEventListener('mousemove', () => { armed = true; }, { once: true });
   document.addEventListener('scroll',    () => { armed = true; }, { once: true });
   document.addEventListener('click',     () => { armed = true; }, { once: true });
 
+  function _hasActiveBet() {
+    return S.bets.some(b => b.status === 'pendente' || b.status === 'confirmado');
+  }
+
   function _fire() {
     if (fired || !armed) return;
+    if (_hasActiveBet()) return;  // já tem palpite ativo — não interromper
     fired = true;
-    sessionStorage.setItem(SHOWN_KEY, '1');
 
-    // Timer de 10 min — persiste no session para não reiniciar se modal reabrir
-    const EXP_KEY = '_eiExp';
-    let exp = parseInt(sessionStorage.getItem(EXP_KEY) || '0');
-    if (!exp || exp < Date.now()) {
-      exp = Date.now() + 10 * 60 * 1000;
-      sessionStorage.setItem(EXP_KEY, String(exp));
-    }
+    // Timer de 10 min por visita (em memória, reinicia a cada acesso)
+    const exp = Date.now() + 10 * 60 * 1000;
 
-    // Contagem social estável na sessão (evita números diferentes a cada clique)
+    // Contagem social com número aleatório por sessão
     const CNT_KEY = '_eiCnt';
     let cnt = sessionStorage.getItem(CNT_KEY);
     if (!cnt) {
@@ -6930,12 +6926,9 @@ function _exitIntentInit() {
   // ── Botão voltar (SPA): intercepta popstate sem quebrar o roteamento ──
   // Injeta um estado "sentinela" sem mudar a URL
   history.pushState({ _eiSentinel: true }, '', location.href);
-  window.addEventListener('popstate', e => {
-    if (!sessionStorage.getItem(SHOWN_KEY)) {
-      _fire();
-      // Reinsere o sentinela para continuar capturando se o usuário não fechou
-      history.pushState({ _eiSentinel: true }, '', location.href);
-    }
+  window.addEventListener('popstate', () => {
+    _fire();
+    history.pushState({ _eiSentinel: true }, '', location.href);
   });
 
   // ── Listeners dos botões do modal ──
