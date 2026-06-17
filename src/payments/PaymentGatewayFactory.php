@@ -29,6 +29,11 @@ class PaymentGatewayFactory
         return new MercadoPagoGateway($token);
     }
 
+    public static function createExpay(ConfigRepository $config): ExpayBrasilGateway
+    {
+        return self::makeExpay($config);
+    }
+
     private static function makeExpay(ConfigRepository $config): ExpayBrasilGateway
     {
         $key = $config->get('expay_merchant_key', '');

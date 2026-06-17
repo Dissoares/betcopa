@@ -51,6 +51,15 @@ class BetController
         jsonResponse(array_merge(['message' => 'Cobrança PIX criada'], $data));
     }
 
+    public function payExpay(int $id): void
+    {
+        Csrf::verify();
+        $userId  = ensureLogged();
+        $gateway = PaymentGatewayFactory::createExpay($this->configRepo);
+        $data    = $this->service->payBet($userId, $id, $gateway);
+        jsonResponse(array_merge(['message' => 'Cobrança ExPay criada'], $data));
+    }
+
     public function confirm(int $id): void
     {
         Csrf::verify();

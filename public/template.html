@@ -1701,14 +1701,15 @@
         <p class="pay-opts__section-label">Forma de pagamento</p>
         <div class="pay-opts__methods">
           <button class="pay-opt-card pay-opt-card--active" data-method="pix" id="payOptPix">
-            <i class="fa-brands fa-pix pay-opt-card__icon"></i>
-            <span class="pay-opt-card__name">PIX</span>
-            <span class="pay-opt-card__sub">Aprovação imediata</span>
+            <img src="/assets/logos/pix.png" alt="PIX" class="pay-opt-card__logo">
           </button>
-          <button class="pay-opt-card" data-method="saldo" id="payOptSaldo">
+          <button class="pay-opt-card" data-method="expay" id="payOptExpay">
+            <img src="/assets/logos/expay.png" alt="ExPay" class="pay-opt-card__logo">
+          </button>
+          <button class="pay-opt-card" data-method="saldo" id="payOptSaldo" style="grid-column:1/-1">
             <i class="fa-solid fa-wallet pay-opt-card__icon"></i>
-            <span class="pay-opt-card__name">Saldo</span>
-            <span class="pay-opt-card__sub" id="payOptSaldoDisp">R$ 0,00 disponível</span>
+            <span class="pay-opt-card__name">Bônus</span>
+            <span class="pay-opt-card__sub" id="payOptSaldoDisp">Saldo R$0,00 disponível</span>
           </button>
         </div>
         <div class="tk__footer">

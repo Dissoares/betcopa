@@ -3172,13 +3172,16 @@ const closePixModal = () => {
 const _selectPayMethod = (method) => {
   S._payMethod = method;
   document.querySelectorAll('.pay-opt-card').forEach(c => c.classList.remove('pay-opt-card--active'));
-  const card = document.getElementById(method === 'saldo' ? 'payOptSaldo' : 'payOptPix');
+  const _cardId = method === 'saldo' ? 'payOptSaldo' : method === 'expay' ? 'payOptExpay' : 'payOptPix';
+  const card = document.getElementById(_cardId);
   if (card) card.classList.add('pay-opt-card--active');
   const btn = document.getElementById('btnFinalizePayment');
   if (!btn) return;
   const amt = fmtMoney(S.selectedBet?.valor ?? 0);
   if (method === 'saldo') {
     btn.innerHTML = `<i class="fa-solid fa-wallet"></i> Pagar ${amt} com Saldo`;
+  } else if (method === 'expay') {
+    btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pagar ${amt} com ExPay`;
   } else {
     btn.innerHTML = `<i class="fa-brands fa-pix"></i> Pagar ${amt} com PIX`;
   }
@@ -3211,12 +3214,12 @@ const simulatePay = () => {
     openPreLogin();
     return;
   }
-  const saldo = parseFloat(S.user?.saldo ?? 0);
-  const saldoEl = document.getElementById('payOptSaldoDisp');
-  if (saldoEl) saldoEl.textContent = fmtMoney(saldo) + ' disponível';
-  const saldoCard = document.getElementById('payOptSaldo');
-  const betValor  = S.selectedBet?.valor ?? 0;
-  if (saldoCard) saldoCard.disabled = saldo < betValor;
+  const saldo    = parseFloat(S.user?.saldo ?? 0);
+  const betValor = S.selectedBet?.valor ?? 0;
+  const saldoEl  = document.getElementById('payOptSaldoDisp');
+  if (saldoEl) saldoEl.textContent = saldo < betValor
+    ? `⚠ Saldo insuficiente (${fmtMoney(saldo)})`
+    : fmtMoney(saldo) + ' disponível';
   _selectPayMethod('pix');
   document.getElementById('tkFooterConfirm')?.classList.add('hidden');
   document.getElementById('tkPaySection')?.classList.remove('hidden');
@@ -3228,6 +3231,14 @@ const simulatePay = () => {
 };
 
 const confirmBalancePayment = async () => {
+  const saldo    = parseFloat(S.user?.saldo ?? 0);
+  const betValor = S.selectedBet?.valor ?? 0;
+  if (saldo < betValor) {
+    toast('Saldo insuficiente. Recarregue seu bônus para continuar.', 'warning');
+    closeModal('modalTicket');
+    openDepositModal();
+    return;
+  }
   const btn = document.getElementById('btnFinalizePayment');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
@@ -3239,7 +3250,7 @@ const confirmBalancePayment = async () => {
   } catch (err) {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-wallet"></i> Pagar com Saldo';
+    btn.innerHTML = '<i class="fa-solid fa-wallet"></i> Pagar com Bônus';
   }
 };
 
@@ -3256,6 +3267,22 @@ const confirmPixPayment = async () => {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com PIX';
+  }
+};
+
+const confirmExpayPayment = async () => {
+  const btn = document.getElementById('btnFinalizePayment');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+  try {
+    const data = await api(`/api/apostas/${S.selectedBet.id}/pagar-expay`, 'POST', {});
+    S.selectedBet.valor = S.selectedBet.valor || data.valor;
+    closeModal('modalTicket');
+    openPixModal(data);
+    await loadBets();
+  } catch (err) {
+    toast(err.message || 'Erro ao processar pagamento.', 'danger');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Pagar com ExPay';
   }
 };
 
@@ -4670,10 +4697,13 @@ const bind = () => {
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
   document.getElementById('btnFinalizePayment')?.addEventListener('click', () => {
-    if (S._payMethod === 'pix') confirmPixPayment(); else confirmBalancePayment();
+    if (S._payMethod === 'saldo') confirmBalancePayment();
+    else if (S._payMethod === 'expay') confirmExpayPayment();
+    else confirmPixPayment();
   });
-  document.getElementById('payOptSaldo')?.addEventListener('click', () => _selectPayMethod('saldo'));
-  document.getElementById('payOptPix')?.addEventListener('click',   () => _selectPayMethod('pix'));
+  document.getElementById('payOptSaldo')?.addEventListener('click',  () => _selectPayMethod('saldo'));
+  document.getElementById('payOptPix')?.addEventListener('click',    () => _selectPayMethod('pix'));
+  document.getElementById('payOptExpay')?.addEventListener('click',  () => _selectPayMethod('expay'));
 
   // PIX modal
   document.getElementById('btnPixClose')?.addEventListener('click', closePixModal);
