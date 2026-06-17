@@ -1074,6 +1074,7 @@ const renderGames = () => {
 
   renderLeagueTabs();
   updateHeroStats();
+  renderHeroUrgency();
 
   // Apply league filter
   const games = _activeLeague === 'all'
@@ -5950,6 +5951,49 @@ const applyBrandLogo = (url) => {
       text?.classList.remove('hidden');
     }
   });
+};
+
+// ── Hero urgency bar — próximo jogo ───────────────────────────
+let _heroUrgencyTimer = null;
+const renderHeroUrgency = () => {
+  const el      = document.getElementById('heroUrgency');
+  const cdEl    = document.getElementById('heroUrgencyCd');
+  const teamsEl = document.getElementById('heroUrgencyTeams');
+  const btn     = document.getElementById('heroUrgencyBtn');
+  if (!el) return;
+
+  const now  = Date.now();
+  const next = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g) && new Date(g.data_hora) > now)
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+
+  if (!next) { el.classList.add('hidden'); return; }
+
+  el.classList.remove('hidden');
+  if (teamsEl) teamsEl.textContent = `${next.time_casa} × ${next.time_fora}`;
+  if (btn) btn.onclick = () => openBetModal(next.id);
+
+  if (_heroUrgencyTimer) clearInterval(_heroUrgencyTimer);
+
+  const tick = () => {
+    const diff = new Date(next.data_hora) - Date.now();
+    if (diff <= 0) { renderHeroUrgency(); return; }
+
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const str = h > 0
+      ? `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
+      : `${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    if (cdEl) cdEl.textContent = str;
+
+    // Menos de 1h: modo vermelho urgente
+    el.classList.toggle('hero-urgency--hot', diff < 3_600_000);
+  };
+
+  tick();
+  _heroUrgencyTimer = setInterval(tick, 1000);
+  S.timers.push(_heroUrgencyTimer);
 };
 
 // ── Hero bonus badge ──────────────────────────────────────────

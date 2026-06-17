@@ -2228,6 +2228,56 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
 .hero-bonus i { color: #ffc107; }
 .hero-bonus strong { color: #ffc107; }
 
+/* ── Urgency bar ──────────────────────────────── */
+.hero-urgency {
+  --uc: #ff6d00;
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  background: rgba(255,109,0,.08);
+  border: 1px solid rgba(255,109,0,.28);
+  border-left: 3px solid var(--uc);
+  border-radius: var(--radius);
+  padding: .6rem 1rem;
+  margin-top: .5rem;
+  font-size: .8rem;
+  animation: urgencyIn .4s cubic-bezier(.22,1,.36,1);
+  max-width: 480px;
+}
+@keyframes urgencyIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-urgency--hot { --uc: #ff4757; border-color: rgba(255,71,87,.35); background: rgba(255,71,87,.08); }
+.hero-urgency__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--uc); flex-shrink: 0;
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+.hero-urgency__info { display: flex; flex-direction: column; gap: .1rem; flex: 1; min-width: 0; }
+.hero-urgency__label {
+  font-size: .6rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--uc); opacity: .8;
+}
+.hero-urgency__teams {
+  font-weight: 700; color: var(--text); font-size: .84rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hero-urgency__timer { display: flex; flex-direction: column; align-items: center; gap: .05rem; flex-shrink: 0; }
+.hero-urgency__starts { font-size: .58rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.hero-urgency__countdown {
+  font-size: 1rem; font-weight: 900; color: var(--uc);
+  font-variant-numeric: tabular-nums; letter-spacing: .04em;
+  line-height: 1;
+}
+.hero-urgency__btn {
+  flex-shrink: 0;
+  background: var(--uc); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: .35rem .85rem;
+  font-size: .75rem; font-weight: 800; cursor: pointer;
+  transition: filter .15s, transform .15s;
+  white-space: nowrap;
+}
+.hero-urgency__btn:hover { filter: brightness(1.12); transform: scale(1.04); }
+
 /* ── Right: stat cards ────────────────────────── */
 .copa-hero__stats {
   display: flex; gap: .75rem; flex-wrap: wrap; justify-content: flex-end;
