@@ -382,7 +382,7 @@ const renderDrawer = () => {
       </div>
       <div class="dr-sep"></div>
       <div class="dr-section">
-        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-house"></i> Início</button>
+        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-house"></i> Jogos</button>
         <button class="dr-item" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
         <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="palpites"><i class="fa-solid fa-ticket"></i> Meus Palpites</button>
@@ -471,7 +471,7 @@ const renderHeader = () => {
           </div>
           <div class="udrop__sep"></div>
           <button class="udrop__item" data-udrop-nav="jogos">
-            <i class="fa-solid fa-house"></i> Início
+            <i class="fa-solid fa-house"></i> Jogos
           </button>
           <button class="udrop__item" data-udrop-nav="palpites">
             <i class="fa-solid fa-ticket"></i> Meus Palpites
@@ -1068,17 +1068,37 @@ const renderTicker = () => {
       + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const items = S.games.map(g => {
-    const live = isGameLive(g);
-    if (live) {
-      const sc = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
-      return `<span class="ticker-item ticker-item--live"><span class="ticker-live-dot"></span> ${g.time_casa} ${sc} ${g.time_fora}</span>`;
+  // Apenas jogos finalizados com placar
+  const finished = S.games.filter(g => g.status === 'finalizado' && g.placar_real);
+
+  if (!finished.length) {
+    inner.innerHTML = '';
+    return;
+  }
+
+  const items = finished.map(g => {
+    const [goalsHome, goalsAway] = g.placar_real.split('x').map(Number);
+    const draw = goalsHome === goalsAway;
+    const homeWon = goalsHome > goalsAway;
+
+    if (draw) {
+      return `<span class="ticker-item ticker-item--result">
+        <span style="color:#f97316;font-weight:600">${g.time_casa}</span>
+        <span class="ticker-score">${goalsHome} × ${goalsAway}</span>
+        <span style="color:#f97316;font-weight:600">${g.time_fora}</span>
+        <span class="ticker-draw">empatou</span>
+      </span>`;
     }
-    if (g.status === 'encerrado' && g.placar_real) {
-      const sc = g.placar_real.replace('x', ' × ');
-      return `<span class="ticker-item ticker-item--result"><i class="fa-solid fa-flag-checkered"></i> ${g.time_casa} ${sc} ${g.time_fora}</span>`;
-    }
-    return `<span class="ticker-item"><i class="fa-solid fa-futbol"></i> ${g.time_casa} × ${g.time_fora} · ${fmtDt(g.data_hora)}</span>`;
+
+    const homeColor = homeWon ? '#00c853' : '#f87171';
+    const awayColor = homeWon ? '#f87171' : '#00c853';
+    const trophy = `<i class="fa-solid fa-trophy" style="color:#facc15;font-size:.7rem;margin:0 2px"></i>`;
+
+    return `<span class="ticker-item ticker-item--result">
+      <span style="color:${homeColor};font-weight:600">${homeWon ? trophy : ''}${g.time_casa}</span>
+      <span class="ticker-score">${goalsHome} × ${goalsAway}</span>
+      <span style="color:${awayColor};font-weight:600">${homeWon ? '' : trophy}${g.time_fora}</span>
+    </span>`;
   }).join('<span class="ticker-sep">✦</span>');
 
   // Duplicar para loop contínuo sem corte
@@ -1332,7 +1352,7 @@ const _getOrCreateDevice = () => {
 };
 
 const _PAGE_LABELS = {
-  '': 'Início', 'jogos': 'Jogos', 'palpites': 'Meus Palpites',
+  '': 'Jogos', 'jogos': 'Jogos', 'palpites': 'Meus Palpites',
   'ranking': 'Ranking', 'ganhadores': 'Ganhadores', 'grupos': 'Grupos',
   'perfil': 'Perfil', 'suporte': 'Suporte', 'resultados': 'Resultados',
   'auth': 'Login/Cadastro', 'termos': 'Termos de Uso',
@@ -1386,6 +1406,15 @@ const _flushEvents = async () => {
     await api('/api/track', 'POST', { session_id: getOrCreateSid(), events: batch });
   } catch { _evtQueue.unshift(...batch); }
 };
+
+// Envia evento de saída do site via sendBeacon (mais confiável no beforeunload)
+window.addEventListener('beforeunload', () => {
+  trackEvent('navigate', 'Saiu do site');
+  if (_evtQueue.length) {
+    const payload = JSON.stringify({ session_id: getOrCreateSid(), events: _evtQueue.splice(0) });
+    navigator.sendBeacon?.('/api/track', new Blob([payload], { type: 'application/json' }));
+  }
+});
 
 // Captura UTM da URL e persiste no sessionStorage (só precisa rodar uma vez por visita)
 const _captureUTM = () => {
@@ -3161,11 +3190,13 @@ const submitBet = async () => {
     });
 
     S.selectedBet = result.aposta;
+    trackEvent('bet', `Palpite criado: ${S.selectedGame.time_casa} ${S.scoreHome}×${S.scoreAway} ${S.selectedGame.time_fora} · R$${S.stake}`);
     closeModal('modalPalpite');
     fillTicket(result.aposta);
     openModal('modalTicket');
     await loadBets();
   } catch (err) {
+    trackEvent('error', `Erro ao criar palpite: ${err.message || 'desconhecido'}`);
     toast(err.message || 'Erro ao registrar palpite.', 'danger');
   } finally {
     btn.disabled = false;
@@ -3324,9 +3355,10 @@ const openPixModal = (data) => {
     const left = deadline - Date.now();
     if (left <= 0) {
       clearInterval(_pixTimerInterval);
+      clearInterval(_pixPollingInterval);
       timerEl.textContent = '00:00';
       timerWrap.classList.add('pix-timer--expired');
-      clearInterval(_pixPollingInterval);
+      trackEvent('error', 'PIX expirou sem pagamento');
       return;
     }
     const m = String(Math.floor(left / 60000)).padStart(2, '0');
@@ -3353,6 +3385,7 @@ const openPixModal = (data) => {
         if (r.status === 'confirmado') {
           clearInterval(_pixPollingInterval);
           clearInterval(_pixTimerInterval);
+          trackEvent('payment', `Depósito PIX confirmado · R$${(S._depositAmt || 0).toFixed(2)}`);
           document.getElementById('pixStatusText').textContent = '✓ Depósito confirmado!';
           await loadUser();
           setTimeout(() => closePixModal(), 2000);
@@ -3367,6 +3400,7 @@ const openPixModal = (data) => {
         if (updated && updated.status === 'confirmado') {
           clearInterval(_pixPollingInterval);
           clearInterval(_pixTimerInterval);
+          trackEvent('payment', `PIX confirmado · R$${(updated.valor || S.selectedBet?.valor || 0).toFixed(2)}`);
           document.getElementById('pixStatusText').textContent = '✓ Pagamento confirmado!';
           S.bets = r.apostas;
           await loadUser();
@@ -3389,6 +3423,10 @@ const closePixModal = () => {
 };
 
 const _selectPayMethod = (method) => {
+  if (S._payMethod !== method) {
+    const _ml = { saldo: 'Saldo/Bônus', pix: 'PIX', expay: 'ExPay' };
+    trackEvent('action', `Selecionou método de pagamento: ${_ml[method] || method}`);
+  }
   S._payMethod = method;
   document.querySelectorAll('.pay-opt-card').forEach(c => c.classList.remove('pay-opt-card--active'));
   const _cardId = method === 'saldo' ? 'payOptSaldo' : method === 'expay' ? 'payOptExpay' : 'payOptPix';
@@ -3451,10 +3489,11 @@ const simulatePay = () => {
 };
 
 const confirmBalancePayment = async () => {
-  trackEvent('action', 'Tentou pagar com Bônus');
+  trackEvent('action', 'Tentou pagar com Saldo/Bônus');
   const saldo    = parseFloat(S.user?.saldo ?? 0);
   const betValor = S.selectedBet?.valor ?? 0;
   if (saldo < betValor) {
+    trackEvent('error', `Saldo insuficiente · tem R$${saldo.toFixed(2)}, precisa R$${betValor.toFixed(2)}`);
     toast('Saldo insuficiente. Recarregue seu bônus para continuar.', 'warning');
     closeModal('modalTicket');
     openDepositModal();
@@ -3464,11 +3503,13 @@ const confirmBalancePayment = async () => {
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
     await api(`/api/apostas/${S.selectedBet.id}/pagar-saldo`, 'POST', {});
+    trackEvent('payment', `Pagou com Saldo · R$${betValor.toFixed(2)}`);
     closeModal('modalTicket');
     await Promise.all([loadUser(), loadBets()]);
     toast('Aposta confirmada! Saldo debitado.', 'success');
     navigate('palpites');
   } catch (err) {
+    trackEvent('error', `Falha ao pagar com Saldo: ${err.message || 'desconhecido'}`);
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-wallet"></i> Pagar com Bônus';
@@ -3476,7 +3517,7 @@ const confirmBalancePayment = async () => {
 };
 
 const confirmPixPayment = async () => {
-  trackEvent('action', 'Iniciou pagamento PIX');
+  trackEvent('action', `Gerou PIX · R$${(S.selectedBet?.valor ?? 0).toFixed(2)}`);
   const btn = document.getElementById('btnFinalizePayment');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
   try {
@@ -3486,6 +3527,7 @@ const confirmPixPayment = async () => {
     openPixModal(data);
     await loadBets();
   } catch (err) {
+    trackEvent('error', `Falha ao gerar PIX: ${err.message || 'desconhecido'}`);
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com PIX';
@@ -3575,6 +3617,7 @@ const submitLogin = async (e) => {
     });
     await loadUser();
     await loadBets();
+    trackEvent('auth', `Login: ${S.user?.email || 'usuário'}`);
 
     if (S.pendingBet) {
       const pb = S.pendingBet;
@@ -3623,6 +3666,7 @@ const submitRegister = async (e) => {
       senha:         document.getElementById('registerPassword').value,
       referral_code: sessionStorage.getItem('refCode') || '',
     });
+    trackEvent('auth', 'Cadastro realizado');
     showAlert(S.pendingBet ? 'Conta criada! Faça login para confirmar seu palpite.' : 'Conta criada! Faça login para começar.', 'success');
     switchAuthTab('login');
     e.target.reset();
@@ -3634,6 +3678,8 @@ const submitRegister = async (e) => {
 };
 
 const logout = async () => {
+  trackEvent('auth', 'Logout');
+  _flushEvents();
   try { await api('/api/logout', 'POST'); } catch {}
   S.user = null; S.bets = [];
   renderHeader();
@@ -3659,6 +3705,7 @@ const googleCallback = async (response) => {
     const res = await api('/api/auth/google', 'POST', { credential: response.credential });
     await loadUser();
     await loadBets();
+    trackEvent('auth', `Login Google: ${S.user?.email || 'usuário'}`);
 
     // Fecha qualquer modal de login rápido/pré-login aberto
     closeModal('modalPreLogin');
@@ -4891,6 +4938,15 @@ const bind = () => {
     if (val === 0 && dir < 0) return null;
     return Math.max(0, val + dir);
   };
+  let _scoreTrackTimer = null;
+  const _trackScoreDebounced = () => {
+    clearTimeout(_scoreTrackTimer);
+    _scoreTrackTimer = setTimeout(() => {
+      if (S.selectedGame && S.scoreHome !== null && S.scoreAway !== null) {
+        trackEvent('bet', `Selecionou placar: ${S.selectedGame.time_casa} ${S.scoreHome}×${S.scoreAway} ${S.selectedGame.time_fora}`);
+      }
+    }, 1500);
+  };
   document.getElementById('modalPalpite').addEventListener('click', e => {
     const btn = e.target.closest('.score-btn');
     if (!btn) return;
@@ -4900,6 +4956,7 @@ const bind = () => {
     renderScore('scoreHome', S.scoreHome);
     renderScore('scoreAway', S.scoreAway);
     updateBetPreview();
+    _trackScoreDebounced();
   });
 
   document.getElementById('modalPalpite').addEventListener('input', e => {
@@ -5532,11 +5589,15 @@ const bind = () => {
       const anon   = sessions.filter(s => !s.user_id);
 
       const _EVT_IC = {
-        navigate:    { icon: 'fa-solid fa-arrow-right',     color: '#60a5fa' },
-        modal_open:  { icon: 'fa-solid fa-window-maximize', color: '#34d399' },
-        modal_close: { icon: 'fa-solid fa-window-minimize', color: '#f87171' },
-        action:      { icon: 'fa-solid fa-bolt',             color: '#fbbf24' },
-        form:        { icon: 'fa-solid fa-pen-to-square',    color: '#a78bfa' },
+        navigate:    { icon: 'fa-solid fa-arrow-right',        color: '#60a5fa' },
+        modal_open:  { icon: 'fa-solid fa-window-maximize',    color: '#34d399' },
+        modal_close: { icon: 'fa-solid fa-window-minimize',    color: '#f87171' },
+        action:      { icon: 'fa-solid fa-bolt',                color: '#fbbf24' },
+        form:        { icon: 'fa-solid fa-pen-to-square',       color: '#a78bfa' },
+        bet:         { icon: 'fa-solid fa-futbol',              color: '#00c853' },
+        payment:     { icon: 'fa-solid fa-credit-card',         color: '#f59e0b' },
+        auth:        { icon: 'fa-solid fa-user-check',          color: '#818cf8' },
+        error:       { icon: 'fa-solid fa-circle-exclamation',  color: '#f87171' },
       };
 
       const renderEventsTimeline = (events, sess) => {

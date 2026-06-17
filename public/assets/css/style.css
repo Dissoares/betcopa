@@ -284,7 +284,9 @@ body::before {
   background: #f87171;
   animation: pulse-dot 1.2s ease-in-out infinite;
 }
-.ticker-item--result { color: rgba(255,255,255,.45); }
+.ticker-item--result { display: inline-flex; align-items: center; gap: .35rem; }
+.ticker-score { color: rgba(255,255,255,.7); font-weight: 700; font-size: .72rem; padding: 0 .1rem; }
+.ticker-draw { font-size: .62rem; color: #f97316; opacity: .8; font-style: italic; }
 .ticker-sep { color: rgba(255,255,255,.1); font-size: .5rem; padding: 0 .2rem; }
 
 .header__inner {
