@@ -2737,8 +2737,8 @@ const openBetModal = (gameId, pending = null) => {
   if (!game) return;
 
   S.selectedGame = game;
-  S.scoreHome    = pending?.scoreHome ?? null;
-  S.scoreAway    = pending?.scoreAway ?? null;
+  S.scoreHome    = pending?.scoreHome ?? 0;
+  S.scoreAway    = pending?.scoreAway ?? 0;
   S.stake        = pending?.stake ?? S.stakeMin;
 
   const slider = document.getElementById('stakeSlider');
@@ -4696,6 +4696,13 @@ const bind = () => {
 
   // Ticket payment buttons
   document.getElementById('btnSimulatePay').addEventListener('click', simulatePay);
+  document.getElementById('btnEditBet')?.addEventListener('click', async () => {
+    if (S.selectedBet?.id && S.selectedBet.status === 'pendente') {
+      try { await api(`/api/apostas/${S.selectedBet.id}/cancelar`, 'POST', {}); } catch { /* ignora */ }
+    }
+    closeModal('modalTicket');
+    openBetModal(S.selectedGame.id);
+  });
   document.getElementById('btnFinalizePayment')?.addEventListener('click', () => {
     if (S._payMethod === 'saldo') confirmBalancePayment();
     else if (S._payMethod === 'expay') confirmExpayPayment();

@@ -160,6 +160,7 @@ try {
         routePattern('/^\/api\/apostas\/(\d+)\/pagar$/',         'POST', fn(int $id) => $betCtrl->pay($id));
         routePattern('/^\/api\/apostas\/(\d+)\/pagar-saldo$/',   'POST', fn(int $id) => $betCtrl->payWithBalance($id));
         routePattern('/^\/api\/apostas\/(\d+)\/pagar-expay$/',   'POST', fn(int $id) => $betCtrl->payExpay($id));
+        routePattern('/^\/api\/apostas\/(\d+)\/cancelar$/',      'POST', fn(int $id) => $betCtrl->cancel($id));
 
         // ── Depósitos ─────────────────────────────────────────
         route('/api/user/depositar',                          'POST', fn() => $depositCtrl->create());

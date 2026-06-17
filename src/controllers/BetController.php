@@ -51,6 +51,21 @@ class BetController
         jsonResponse(array_merge(['message' => 'Cobrança PIX criada'], $data));
     }
 
+    public function cancel(int $id): void
+    {
+        Csrf::verify();
+        $userId = ensureLogged();
+        $bet    = $this->repository->find($id);
+        if (!$bet || (int) $bet['user_id'] !== $userId) {
+            jsonResponse(['error' => 'Aposta não encontrada'], 404); return;
+        }
+        if ($bet['status'] !== 'pendente') {
+            jsonResponse(['error' => 'Apenas apostas pendentes podem ser canceladas'], 400); return;
+        }
+        $this->repository->updateStatus($id, 'cancelado');
+        jsonResponse(['message' => 'Aposta cancelada']);
+    }
+
     public function payExpay(int $id): void
     {
         Csrf::verify();
