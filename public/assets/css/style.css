@@ -202,6 +202,7 @@ body {
 }
 
 button, input, select { font: inherit; }
+button, a, input, select, textarea, label { touch-action: manipulation; }
 
 body::before {
   content: '';
@@ -1296,7 +1297,7 @@ select {
   border-radius: var(--radius-sm);
   color: var(--text);
   padding: .75rem .95rem;
-  font-size: .92rem;
+  font-size: 1rem;
   transition: border-color .15s, box-shadow .15s;
   appearance: none;
   -webkit-appearance: none;
@@ -1341,7 +1342,7 @@ select {
   border-radius: var(--radius-xl);
   padding: 2rem;
   width: min(500px, 100%);
-  max-height: 92vh; overflow-y: auto;
+  max-height: 92vh; overflow-y: auto; overflow-x: hidden;
   animation: modalIn .25s cubic-bezier(.34,1.56,.64,1);
   box-shadow: var(--shadow-modal);
 }
@@ -6320,6 +6321,7 @@ input:focus, select:focus {
   color: var(--text, #e2e8f0) !important;
   border: 1px solid var(--border, rgba(255,255,255,.1)) !important;
   border-radius: var(--radius-lg, 14px) !important;
+  max-width: calc(100vw - 2rem) !important;
 }
 .swal2-title {
   color: var(--text, #e2e8f0) !important;
@@ -6335,6 +6337,7 @@ input:focus, select:focus {
   border-color: var(--border, rgba(255,255,255,.12)) !important;
   border-radius: var(--radius, 8px) !important;
   box-shadow: none !important;
+  font-size: 1rem !important;
 }
 .swal2-input:focus,
 .swal2-textarea:focus {
