@@ -2686,11 +2686,7 @@ const startPendingBetTimer = () => {
     const secs = Math.floor((remaining % 60000) / 1000);
     display.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
     if (remaining <= 0) {
-      clearInterval(_pendingBetTimerRef);
-      _pendingBetTimerRef = null;
-      S.pendingBet = null;
-      sessionStorage.removeItem('pendingBetExpiry');
-      bar.classList.add('hidden');
+      clearPendingBet();
     }
   };
   tick();
@@ -2701,6 +2697,31 @@ const stopPendingBetTimer = () => {
   if (_pendingBetTimerRef) { clearInterval(_pendingBetTimerRef); _pendingBetTimerRef = null; }
   sessionStorage.removeItem('pendingBetExpiry');
   document.getElementById('pendingBetBar')?.classList.add('hidden');
+};
+
+const savePendingBet = (pb) => {
+  const expiry = Date.now() + PENDING_BET_TTL;
+  localStorage.setItem('pendingBet', JSON.stringify({ ...pb, _expiry: expiry }));
+  sessionStorage.setItem('pendingBetExpiry', String(expiry));
+};
+
+const clearPendingBet = () => {
+  S.pendingBet = null;
+  localStorage.removeItem('pendingBet');
+  if (_pendingBetTimerRef) { clearInterval(_pendingBetTimerRef); _pendingBetTimerRef = null; }
+  sessionStorage.removeItem('pendingBetExpiry');
+  document.getElementById('pendingBetBar')?.classList.add('hidden');
+};
+
+const restorePendingBet = () => {
+  try {
+    const raw = localStorage.getItem('pendingBet');
+    if (!raw) return;
+    const { _expiry, ...pb } = JSON.parse(raw);
+    if (!_expiry || _expiry <= Date.now()) { localStorage.removeItem('pendingBet'); return; }
+    S.pendingBet = pb;
+    sessionStorage.setItem('pendingBetExpiry', String(_expiry));
+  } catch { localStorage.removeItem('pendingBet'); }
 };
 
 let _betCountdownTimer = null;
@@ -2775,6 +2796,7 @@ const submitBet = async () => {
       scoreAway: S.scoreAway,
       stake:     S.stake,
     };
+    savePendingBet(S.pendingBet);
     const g   = S.selectedGame;
     const odd = parseFloat(g?.odd || 0) > 1 ? parseFloat(g.odd) : (S.oddPadrao ?? 9);
     const previewBet = {
@@ -3188,9 +3210,8 @@ const submitLogin = async (e) => {
     await loadBets();
 
     if (S.pendingBet) {
-      stopPendingBetTimer();
       const pb = S.pendingBet;
-      S.pendingBet = null;
+      clearPendingBet();
       navigate('jogos');
       showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}! Finalizando seu palpite…`, 'success');
       e.target.reset();
@@ -3271,9 +3292,8 @@ const googleCallback = async (response) => {
     await loadBets();
 
     if (S.pendingBet) {
-      stopPendingBetTimer();
       const pb = S.pendingBet;
-      S.pendingBet = null;
+      clearPendingBet();
       navigate('jogos');
       showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}!`, 'success');
       setTimeout(async () => {
@@ -6329,6 +6349,30 @@ const init = async () => {
   await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
+
+  // Restaura palpite pendente salvo no localStorage
+  restorePendingBet();
+  if (S.user && S.pendingBet) {
+    const pb = S.pendingBet;
+    clearPendingBet();
+    setTimeout(async () => {
+      try {
+        S.selectedGame = S.games.find(g => g.id === pb.gameId) ?? S.selectedGame;
+        const result = await api('/api/apostas', 'POST', {
+          jogo_id:     pb.gameId,
+          placar_casa: pb.scoreHome,
+          placar_fora: pb.scoreAway,
+          valor:       pb.stake,
+        });
+        S.selectedBet = result.aposta;
+        fillTicket(result.aposta);
+        openModal('modalTicket');
+        await loadBets();
+      } catch (err) {
+        toast(err.message || 'Não foi possível recuperar seu palpite.', 'danger');
+      }
+    }, 600);
+  }
   pingOnline();
   setInterval(pingOnline, 30000);
 
