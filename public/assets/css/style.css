@@ -114,12 +114,12 @@
   --border:        rgba(15,23,42,0.10);
   --border-strong: rgba(15,23,42,0.20);
 
-  /* Marca — verde profundo/premium para fundos claros */
-  --primary:      #00d435;
-  --primary-dark: #00aa2b;
-  --primary-glow: rgba(6,95,70,0.22);
-  --gold:         #b45309;
-  --gold-glow:    rgba(180,83,9,0.25);
+  /* Marca — verde vibrante da marca */
+  --primary:      #00c853;
+  --primary-dark: #00a040;
+  --primary-glow: rgba(0,200,83,0.25);
+  --gold:         #f59e0b;
+  --gold-glow:    rgba(245,158,11,0.28);
   --danger:       #dc2626;
   --danger-glow:  rgba(220,38,38,0.22);
   --info:         #2563eb;
@@ -130,10 +130,10 @@
   --text-dim:   #94a3b8;
 
   /* Tints semânticos */
-  --tint-primary: rgba(6,95,70,0.12);
+  --tint-primary: rgba(0,200,83,0.13);
   --tint-danger:  rgba(220,38,38,0.13);
   --tint-info:    rgba(37,99,235,0.13);
-  --tint-gold:    rgba(180,83,9,0.14);
+  --tint-gold:    rgba(245,158,11,0.14);
 
   /* Tints de resultado */
   --tint-win-border:  rgba(5,150,105,0.32);
@@ -157,8 +157,8 @@
 
   /* Contextos específicos */
   --ranking-winner-bg:     linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);
-  --ranking-winner-border: rgba(180,83,9,0.30);
-  --ranking-winner-shadow: 0 4px 24px rgba(180,83,9,0.12);
+  --ranking-winner-border: rgba(245,158,11,0.30);
+  --ranking-winner-shadow: 0 4px 24px rgba(245,158,11,0.12);
   --modal-backdrop:        rgba(15,23,42,0.60);
   --score-shadow:          none;
   --ambient-glow:          rgba(5,150,105,0.06);
@@ -216,23 +216,23 @@
   padding: 0;
 }
 
-/* ── Botões primários — verde escuro premium, texto branco ── */
+/* ── Botões primários — verde vibrante, texto escuro ─────── */
 .theme-light .btn--primary {
-  color: #ffffff;
-  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+  color: #001a0d;
+  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22);
 }
 .theme-light .btn--primary:hover {
-  color: #ffffff;
-  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+  color: #001a0d;
+  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22);
 }
 .theme-light .btn-show-more {
   background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+  color: #001a0d;
+  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22);
 }
 .theme-light .btn-show-more:hover {
-  color: #ffffff;
-  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+  color: #001a0d;
+  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22);
 }
 
 /* ── Section headers (HOJE, AMANHÃ) ──────────────────────── */
@@ -240,7 +240,7 @@
 .theme-light .games-section__count {
   background: var(--tint-primary);
   color: var(--primary);
-  border: 1px solid rgba(6,95,70,.2);
+  border: 1px solid rgba(0,200,83,.2);
 }
 
 /* ── League tabs ──────────────────────────────────────────── */
@@ -260,14 +260,14 @@
 /* ── Barra "Próximo Jogo" — light card elegante ──────────── */
 .theme-light .ngb {
   background: #fff;
-  border: 1px solid rgba(180,83,9,.28);
+  border: 1px solid rgba(245,158,11,.28);
   border-left: 3px solid var(--gold);
   box-shadow: 0 2px 12px rgba(15,23,42,.10);
   animation: none;
 }
 .theme-light .ngb__dot {
   background: var(--gold);
-  box-shadow: 0 0 6px rgba(180,83,9,.4), 0 0 12px rgba(180,83,9,.2);
+  box-shadow: 0 0 6px rgba(245,158,11,.5), 0 0 12px rgba(245,158,11,.25);
 }
 .theme-light .ngb__label {
   text-shadow: none;
@@ -281,10 +281,10 @@
 }
 .theme-light .ngb__btn {
   animation: none;
-  box-shadow: 0 3px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
+  box-shadow: 0 3px 0 0 #c97d00, inset 0 1px 0 rgba(255,255,255,.22);
 }
 .theme-light .ngb__btn:hover {
-  box-shadow: 0 5px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
+  box-shadow: 0 5px 0 0 #c97d00, inset 0 1px 0 rgba(255,255,255,.22);
 }
 
 /* ── Ticker de atividade ──────────────────────────────────── */
@@ -1337,6 +1337,20 @@ body.scroll-locked {
 @keyframes pulseCardLive {
   0%,100% { box-shadow: 0 0 0 0   rgba(255,71,87,.12); }
   50%     { box-shadow: 0 0 0 6px rgba(255,71,87,.22); }
+}
+
+/* ─ "Palpites encerrados" — badge vermelho bloqueado ───────── */
+.game-card--live .btn--ghost[disabled],
+.game-card--live .btn--ghost:disabled {
+  background: rgba(220,38,38,.12) !important;
+  border: 1px solid rgba(220,38,38,.32) !important;
+  color: #ff4757 !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+}
+.game-card--live .btn--ghost[disabled] i,
+.game-card--live .btn--ghost:disabled i {
+  color: #ff4757 !important;
 }
 
 /* ─ Head: badge + liga + data --------------------------------- */
@@ -2941,26 +2955,50 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
     gap: .3rem;
   }
 
-  /* Botão "Criar conta" no header: compacto mas destacado */
+  /* Botão "Criar conta" no header — 3D igual ao Apostar */
   .header__register-btn {
-    padding: .32rem .6rem !important;
+    padding: .34rem .72rem !important;
     font-size: .72rem !important;
-    border-radius: var(--radius-sm) !important;
-    animation: none !important; /* sem shimmer no header */
+    font-weight: 800 !important;
+    border-radius: 8px !important;
+    animation: none !important;
     background: var(--primary) !important;
-    box-shadow: 0 0 14px rgba(0,230,118,.35) !important;
+    color: #001a0d !important;
+    border: 1px solid rgba(0,0,0,.12) !important;
+    box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22) !important;
+    transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s !important;
+  }
+  .header__register-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22) !important;
+  }
+  .header__register-btn:active {
+    transform: translateY(4px) !important;
+    box-shadow: 0 0 0 0 var(--primary-dark) !important;
   }
   .header__register-btn i { font-size: .7rem !important; }
-  /* Label de texto do botão — some em telas muito pequenas */
   @media (max-width: 370px) {
     .header__register-label { display: none; }
-    .header__register-btn { padding: .32rem .45rem !important; }
+    .header__register-btn { padding: .34rem .5rem !important; }
   }
 
-  /* Botão "Entrar" no header: compacto ghost */
+  /* Botão "Entrar" no header — 3D ghost */
   .header__login-btn {
-    padding: .32rem .6rem !important;
+    padding: .34rem .72rem !important;
     font-size: .72rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
+    box-shadow: 0 4px 0 0 rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s !important;
+  }
+  .header__login-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 0 0 rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  .header__login-btn:active {
+    transform: translateY(4px) !important;
+    box-shadow: 0 0 0 0 rgba(255,255,255,.08) !important;
   }
 
   /* Dropdown do usuário logado: reduz padding */
@@ -3196,27 +3234,102 @@ button.copa-hero__stat:hover {
 
 /* ── Light mode ───────────────────────────────── */
 .theme-light .copa-hero {
-  background:
-    radial-gradient(ellipse at 15% 45%, rgba(5,150,105,.12) 0%, transparent 55%),
-    radial-gradient(ellipse at 88% 10%, rgba(16,185,129,.08) 0%, transparent 50%),
-    linear-gradient(150deg, #edfdf5 0%, #ffffff 55%, #f0fbf8 100%);
-  border: 1px solid rgba(5,150,105,.22);
-  box-shadow: 0 8px 40px rgba(5,150,105,.1);
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,.08);
+  box-shadow: 0 4px 24px rgba(15,23,42,.09);
+  border-radius: 14px;
+  padding: 1.5rem 1.25rem 1.25rem;
 }
-.theme-light .copa-hero__title  { color: #0a2e1a; }
-.theme-light .copa-hero__sub    { color: #3d6655; }
+
+/* Espaçamento interno — seções bem separadas */
+.theme-light .copa-hero__content { gap: 1.1rem; }
+.theme-light .copa-hero__actions { gap: .9rem; flex-direction: column; align-items: flex-start; }
+
+/* Título */
+.theme-light .copa-hero__title {
+  color: #060d1a;
+  font-weight: 900;
+  font-size: clamp(2.4rem, 11vw, 4.8rem);
+}
+.theme-light .copa-hero__title span { color: var(--primary); }
+.theme-light .copa-hero__sub { color: #475569; font-size: .9rem; margin-top: -.2rem; }
+
+/* Eyebrow */
 .theme-light .copa-hero__eyebrow {
-  background: rgba(5,150,105,.1); border-color: rgba(5,150,105,.3);
+  background: rgba(0,200,83,.12);
+  border: 1px solid rgba(0,200,83,.32);
+  color: #007a30;
+  font-weight: 800;
 }
+.theme-light .copa-hero__eyebrow i { color: var(--primary); }
+
+/* CTA "Fazer palpite" — 3D sólido (sem glow) */
+.theme-light .copa-hero__cta {
+  color: #001a0d !important;
+  font-weight: 800 !important;
+  box-shadow: 0 5px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+.theme-light .copa-hero__cta:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 7px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+.theme-light .copa-hero__cta:active {
+  transform: translateY(5px) !important;
+  box-shadow: 0 0 0 0 var(--primary-dark) !important;
+}
+
+/* Pill "Ao Vivo" */
+.theme-light .hero-live-pill {
+  background: rgba(220,38,38,.1);
+  border-color: rgba(220,38,38,.3);
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* Bônus badge — card neutro, botão com 3D */
+.theme-light .hero-bonus {
+  background: #fff8ed;
+  border: 1px solid rgba(245,158,11,.3);
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  color: #78350f;
+  gap: .75rem;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(245,158,11,.1);
+}
+.theme-light .hero-bonus strong { color: #92400e; font-weight: 800; }
+.theme-light .hero-bonus .btn--primary {
+  border-radius: 8px !important;
+  padding: .52rem 1.1rem !important;
+  font-size: .84rem !important;
+  font-weight: 800 !important;
+  color: #001a0d !important;
+  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22) !important;
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s !important;
+}
+.theme-light .hero-bonus .btn--primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+.theme-light .hero-bonus .btn--primary:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 0 0 0 var(--primary-dark) !important;
+}
+
+/* Stats */
 .theme-light .copa-hero__stat {
-  background: rgba(255,255,255,.75);
-  border-color: rgba(5,150,105,.18);
-  box-shadow: 0 2px 10px rgba(5,150,105,.08);
+  background: #f1f5f9;
+  border: 1px solid rgba(15,23,42,.1);
+  box-shadow: 0 2px 8px rgba(15,23,42,.07);
 }
-.theme-light .copa-hero__stat strong { color: #0a2e1a; }
-.theme-light .copa-hero__stat span   { color: #4d7a65; }
-.theme-light .hero-bonus { background: rgba(255,160,0,.1); border-color: rgba(255,160,0,.3); color: #6b4c00; }
-.theme-light .copa-hero__cta { box-shadow: 0 0 28px rgba(5,150,105,.35); }
+.theme-light .copa-hero__stat strong { color: #060d1a; font-size: 1.5rem; font-weight: 900; }
+.theme-light .copa-hero__stat span   { color: #475569; font-size: .65rem; font-weight: 700; letter-spacing: .06em; }
+.theme-light .copa-hero__stat-icon   { background: rgba(0,200,83,.18) !important; color: var(--primary) !important; }
+
+/* Canvas */
+.theme-light .hero-canvas { opacity: .04; }
 
 
 /* ============================================================
@@ -7505,9 +7618,9 @@ input:focus, select:focus {
   color: #0b1120;
 }
 .theme-light .exit-modal__badge {
-  background: rgba(6,95,70,.1);
-  border-color: rgba(6,95,70,.22);
-  color: #065f46;
+  background: rgba(0,200,83,.1);
+  border-color: rgba(0,200,83,.25);
+  color: #00a040;
 }
 .theme-light .exit-modal__headline { color: #0b1120; }
 .theme-light .exit-modal__sub { color: rgba(15,23,42,.5); }
