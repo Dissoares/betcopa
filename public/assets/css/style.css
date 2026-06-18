@@ -3634,23 +3634,31 @@ button.copa-hero__stat:hover {
   gap: .45rem;
   width: 100%;
   margin-top: .9rem;
-  padding: .65rem 1.25rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  padding: .68rem 1.25rem;
+  background: var(--primary);
+  border: 1px solid rgba(0,0,0,.14);
+  border-top-color: rgba(0,0,0,.08);
   border-radius: var(--radius-sm);
-  color: var(--text-dim);
-  font-size: .82rem;
-  font-weight: 600;
+  color: #001a0d;
+  font-family: 'Barlow Condensed', var(--font-base);
+  font-size: .9rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
+  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22);
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s;
 }
 .btn-show-more:hover {
-  background: var(--surface-3);
-  color: var(--text);
-  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.btn-show-more:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 var(--primary-dark);
 }
 .btn-show-more i {
-  font-size: .75rem;
+  font-size: .78rem;
   transition: transform .2s;
 }
 .btn-show-more:hover i { transform: translateY(2px); }
@@ -7130,15 +7138,17 @@ input:focus, select:focus {
 #nextGameBar.hidden { display: none !important; }
 
 .ngb {
-  background: #111218;
-  border: 1px solid rgba(255,255,255,.08);
+  background: #16192a;
+  border: 1px solid rgba(255,215,0,.22);
+  border-left: 3px solid var(--gold);
   border-radius: 12px;
-  padding: .55rem .85rem .55rem .7rem;
+  padding: .52rem .85rem .52rem .7rem;
   display: flex;
   align-items: center;
   gap: .7rem;
   margin-top: .35rem;
   overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,215,0,.05);
 }
 .ngb__dot {
   width: 8px; height: 8px; flex-shrink: 0;
@@ -7149,31 +7159,33 @@ input:focus, select:focus {
 }
 .ngb__info {
   display: flex; flex-direction: column; gap: .06rem;
-  min-width: 0; flex-shrink: 0;
+  flex: 1; min-width: 0;
 }
 .ngb__label {
   font-size: .56rem; font-weight: 800; letter-spacing: .1em;
   text-transform: uppercase; color: var(--gold);
+  white-space: nowrap;
 }
 .ngb__teams {
   font-family: 'Barlow Condensed', var(--font-base);
-  font-size: .9rem; font-weight: 700; text-transform: uppercase;
+  font-size: .92rem; font-weight: 700; text-transform: uppercase;
   color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 110px;
 }
 .ngb__timer {
   display: flex; flex-direction: column; gap: .04rem;
-  flex: 1; text-align: center;
+  flex-shrink: 0; text-align: center;
 }
 .ngb__timer-label {
   font-size: .56rem; color: rgba(255,255,255,.38);
   text-transform: uppercase; letter-spacing: .06em;
+  white-space: nowrap;
 }
 .ngb__timer-cd {
   font-family: 'Barlow Condensed', var(--font-base);
   font-size: 1.12rem; font-weight: 900;
   color: var(--gold); font-variant-numeric: tabular-nums;
   letter-spacing: .02em;
+  white-space: nowrap;
 }
 .ngb__btn {
   background: var(--gold); color: #1a0500;

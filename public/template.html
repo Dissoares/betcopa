@@ -70,7 +70,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=28" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=30" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2353,5 +2353,29 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   </script>
+
+  <!-- ===== BOTTOM NAV — mobile ===== -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav__btn nav__btn--active" data-nav="jogos">
+      <i class="fa-solid fa-house"></i>
+      Jogos
+    </button>
+    <button class="nav__btn" data-nav="resultados">
+      <i class="fa-solid fa-chart-simple"></i>
+      Placar
+    </button>
+    <button class="nav__btn bottom-nav__cta-item" data-nav="jogos">
+      <div class="bottom-nav__cta-ring"><i class="fa-solid fa-bolt"></i></div>
+      Apostar
+    </button>
+    <button class="nav__btn" data-nav="ganhadores">
+      <i class="fa-solid fa-trophy"></i>
+      Top
+    </button>
+    <button class="nav__btn" id="bottomNavConta">
+      <i class="fa-solid fa-user"></i>
+      Conta
+    </button>
+  </nav>
 </body>
 </html>
