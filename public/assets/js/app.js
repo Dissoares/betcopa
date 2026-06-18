@@ -293,7 +293,7 @@ const gameBadge = (g) => {
 
   // 5. Em Breve: aberto + menos de 1h para começar
   if (s === 'aberto' && diff > 0 && diff <= 3600000) {
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Encerra em breve</span>`;
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Ainda hoje</span>`;
   }
 
   // 6. Em breve: aberto + mais de 7 dias para começar
@@ -4497,12 +4497,18 @@ const loadGames = async () => {
   if (grid) grid.innerHTML = '';
   try {
     const r = await api('/api/jogos');
-    S.games = (r.jogos || []).map(g => ({
-      ...g,
-      time_casa: teamNamePt(g.time_casa),
-      time_fora: teamNamePt(g.time_fora),
-      liga_nome: LEAGUE_SHORT[g.liga_nome] || g.liga_nome,
-    }));
+    S.games = (r.jogos || [])
+      .map(g => ({
+        ...g,
+        time_casa: teamNamePt(g.time_casa),
+        time_fora: teamNamePt(g.time_fora),
+        liga_nome: LEAGUE_SHORT[g.liga_nome] || g.liga_nome,
+      }))
+      .filter(g => {
+        const a = (g.time_casa || '').trim();
+        const b = (g.time_fora || '').trim();
+        return a && b && a !== '?' && b !== '?';
+      });
   } catch {
     S.games = [];
   }

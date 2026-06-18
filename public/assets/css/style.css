@@ -1173,7 +1173,7 @@ body.scroll-locked {
 #copaHero                     { order: 8; margin-top: 1.5rem; }
 #referralBanner               { order: 9; }
 
-/* Banner dentro do container: ocupa a largura toda sem double-padding */
+/* Banner: fundo sangra até a borda da viewport, conteúdo centralizado */
 #view-jogos .match-banner-wrap {
   margin-left:  calc(-1 * (100vw - 100%) / 2);
   margin-right: calc(-1 * (100vw - 100%) / 2);
@@ -1181,6 +1181,14 @@ body.scroll-locked {
 #view-jogos .match-banner {
   width: 100%;
   max-width: 100%;
+}
+
+/* Desktop: limita o conteúdo interno ao mesmo max-width do container */
+@media (min-width: 900px) {
+  #view-jogos .match-banner {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
 }
 
 .view-hero {
