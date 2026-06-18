@@ -7134,12 +7134,25 @@ input:focus, select:focus {
 /* ════════════════════════════════════════════════════════════
    §NEXT GAME BAR — barra de urgência abaixo do header
    ════════════════════════════════════════════════════════════ */
+@keyframes ngb-border-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,152,0,.2), 0 0 0 1px rgba(255,152,0,.1), inset 0 1px 0 rgba(255,152,0,.06); }
+     50%    { box-shadow: 0 0 28px rgba(255,152,0,.55), 0 0 0 1px rgba(255,152,0,.28), inset 0 1px 0 rgba(255,152,0,.1); }
+}
+@keyframes ngb-cd-glow {
+  from { text-shadow: 0 0 6px rgba(255,200,0,.65), 0 0 14px rgba(255,152,0,.35); }
+  to   { text-shadow: 0 0 14px rgba(255,220,0,.98), 0 0 28px rgba(255,152,0,.65), 0 0 48px rgba(255,100,0,.25); }
+}
+@keyframes ngb-btn-aura {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,152,0,.45), 0 3px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22); }
+     50%    { box-shadow: 0 0 26px rgba(255,152,0,.85), 0 3px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22), 0 0 48px rgba(255,100,0,.28); }
+}
+
 #nextGameBar { order: 0; }
 #nextGameBar.hidden { display: none !important; }
 
 .ngb {
-  background: #16192a;
-  border: 1px solid rgba(255,215,0,.22);
+  background: linear-gradient(135deg, #0e0c06 0%, #15120a 60%, #1a0f04 100%);
+  border: 1px solid rgba(255,152,0,.38);
   border-left: 3px solid var(--gold);
   border-radius: 12px;
   padding: .52rem .85rem .52rem .7rem;
@@ -7148,28 +7161,32 @@ input:focus, select:focus {
   gap: .7rem;
   margin-top: .35rem;
   overflow: hidden;
-  box-shadow: 0 2px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,215,0,.05);
+  animation: ngb-border-pulse 2.8s ease-in-out infinite;
 }
 .ngb__dot {
-  width: 8px; height: 8px; flex-shrink: 0;
+  width: 9px; height: 9px; flex-shrink: 0;
   border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 0 8px var(--primary-glow);
-  animation: dot-pulse 1.5s ease-in-out infinite;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold), 0 0 14px rgba(255,200,0,.5);
+  animation: dot-pulse 1.2s ease-in-out infinite;
 }
 .ngb__info {
   display: flex; flex-direction: column; gap: .06rem;
   flex: 1; min-width: 0;
 }
 .ngb__label {
-  font-size: .56rem; font-weight: 800; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--gold);
+  font-size: .56rem; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255,200,0,.55);
   white-space: nowrap;
 }
 .ngb__teams {
   font-family: 'Barlow Condensed', var(--font-base);
   font-size: .92rem; font-weight: 700; text-transform: uppercase;
-  color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255,255,255,.25);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ngb__timer {
   display: flex; flex-direction: column; gap: .04rem;
@@ -7182,26 +7199,28 @@ input:focus, select:focus {
 }
 .ngb__timer-cd {
   font-family: 'Barlow Condensed', var(--font-base);
-  font-size: 1.12rem; font-weight: 900;
-  color: var(--gold); font-variant-numeric: tabular-nums;
+  font-size: 1.15rem; font-weight: 900;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
   letter-spacing: .02em;
   white-space: nowrap;
+  animation: ngb-cd-glow 1.1s ease-in-out infinite alternate;
 }
 .ngb__btn {
   background: var(--gold); color: #1a0500;
   border: none; border-radius: 8px;
-  padding: .4rem .85rem; font-size: .78rem; font-weight: 800;
+  padding: .42rem .88rem; font-size: .78rem; font-weight: 800;
   cursor: pointer; flex-shrink: 0;
   display: flex; align-items: center; gap: .3rem;
-  box-shadow: 0 3px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
-  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s;
+  animation: ngb-btn-aura 2.2s ease-in-out infinite;
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1);
 }
 .ngb__btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
 }
 .ngb__btn:active {
   transform: translateY(3px);
+  animation: none;
   box-shadow: 0 0 0 0 #966000;
 }
 
