@@ -984,8 +984,10 @@ const renderNextGameBar = () => {
     const h = Math.floor(ms / 3600000);
     const m = Math.floor((ms % 3600000) / 60000);
     const s = Math.floor((ms % 60000) / 1000);
-    if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
-    return `${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    const seg = n => String(n).padStart(2,'0').split('').map(d => `<b>${d}</b>`).join('');
+    const sep = '<i>:</i>';
+    if (h > 0) return seg(h) + sep + seg(m) + sep + seg(s);
+    return seg(m) + sep + seg(s);
   };
 
   bar.innerHTML = `
@@ -995,7 +997,7 @@ const renderNextGameBar = () => {
       <span class="ngb__teams">${g.time_casa} × ${g.time_fora}</span>
     </div>
     <div class="ngb__timer">
-      <span class="ngb__timer-label">O jogo começa em</span>
+      <span class="ngb__timer-label">começa em</span>
       <span class="ngb__timer-cd" id="ngbCd">${fmtNgb(ms)}</span>
     </div>
     <button class="ngb__btn" data-action="bet" data-id="${g.id}">
@@ -1007,7 +1009,7 @@ const renderNextGameBar = () => {
     const left = new Date(g.data_hora) - Date.now();
     const cdEl = document.getElementById('ngbCd');
     if (!cdEl || left <= 0) { clearInterval(_ngbTimer); renderNextGameBar(); return; }
-    cdEl.textContent = fmtNgb(left);
+    cdEl.innerHTML = fmtNgb(left);
   }, 1000);
 };
 
