@@ -293,7 +293,7 @@ const gameBadge = (g) => {
 
   // 5. Em Breve: aberto + menos de 1h para começar
   if (s === 'aberto' && diff > 0 && diff <= 3600000) {
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Ainda hoje</span>`;
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Apostas encerram em breve</span>`;
   }
 
   // 6. Em breve: aberto + mais de 7 dias para começar
@@ -551,10 +551,29 @@ const renderDrawer = () => {
     footer.innerHTML = `
       <div class="dr-sep"></div>
       <div class="dr-section">
+        <button class="dr-item dr-item--pwa hidden" id="drawerBtnPwa">
+          <i class="fa-solid fa-download"></i> Instalar App
+          <span class="dr-badge-pwa">App</span>
+        </button>
         <button class="dr-item btn-theme-toggle">
           <i class="fa-solid fa-moon theme-icon"></i>Modo
         </button>
       </div>`;
+
+    document.getElementById('drawerBtnPwa')?.addEventListener('click', async () => {
+      if (!_installPrompt) return;
+      _installPrompt.prompt();
+      const { outcome } = await _installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        _installPrompt = null;
+        document.getElementById('drawerBtnPwa')?.classList.add('hidden');
+        document.getElementById('btnInstallPwa')?.classList.add('hidden');
+      }
+    });
+
+    if (_installPrompt) {
+      document.getElementById('drawerBtnPwa')?.classList.remove('hidden');
+    }
   }
 };
 
@@ -818,7 +837,7 @@ const TEAM_NAMES_PT = {
 const teamNamePt = (name) => TEAM_NAMES_PT[name] || name;
 
 // ── Game card renderer ────────────────────────────────────────
-const renderCard = (g) => {
+const renderCard = (g, opts = {}) => {
   const emblemHome = getEmblem(g, 'home');
   const emblemAway = getEmblem(g, 'away');
   const isLive     = isGameLive(g);
@@ -910,7 +929,7 @@ const renderCard = (g) => {
   const cardClickable = !betBlocked && !isLive;
 
   return `
-    <article class="game-card game-card--${statusClass}" data-game-id="${g.id}"${!cardClickable ? ' data-blocked' : ''}>
+    <article class="game-card game-card--${statusClass}${opts.isToday ? ' game-card--today' : ''}" data-game-id="${g.id}"${!cardClickable ? ' data-blocked' : ''}>
       <div class="game-card__head">
         ${badgeLabel}
         ${leagueHtml}
@@ -944,9 +963,10 @@ const SECTION_LIMIT = 6;
 const renderSection = (id, title, iconHtml, games, extraClass = '') => {
   if (!games.length) return '';
   _sectionReg[id] = games;
-  const cls   = ['games-section', extraClass].filter(Boolean).join(' ');
-  const shown = games.slice(0, SECTION_LIMIT);
-  const more  = games.length - SECTION_LIMIT;
+  const cls     = ['games-section', extraClass].filter(Boolean).join(' ');
+  const shown   = games.slice(0, SECTION_LIMIT);
+  const more    = games.length - SECTION_LIMIT;
+  const isToday = id === 'today';
 
   const moreBtn = more > 0
     ? `<button class="btn-show-more" data-sid="${id}">
@@ -961,7 +981,7 @@ const renderSection = (id, title, iconHtml, games, extraClass = '') => {
         <h3 class="games-section__title">${iconHtml}${title}</h3>
         <span class="games-section__count">${games.length}</span>
       </div>
-      <div class="games-grid" id="gs-grid-${id}">${shown.map(renderCard).join('')}</div>
+      <div class="games-grid" id="gs-grid-${id}">${shown.map(g => renderCard(g, { isToday })).join('')}</div>
       ${moreBtn}
     </section>`;
 };
@@ -4675,11 +4695,13 @@ window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   _installPrompt = e;
   document.getElementById('btnInstallPwa')?.classList.remove('hidden');
+  document.getElementById('drawerBtnPwa')?.classList.remove('hidden');
 });
 
 window.addEventListener('appinstalled', () => {
   _installPrompt = null;
   document.getElementById('btnInstallPwa')?.classList.add('hidden');
+  document.getElementById('drawerBtnPwa')?.classList.add('hidden');
 });
 
 // ═══════════════════════════════════════════════════════════════
