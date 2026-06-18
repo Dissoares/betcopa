@@ -7124,6 +7124,76 @@ input:focus, select:focus {
 }
 
 /* ════════════════════════════════════════════════════════════
+   §NEXT GAME BAR — barra de urgência abaixo do header
+   ════════════════════════════════════════════════════════════ */
+#nextGameBar { order: 0; }
+#nextGameBar.hidden { display: none !important; }
+
+.ngb {
+  background: #111218;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: .55rem .85rem .55rem .7rem;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  margin-top: .35rem;
+  overflow: hidden;
+}
+.ngb__dot {
+  width: 8px; height: 8px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+.ngb__info {
+  display: flex; flex-direction: column; gap: .06rem;
+  min-width: 0; flex-shrink: 0;
+}
+.ngb__label {
+  font-size: .56rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gold);
+}
+.ngb__teams {
+  font-family: 'Barlow Condensed', var(--font-base);
+  font-size: .9rem; font-weight: 700; text-transform: uppercase;
+  color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 110px;
+}
+.ngb__timer {
+  display: flex; flex-direction: column; gap: .04rem;
+  flex: 1; text-align: center;
+}
+.ngb__timer-label {
+  font-size: .56rem; color: rgba(255,255,255,.38);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.ngb__timer-cd {
+  font-family: 'Barlow Condensed', var(--font-base);
+  font-size: 1.12rem; font-weight: 900;
+  color: var(--gold); font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+.ngb__btn {
+  background: var(--gold); color: #1a0500;
+  border: none; border-radius: 8px;
+  padding: .4rem .85rem; font-size: .78rem; font-weight: 800;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; gap: .3rem;
+  box-shadow: 0 3px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s;
+}
+.ngb__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
+}
+.ngb__btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 0 #966000;
+}
+
+/* ════════════════════════════════════════════════════════════
    §EXIT INTENT MODAL — gatilho de saída
    ════════════════════════════════════════════════════════════ */
 .exit-modal {

@@ -967,6 +967,50 @@ const renderSection = (id, title, iconHtml, games, extraClass = '') => {
 };
 
 // ── Match Banner carousel ─────────────────────────────────────
+/* ── Next Game Bar — barra de urgência no topo do conteúdo ─── */
+let _ngbTimer = null;
+const renderNextGameBar = () => {
+  const bar = document.getElementById('nextGameBar');
+  if (!bar) return;
+  clearInterval(_ngbTimer);
+
+  const g = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g))
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+  const ms = g ? new Date(g.data_hora) - Date.now() : 0;
+  if (!g || ms <= 0) { bar.classList.add('hidden'); return; }
+
+  const fmtNgb = (ms) => {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    return `${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  };
+
+  bar.innerHTML = `
+    <span class="ngb__dot"></span>
+    <div class="ngb__info">
+      <span class="ngb__label">Próximo Jogo</span>
+      <span class="ngb__teams">${g.time_casa} × ${g.time_fora}</span>
+    </div>
+    <div class="ngb__timer">
+      <span class="ngb__timer-label">O jogo começa em</span>
+      <span class="ngb__timer-cd" id="ngbCd">${fmtNgb(ms)}</span>
+    </div>
+    <button class="ngb__btn" data-action="bet" data-id="${g.id}">
+      Apostar <i class="fa-solid fa-arrow-right"></i>
+    </button>`;
+  bar.classList.remove('hidden');
+
+  _ngbTimer = setInterval(() => {
+    const left = new Date(g.data_hora) - Date.now();
+    const cdEl = document.getElementById('ngbCd');
+    if (!cdEl || left <= 0) { clearInterval(_ngbTimer); renderNextGameBar(); return; }
+    cdEl.textContent = fmtNgb(left);
+  }, 1000);
+};
+
 // Auto-advance timer lives outside S.timers so it can be paused on hover
 // and re-created without polluting S.timers on each mouse event.
 let _mbAutoTimer = null;
@@ -1359,6 +1403,7 @@ const renderGames = () => {
   container.innerHTML = html;
 
   renderMatchBanner();
+  renderNextGameBar();
   startCountdowns();
   startLiveClocks();
 

@@ -70,7 +70,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=27" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=28" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -165,15 +165,21 @@
 
   <div class="alerts container" id="alerts"></div>
 
-  <!-- ===== BANNER DINÂMICO ===== -->
-  <div class="match-banner-wrap hidden" id="matchBannerWrap">
-    <div id="matchBanner" class="match-banner container"></div>
-  </div>
-
   <!-- ===== VIEW: JOGOS ===== -->
   <main class="container view" id="view-jogos">
 
-    <!-- Hero -->
+    <!-- ① Barra "Próximo Jogo" — abaixo do header (order: 0) -->
+    <div id="nextGameBar" class="ngb hidden"></div>
+
+    <!-- ② Ao Vivo / Daqui a Pouco — order: 1 -->
+    <div id="liveSectionWrap"></div>
+
+    <!-- ③ Banner slide próximos jogos — order: 2 -->
+    <div class="match-banner-wrap hidden" id="matchBannerWrap">
+      <div id="matchBanner" class="match-banner"></div>
+    </div>
+
+    <!-- Hero (finalizados) — order: 8 -->
     <div class="copa-hero" id="copaHero">
       <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
       <div class="copa-hero__content">
@@ -2341,7 +2347,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=14"></script>
+  <script src="/assets/js/app.js?v=15"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
