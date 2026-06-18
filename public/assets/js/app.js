@@ -293,7 +293,7 @@ const gameBadge = (g) => {
 
   // 5. Em Breve: aberto + menos de 1h para começar
   if (s === 'aberto' && diff > 0 && diff <= 3600000) {
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Daqui a Pouco</span>`;
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Encerra em breve</span>`;
   }
 
   // 6. Em breve: aberto + mais de 7 dias para começar
@@ -504,7 +504,15 @@ const renderHeader = () => {
     document.getElementById('notifBell')?.classList.remove('hidden');
     if (!_notifPoll) startNotifPoll();
   } else {
-    wrap.innerHTML = `<button class="btn btn--primary btn--sm" id="btnNavLogin">Entrar</button>`;
+    wrap.innerHTML = `
+      <button class="btn btn--primary btn--sm header__register-btn" id="btnNavRegister">
+        <i class="fa-solid fa-user-plus"></i><span class="header__register-label"> Criar conta</span>
+      </button>
+      <button class="btn btn--ghost btn--sm header__login-btn" id="btnNavLogin">Entrar</button>`;
+    document.getElementById('btnNavRegister').addEventListener('click', () => {
+      navigate('auth');
+      setTimeout(() => switchAuthTab('register'), 80);
+    });
     document.getElementById('btnNavLogin').addEventListener('click', () => navigate('auth'));
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     // Hide bell and stop polling
@@ -625,6 +633,21 @@ const LEAGUE_SHORT = {
 };
 const leagueShortName = (name) => LEAGUE_SHORT[name] || name;
 
+const LEAGUE_ICONS = {
+  'all':                'fa-solid fa-layer-group',
+  'Copa do Mundo 2026': 'fa-solid fa-earth-americas',
+  'Copa Libertadores':  'fa-solid fa-trophy',
+  'Copa do Brasil':     'fa-solid fa-flag',
+  'Copa América':       'fa-solid fa-earth-americas',
+  'Premier League':     'fa-solid fa-crown',
+  'La Liga':            'fa-solid fa-star',
+  'Serie A':            'fa-solid fa-futbol',
+  'Bundesliga':         'fa-solid fa-shield-halved',
+  'Ligue 1':            'fa-solid fa-circle-dot',
+  'Champions League':   'fa-solid fa-star',
+};
+const leagueIcon = (key) => `<i class="${LEAGUE_ICONS[key] || 'fa-solid fa-shield'}"></i>`;
+
 const TEAM_NAMES_PT = {
   // Seleções — Copa do Mundo 2026
   'Afghanistan':'Afeganistão','Albania':'Albânia','Algeria':'Argélia',
@@ -733,7 +756,11 @@ const renderCard = (g) => {
     ? '<i class="fa-solid fa-calendar"></i> Em Breve'
     : '<i class="fa-solid fa-lock"></i> Encerrado';
 
-  const ctaOdd = g.odd > 1 ? g.odd : S.oddPadrao;
+  const ctaOdd    = g.odd > 1 ? g.odd : S.oddPadrao;
+  const ctaOddNum = parseFloat(ctaOdd);
+  const ctaOddFmt = ctaOddNum % 1 === 0
+    ? ctaOddNum.toFixed(0)
+    : ctaOddNum.toFixed(1).replace('.', ',');
   const ctaHtml = !isClosed
     ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte o placar e ganhe <strong>${ctaOdd}×</strong> vezes o seu palpite!</p>`
     : '';
@@ -743,13 +770,17 @@ const renderCard = (g) => {
     : '';
 
   const betBlocked = isClosed || isTooFar;
+  const oddPill = (!betBlocked && ctaOddNum > 1)
+    ? `<span class="gc-odd-pill">${ctaOddFmt}<small>×</small></span>` : '';
+
   const footHtml = isLive
     ? `<button class="btn btn--ghost btn--full" disabled>
          <i class="fa-solid fa-lock"></i> Palpites encerrados
        </button>`
-    : `<button class="btn ${!betBlocked ? 'btn--bet' : 'btn--ghost'} btn--full"
+    : `${oddPill}
+       <button class="btn ${!betBlocked ? 'btn--bet' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
-         ${!betBlocked ? '<i class="fa-solid fa-bullseye"></i> Fazer Palpite' : btnLabel}
+         ${!betBlocked ? '<i class="fa-solid fa-bolt"></i> Apostar' : btnLabel}
        </button>
        ${ctaHtml}`;
 
@@ -757,8 +788,10 @@ const renderCard = (g) => {
     ? `<span class="gc-league"><i class="fa-solid fa-trophy"></i> ${leagueShortName(g.liga_nome)}</span>`
     : `<span></span>`;
 
+  const cardClickable = !betBlocked && !isLive;
+
   return `
-    <article class="game-card game-card--${statusClass}">
+    <article class="game-card game-card--${statusClass}" data-game-id="${g.id}"${!cardClickable ? ' data-blocked' : ''}>
       <div class="game-card__head">
         ${badgeLabel}
         ${leagueHtml}
@@ -831,8 +864,7 @@ const renderMatchBanner = () => {
   el.replaceWith(fresh);
   el = fresh;
 
-  // Slide priority: live games → soon (<1h) → next upcoming (max 8 total)
-  const live = S.games.filter(isGameLive);
+  // Slide: só próximos jogos (ao vivo já aparece na seção própria no topo)
   const soon = S.games
     .filter(g => g.status === 'aberto' && !isGameLive(g))
     .filter(g => { const ms = new Date(g.data_hora) - Date.now(); return ms > 0 && ms <= 3_600_000; })
@@ -842,7 +874,7 @@ const renderMatchBanner = () => {
     .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
   const MAX_SLIDES = 8;
-  const slides = [...live, ...soon, ...next].slice(0, MAX_SLIDES);
+  const slides = [...soon, ...next].slice(0, MAX_SLIDES);
 
   if (!slides.length) {
     wrap.className = 'match-banner-wrap hidden';
@@ -860,57 +892,36 @@ const renderMatchBanner = () => {
   };
 
   const buildSlide = (g, idx) => {
-    const gLive = isGameLive(g);
-    const logoH = g.logo_casa ? `<img src="${g.logo_casa}" class="mb-logo" alt="${g.time_casa}">` : `<span class="mb-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
-    const logoA = g.logo_fora ? `<img src="${g.logo_fora}" class="mb-logo" alt="${g.time_fora}">` : `<span class="mb-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
-    let pill, center, cta;
+    const logoH = g.logo_casa
+      ? `<img src="${g.logo_casa}" class="mb-logo" alt="">`
+      : `<span class="mb-flag">${flagEmoji(g.bandeira_casa || '')}</span>`;
+    const logoA = g.logo_fora
+      ? `<img src="${g.logo_fora}" class="mb-logo" alt="">`
+      : `<span class="mb-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
 
-    if (gLive) {
-      const score = g.placar_real ? g.placar_real.replace('x', ' × ') : '0 × 0';
-      const { period, clockStr } = fmtLiveClock(g);
-      pill   = `<div class="mb-pill mb-pill--live"><i class="fa-solid fa-circle fa-beat"></i> AO VIVO</div>`;
-      center = `<div class="mb-score">${score}</div>
-                <div class="mb-clock" id="mbc-clk-${g.id}">${clockStr ? `${period} · ${clockStr}` : period}</div>`;
-      cta    = `<button class="btn btn--danger btn--sm mb-cta-btn" disabled>
-                  <i class="fa-solid fa-satellite-dish fa-beat"></i> Ao Vivo
-                </button>`;
-    } else {
-      const ms     = new Date(g.data_hora) - Date.now();
-      const isSoon = ms <= 3_600_000;
-      pill   = isSoon
-        ? `<div class="mb-pill mb-pill--soon"><i class="fa-solid fa-bolt"></i> DAQUI A POUCO</div>`
-        : `<div class="mb-pill mb-pill--next"><i class="fa-solid fa-clock"></i> PRÓXIMO JOGO</div>`;
-      center = `<div class="mb-label">COMEÇA EM</div>
-                <div class="mb-countdown" id="mbc-cd-${g.id}">${fmtCountdown(ms)}</div>`;
-      cta    = `<button class="btn btn--bet btn--sm mb-cta-btn" data-action="bet" data-id="${g.id}">
-                  <i class="fa-solid fa-bullseye"></i> Fazer Palpite
-                </button>`;
-    }
+    const dt      = new Date(g.data_hora);
+    const ms      = dt - Date.now();
+    const isSoon  = ms > 0 && ms <= 3_600_000;
+    const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    const soonDot = isSoon ? `<span class="mb-soon-dot"></span>` : '';
 
     return `
-      <div class="mb-slide mb-slide--c${idx % 5}${idx === 0 ? ' mb-slide--active' : ''}" data-slide="${idx}">
-        ${pill}
-        <div class="mb-match">
-          <div class="mb-team">${logoH}<span class="mb-name">${g.time_casa}</span></div>
-          <div class="mb-center">${center}</div>
-          <div class="mb-team">${logoA}<span class="mb-name">${g.time_fora}</span></div>
-        </div>
-        ${cta}
+      <div class="mb-slide mb-slide--c${idx % 5}" data-slide="${idx}" data-game-id="${g.id}">
+        <time class="mb-slide__meta">${dateStr} · ${timeStr}${soonDot}</time>
+        <div class="mb-slide__team">${logoH}<span class="mb-name">${g.time_casa}</span></div>
+        <div class="mb-slide__team">${logoA}<span class="mb-name">${g.time_fora}</span></div>
       </div>`;
   };
 
-  const navHtml = slides.length > 1 ? `
-    <div class="mb-nav">
-      <button class="mb-arrow" id="mbPrev"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="mb-dots">${slides.map((_, i) =>
-        `<button class="mb-dot${i === 0 ? ' mb-dot--active' : ''}" data-dot="${i}"></button>`
-      ).join('')}</div>
-      <button class="mb-arrow" id="mbNext"><i class="fa-solid fa-chevron-right"></i></button>
-    </div>` : '';
-
   setThemeClass(slides[0]);
-  el.className = 'match-banner container';
-  el.innerHTML = `<div class="mb-strip" id="mbStrip">${slides.map(buildSlide).join('')}</div>${navHtml}`;
+  el.className = 'match-banner';
+  el.innerHTML = `
+    <div class="mb-header">
+      <span class="mb-header__label"><i class="fa-solid fa-calendar-day"></i> Próximos Jogos</span>
+      <span class="mb-header__swipe"><i class="fa-solid fa-angles-right"></i></span>
+    </div>
+    <div class="mb-strip" id="mbStrip">${slides.map(buildSlide).join('')}</div>`;
 
   // Countdown timers for non-live slides
   slides.filter(g => !isGameLive(g)).forEach(g => {
@@ -1064,13 +1075,13 @@ const renderLeagueTabs = () => {
   bar.innerHTML = [
     `<button class="league-tab ${_activeLeague === 'all' ? 'league-tab--active' : ''}"
              data-league="all" role="tab" aria-selected="${_activeLeague === 'all'}">
-       Todos <span class="league-tab__count">${totalCount}</span>
+       ${leagueIcon('all')} Todos <span class="league-tab__count">${totalCount}</span>
      </button>`,
     ...leagues.map(liga =>
       `<button class="league-tab ${_activeLeague === liga ? 'league-tab--active' : ''}"
                data-league="${liga.replace(/"/g, '&quot;')}" role="tab"
                aria-selected="${_activeLeague === liga}">
-         ${leagueShortName(liga)} <span class="league-tab__count">${counts[liga]}</span>
+         ${leagueIcon(liga)} ${leagueShortName(liga)} <span class="league-tab__count">${counts[liga]}</span>
        </button>`
     ),
   ].join('');
@@ -1198,8 +1209,16 @@ const renderGames = () => {
   }
   empty?.classList.add('hidden');
 
+  // Seção Ao Vivo → container próprio no topo da página
+  const liveWrap = document.getElementById('liveSectionWrap');
+  if (liveWrap) {
+    liveWrap.innerHTML = live.length
+      ? renderSection('live', 'Ao Vivo', '<i class="fa-solid fa-circle fa-beat"></i>', live, 'games-section--live')
+      : '';
+  }
+
+  // Demais seções no grid principal (sem ao vivo)
   let html = '';
-  html += renderSection('live',     'Ao Vivo',     '<i class="fa-solid fa-circle fa-beat"></i>',  live,     'games-section--live');
   html += renderSection('soon',     'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>',           soon,     'games-section--soon');
   html += renderSection('today',    'Hoje',        '<i class="fa-solid fa-sun"></i>',              today,    'games-section--today');
   html += renderSection('tomorrow', 'Amanhã',      '<i class="fa-solid fa-calendar-day"></i>',    tomorrow, 'games-section--tomorrow');
@@ -4873,6 +4892,17 @@ const bind = () => {
     if (btn.dataset.action === 'my-bets-next') loadBets(_betsPage + 1);
   });
 
+  // Card-level click: qualquer área do card ou do slide abre o modal de palpite
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-action]')) return;
+    const card  = e.target.closest('.game-card[data-game-id]:not([data-blocked])');
+    const slide = e.target.closest('.mb-slide[data-game-id]');
+    const target = card || slide;
+    if (!target) return;
+    const id = target.dataset.gameId;
+    if (id) openBetModal(id);
+  });
+
   // Game grid actions (bet / pay / confirm) via delegation
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
@@ -6878,6 +6908,10 @@ const loadFeed = async () => {
     }).join('');
     track.innerHTML = items + items; // duplicar para loop contínuo
     ticker.classList.remove('hidden');
+    // Alimenta o winner toast com dados reais
+    if (typeof window._initWinnerToastPool === 'function') {
+      window._initWinnerToastPool(feed);
+    }
   } catch (_) {}
 };
 
@@ -7234,5 +7268,78 @@ function _exitIntentInit() {
     }
   });
 }
+
+// ── Winner Toast — notificações flutuantes de ganhadores ──────
+(function initWinnerToast() {
+  const wrap = document.getElementById('winnerToastWrap');
+  if (!wrap) return;
+
+  // Dados de fallback enquanto a API não responde
+  const fallback = [
+    { nome: 'Lucas S.', time_casa: 'Brasil',    time_fora: 'Argentina', valor_ganho: 'R$&nbsp;320,00' },
+    { nome: 'Ana C.',   time_casa: 'França',     time_fora: 'Espanha',   valor_ganho: 'R$&nbsp;150,00' },
+    { nome: 'Pedro R.', time_casa: 'Alemanha',   time_fora: 'Portugal',  valor_ganho: 'R$&nbsp;500,00' },
+    { nome: 'Maria L.', time_casa: 'Inglaterra', time_fora: 'Itália',    valor_ganho: 'R$&nbsp;240,00' },
+    { nome: 'Carlos M.',time_casa: 'México',     time_fora: 'EUA',       valor_ganho: 'R$&nbsp;180,00' },
+  ];
+
+  let pool = [];
+  let idx  = 0;
+  let toastTimer = null;
+
+  const agos = ['há 1 min', 'há 2 min', 'há 4 min', 'há 6 min', 'há 8 min', 'há 10 min'];
+
+  const showToast = (entry) => {
+    const toast = document.createElement('div');
+    toast.className = 'winner-toast';
+    toast.innerHTML = `
+      <div class="winner-toast__icon">🏆</div>
+      <div class="winner-toast__body">
+        <div class="winner-toast__name">${entry.nome} acertou ${entry.time_casa} × ${entry.time_fora}</div>
+        <div class="winner-toast__detail">Ganhou ${entry.valor_ganho}</div>
+        <div class="winner-toast__ago">${agos[Math.floor(Math.random() * agos.length)]}</div>
+      </div>`;
+    wrap.appendChild(toast);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => toast.classList.add('winner-toast--in'));
+    });
+    setTimeout(() => {
+      toast.classList.remove('winner-toast--in');
+      setTimeout(() => toast.remove(), 450);
+    }, 4200);
+  };
+
+  const next = () => {
+    if (!pool.length) return;
+    const entry = pool[idx % pool.length];
+    idx++;
+    showToast(entry);
+    const delay = 9000 + Math.random() * 8000;
+    toastTimer = setTimeout(next, delay);
+  };
+
+  // Aguarda a API carregar; usa fallback se não houver dados
+  window._initWinnerToastPool = (feed) => {
+    pool = feed && feed.length ? feed : fallback;
+    idx = 0;
+    clearTimeout(toastTimer);
+    // Primeira exibição após 6-10s (não incomodar na chegada)
+    toastTimer = setTimeout(next, 6000 + Math.random() * 4000);
+  };
+
+  // Inicia com fallback imediatamente (a API pode sobrescrever depois)
+  setTimeout(() => {
+    if (!pool.length) window._initWinnerToastPool(null);
+  }, 3000);
+})();
+
+// ── Bottom nav: botão "Conta" adapta ao estado de login ───────
+// Intercepta em capture antes do listener global de data-nav
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#bottomNavConta');
+  if (!btn) return;
+  e.stopPropagation();
+  navigate(S.user ? 'palpites' : 'auth');
+}, true);
 
 document.addEventListener('DOMContentLoaded', init);

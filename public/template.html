@@ -68,9 +68,9 @@
   <!-- ═══ FONTS & ASSETS ══════════════════════════════════════ -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=15" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -165,66 +165,75 @@
 
   <div class="alerts container" id="alerts"></div>
 
-  <!-- ===== BANNER DINÂMICO ===== -->
-  <div class="match-banner-wrap hidden" id="matchBannerWrap">
-    <div id="matchBanner" class="match-banner container"></div>
-  </div>
-
   <!-- ===== VIEW: JOGOS ===== -->
   <main class="container view" id="view-jogos">
 
-    <!-- Hero -->
-    <div class="copa-hero">
+    <!-- ① Ao Vivo — sempre no topo, renderizado pelo JS -->
+    <div id="liveSectionWrap"></div>
+
+    <!-- ② Banner dinâmico (só próximos jogos, sem ao vivo) -->
+    <div class="match-banner-wrap hidden" id="matchBannerWrap">
+      <div id="matchBanner" class="match-banner"></div>
+    </div>
+
+    <!-- Hero (aparece visualmente no final via CSS order) -->
+    <div class="copa-hero" id="copaHero">
       <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
       <div class="copa-hero__content">
 
-        <!-- Linha superior: tagline | stats -->
-        <div class="copa-hero__top">
-
-          <div class="copa-hero__left">
-            <div class="copa-hero__eyebrow"><i class="fa-solid fa-futbol"></i> Apostas Esportivas</div>
-            <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
-            <p class="copa-hero__sub">Faça seu palpite, escolha seu multiplicador e leve o prêmio para casa.</p>
-            <div class="copa-hero__actions">
-              <button class="btn btn--primary btn--lg copa-hero__cta" id="btnHeroCta">
-                <i class="fa-solid fa-bolt"></i> Fazer palpite
-              </button>
-              <button class="hero-live-pill hidden" id="heroStatLiveWrap" data-nav="jogos">
-                <i class="fa-solid fa-circle copa-hero__live-dot"></i>
-                <span id="heroStatLive">0</span> Ao Vivo
-              </button>
-              <div id="heroBonusBadge" class="hero-bonus hidden">
-                <i class="fa-solid fa-gift"></i>
-                <span>Bônus de <strong id="heroBonusAmt">R$50</strong> no cadastro</span>
-                <button class="btn btn--primary btn--sm" data-nav="auth"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
-              </div>
-            </div>
+        <!-- Barra superior: eyebrow + live pill -->
+        <div class="copa-hero__topbar">
+          <div class="copa-hero__eyebrow">
+            <i class="fa-solid fa-futbol"></i> Copa do Mundo 2026
           </div>
-
-          <div class="copa-hero__right">
-            <div class="copa-hero__stats">
-              <button class="copa-hero__stat" data-nav="jogos">
-                <div class="copa-hero__stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
-                <strong id="heroStatGames">—</strong>
-                <span>Jogos</span>
-              </button>
-              <button class="copa-hero__stat" data-nav="jogos">
-                <div class="copa-hero__stat-icon"><i class="fa-solid fa-lock-open"></i></div>
-                <strong id="heroStatOpen">—</strong>
-                <span>Abertos</span>
-              </button>
-              <button class="copa-hero__stat" data-nav="resultados">
-                <div class="copa-hero__stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
-                <strong id="heroStatFinal">—</strong>
-                <span>Finalizados</span>
-              </button>
-            </div>
-            <div class="hero-field-deco" aria-hidden="true"></div>
-          </div>
-
+          <button class="hero-live-pill hidden" id="heroStatLiveWrap" data-nav="jogos">
+            <i class="fa-solid fa-circle copa-hero__live-dot"></i>
+            <span id="heroStatLive">0</span> Ao Vivo
+          </button>
         </div>
 
-        <!-- Urgency bar — largura total, abaixo das colunas -->
+        <!-- Título impactante — Barlow Condensed -->
+        <h1 class="copa-hero__title">Acerte o Placar.<br/><span>Ganhe de Verdade.</span></h1>
+
+        <!-- Subtítulo -->
+        <p class="copa-hero__sub">Faça seu palpite no placar exato e leve o prêmio para casa via PIX.</p>
+
+        <!-- Bônus de cadastro (mostrado pelo JS quando configurado) -->
+        <div id="heroBonusBadge" class="hero-bonus hidden">
+          <i class="fa-solid fa-gift"></i>
+          <span>Bônus de <strong id="heroBonusAmt">R$50</strong> no cadastro</span>
+          <button class="btn btn--primary btn--sm" data-nav="auth">
+            <i class="fa-solid fa-user-plus"></i> Criar conta
+          </button>
+        </div>
+
+        <!-- CTA principal — botão full-width com shine -->
+        <div class="copa-hero__actions">
+          <button class="btn btn--primary btn--lg copa-hero__cta" id="btnHeroCta">
+            <i class="fa-solid fa-bolt"></i> Fazer palpite agora
+          </button>
+        </div>
+
+        <!-- Stats row — horizontal no mobile -->
+        <div class="copa-hero__stats">
+          <button class="copa-hero__stat" data-nav="jogos">
+            <div class="copa-hero__stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <strong id="heroStatGames">—</strong>
+            <span>Jogos</span>
+          </button>
+          <button class="copa-hero__stat" data-nav="jogos">
+            <div class="copa-hero__stat-icon"><i class="fa-solid fa-lock-open"></i></div>
+            <strong id="heroStatOpen">—</strong>
+            <span>Abertos</span>
+          </button>
+          <button class="copa-hero__stat" data-nav="resultados">
+            <div class="copa-hero__stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+            <strong id="heroStatFinal">—</strong>
+            <span>Finalizados</span>
+          </button>
+        </div>
+
+        <!-- Urgency bar — próximo jogo com countdown -->
         <div class="hero-urgency hidden" id="heroUrgency">
           <span class="hero-urgency__dot"></span>
           <div class="hero-urgency__info">
@@ -2328,7 +2337,36 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=2"></script>
+  <!-- ===== BOTTOM NAV — navegação mobile nativa ===== -->
+  <nav class="bottom-nav" id="bottomNav" aria-label="Navegação principal">
+    <button class="nav__btn" data-nav="jogos">
+      <i class="fa-solid fa-house"></i>
+      <span>Jogos</span>
+    </button>
+    <button class="nav__btn" data-nav="resultados">
+      <i class="fa-solid fa-chart-simple"></i>
+      <span>Placar</span>
+    </button>
+    <button class="nav__btn bottom-nav__cta-item" data-nav="jogos" id="btnBottomCta" aria-label="Apostar agora">
+      <div class="bottom-nav__cta-ring">
+        <i class="fa-solid fa-futbol"></i>
+      </div>
+      <span>Apostar</span>
+    </button>
+    <button class="nav__btn" data-nav="ganhadores">
+      <i class="fa-solid fa-trophy"></i>
+      <span>Top</span>
+    </button>
+    <button class="nav__btn" data-nav="palpites" id="bottomNavConta">
+      <i class="fa-solid fa-user"></i>
+      <span>Conta</span>
+    </button>
+  </nav>
+
+  <!-- ===== WINNER TOAST — notificações de ganhadores ===== -->
+  <div class="winner-toast-wrap" id="winnerToastWrap" aria-live="polite"></div>
+
+  <script src="/assets/js/app.js?v=9"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
