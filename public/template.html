@@ -70,7 +70,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=45" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=53" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -298,18 +298,15 @@
   <!-- ===== VIEW: GANHADORES ===== -->
   <main class="container view hidden" id="view-ganhadores">
     <div class="section-header">
-      <h2><i class="fa-solid fa-trophy" style="color:var(--gold)"></i> Hall da Fama</h2>
+      <h2><i class="fa-solid fa-trophy" style="color:var(--gold)"></i> Vencedores</h2>
     </div>
     <div id="rankingWinnerSpot" class="hidden"></div>
-
-    <!-- Pódio -->
-    <div class="ranking-podium" id="rankingPodium"></div>
 
     <!-- Grid: Ganhadores + Quase lá -->
     <div class="hf-grid">
       <div class="hf-section">
         <div class="hf-section__header">
-          <span class="hf-section__title"><i class="fa-solid fa-medal"></i> Ganhadores</span>
+          <span class="hf-section__title"><i class="fa-solid fa-medal"></i> Acertaram</span>
           <span class="hf-section__badge hidden" id="rankingWinsCount">0</span>
         </div>
         <div id="rankingWinners"><p class="text--muted hf-empty">Nenhum ganhador ainda.</p></div>
@@ -2347,7 +2344,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=15"></script>
+  <script src="/assets/js/app.js?v=18"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

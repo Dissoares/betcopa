@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    BETCOPA — app.js v2
    ============================================================ */
 
@@ -2101,7 +2101,7 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
         <div><div class="an-stat-card__val">${(+stats.total_visits||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Total Visitas</div></div>
       </div>
       <div class="an-stat-card">
-        <div class="an-stat-card__icon" style="background:rgba(34,197,94,.15);color:#22c55e"><i class="fa-solid fa-users"></i></div>
+        <div class="an-stat-card__icon" style="background:rgba(0,200,83,.15);color:#00c853"><i class="fa-solid fa-users"></i></div>
         <div><div class="an-stat-card__val">${(+stats.unique_ips||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Visitantes Únicos</div></div>
       </div>
       <div class="an-stat-card">
@@ -2978,7 +2978,6 @@ const renderRanking = async () => {
   let data;
   try { data = await api('/api/ranking'); } catch { return; }
 
-  const podiumEl  = document.getElementById('rankingPodium');
   const winsEl    = document.getElementById('rankingWinners');
   const nearEl    = document.getElementById('rankingNear');
   const countEl   = document.getElementById('rankingWinsCount');
@@ -2998,28 +2997,6 @@ const renderRanking = async () => {
   };
 
   const initial = (r) => (r.nome_real || r.nome || '?').charAt(0).toUpperCase();
-
-  // ── Pódio ──────────────────────────────────────────────────
-  if (data.vencedores?.length && podiumEl) {
-    const top3 = data.vencedores.slice(0, 3);
-    const displayOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]]
-                       : top3.length === 2 ? [top3[1], top3[0]] : [top3[0]];
-    podiumEl.innerHTML = displayOrder.map(r => {
-      const pos = top3.indexOf(r);
-      const { imgH, imgA, tc, tf } = teamImgs(r);
-      return `
-        <div class="podium-step podium-step--${pos + 1}">
-          <div class="podium-step__crown">${MEDAL_EMOJI[pos]}</div>
-          <div class="podium-step__avatar" style="border-color:${MEDAL_COLORS[pos]};color:${MEDAL_COLORS[pos]}">${initial(r)}</div>
-          <div class="podium-step__name">${escHtml(maskName(r.nome_real || r.nome))}</div>
-          <div class="podium-step__game">${imgH}${tc} × ${imgA}${tf}</div>
-          <div class="podium-step__score">${(r.resultado||'').replace('x','×')}</div>
-          <div class="podium-step__val">${fmtMoney(r.ganho)}</div>
-        </div>`;
-    }).join('');
-  } else if (podiumEl) {
-    podiumEl.innerHTML = '';
-  }
 
   // ── Ganhadores ─────────────────────────────────────────────
   if (data.vencedores?.length) {
@@ -3043,7 +3020,6 @@ const renderRanking = async () => {
     }).join('');
   } else {
     if (countEl) countEl.classList.add('hidden');
-    if (podiumEl) podiumEl.innerHTML = '';
     winsEl.innerHTML = '<p class="text--muted hf-empty">Nenhum ganhador ainda.</p>';
   }
 
@@ -4259,7 +4235,7 @@ const submitBulkResult = async () => {
     html:         `<small style="color:#888">Esta ação processará todas as apostas e <b>não pode ser desfeita</b>.</small>`,
     confirmText:  'Sim, registrar',
     cancelText:   'Cancelar',
-    confirmColor: '#2ecc71',
+    confirmColor: '#00c853',
   });
   if (!ok) return;
 
@@ -4456,7 +4432,7 @@ const submitAdminResult = async (e) => {
     html:         `<strong>${nomeCasa} ${placarCasa} × ${placarFora} ${nomeFora}</strong><br><small style="color:#888">Esta ação processará todas as apostas e <b>não pode ser desfeita</b>.</small>`,
     confirmText:  'Sim, registrar',
     cancelText:   'Cancelar',
-    confirmColor: '#2ecc71',
+    confirmColor: '#00c853',
   });
   if (!ok) return;
 
@@ -4534,6 +4510,7 @@ const loadGames = async () => {
   renderTicker();
   if (!document.getElementById('view-resultados')?.classList.contains('hidden')) renderResultados();
   prefetchGameImages();
+  renderDrawer();
 };
 
 let _betsPage  = 1;
@@ -6322,7 +6299,7 @@ const handleBlockUser = async (uid, block) => {
       : 'O usuário voltará a ter acesso normalmente.',
     confirmText:  block ? 'Bloquear' : 'Desbloquear',
     cancelText:  'Cancelar',
-    confirmColor: block ? '#e63946' : '#2ecc71',
+    confirmColor: block ? '#e63946' : '#00c853',
   });
   if (!ok) return;
 
@@ -6366,7 +6343,7 @@ const handleChangeUserPassword = async (uid, nome) => {
     showCancelButton: true,
     confirmButtonText: 'Salvar',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#2ecc71',
+    confirmButtonColor: '#00c853',
     reverseButtons: true,
     inputValidator: (v) => (!v || v.length < 6) ? 'Mínimo 6 caracteres.' : null,
   });
@@ -6399,7 +6376,7 @@ const handleUserBonus = async (uid, nome) => {
     showCancelButton: true,
     confirmButtonText: 'Confirmar',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#2ecc71',
+    confirmButtonColor: '#00c853',
     reverseButtons: true,
     didOpen: () => {
       let tipo = 'add';
