@@ -333,6 +333,8 @@ const navigate = (view) => {
   document.querySelectorAll('.nav__btn').forEach(btn => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
+  const contaBtn = document.getElementById('bottomNavConta');
+  if (contaBtn) contaBtn.classList.toggle('nav__btn--active', view === 'auth' || view === 'palpites');
 
   // Banner só aparece na view de jogos
   const bannerWrap = document.getElementById('matchBannerWrap');
@@ -651,7 +653,7 @@ const renderHeader = () => {
       navigate('auth');
       setTimeout(() => switchAuthTab('register'), 80);
     });
-    document.getElementById('btnNavLogin').addEventListener('click', () => navigate('auth'));
+    document.getElementById('btnNavLogin').addEventListener('click', () => { navigate('auth'); switchAuthTab('login'); });
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     // Hide bell and stop polling
     document.getElementById('notifBell')?.classList.add('hidden');
@@ -915,6 +917,13 @@ const renderCard = (g, opts = {}) => {
     ? `<button class="btn btn--ghost btn--full" disabled>
          <i class="fa-solid fa-lock"></i> Palpites encerrados
        </button>`
+    : isFinal && scoreStr
+    ? `<div class="gc-final-cta">
+         <span class="gc-final-cta__score">${scoreStr}</span>
+         <button class="btn btn--ghost btn--full" disabled>
+           <i class="fa-solid fa-flag-checkered"></i> Finalizado
+         </button>
+       </div>`
     : `${oddPill}
        <button class="btn ${!betBlocked ? 'btn--bet' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
@@ -3906,11 +3915,20 @@ const logout = async () => {
 
 const switchAuthTab = (tab) => {
   ['login', 'register', 'forgot', 'reset'].forEach(t => {
-    document.getElementById(`auth${t.charAt(0).toUpperCase() + t.slice(1)}`)?.classList.toggle('hidden', t !== tab);
+    const el = document.getElementById(`auth${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (!el) return;
+    if (t === tab) { el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
   });
-  document.querySelector('.auth-tabs')?.classList.toggle('hidden', tab === 'forgot' || tab === 'reset');
+  const tabs = document.querySelector('.auth-tabs');
+  if (tabs) {
+    if (tab === 'forgot' || tab === 'reset') { tabs.classList.add('hidden'); } else { tabs.classList.remove('hidden'); }
+  }
   document.querySelectorAll('.auth-tab').forEach(btn => {
-    btn.classList.toggle('auth-tab--active', btn.dataset.authTab === tab);
+    if (btn.dataset.authTab === tab) {
+      btn.classList.add('auth-tab--active');
+    } else {
+      btn.classList.remove('auth-tab--active');
+    }
   });
 };
 

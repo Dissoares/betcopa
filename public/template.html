@@ -103,6 +103,11 @@
       </nav>
       <!-- Ações direita -->
       <div class="header__actions">
+        <!-- Theme toggle — visível no mobile (desktop usa o btn-theme-toggle do header esquerdo) -->
+        <button class="btn-theme-toggle header__theme-mobile" aria-label="Alternar tema">
+          <i class="fa-solid fa-moon theme-icon"></i>
+        </button>
+
         <div class="header__user" id="headerUser">
           <button class="btn btn--ghost btn--sm" id="btnNavLogin" data-nav="auth">Entrar</button>
         </div>
@@ -371,8 +376,8 @@
       </div>
 
       <div class="auth-tabs">
-        <button class="auth-tab auth-tab--active" data-auth-tab="login"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
-        <button class="auth-tab" data-auth-tab="register"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+        <button type="button" class="auth-tab auth-tab--active" data-auth-tab="login"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
+        <button type="button" class="auth-tab" data-auth-tab="register"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
       </div>
       <div id="authLogin">
         <form id="loginForm">
@@ -1612,7 +1617,7 @@
       </div>
       <p class="bm__prize-hint hidden" id="betPrizeHint"></p>
 
-      <button class="btn btn--primary btn--full btn--large" id="btnConfirmBet">
+      <button class="btn btn--primary btn--full btn--large btn--pulse" id="btnConfirmBet">
         Confirmar Palpite →
       </button>
     </div>
@@ -1680,7 +1685,7 @@
           <span class="tk__row-label">Data do Jogo</span>
           <span class="tk__row-val" id="ticketDateTime">—</span>
         </div>
-        <div class="tk__row">
+        <div class="tk__row tk__row--prize">
           <span class="tk__row-label">Prêmio por acerto</span>
           <span class="tk__row-val" id="ticketPremio">—</span>
         </div>
@@ -1700,7 +1705,7 @@
       </div>
 
       <div class="tk__footer" id="tkFooterConfirm">
-        <button class="btn btn--primary btn--full btn--large" id="btnSimulatePay">
+        <button class="btn btn--primary btn--full btn--large btn--pulse" id="btnSimulatePay">
           Confirmar palpite <i class="fa-solid fa-arrow-right"></i>
         </button>
         <button class="btn btn--ghost btn--full" id="btnEditBet" style="margin-top:.5rem">
@@ -1724,7 +1729,7 @@
           </button>
         </div>
         <div class="tk__footer">
-          <button class="btn btn--primary btn--full btn--large" id="btnFinalizePayment">
+          <button class="btn btn--primary btn--full btn--large btn--pulse" id="btnFinalizePayment">
             <i class="fa-brands fa-pix"></i> Pagar com PIX
           </button>
           <button class="btn btn--ghost btn--full" id="btnEditBetPay" style="margin-top:.5rem">
@@ -1876,10 +1881,10 @@
 
       <div class="pl__divider"><span>ou</span></div>
 
-      <button class="pl__btn-primary" id="plBtnRegister">
+      <button class="btn btn--primary btn--full btn--large btn--pulse" id="plBtnRegister">
         <i class="fa-solid fa-user-plus"></i> Criar conta grátis
       </button>
-      <button class="pl__btn-ghost" id="plBtnLogin">
+      <button class="btn btn--ghost btn--full" id="plBtnLogin" style="margin-top:.5rem">
         Já tenho conta — Entrar
       </button>
 
