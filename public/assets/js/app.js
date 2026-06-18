@@ -526,23 +526,10 @@ const renderDrawer = () => {
         </div>
       </div>
 
-      <div class="dr-sep"></div>
-      <div class="dr-cta-block">
-        <button class="btn btn--primary btn--full" id="drawerBtnRegister">
-          <i class="fa-solid fa-user-plus"></i> Criar conta — é grátis
-        </button>
-        <button class="btn btn--ghost btn--full" data-nav="auth">
-          <i class="fa-solid fa-right-to-bracket"></i> Já tenho conta
-        </button>
-      </div>`;
+      <div class="dr-sep"></div>`;
 
     document.getElementById('drawerHeroCta')?.addEventListener('click', () => {
-      closeMobileMenu(); navigate('auth');
-      setTimeout(() => switchAuthTab?.('register'), 80);
-    });
-    document.getElementById('drawerBtnRegister')?.addEventListener('click', () => {
-      closeMobileMenu(); navigate('auth');
-      setTimeout(() => switchAuthTab?.('register'), 80);
+      closeMobileMenu(); navigate('auth'); switchAuthTab('register');
     });
   }
 
@@ -640,6 +627,7 @@ const renderHeader = () => {
 
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = '');
     document.getElementById('btnNavLogin')?.remove();
+    document.getElementById('drawerAuthBtns')?.classList.add('hidden');
     // Show bell and start notification polling
     document.getElementById('notifBell')?.classList.remove('hidden');
     if (!_notifPoll) startNotifPoll();
@@ -654,6 +642,7 @@ const renderHeader = () => {
       setTimeout(() => switchAuthTab('register'), 80);
     });
     document.getElementById('btnNavLogin').addEventListener('click', () => { navigate('auth'); switchAuthTab('login'); });
+    document.getElementById('drawerAuthBtns')?.classList.remove('hidden');
     document.querySelectorAll('.nav__btn--auth').forEach(b => b.style.display = 'none');
     // Hide bell and stop polling
     document.getElementById('notifBell')?.classList.add('hidden');
@@ -5490,6 +5479,11 @@ const bind = () => {
   document.getElementById('resetForm')?.addEventListener('submit', submitResetPassword);
   document.getElementById('btnForgotPassword')?.addEventListener('click', () => switchAuthTab('forgot'));
   document.getElementById('btnBackToLogin')?.addEventListener('click', () => switchAuthTab('login'));
+
+  // Drawer auth buttons (static in template)
+  document.getElementById('drawerBtnRegister')?.addEventListener('click', () => {
+    closeMobileMenu(); navigate('auth'); switchAuthTab('register');
+  });
 
   // Auth tab switcher
   document.querySelectorAll('.auth-tab').forEach(tab => {

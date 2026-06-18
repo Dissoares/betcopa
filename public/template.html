@@ -162,6 +162,14 @@
         </a>
         <button class="drawer__close" data-action="close-mobile-menu" aria-label="Fechar menu"><i class="fa-solid fa-xmark"></i></button>
       </div>
+      <div class="dr-auth-btns" id="drawerAuthBtns">
+        <button class="btn btn--primary btn--sm header__register-btn" id="drawerBtnRegister">
+          <i class="fa-solid fa-user-plus"></i><span class="header__register-label"> Criar conta</span>
+        </button>
+        <button class="btn btn--ghost btn--sm header__login-btn" data-nav="auth">
+          Entrar
+        </button>
+      </div>
       <div class="dr-sep"></div>
       <div class="drawer__body" id="drawerBody"></div>
       <div class="drawer__footer" id="drawerFooter"></div>
@@ -1881,12 +1889,14 @@
 
       <div class="pl__divider"><span>ou</span></div>
 
-      <button class="btn btn--primary btn--full btn--large btn--pulse" id="plBtnRegister">
-        <i class="fa-solid fa-user-plus"></i> Criar conta grátis
-      </button>
-      <button class="btn btn--ghost btn--full" id="plBtnLogin" style="margin-top:.5rem">
-        Já tenho conta — Entrar
-      </button>
+      <div class="pl__btn-row">
+        <button class="btn btn--primary btn--pulse" id="plBtnRegister">
+          <i class="fa-solid fa-user-plus"></i> Criar conta
+        </button>
+        <button class="btn btn--ghost" id="plBtnLogin">
+          <i class="fa-solid fa-right-to-bracket"></i> Entrar
+        </button>
+      </div>
 
     </div>
   </div>
