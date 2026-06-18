@@ -357,6 +357,45 @@ const navigate = (view) => {
 };
 
 // ── Header user chip ──────────────────────────────────────────
+let _drawerCdTimer = null;
+
+const buildDrawerNextGame = () => {
+  const g = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g))
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+  if (!g) return '';
+  const ms = new Date(g.data_hora) - Date.now();
+  if (ms <= 0 || ms > 48 * 3600_000) return '';
+  return `
+    <div class="dr-next-game">
+      <div class="dr-next-game__head">
+        <span class="dr-next-game__label"><i class="fa-solid fa-bolt"></i> Próximo Jogo</span>
+        <span class="dr-next-game__cd" id="drNextCd">${fmtCountdown(ms)}</span>
+      </div>
+      <div class="dr-next-game__foot">
+        <span class="dr-next-game__teams">${g.time_casa} × ${g.time_fora}</span>
+        <button class="dr-next-game__btn" data-action="bet" data-id="${g.id}">
+          Apostar <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>`;
+};
+
+const startDrawerCd = () => {
+  clearInterval(_drawerCdTimer);
+  const cdEl = document.getElementById('drNextCd');
+  if (!cdEl) return;
+  const g = S.games
+    .filter(g => g.status === 'aberto' && !isGameLive(g))
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+  if (!g) return;
+  _drawerCdTimer = setInterval(() => {
+    const left = new Date(g.data_hora) - Date.now();
+    if (left <= 0) { clearInterval(_drawerCdTimer); cdEl.textContent = 'Iniciando!'; return; }
+    cdEl.textContent = fmtCountdown(left);
+  }, 1000);
+};
+
 const renderDrawer = () => {
   const body = document.getElementById('drawerBody');
   if (!body) return;
@@ -396,6 +435,8 @@ const renderDrawer = () => {
         <button class="dr-item" data-nav="admin"><i class="fa-solid fa-shield-halved"></i> Painel Admin</button>
       </div>` : ''}
       <div class="dr-sep"></div>
+      ${buildDrawerNextGame()}
+      <div class="dr-sep"></div>
       <div class="dr-section">
         <button class="dr-item dr-item--referral" id="drawerBtnReferral">
           <i class="fa-solid fa-gift"></i> Convide e Ganhe Bônus
@@ -412,20 +453,98 @@ const renderDrawer = () => {
     document.getElementById('drawerLogout')?.addEventListener('click', () => { closeMobileMenu(); logout(); });
     document.getElementById('drawerBtnDeposit')?.addEventListener('click', () => { closeMobileMenu(); openModal('modalDeposit'); });
     document.getElementById('drawerBtnReferral')?.addEventListener('click', () => { closeMobileMenu(); openReferralModal(); });
+    startDrawerCd();
   } else {
+    const openCount     = S.games.filter(g => g.status === 'aberto').length;
+    const liveCount     = S.games.filter(isGameLive).length;
+    const finishedCount = S.games.filter(g => g.status === 'finalizado').length;
+    const mult          = S.oddPadrao ? `${S.oddPadrao}×` : '5×';
+    const totalGames    = S.games.length;
+
+    // Próximo jogo — sem limite de tempo, apenas futuros
+    const nextG = S.games
+      .filter(g => g.status === 'aberto' && !isGameLive(g))
+      .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+    const nextMs = nextG ? new Date(nextG.data_hora) - Date.now() : 0;
+    const nextWidget = (nextG && nextMs > 0) ? `
+      <div class="dr-next-game">
+        <div class="dr-next-game__head">
+          <span class="dr-next-game__label"><i class="fa-solid fa-bolt"></i> Próximo Jogo</span>
+          <span class="dr-next-game__cd" id="drNextCd">${fmtCountdown(nextMs)}</span>
+        </div>
+        <div class="dr-next-game__foot">
+          <span class="dr-next-game__teams">${nextG.time_casa} × ${nextG.time_fora}</span>
+          <button class="dr-next-game__btn" data-action="bet" data-id="${nextG.id}">
+            Apostar <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>` : '';
+
     body.innerHTML = `
+      <div class="dr-hero">
+        <div class="dr-hero__eyebrow">
+          <span class="dr-hero__dot"></span>
+          Copa do Mundo 2026
+        </div>
+        <p class="dr-hero__headline">Acerte o placar.<br>Ganhe de verdade.</p>
+        <p class="dr-hero__sub">${totalGames ? `${totalGames} partidas disponíveis` : 'Partidas disponíveis para apostar'}</p>
+        <button class="dr-hero__cta" id="drawerHeroCta">
+          Apostar agora <i class="fa-solid fa-bolt"></i>
+        </button>
+      </div>
+
+      ${nextWidget ? `<div class="dr-sep"></div>${nextWidget}` : ''}
+
+      <div class="dr-sep"></div>
+      <p class="dr-section-label">Navegar</p>
       <div class="dr-section">
-        <button class="dr-item" data-nav="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
+        <button class="dr-item" data-nav="jogos">
+          <i class="fa-solid fa-futbol"></i> Jogos
+          ${openCount ? `<span class="dr-badge">${openCount}</span>` : ''}
+        </button>
         <button class="dr-item" data-nav="grupos"><i class="fa-solid fa-table-cells"></i> Grupos</button>
         <button class="dr-item" data-nav="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</button>
         <button class="dr-item" data-nav="ganhadores"><i class="fa-solid fa-trophy"></i> Ganhadores</button>
         <button class="dr-item" data-nav="suporte"><i class="fa-solid fa-headset"></i> Suporte</button>
       </div>
+
       <div class="dr-sep"></div>
-      <button class="btn btn--primary btn--full" data-nav="auth">
-        <i class="fa-solid fa-right-to-bracket"></i> Entrar
-      </button>`;
+      <div class="dr-stats-strip">
+        <div class="dr-stat-chip">
+          <span class="dr-stat-chip__val">${openCount || '0'}</span>
+          <span class="dr-stat-chip__lbl">Abertos</span>
+        </div>
+        <div class="dr-stat-chip dr-stat-chip--gold">
+          <span class="dr-stat-chip__val">${mult}</span>
+          <span class="dr-stat-chip__lbl">Mult.</span>
+        </div>
+        <div class="dr-stat-chip dr-stat-chip--danger">
+          <span class="dr-stat-chip__val">${liveCount || '0'}</span>
+          <span class="dr-stat-chip__lbl">Ao Vivo</span>
+        </div>
+      </div>
+
+      <div class="dr-sep"></div>
+      <div class="dr-cta-block">
+        <button class="btn btn--primary btn--full" id="drawerBtnRegister">
+          <i class="fa-solid fa-user-plus"></i> Criar conta — é grátis
+        </button>
+        <button class="btn btn--ghost btn--full" data-nav="auth">
+          <i class="fa-solid fa-right-to-bracket"></i> Já tenho conta
+        </button>
+      </div>`;
+
+    document.getElementById('drawerHeroCta')?.addEventListener('click', () => {
+      closeMobileMenu(); navigate('auth');
+      setTimeout(() => switchAuthTab?.('register'), 80);
+    });
+    document.getElementById('drawerBtnRegister')?.addEventListener('click', () => {
+      closeMobileMenu(); navigate('auth');
+      setTimeout(() => switchAuthTab?.('register'), 80);
+    });
   }
+
+  startDrawerCd();
 
   const footer = document.getElementById('drawerFooter');
   if (footer) {
@@ -609,16 +728,16 @@ const updateHeroStats = () => {
 
 // ── League name abbreviations ─────────────────────────────────
 const LEAGUE_SHORT = {
-  'Campeonato Brasileiro Série A': 'Série A',
-  'Campeonato Brasileiro Série B': 'Série B',
-  'Campeonato Brasileiro Série C': 'Série C',
-  'Brasileirão Série A':           'Série A',
-  'Brasileirão Série B':           'Série B',
-  'Copa Libertadores':             'Libertadores',
-  'Copa Sul-Americana':            'Sul-Americana',
-  'Copa do Mundo FIFA':            'Copa do Mundo 2026',
-  'FIFA World Cup':                'Copa do Mundo 2026',
-  'UEFA Champions League':         'Champions',
+  'Campeonato Brasileiro Série A': 'Campeonato Brasileiro Série A',
+  'Campeonato Brasileiro Série B': 'Campeonato Brasileiro Série B',
+  'Campeonato Brasileiro Série C': 'Campeonato Brasileiro Série C',
+  'Brasileirão Série A':           'Brasileirão Série A',
+  'Brasileirão Série B':           'Brasileirão Série B',
+  'Copa Libertadores':             'Copa Libertadores',
+  'Copa Sul-Americana':            'Copa Sul-Americana',
+  'Copa do Mundo FIFA':            'Copa do Mundo FIFA',
+  'FIFA World Cup':                'Copa do Mundo',
+  'UEFA Champions League':         'UEFA Champions League',
   'UEFA Europa League':            'Europa League',
   'UEFA Europa Conference League': 'Conference',
   'Premier League':                'Premier League',
@@ -1209,17 +1328,25 @@ const renderGames = () => {
   }
   empty?.classList.add('hidden');
 
-  // Seção Ao Vivo → container próprio no topo da página
+  // Seção topo → Ao Vivo tem prioridade; sem live, promove "Daqui a Pouco"
   const liveWrap = document.getElementById('liveSectionWrap');
+  let soonFeatured = false;
   if (liveWrap) {
-    liveWrap.innerHTML = live.length
-      ? renderSection('live', 'Ao Vivo', '<i class="fa-solid fa-circle fa-beat"></i>', live, 'games-section--live')
-      : '';
+    if (live.length) {
+      liveWrap.innerHTML = renderSection('live', 'Ao Vivo', '<i class="fa-solid fa-circle fa-beat"></i>', live, 'games-section--live');
+    } else if (soon.length) {
+      soonFeatured = true;
+      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>', soon, 'games-section--soon');
+    } else {
+      liveWrap.innerHTML = '';
+    }
   }
 
-  // Demais seções no grid principal (sem ao vivo)
+  // Demais seções no grid principal (sem ao vivo; soon já pode estar no topo)
   let html = '';
-  html += renderSection('soon',     'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>',           soon,     'games-section--soon');
+  if (!soonFeatured) {
+    html += renderSection('soon', 'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>', soon, 'games-section--soon');
+  }
   html += renderSection('today',    'Hoje',        '<i class="fa-solid fa-sun"></i>',              today,    'games-section--today');
   html += renderSection('tomorrow', 'Amanhã',      '<i class="fa-solid fa-calendar-day"></i>',    tomorrow, 'games-section--tomorrow');
   weekSections.forEach(ws => {
