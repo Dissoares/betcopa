@@ -104,62 +104,62 @@
    ============================================================ */
 .theme-light {
 
-  /* Superfícies */
-  --bg:        #edf0f7;
+  /* Superfícies — fundo mais rico, não lavado */
+  --bg:        #e5e9f2;
   --surface:   #ffffff;
-  --surface-2: #f4f7fb;
-  --surface-3: #e8edf5;
+  --surface-2: #f2f5fb;
+  --surface-3: #e8ecf5;
 
-  /* Bordas */
+  /* Bordas — levemente mais definidas */
   --border:        rgba(15,23,42,0.10);
   --border-strong: rgba(15,23,42,0.20);
 
-  /* Marca */
-  --primary:      #059669;
-  --primary-dark: #047857;
-  --primary-glow: rgba(5,150,105,0.20);
-  --gold:         #d97706;
-  --gold-glow:    rgba(217,119,6,0.20);
+  /* Marca — verde profundo/premium para fundos claros */
+  --primary:      #00d435;
+  --primary-dark: #00aa2b;
+  --primary-glow: rgba(6,95,70,0.22);
+  --gold:         #b45309;
+  --gold-glow:    rgba(180,83,9,0.25);
   --danger:       #dc2626;
-  --danger-glow:  rgba(220,38,38,0.20);
+  --danger-glow:  rgba(220,38,38,0.22);
   --info:         #2563eb;
 
-  /* Texto */
-  --text:       #0f172a;
-  --text-muted: #64748b;
+  /* Texto — contraste forte, hierarquia clara */
+  --text:       #0b1120;
+  --text-muted: #475569;
   --text-dim:   #94a3b8;
 
   /* Tints semânticos */
-  --tint-primary: rgba(5,150,105,0.13);
-  --tint-danger:  rgba(220,38,38,0.12);
-  --tint-info:    rgba(37,99,235,0.12);
-  --tint-gold:    rgba(217,119,6,0.14);
+  --tint-primary: rgba(6,95,70,0.12);
+  --tint-danger:  rgba(220,38,38,0.13);
+  --tint-info:    rgba(37,99,235,0.13);
+  --tint-gold:    rgba(180,83,9,0.14);
 
   /* Tints de resultado */
-  --tint-win-border:  rgba(5,150,105,0.30);
-  --tint-win-bg:      rgba(5,150,105,0.06);
-  --tint-loss-border: rgba(220,38,38,0.25);
-  --tint-loss-bg:     rgba(220,38,38,0.05);
+  --tint-win-border:  rgba(5,150,105,0.32);
+  --tint-win-bg:      rgba(5,150,105,0.07);
+  --tint-loss-border: rgba(220,38,38,0.28);
+  --tint-loss-bg:     rgba(220,38,38,0.06);
 
   /* Tints de alerta */
-  --alert-success-bg:     rgba(5,150,105,0.10);
-  --alert-success-border: rgba(5,150,105,0.22);
-  --alert-danger-bg:      rgba(220,38,38,0.10);
-  --alert-danger-border:  rgba(220,38,38,0.20);
-  --alert-info-bg:        rgba(37,99,235,0.10);
-  --alert-info-border:    rgba(37,99,235,0.20);
+  --alert-success-bg:     rgba(5,150,105,0.11);
+  --alert-success-border: rgba(5,150,105,0.25);
+  --alert-danger-bg:      rgba(220,38,38,0.11);
+  --alert-danger-border:  rgba(220,38,38,0.22);
+  --alert-info-bg:        rgba(37,99,235,0.11);
+  --alert-info-border:    rgba(37,99,235,0.22);
 
-  /* Sombras — light usa elevação por sombras em vez de contraste de bg */
-  --shadow-card:       0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.05);
-  --shadow-card-hover: 0 8px 30px rgba(15,23,42,0.14);
-  --shadow-modal:      0 8px 40px rgba(15,23,42,0.16);
-  --shadow-sidebar:    2px 0 16px rgba(15,23,42,0.06);
+  /* Sombras — elevação real, cards saem do fundo */
+  --shadow-card:       0 2px 6px rgba(15,23,42,0.09), 0 8px 24px rgba(15,23,42,0.08);
+  --shadow-card-hover: 0 12px 40px rgba(15,23,42,0.18), 0 2px 8px rgba(15,23,42,0.10);
+  --shadow-modal:      0 12px 50px rgba(15,23,42,0.20);
+  --shadow-sidebar:    2px 0 20px rgba(15,23,42,0.08);
 
   /* Contextos específicos */
   --ranking-winner-bg:     linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);
-  --ranking-winner-border: rgba(217,119,6,0.30);
-  --ranking-winner-shadow: 0 4px 24px rgba(217,119,6,0.10);
-  --modal-backdrop:        rgba(15,23,42,0.55);
+  --ranking-winner-border: rgba(180,83,9,0.30);
+  --ranking-winner-shadow: 0 4px 24px rgba(180,83,9,0.12);
+  --modal-backdrop:        rgba(15,23,42,0.60);
   --score-shadow:          none;
   --ambient-glow:          rgba(5,150,105,0.06);
 }
@@ -188,6 +188,112 @@
   --tint-primary: rgba(0,230,118,0.12);
 }
 
+
+/* ============================================================
+   §3b  LIGHT THEME — overrides de componente
+   ============================================================ */
+
+/* ── Game cards — elevação limpa ─────────────────────────── */
+.theme-light .game-card {
+  box-shadow: 0 2px 6px rgba(15,23,42,.09), 0 8px 24px rgba(15,23,42,.08);
+  border-color: rgba(15,23,42,.08);
+}
+.theme-light .game-card:hover {
+  box-shadow: 0 10px 36px rgba(15,23,42,.16), 0 2px 8px rgba(15,23,42,.09);
+}
+.theme-light .game-card--live {
+  box-shadow: 0 0 0 2px rgba(220,38,38,.2), 0 6px 24px rgba(220,38,38,.1);
+}
+
+/* ── Times — texto forte ──────────────────────────────────── */
+.theme-light .game-card__name { color: #0b1120; }
+
+/* ── Multiplier (10×) — só texto, sem caixinha ───────────── */
+.theme-light .gc-meta__odd {
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* ── Botões primários — verde escuro premium, texto branco ── */
+.theme-light .btn--primary {
+  color: #ffffff;
+  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.theme-light .btn--primary:hover {
+  color: #ffffff;
+  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.theme-light .btn-show-more {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.theme-light .btn-show-more:hover {
+  color: #ffffff;
+  box-shadow: 0 6px 0 0 var(--primary-dark), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+/* ── Section headers (HOJE, AMANHÃ) ──────────────────────── */
+.theme-light .games-section__title { color: #0b1120; font-weight: 800; }
+.theme-light .games-section__count {
+  background: var(--tint-primary);
+  color: var(--primary);
+  border: 1px solid rgba(6,95,70,.2);
+}
+
+/* ── League tabs ──────────────────────────────────────────── */
+.theme-light .league-tab {
+  background: #fff;
+  border-color: rgba(15,23,42,.12);
+  box-shadow: 0 2px 0 0 rgba(15,23,42,.12);
+  color: var(--text-muted);
+}
+.theme-light .league-tab--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(0,0,0,.15);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.25), inset 0 1px 0 rgba(0,0,0,.12);
+}
+
+/* ── Barra "Próximo Jogo" — light card elegante ──────────── */
+.theme-light .ngb {
+  background: #fff;
+  border: 1px solid rgba(180,83,9,.28);
+  border-left: 3px solid var(--gold);
+  box-shadow: 0 2px 12px rgba(15,23,42,.10);
+  animation: none;
+}
+.theme-light .ngb__dot {
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(180,83,9,.4), 0 0 12px rgba(180,83,9,.2);
+}
+.theme-light .ngb__label {
+  text-shadow: none;
+}
+.theme-light .ngb__teams { color: #0b1120; text-shadow: none; }
+.theme-light .ngb__timer-label { color: rgba(15,23,42,.45); }
+.theme-light .ngb__timer-cd {
+  color: var(--gold);
+  text-shadow: none;
+  animation: none;
+}
+.theme-light .ngb__btn {
+  animation: none;
+  box-shadow: 0 3px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
+}
+.theme-light .ngb__btn:hover {
+  box-shadow: 0 5px 0 0 #966000, inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+/* ── Ticker de atividade ──────────────────────────────────── */
+.theme-light #activityTicker {
+  background: linear-gradient(90deg, #047857 0%, #059669 50%, #047857 100%);
+  border: none;
+}
+.theme-light .activity-ticker__label { color: rgba(255,255,255,.85); }
+.theme-light .activity-ticker__track { color: rgba(255,255,255,.92); }
 
 /* ============================================================
    §4  RESET & BASE
@@ -7380,6 +7486,46 @@ input:focus, select:focus {
   from { opacity: 1; } to { opacity: .5; }
 }
 
+/* ── Exit modal — tema claro ─────────────────────────────── */
+.theme-light .exit-modal__card {
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 50%, #f0f4f8 100%);
+  border: 1px solid rgba(6,95,70,.18);
+  box-shadow:
+    0 0 0 1px rgba(6,95,70,.05),
+    0 0 60px rgba(6,95,70,.07),
+    0 30px 80px rgba(15,23,42,.18);
+}
+.theme-light .exit-modal__x {
+  background: rgba(15,23,42,.05);
+  border-color: rgba(15,23,42,.12);
+  color: rgba(15,23,42,.4);
+}
+.theme-light .exit-modal__x:hover {
+  background: rgba(15,23,42,.1);
+  color: #0b1120;
+}
+.theme-light .exit-modal__badge {
+  background: rgba(6,95,70,.1);
+  border-color: rgba(6,95,70,.22);
+  color: #065f46;
+}
+.theme-light .exit-modal__headline { color: #0b1120; }
+.theme-light .exit-modal__sub { color: rgba(15,23,42,.5); }
+.theme-light .exit-modal__offer {
+  background: rgba(15,23,42,.03);
+  border-color: rgba(180,83,9,.18);
+}
+.theme-light .exit-modal__offer-label { color: rgba(15,23,42,.4); }
+.theme-light .exit-modal__offer-price { color: #0b1120; }
+.theme-light .exit-modal__offer-sep { color: rgba(15,23,42,.3); }
+.theme-light .exit-modal__social { color: rgba(15,23,42,.45); }
+.theme-light .exit-modal__timer-wrap {
+  background: rgba(255,112,67,.06);
+  border-color: rgba(255,112,67,.18);
+}
+.theme-light .exit-modal__timer-label { color: rgba(15,23,42,.4); }
+.theme-light .exit-modal__dismiss { color: rgba(15,23,42,.3); }
+
 /* ════════════════════════════════════════════════════════════
    §35. GAME CARDS — MOBILE PREMIUM (≤ 767px)
    Layout inspirado em Betano/bet365: left-border accent,
@@ -7768,9 +7914,14 @@ input:focus, select:focus {
 /* ── Botão central: "Apostar" ─────────────────── */
 .bottom-nav__cta-item {
   flex: 0 0 76px !important;
+  height: auto !important;
+  padding-top: .3rem !important;
+  padding-bottom: .3rem !important;
 }
 .bottom-nav__cta-ring {
   width: 48px; height: 48px;
+  min-width: 48px; min-height: 48px;
+  flex-shrink: 0;
   background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
