@@ -5,6 +5,8 @@
   # Rotas de share e OG — devem ir para share.php/og.php antes do catch-all
   RewriteRule ^share/game/([0-9]+)/og\.png$ public/og.php?id=$1 [L,QSA]
   RewriteRule ^share/game/([0-9]+)$          public/share.php?id=$1 [L,QSA]
+  RewriteRule ^share/bet/([0-9]+)/og\.png$  public/og-bet.php?id=$1 [L,QSA]
+  RewriteRule ^share/bet/([0-9]+)$           public/share-bet.php?id=$1 [L,QSA]
 
   # Se o arquivo já existir em public, sirva ele diretamente
   RewriteCond %{REQUEST_URI} !^/public/

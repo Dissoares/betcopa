@@ -206,8 +206,9 @@ try {
         // ── Admin: Configurações ──────────────────────────────
         route('/api/admin/config',       'GET',  fn() => $adminCtrl->getConfig());
         route('/api/admin/config',       'POST', fn() => $adminCtrl->updateConfig());
-        route('/api/admin/upload-logo',  'POST', fn() => $adminCtrl->uploadLogo());
-        route('/api/admin/delete-logo',  'POST', fn() => $adminCtrl->deleteLogo());
+        route('/api/admin/upload-logo',         'POST', fn() => $adminCtrl->uploadLogo());
+        route('/api/admin/delete-logo',         'POST', fn() => $adminCtrl->deleteLogo());
+        route('/api/admin/upload-payment-logo', 'POST', fn() => $adminCtrl->uploadPaymentLogo());
         route('/api/admin/cache/clear',  'POST', fn() => $adminCtrl->clearCache());
         route('/api/admin/online',       'GET',  fn() => $adminCtrl->online());
         route('/api/admin/analytics',    'GET',  fn() => $adminCtrl->analyticsData());

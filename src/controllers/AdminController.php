@@ -256,6 +256,10 @@ class AdminController
             'site_description' =>         $this->config->get('site_description',   'Faça seu palpite e acerte o placar exato dos jogos da copa do mundo.'),
             'admin_email'      =>         $this->adminEmail,
             'bonus_cadastro'   => (float) $this->config->get('bonus_cadastro',     0),
+            'pix_ativo'        => (int)   $this->config->get('pix_ativo',          '1'),
+            'expay_ativo'      => (int)   $this->config->get('expay_ativo',        '1'),
+            'pix_logo'         =>         $this->config->get('pix_logo',           '/assets/logos/pix.png'),
+            'expay_logo'       =>         $this->config->get('expay_logo',         '/assets/logos/expay.png'),
         ]);
     }
 
@@ -278,6 +282,7 @@ class AdminController
             'google_client_id',
             'saques_ativos',
             'site_logo',
+            'pix_ativo', 'expay_ativo',
         ];
 
         $saved = [];
@@ -355,6 +360,63 @@ class AdminController
         $this->config->set('site_logo', $url);
 
         jsonResponse(['url' => $url, 'message' => 'Logo enviado com sucesso.']);
+    }
+
+    public function uploadPaymentLogo(): void
+    {
+        ensureAdmin($this->adminEmail);
+
+        $method  = $_POST['method'] ?? '';
+        $allowed = ['pix' => 'pix_logo', 'expay' => 'expay_logo'];
+        if (!isset($allowed[$method])) {
+            jsonResponse(['error' => 'Método inválido.'], 400);
+        }
+        $configKey = $allowed[$method];
+
+        if (empty($_FILES['logo'])) {
+            jsonResponse(['error' => 'Nenhum arquivo enviado.'], 400);
+        }
+
+        $file    = $_FILES['logo'];
+        $maxSize = 2 * 1024 * 1024;
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            jsonResponse(['error' => 'Erro no upload: código ' . $file['error']], 400);
+        }
+        if ($file['size'] > $maxSize) {
+            jsonResponse(['error' => 'Arquivo muito grande. Máximo 2 MB.'], 400);
+        }
+
+        $mime = mime_content_type($file['tmp_name']);
+        $mimeMap = ['image/png' => 'png', 'image/jpeg' => 'jpg',
+                    'image/gif' => 'gif', 'image/webp' => 'webp',
+                    'image/svg+xml' => 'svg'];
+        if (!isset($mimeMap[$mime])) {
+            jsonResponse(['error' => 'Use PNG, JPG, GIF, WEBP ou SVG.'], 400);
+        }
+
+        $ext       = $mimeMap[$mime];
+        $filename  = 'payment_' . $method . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+        $uploadDir = __DIR__ . '/../../public/assets/uploads/';
+        $destPath  = $uploadDir . $filename;
+
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        // Remove logo anterior se for de upload
+        $old = $this->config->get($configKey, '');
+        if ($old && str_starts_with($old, '/assets/uploads/')) {
+            $oldFile = __DIR__ . '/../../public' . $old;
+            if (is_file($oldFile)) @unlink($oldFile);
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            jsonResponse(['error' => 'Falha ao salvar o arquivo.'], 500);
+        }
+
+        $url = '/assets/uploads/' . $filename;
+        $this->config->set($configKey, $url);
+
+        jsonResponse(['url' => $url, 'method' => $method, 'message' => 'Logo atualizado.']);
     }
 
     public function deleteLogo(): void

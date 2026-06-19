@@ -3,6 +3,8 @@
   RewriteBase /
   RewriteRule ^share/game/([0-9]+)/og\.png$ og.php?id=$1 [L,QSA]
   RewriteRule ^share/game/([0-9]+)$         share.php?id=$1 [L,QSA]
+  RewriteRule ^share/bet/([0-9]+)/og\.png$  og-bet.php?id=$1 [L,QSA]
+  RewriteRule ^share/bet/([0-9]+)$          share-bet.php?id=$1 [L,QSA]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^.*$ index.php [L,QSA]

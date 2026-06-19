@@ -2815,7 +2815,6 @@ select {
 .pay-opt-card__sub  { font-size: .7rem; color: var(--text-muted); }
 .pay-opt-card__logo { max-width: 100%; max-height: 2.4rem; object-fit: contain; }
 #payOptExpay.pay-opt-card--active { background: transparent; }
-#payOptExpay.pay-opt-card--active .pay-opt-card__logo { filter: brightness(0) invert(1); }
 .pay-opt-card { background: #f0f0f0; border-color: #ddd; color: #333; }
 .pay-opt-card--active { border-color: var(--primary); background: #f0f0f0; }
 .pay-opt-card__sub { color: #888; }

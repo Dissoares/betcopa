@@ -2805,15 +2805,21 @@ const teamNameToIso = name => {
 
 const getShareText = (bet) => {
   const game  = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
-  const fH = game?.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
-  const fA = game?.bandeira_fora ? flagEmoji(game.bandeira_fora) + ' ' : '';
-  const nH = toPortuguese(bet?.time_casa || '').toUpperCase();
-  const nA = toPortuguese(bet?.time_fora || '').toUpperCase();
-  const match = `${fH}${nH} × ${fA}${nA}`;
+  const fH    = game?.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
+  const fA    = game?.bandeira_fora ? flagEmoji(game.bandeira_fora) + ' ' : '';
+  const nH    = toPortuguese(bet?.time_casa || '').toUpperCase();
+  const nA    = toPortuguese(bet?.time_fora || '').toUpperCase();
   const score = `${bet?.placar_casa ?? 0} × ${bet?.placar_fora ?? 0}`;
-  const liga  = game?.liga_nome ? `🏆 ${game.liga_nome} 🏆\n` : '';
-  const url   = game ? `${location.origin}/share/game/${game.id}` : location.origin;
-  return `${liga}Chutei ${score} em ${match}!\nSerá que acerto? Faça o seu também 👉 ${url}`;
+  const liga  = game?.liga_nome ? `🏆 ${game.liga_nome.toUpperCase()} 🏆\n` : '';
+  const url   = bet?.id ? `${location.origin}/share/bet/${bet.id}` : location.origin;
+
+  const live  = game ? isGameLive(game) : false;
+  const final = game?.status === 'finalizado';
+  const hook  = final ? 'O resultado já saiu, olha aí: 👉'
+               : live  ? 'O jogo está rolando AGORA, olha aí: 👉'
+               :         'O jogo vai começar em breve, olha aí: 👉';
+
+  return `${liga}Meu palpite foi ${fH}${nH} ${score} ${fA}${nA}, será que acertei?\n${hook}\n${url}`;
 };
 
 const shareGameLink = async (gameId) => openGameShareModal(gameId);
@@ -4160,7 +4166,17 @@ const simulatePay = () => {
   if (saldoEl) saldoEl.textContent = saldo < betValor
     ? `⚠ Saldo insuficiente (${fmtMoney(saldo)})`
     : fmtMoney(saldo) + ' disponível';
-  _selectPayMethod('pix');
+  // Mostra/oculta métodos de pagamento conforme config do admin
+  const pixEl   = document.getElementById('payOptPix');
+  const expayEl = document.getElementById('payOptExpay');
+  const showPix   = S.pixAtivo   !== false;
+  const showExpay = S.expayAtivo !== false;
+  if (pixEl)   { pixEl.classList.toggle('hidden', !showPix);   pixEl.style.gridColumn   = (showPix && !showExpay) ? '1/-1' : ''; }
+  if (expayEl) { expayEl.classList.toggle('hidden', !showExpay); expayEl.style.gridColumn = (!showPix && showExpay) ? '1/-1' : ''; }
+
+  // Seleciona o primeiro método ativo como padrão
+  const defaultMethod = showPix ? 'pix' : showExpay ? 'expay' : 'saldo';
+  _selectPayMethod(defaultMethod);
   document.getElementById('tkFooterConfirm')?.classList.add('hidden');
   document.getElementById('tkPaySection')?.classList.remove('hidden');
   // Avança stepper para passo 3
@@ -5819,15 +5835,13 @@ const bind = () => {
     window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
   });
   document.getElementById('btnShareTelegram')?.addEventListener('click', () => {
-    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
-    const game = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
-    const url  = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
+    const url = bet?.id ? `${location.origin}/share/bet/${bet.id}` : location.origin;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(getShareText(bet))}`, '_blank');
   });
   document.getElementById('btnShareFacebook')?.addEventListener('click', () => {
-    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
-    const game = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
-    const url  = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
+    const url = bet?.id ? `${location.origin}/share/bet/${bet.id}` : location.origin;
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
   });
   document.getElementById('btnShareTwitter')?.addEventListener('click', () => {
@@ -5846,9 +5860,8 @@ const bind = () => {
     }, 'image/png');
   });
   document.getElementById('btnShareCopyLink')?.addEventListener('click', () => {
-    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
-    const game = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
-    const url  = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
+    const url = bet?.id ? `${location.origin}/share/bet/${bet.id}` : location.origin;
     navigator.clipboard.writeText(url).then(() => {
       const btn = document.getElementById('btnShareCopyLink');
       const orig = btn.innerHTML;
@@ -6037,6 +6050,14 @@ const bind = () => {
       if (file) uploadLogo(file);
     });
   }
+
+  // Payment logo upload inputs
+  document.getElementById('pixLogoInput')?.addEventListener('change', e => {
+    const f = e.target.files?.[0]; if (f) uploadPaymentLogo('pix', f); e.target.value = '';
+  });
+  document.getElementById('expayLogoInput')?.addEventListener('change', e => {
+    const f = e.target.files?.[0]; if (f) uploadPaymentLogo('expay', f); e.target.value = '';
+  });
 
   // Admin forms
   document.getElementById('adminResultForm').addEventListener('submit', submitAdminResult);
@@ -7289,6 +7310,20 @@ const loadAdminConfig = async () => {
     set('cfg_expay_merchant_key',        'expay_merchant_key');
     set('cfg_google_client_id',          'google_client_id');
 
+    // Payment method toggles (checkboxes)
+    const elPixAtivo   = document.getElementById('cfg_pix_ativo');
+    const elExpayAtivo = document.getElementById('cfg_expay_ativo');
+    if (elPixAtivo)   elPixAtivo.checked   = (config['pix_ativo']?.valor   ?? '1') === '1';
+    if (elExpayAtivo) elExpayAtivo.checked = (config['expay_ativo']?.valor  ?? '1') === '1';
+
+    // Payment logo previews in admin
+    const pixLogoUrl   = config['pix_logo']?.valor   || '/assets/logos/pix.png';
+    const expayLogoUrl = config['expay_logo']?.valor  || '/assets/logos/expay.png';
+    const prevPix   = document.getElementById('previewPixLogo');
+    const prevExpay = document.getElementById('previewExpayLogo');
+    if (prevPix)   prevPix.src   = pixLogoUrl;
+    if (prevExpay) prevExpay.src = expayLogoUrl;
+
     // Inicia botões Google se client id já estiver salvo
     const googleClientId = config['google_client_id']?.valor ?? '';
     if (googleClientId) initGoogleButtons(googleClientId);
@@ -7358,6 +7393,8 @@ const submitAdminConfig = async (e) => {
       mp_webhook_secret:         get('cfg_mp_webhook_secret'),
       expay_merchant_key:        get('cfg_expay_merchant_key'),
       google_client_id:          get('cfg_google_client_id'),
+      pix_ativo:   document.getElementById('cfg_pix_ativo')?.checked   ? '1' : '0',
+      expay_ativo: document.getElementById('cfg_expay_ativo')?.checked ? '1' : '0',
     });
     toast(res.message ?? 'Configurações salvas!', 'success');
     applyBrandName(get('cfg_site_nome'));
@@ -7431,6 +7468,27 @@ const setLogoPickerStatus = (msg, isError = false) => {
   el.textContent = msg;
   el.className = 'media-picker__status' + (isError ? ' media-picker__status--error' : '');
   if (msg) setTimeout(() => { el.textContent = ''; el.className = 'media-picker__status'; }, 4000);
+};
+
+const uploadPaymentLogo = async (method, file) => {
+  const previewId = method === 'pix' ? 'previewPixLogo' : 'previewExpayLogo';
+  const modalImgId = method === 'pix' ? 'payOptPixImg' : 'payOptExpayImg';
+  try {
+    const formData = new FormData();
+    formData.append('logo', file);
+    formData.append('method', method);
+    formData.append('csrf_token', S.csrf || '');
+    const res  = await fetch('/api/admin/upload-payment-logo', { method: 'POST', body: formData, credentials: 'same-origin' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao enviar logo');
+    const prev = document.getElementById(previewId);
+    if (prev) prev.src = data.url;
+    const modalImg = document.getElementById(modalImgId);
+    if (modalImg) modalImg.src = data.url;
+    toast('Logo atualizado!', 'success');
+  } catch (err) {
+    toast(err.message, 'danger');
+  }
 };
 
 const uploadLogo = async (file) => {
@@ -7653,10 +7711,15 @@ const loadBetConfig = async () => {
     const cfg = await api('/api/config/bets');
     S.stakeMin  = cfg.stake_min  || 5;
     S.stakeMax  = cfg.stake_max  || 500;
-    S.oddPadrao = cfg.odd_padrao || 5;
+    S.oddPadrao   = cfg.odd_padrao || 5;
     if (cfg.admin_email) S.adminEmail = cfg.admin_email;
     S.bonusCadastro = cfg.bonus_cadastro || 0;
-    S.siteName = cfg.site_nome || 'BetCopa';
+    S.siteName    = cfg.site_nome || 'BetCopa';
+    S.pixAtivo    = cfg.pix_ativo   !== 0;
+    S.expayAtivo  = cfg.expay_ativo !== 0;
+    // Apply custom payment logos to the modal
+    if (cfg.pix_logo)   { const el = document.getElementById('payOptPixImg');   if (el) el.src = cfg.pix_logo; }
+    if (cfg.expay_logo) { const el = document.getElementById('payOptExpayImg'); if (el) el.src = cfg.expay_logo; }
     S.siteLogo = cfg.site_logo || '';
     applyBrandLogo(S.siteLogo);
     if (S.siteName) applyBrandName(S.siteName);
