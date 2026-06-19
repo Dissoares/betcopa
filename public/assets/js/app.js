@@ -3012,10 +3012,47 @@ const generateGameCard = async (game) => {
     ctx.fillText(`${myBet.placar_casa}  ×  ${myBet.placar_fora}`, cx, infoY + 20);
     ctx.restore(); ctx.textBaseline = 'alphabetic';
   } else if (!isLive && !isFinal) {
-    const dt = new Date(game.data_hora);
-    const when = dt.toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    ctx.font = F(14, '600'); ctx.fillStyle = 'rgba(255,255,255,.60)'; ctx.textAlign = 'center';
-    ctx.fillText(when, cx, infoY + 16);
+    const dt   = new Date(game.data_hora);
+    const wday = dt.toLocaleDateString('pt-BR', { weekday: 'short' });
+    const date = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    const time = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const label = `${wday}, ${date}  ·  ${time}`;
+
+    const clockR = 7;
+    const clockColor = 'rgba(251,146,60,.95)';
+    const textColor  = '#fbd38d';
+    const badgeFontSz = 13;
+    ctx.font = F(badgeFontSz, '600');
+    const textW = ctx.measureText(label).width;
+    const gap   = 6;
+    const totalW = clockR * 2 + gap + textW;
+    const badgeW = totalW + 28;
+    const badgeH = 28;
+    const badgeX = cx - badgeW / 2;
+    const badgeY = infoY + 4;
+    const badgeR = 7;
+
+    // Badge laranja
+    rrect(ctx, badgeX, badgeY, badgeW, badgeH, badgeR);
+    ctx.fillStyle = 'rgba(251,146,60,.18)'; ctx.fill();
+    rrect(ctx, badgeX, badgeY, badgeW, badgeH, badgeR);
+    ctx.strokeStyle = 'rgba(251,146,60,.70)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+    // Mini clock icon
+    const clkX = badgeX + 14 + clockR;
+    const clkY = badgeY + badgeH / 2;
+    ctx.save();
+    ctx.strokeStyle = clockColor; ctx.lineWidth = 1.2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(clkX, clkY, clockR, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(clkX, clkY); ctx.lineTo(clkX, clkY - clockR * 0.65); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(clkX, clkY); ctx.lineTo(clkX + clockR * 0.5, clkY + clockR * 0.3); ctx.stroke();
+    ctx.restore();
+
+    // Date text
+    ctx.font = F(badgeFontSz, '600');
+    ctx.fillStyle = textColor; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, clkX + clockR + gap, clkY);
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
   } else if (isFinal && !score) {
     ctx.font = F(10, '600'); ctx.fillStyle = 'rgba(156,163,175,.65)'; ctx.textAlign = 'center';
     ctx.fillText('RESULTADO FINAL', cx, infoY + 12);
@@ -3047,14 +3084,14 @@ const openGameShareModal = async (gameId) => {
   spinner.classList.remove('hidden');
   spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Gerando imagem…</span>';
   canvas.classList.add('hidden');
-  ['btnGameShareWhatsApp','btnGameShareTwitter','btnGameShareFacebook','btnGameShareNative']
+  ['btnGameShareWhatsApp','btnGameShareTelegram','btnGameShareTwitter','btnGameShareFacebook','btnGameShareNative','btnGameShareCopyLink']
     .forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
   try {
     await generateGameCard(game);
     spinner.classList.add('hidden');
     canvas.classList.remove('hidden');
-    ['btnGameShareWhatsApp','btnGameShareFacebook','btnGameShareTwitter']
+    ['btnGameShareWhatsApp','btnGameShareTelegram','btnGameShareFacebook','btnGameShareTwitter','btnGameShareCopyLink']
       .forEach(id => document.getElementById(id)?.classList.remove('hidden'));
     if (navigator.share) document.getElementById('btnGameShareNative')?.classList.remove('hidden');
   } catch {
@@ -5813,6 +5850,12 @@ const bind = () => {
     const url = `${location.origin}/share/game/${_shareGameId}`;
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
   });
+  document.getElementById('btnGameShareTelegram')?.addEventListener('click', () => {
+    const game = S.games.find(g => Number(g.id) === _shareGameId);
+    const text = getGameShareText(game);
+    const url  = `${location.origin}/share/game/${_shareGameId}`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+  });
   document.getElementById('btnGameShareNative')?.addEventListener('click', () => {
     const game   = S.games.find(g => Number(g.id) === _shareGameId);
     const canvas = document.getElementById('gameShareCanvas');
@@ -5823,6 +5866,16 @@ const bind = () => {
         await navigator.share({ title: 'BetCopa', text: getGameShareText(game), files: [file] });
       } catch { /* user cancelled */ }
     }, 'image/png');
+  });
+  document.getElementById('btnGameShareCopyLink')?.addEventListener('click', () => {
+    const url = `${location.origin}/share/game/${_shareGameId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('btnGameShareCopyLink');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+      btn.style.color = 'var(--primary)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    }).catch(() => toast('Não foi possível copiar o link.', 'danger'));
   });
 
   // ── Guest bet modal ───────────────────────────────────────
@@ -7831,9 +7884,18 @@ function _exitIntentInit() {
     return S.bets.some(b => b.status === 'pendente' || b.status === 'confirmado');
   }
 
+  // Views onde o exit intent nunca deve aparecer
+  const BLOCKED_VIEWS = ['auth', 'pagamento', 'admin', 'perfil'];
+  function _isBlockedView() {
+    return BLOCKED_VIEWS.some(v => !document.getElementById(`view-${v}`)?.classList.contains('hidden'));
+  }
+
   function _fire() {
     if (fired || !armed) return;
-    if (_hasActiveBet()) return;  // já tem palpite ativo — não interromper
+    if (_hasActiveBet()) return;
+    if (_isBlockedView()) return;
+    // Não dispara se qualquer modal estiver aberto
+    if (document.querySelectorAll('.modal:not(.hidden), .modal-overlay:not(.hidden)').length > 0) return;
     fired = true;
 
     // Timer de 10 min por visita (em memória, reinicia a cada acesso)
@@ -7895,13 +7957,7 @@ function _exitIntentInit() {
     _prevT = now;
   }, { passive: true });
 
-  // ── Botão voltar (SPA): intercepta popstate sem quebrar o roteamento ──
-  // Injeta um estado "sentinela" sem mudar a URL
-  history.pushState({ _eiSentinel: true }, '', location.href);
-  window.addEventListener('popstate', () => {
-    _fire();
-    history.pushState({ _eiSentinel: true }, '', location.href);
-  });
+  // popstate removido — o sentinel causava disparos falsos no SPA
 
   // ── Listeners dos botões do modal ──
   document.getElementById('exitModalX').addEventListener('click', _close);

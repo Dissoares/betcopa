@@ -6541,14 +6541,22 @@ input:focus, select:focus {
 /* ═══════════════════════════════════════════════════════════════
    §39. SHARE MODAL (bet + game)
    ═══════════════════════════════════════════════════════════════ */
+/* ── Share modal — adapta ao tema claro/escuro ──────────────── */
 .share-modal {
   width: 100%;
-  max-width: 560px;
+  max-width: 520px;
   padding: 0;
-  background: linear-gradient(160deg, #0d1627 0%, #080e1c 100%);
-  border: 1px solid rgba(89,255,21,.22);
-  box-shadow: 0 0 40px rgba(89,255,21,.08), 0 24px 64px rgba(0,0,0,.7);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 64px rgba(0,0,0,.25);
   border-radius: 18px;
+}
+/* Glow verde só no tema escuro */
+:root:not([data-theme="light"]) .share-modal,
+.theme-dark .share-modal {
+  background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
+  border-color: rgba(89,255,21,.22);
+  box-shadow: 0 0 40px rgba(89,255,21,.06), 0 24px 64px rgba(0,0,0,.7);
 }
 
 .share-modal__header {
@@ -6556,54 +6564,45 @@ input:focus, select:focus {
   align-items: center;
   justify-content: space-between;
   padding: 1.1rem 1.4rem .9rem;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .share-modal__title {
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
   margin: 0;
   display: flex;
   align-items: center;
   gap: .5rem;
   letter-spacing: .02em;
 }
-.share-modal__title i {
-  color: var(--primary);
-  font-size: 1.05rem;
-}
+.share-modal__title i { color: var(--primary); font-size: 1.05rem; }
 
-.share-modal__body {
-  padding: 1.25rem 1.4rem 1.4rem;
-}
+.share-modal__body { padding: 1.1rem 1.25rem 1.25rem; }
 
 .share-preview {
-  background: #04080f;
-  border-radius: 14px;
+  background: var(--bg);
+  border-radius: 12px;
   overflow: hidden;
-  min-height: 120px;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.25rem;
-  border: 1px solid rgba(89,255,21,.28);
-  box-shadow: 0 0 20px rgba(89,255,21,.08) inset, 0 4px 24px rgba(0,0,0,.5);
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-strong);
   position: relative;
 }
-.share-preview::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  box-shadow: 0 0 0 1px rgba(89,255,21,.10) inset;
-  pointer-events: none;
+:root:not([data-theme="light"]) .share-preview,
+.theme-dark .share-preview {
+  border-color: rgba(89,255,21,.25);
+  box-shadow: 0 0 18px rgba(89,255,21,.06) inset;
 }
 .share-preview canvas {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 .share-spinner {
@@ -6611,63 +6610,71 @@ input:focus, select:focus {
   flex-direction: column;
   align-items: center;
   gap: .6rem;
-  color: rgba(255,255,255,.45);
+  color: var(--text-muted);
   font-size: .8rem;
   padding: 2rem 0;
 }
-.share-spinner i {
-  font-size: 1.6rem;
-  color: var(--primary);
-}
+.share-spinner i { font-size: 1.6rem; color: var(--primary); }
 
+/* ── Botões de ação ───────────────────────────────────────── */
+/* ── Botões de compartilhamento ──────────────────────────── */
 .share-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+}
+
+.share-btn {
   display: flex;
-  gap: .5rem;
-  flex-wrap: wrap;
-  justify-content: stretch;
-}
-.share-actions .btn {
-  flex: 1 1 calc(50% - .25rem);
-  min-width: 0;
-  font-size: .82rem;
-  padding: .65rem .75rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  padding: .6rem .75rem;
   border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #fff;
+  transition: filter .15s, transform .1s;
+}
+.share-btn i { font-size: .95rem; flex-shrink: 0; }
+.share-btn:hover  { filter: brightness(1.1); }
+.share-btn:active { transform: scale(.97); filter: brightness(.93); }
+
+/* Cores oficiais */
+#btnGameShareWhatsApp { background: #25D366; }
+#btnGameShareTelegram { background: #229ED9; }
+#btnGameShareFacebook { background: #1877F2; }
+#btnGameShareTwitter  { background: #111;    }
+.share-btn--native    { background: var(--primary, #00C853); }
+.share-btn--copy {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+}
+.share-btn--copy:hover { color: var(--text); filter: none; background: var(--surface-3); }
+
+[data-theme="light"] #btnGameShareTwitter,
+.theme-light #btnGameShareTwitter { background: #1a1a1a; }
+
+/* No tema claro, Twitter fica um pouco mais claro para ser visível */
+[data-theme="light"] #btnGameShareTwitter,
+.theme-light #btnGameShareTwitter { background: #1a1a1a; }
+
+/* Mobile < 380px: 1 coluna */
+@media (max-width: 380px) {
+  .share-actions { grid-template-columns: 1fr; }
 }
 
-/* Cores oficiais das redes sociais */
-#btnGameShareWhatsApp, #btnShareWhatsApp {
-  background: #25D366; color: #fff; font-weight: 700;
-  box-shadow: 0 4px 0 0 #1a9e4c;
-  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s, background .12s;
-}
-#btnGameShareWhatsApp:hover, #btnShareWhatsApp:hover { background: #22c35e; }
-#btnGameShareWhatsApp:active, #btnShareWhatsApp:active {
-  transform: translateY(3px); box-shadow: 0 1px 0 0 #1a9e4c;
-}
-
-#btnGameShareTwitter, #btnShareTwitter {
-  background: #000; color: #fff; font-weight: 700;
-  box-shadow: 0 4px 0 0 #333;
-  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s, background .12s;
-}
-#btnGameShareTwitter:hover, #btnShareTwitter:hover { background: #1a1a1a; }
-#btnGameShareTwitter:active, #btnShareTwitter:active {
-  transform: translateY(3px); box-shadow: 0 1px 0 0 #333;
-}
-
-#btnGameShareFacebook {
-  background: #1877F2; color: #fff; font-weight: 700;
-  box-shadow: 0 4px 0 0 #0d5dbf;
-  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s, background .12s;
-}
-#btnGameShareFacebook:hover { background: #166fe5; }
-#btnGameShareFacebook:active { transform: translateY(3px); box-shadow: 0 1px 0 0 #0d5dbf; }
-
+/* ── Botão fechar ──────────────────────────────────────────── */
 .share-modal__close {
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.10);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  color: rgba(255,255,255,.55);
+  color: var(--text-muted);
   font-size: 1.15rem;
   line-height: 1;
   width: 30px; height: 30px;
@@ -6676,7 +6683,13 @@ input:focus, select:focus {
   transition: background .15s, color .15s;
   flex-shrink: 0;
 }
-.share-modal__close:hover { background: rgba(255,255,255,.12); color: #fff; }
+.share-modal__close:hover { background: var(--surface-3); color: var(--text); }
+
+/* Mobile: empilha em coluna única abaixo de 380px */
+@media (max-width: 380px) {
+  .share-actions { grid-template-columns: 1fr; }
+  .share-btn--copy { grid-column: 1; }
+}
 
 /* ── Game header: team name row + status badge side-by-side ── */
 .bet-card__game-header {
@@ -7716,7 +7729,7 @@ input:focus, select:focus {
    §EXIT INTENT MODAL — gatilho de saída
    ════════════════════════════════════════════════════════════ */
 .exit-modal {
-  position: fixed; inset: 0; z-index: 99998;
+  position: fixed; inset: 0; z-index: 3100;
   display: flex; align-items: center; justify-content: center;
   padding: 1rem;
 }
