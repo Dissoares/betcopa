@@ -715,8 +715,27 @@ body.scroll-locked {
 .dr-sep { height: 1px; background: rgba(255,255,255,.07); margin: .45rem 0; }
 
 .dr-auth-btns {
-  display: flex; gap: .5rem; padding: .5rem 1rem .1rem;
+  display: flex; align-items: center; gap: .5rem; padding: .5rem 1rem .1rem;
 }
+.dr-auth-btn {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .36rem .75rem;
+  font-size: .73rem; font-weight: 700;
+  border-radius: 7px; cursor: pointer;
+  white-space: nowrap; border: none;
+  transition: filter .15s;
+}
+.dr-auth-btn--primary {
+  background: var(--primary); color: #001a0d;
+}
+.dr-auth-btn--primary:hover { filter: brightness(1.1); }
+.dr-auth-btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.85);
+  transition: background .15s, border-color .15s;
+}
+.dr-auth-btn--ghost:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
 
 /* ── Section label ───────────────────────────────────────────── */
 .dr-section-label {

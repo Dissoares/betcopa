@@ -3517,7 +3517,7 @@ const fillTicket = (bet) => {
     const paid = ['pago','confirmado','ganhou','perdido'].includes(status);
     payBtn.style.display = paid ? 'none' : '';
     payBtn.innerHTML = isGuest
-      ? '<i class="fa-solid fa-lock"></i> Entrar para confirmar'
+      ? '<i class="fa-solid fa-lock"></i> Confirmar e continuar'
       : 'Confirmar palpite <i class="fa-solid fa-arrow-right"></i>';
   }
 };
@@ -3863,7 +3863,7 @@ const submitLogin = async (e) => {
   } catch (err) {
     showAlert(err.message, 'danger');
   } finally {
-    btn.disabled = false; btn.textContent = 'Entrar →';
+    btn.disabled = false; btn.textContent = 'ACESSAR';
   }
 };
 
@@ -3886,7 +3886,7 @@ const submitRegister = async (e) => {
   } catch (err) {
     showAlert(err.message, 'danger');
   } finally {
-    btn.disabled = false; btn.textContent = 'Criar conta grátis →';
+    btn.disabled = false; btn.textContent = 'CADASTRAR';
   }
 };
 
