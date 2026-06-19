@@ -1556,7 +1556,7 @@ const betTimeline = (status) => {
     { key: 'pendente',   label: 'Palpite' },
     { key: 'pago',       label: 'Pagamento' },
     { key: 'confirmado', label: 'Aguardando Jogo' },
-    { key: 'resultado',  label: isWon ? '<span style="color:var(--primary)">Ganhou!</span>' : isLost ? '<span style="color:var(--danger)">Perdeu</span>' : 'Resultado' },
+    { key: 'resultado',  label: isWon ? '<span style="color:var(--primary)">Acertou!</span>' : isLost ? '<span style="color:var(--danger)">Errou Placar</span>' : 'Resultado' },
   ];
   const ORDER = ['pendente', 'pago', 'confirmado'];
   const done  = isWon || isLost;
@@ -1564,13 +1564,25 @@ const betTimeline = (status) => {
   // +1 faz "Palpite" virar done e aponta o active para o próximo passo
   const idx   = done ? 4 : status === 'confirmado' ? 3 : ORDER.indexOf(status) + 1;
 
+  const lastIdx = STEPS.length - 1;
   return `<div class="bet-status-steps">${STEPS.map((step, i) => {
-    const state = i < idx ? 'done' : i === idx ? 'active' : '';
-    const dot   = state === 'done'
-      ? `<span class="bet-step__dot bet-step__dot--check"><i class="fa-solid fa-check"></i></span>`
-      : `<span class="bet-step__dot"></span>`;
-    const line  = i < STEPS.length - 1
-      ? `<span class="bet-step__line${i < idx ? ' bet-step__line--done' : ''}"></span>`
+    const isLastLost = isLost && i === lastIdx;
+    const isLastWon  = isWon  && i === lastIdx;
+    let state = i < idx ? 'done' : i === idx ? 'active' : '';
+    if (isLastLost) state = 'fail';
+
+    let dot;
+    if (isLastLost) {
+      dot = `<span class="bet-step__dot bet-step__dot--fail"><i class="fa-solid fa-xmark"></i></span>`;
+    } else if (state === 'done') {
+      dot = `<span class="bet-step__dot bet-step__dot--check"><i class="fa-solid fa-check"></i></span>`;
+    } else {
+      dot = `<span class="bet-step__dot"></span>`;
+    }
+
+    const lineDone = i < idx && !isLastLost;
+    const line = i < lastIdx
+      ? `<span class="bet-step__line${lineDone ? ' bet-step__line--done' : ''}"></span>`
       : '';
     return `<span class="bet-step bet-step--${state}">${dot}<span class="bet-step__label">${step.label}</span></span>${line}`;
   }).join('')}</div>`;

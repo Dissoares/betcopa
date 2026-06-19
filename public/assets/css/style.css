@@ -3648,18 +3648,22 @@ button.copa-hero__stat:hover {
   gap: .2rem; color: var(--text-muted); flex-shrink: 0;
 }
 .bet-step--done   { color: var(--primary); }
+.bet-step--fail   { color: var(--danger); }
 .bet-step--active { color: var(--text); }
 .bet-step__dot {
   width: 9px; height: 9px; border-radius: 50%;
   background: var(--border); flex-shrink: 0;
   transition: background .2s;
 }
-.bet-step__dot--check {
+.bet-step__dot--check,
+.bet-step__dot--fail {
   width: 16px; height: 16px;
-  background: var(--primary);
   display: flex; align-items: center; justify-content: center;
 }
-.bet-step__dot--check i { font-size: .55rem; color: #000; font-weight: 900; }
+.bet-step__dot--check { background: var(--primary); }
+.bet-step__dot--fail  { background: var(--danger); }
+.bet-step__dot--check i,
+.bet-step__dot--fail  i { font-size: .55rem; color: #fff; font-weight: 900; }
 .bet-step--done   .bet-step__dot:not(.bet-step__dot--check) { background: var(--primary); }
 .bet-step--active .bet-step__dot { background: var(--text); box-shadow: 0 0 0 3px rgba(249,250,251,.12); }
 .bet-step__label { font-weight: 600; white-space: nowrap; }
