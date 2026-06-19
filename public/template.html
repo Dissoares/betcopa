@@ -70,7 +70,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=58" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=95" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -587,7 +587,7 @@
               <h3 class="panel__title" style="margin:0">Jogos cadastrados</h3>
               <div style="display:flex;align-items:center;gap:.6rem">
                 <span class="text--muted" id="adminGamesCount"></span>
-                <button class="btn btn--danger btn--sm" id="btnDeleteAllGames"><i class="fa-solid fa-trash-can"></i> Limpar tudo</button>
+                <button class="btn btn--danger btn--sm" id="btnDeleteAllGames"><i class="fa-solid fa-trash-can"></i> Exluir todos</button>
               </div>
             </div>
             <div class="bulk-action-bar hidden" id="bulkActionBar">
@@ -1893,7 +1893,7 @@
         <button class="btn btn--primary btn--pulse" id="plBtnRegister">
           <i class="fa-solid fa-user-plus"></i> Criar conta
         </button>
-        <button class="btn btn--ghost" id="plBtnLogin">
+        <button class="btn btn--primary" id="plBtnLogin">
           <i class="fa-solid fa-right-to-bracket"></i> Entrar
         </button>
       </div>
@@ -1934,52 +1934,6 @@
     <!-- ① Linha separadora com brilho -->
     <div class="site-footer__topline" aria-hidden="true"></div>
 
-    <!-- ② Faixa de selos de confiança -->
-    <div class="site-footer__trust">
-      <div class="container site-footer__trust-inner">
-
-        <div class="ft-badge ft-badge--ssl">
-          <div class="ft-badge__icon"><i class="fa-solid fa-lock"></i></div>
-          <div class="ft-badge__text">
-            <span class="ft-badge__title">SSL 256-bit</span>
-            <span class="ft-badge__sub">Criptografado</span>
-          </div>
-        </div>
-
-        <div class="ft-badge ft-badge--lgpd">
-          <div class="ft-badge__icon"><i class="fa-solid fa-shield-halved"></i></div>
-          <div class="ft-badge__text">
-            <span class="ft-badge__title">LGPD Compliant</span>
-            <span class="ft-badge__sub">Dados Protegidos</span>
-          </div>
-        </div>
-
-        <div class="ft-badge ft-badge--verified">
-          <div class="ft-badge__icon"><i class="fa-solid fa-circle-check"></i></div>
-          <div class="ft-badge__text">
-            <span class="ft-badge__title">Verificado</span>
-            <span class="ft-badge__sub">Plataforma Segura</span>
-          </div>
-        </div>
-
-        <div class="ft-badge ft-badge--pix">
-          <div class="ft-badge__icon"><i class="fa-brands fa-pix"></i></div>
-          <div class="ft-badge__text">
-            <span class="ft-badge__title">PIX Oficial</span>
-            <span class="ft-badge__sub">Pagamento Instantâneo</span>
-          </div>
-        </div>
-
-        <!-- <div class="ft-badge ft-badge--18">
-          <div class="ft-badge__icon"><i class="fa-solid fa-user-shield"></i></div>
-          <div class="ft-badge__text">
-            <span class="ft-badge__title">+18 apenas</span>
-            <span class="ft-badge__sub">Acesso Restrito</span>
-          </div>
-        </div> -->
-
-      </div>
-    </div>
 
     <!-- ③ Corpo principal -->
     <div class="container site-footer__main">
@@ -2393,7 +2347,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=20"></script>
+  <script src="/assets/js/app.js?v=32"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

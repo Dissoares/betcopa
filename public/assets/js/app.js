@@ -263,7 +263,7 @@ const maskName = (name) => {
 //  4. Fechado    → status='encerrado'  (apostas fechadas, jogo não registrado)
 //  5. Em Breve   → status='aberto' + menos de 1h para o pontapé
 //  6. Aberto     → status='aberto' + mais de 1h para o pontapé
-const gameBadge = (g) => {
+const gameBadge = (g, opts = {}) => {
   const api  = (g.status_api || '').toUpperCase();
   const s    = g.status;
   const diff = new Date(g.data_hora) - Date.now();
@@ -301,7 +301,10 @@ const gameBadge = (g) => {
     return `<span class="badge badge--soon"><i class="fa-solid fa-calendar"></i> Em Breve</span>`;
   }
 
-  // 7. aberto
+  // 7. aberto — se for seção HOJE exibe "É HOJE!"
+  if (opts.isToday) {
+    return `<span class="badge badge--open badge--today"><i class="fa-solid fa-bolt"></i> É HOJE!</span>`;
+  }
   return `<span class="badge badge--open"><i class="fa-solid fa-unlock"></i> Aberto</span>`;
 };
 
@@ -843,7 +846,7 @@ const renderCard = (g, opts = {}) => {
                     : isSoon   ? 'soon'
                     :            'open';
 
-  const badgeLabel = gameBadge(g);
+  const badgeLabel = gameBadge(g, opts);
   const scoreStr   = g.placar_real ? g.placar_real.replace('x', ' × ') : null;
   const oddNum     = parseFloat(g.odd || 1);
   const oddFmt     = oddNum % 1 === 0 ? oddNum.toFixed(0) : oddNum.toFixed(1).replace('.', ',');
@@ -863,14 +866,14 @@ const renderCard = (g, opts = {}) => {
         </div>`;
   } else if (isFinal && scoreStr) {
     midHtml = `
-        <div class="gc-vs">VS</div>
+        <div class="gc-vs">×</div>
         <div class="gc-score gc-score--final">
           <span class="gc-score__label">PLACAR</span>
           <span class="gc-score__val">${scoreStr}</span>
         </div>`;
   } else if (!isClosed) {
     midHtml = `
-        <div class="gc-vs">VS</div>
+        <div class="gc-vs">×</div>
         <div class="gc-countdown">
           <span class="gc-countdown__label">COMEÇA EM</span>
           <span class="gc-countdown__time" id="cdtime-${g.id}">--:--:--</span>
@@ -902,6 +905,10 @@ const renderCard = (g, opts = {}) => {
   const oddPill = (!betBlocked && ctaOddNum > 1)
     ? `<span class="gc-odd-pill">${ctaOddFmt}<small>×</small></span>` : '';
 
+  const mobileCta = (opts.isToday && !betBlocked)
+    ? `<div class="gc-mob-countdown"><span class="gc-countdown__time" id="cdtime-mob-${g.id}">--:--:--</span></div>`
+    : oddPill;
+
   const footHtml = isLive
     ? `<button class="btn btn--ghost btn--full" disabled>
          <i class="fa-solid fa-lock"></i> Palpites encerrados
@@ -913,8 +920,8 @@ const renderCard = (g, opts = {}) => {
            <i class="fa-solid fa-flag-checkered"></i> Finalizado
          </button>
        </div>`
-    : `${oddPill}
-       <button class="btn ${!betBlocked ? 'btn--bet' : 'btn--ghost'} btn--full"
+    : `${mobileCta}
+       <button class="btn ${!betBlocked ? 'btn--primary btn--bet' : 'btn--ghost'} btn--full"
          data-action="bet" data-id="${g.id}" ${betBlocked ? 'disabled' : ''}>
          ${!betBlocked ? '<i class="fa-solid fa-bolt"></i> Apostar' : btnLabel}
        </button>
@@ -1311,8 +1318,8 @@ const renderTicker = () => {
       </span>`;
     }
 
-    const homeColor = homeWon ? '#00c853' : '#f87171';
-    const awayColor = homeWon ? '#f87171' : '#00c853';
+    const homeColor = homeWon ? '#59ff15' : '#f87171';
+    const awayColor = homeWon ? '#f87171' : '#59ff15';
     const trophy = `<i class="fa-solid fa-trophy" style="color:#facc15;font-size:.7rem;margin:0 2px"></i>`;
 
     return `<span class="ticker-item ticker-item--result">
@@ -1378,8 +1385,8 @@ const renderGames = () => {
   }
 
   const weekSections = Object.values(weekMap).map(({ dt, games }) => {
-    const wday = dt.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const cap  = wday.charAt(0).toUpperCase() + wday.slice(1).replace('.', '');
+    const wday = dt.toLocaleDateString('pt-BR', { weekday: 'long' });
+    const cap  = wday.charAt(0).toUpperCase() + wday.slice(1);
     const date = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     return {
       sid:   `week${dt.toISOString().slice(0, 10).replace(/-/g, '')}`,
@@ -1404,10 +1411,10 @@ const renderGames = () => {
   let soonFeatured = false;
   if (liveWrap) {
     if (live.length) {
-      liveWrap.innerHTML = renderSection('live', 'Ao Vivo', '<i class="fa-solid fa-circle fa-beat"></i>', live, 'games-section--live');
+      liveWrap.innerHTML = renderSection('live', 'Ao Vivo', '', live, 'games-section--live');
     } else if (soon.length) {
       soonFeatured = true;
-      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>', soon, 'games-section--soon');
+      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '', soon, 'games-section--soon');
     } else {
       liveWrap.innerHTML = '';
     }
@@ -1416,16 +1423,16 @@ const renderGames = () => {
   // Demais seções no grid principal (sem ao vivo; soon já pode estar no topo)
   let html = '';
   if (!soonFeatured) {
-    html += renderSection('soon', 'Daqui a Pouco', '<i class="fa-solid fa-bolt"></i>', soon, 'games-section--soon');
+    html += renderSection('soon', 'Daqui a Pouco', '', soon, 'games-section--soon');
   }
-  html += renderSection('today',    'Hoje',        '<i class="fa-solid fa-sun"></i>',              today,    'games-section--today');
-  html += renderSection('tomorrow', 'Amanhã',      '<i class="fa-solid fa-calendar-day"></i>',    tomorrow, 'games-section--tomorrow');
+  html += renderSection('today',    'Hoje',     '', today,    'games-section--today');
+  html += renderSection('tomorrow', 'Amanhã',   '', tomorrow, 'games-section--tomorrow');
   weekSections.forEach(ws => {
-    html += renderSection(ws.sid, ws.title, '<i class="fa-solid fa-calendar-week"></i>', ws.games, 'games-section--week');
+    html += renderSection(ws.sid, ws.title, '', ws.games, 'games-section--week');
   });
   if (beyond.length)
-    html += renderSection('beyond', 'Próximos', '<i class="fa-solid fa-calendar-plus"></i>', beyond, 'games-section--beyond');
-  html += renderSection('finished', 'Finalizados', '<i class="fa-solid fa-flag-checkered"></i>',  finished, 'games-section--finished');
+    html += renderSection('beyond', 'Próximos', '', beyond, 'games-section--beyond');
+  html += renderSection('finished', 'Finalizados', '', finished, 'games-section--finished');
 
   container.innerHTML = html;
 
@@ -1451,6 +1458,12 @@ const fmtCountdown = (ms) => {
   const s = Math.floor((ms % 60000) / 1000);
   if (d >= 1) return `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+};
+const fmtCountdownShort = (ms) => {
+  if (ms <= 0) return '--:--';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 };
 
 const fmtLiveClock = (g) => {
@@ -1503,15 +1516,16 @@ const startLiveClocks = () => {
 const startCountdowns = () => {
   S.games.forEach(g => {
     if (g.status !== 'aberto') return;
-    const el = document.getElementById(`cdtime-${g.id}`);
-    if (!el || el.dataset.t) return;
-    el.dataset.t = '1';
+    const el    = document.getElementById(`cdtime-${g.id}`);
+    const elMob = document.getElementById(`cdtime-mob-${g.id}`);
+    if ((!el && !elMob) || (el && el.dataset.t)) return;
+    if (el) el.dataset.t = '1';
 
     const tick = () => {
       const diff = new Date(g.data_hora) - Date.now();
       const txt  = fmtCountdown(diff);
-      el.textContent = txt;
-      if (diff <= 0) el.classList.add('game-card__countdown-time--expired');
+      if (el)    { el.textContent = txt; if (diff <= 0) el.classList.add('game-card__countdown-time--expired'); }
+      if (elMob) { elMob.textContent = fmtCountdown(diff); if (diff <= 0) elMob.classList.add('game-card__countdown-time--expired'); }
     };
     tick();
     S.timers.push(setInterval(tick, 1000));
@@ -1881,7 +1895,7 @@ const loadAdminOnline = async () => {
     }
 
     const _statusLabel = { active: 'Online', idle: 'Inativo', leaving: 'Saindo' };
-    const _statusColor = { active: 'var(--green,#00c853)', idle: '#ff9800', leaving: '#f44336' };
+    const _statusColor = { active: 'var(--green,#59ff15)', idle: '#ff9800', leaving: '#f44336' };
 
     // Render cards
     listEl.innerHTML = sessions.map(s => {
@@ -2128,7 +2142,7 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
         <div><div class="an-stat-card__val">${(+stats.total_visits||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Total Visitas</div></div>
       </div>
       <div class="an-stat-card">
-        <div class="an-stat-card__icon" style="background:rgba(0,200,83,.15);color:#00c853"><i class="fa-solid fa-users"></i></div>
+        <div class="an-stat-card__icon" style="background:rgba(89,255,21,.15);color:#59ff15"><i class="fa-solid fa-users"></i></div>
         <div><div class="an-stat-card__val">${(+stats.unique_ips||0).toLocaleString('pt-BR')}</div><div class="an-stat-card__label">Visitantes Únicos</div></div>
       </div>
       <div class="an-stat-card">
@@ -2419,11 +2433,11 @@ const generateBetCard = async (bet) => {
   // ── Helpers ───────────────────────────────────────────────
   const accentGrad = () => {
     const g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0,   'rgba(0,200,83,0)');
-    g.addColorStop(0.25,'#00C853');
+    g.addColorStop(0,   'rgba(89,255,21,0)');
+    g.addColorStop(0.25,'#59ff15');
     g.addColorStop(0.5, '#FFD700');
-    g.addColorStop(0.75,'#00C853');
-    g.addColorStop(1,   'rgba(0,200,83,0)');
+    g.addColorStop(0.75,'#59ff15');
+    g.addColorStop(1,   'rgba(89,255,21,0)');
     return g;
   };
 
@@ -2550,15 +2564,15 @@ const generateBetCard = async (bet) => {
     brandX += logoSz + 8;
   }
   ctx.font = 'bold 15px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = '#00C853'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#59ff15'; ctx.textAlign = 'left';
   ctx.fillText(siteName, brandX, 34);
 
   // Status badge (top-right)
   if (bet.status === 'ganhou' || bet.status === 'perdido') {
     const isWin = bet.status === 'ganhou';
     const label = isWin ? 'GANHOU!' : 'PERDEU';
-    const bg    = isWin ? 'rgba(0,200,83,.20)' : 'rgba(255,71,87,.18)';
-    const col   = isWin ? '#00C853' : '#FF4757';
+    const bg    = isWin ? 'rgba(89,255,21,.20)' : 'rgba(255,71,87,.18)';
+    const col   = isWin ? '#59ff15' : '#FF4757';
     ctx.font = 'bold 11px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
     const tw = ctx.measureText(label).width + 20;
     rrect(ctx, W - tw - 14, 18, tw, 22, 11);
@@ -2615,13 +2629,13 @@ const generateBetCard = async (bet) => {
   const boxW = 200, boxH = 72;
   rrect(ctx, cx - boxW / 2, scoreY, boxW, boxH, 14);
   const sg = ctx.createLinearGradient(cx - boxW / 2, scoreY, cx + boxW / 2, scoreY + boxH);
-  sg.addColorStop(0, 'rgba(0,200,83,.18)');
+  sg.addColorStop(0, 'rgba(89,255,21,.18)');
   sg.addColorStop(1, 'rgba(0,160,60,.08)');
   ctx.fillStyle = sg; ctx.fill();
-  ctx.strokeStyle = 'rgba(0,200,83,.50)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = 'rgba(89,255,21,.50)'; ctx.lineWidth = 1.5; ctx.stroke();
 
   ctx.font = '700 10px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-  ctx.fillStyle = '#00C853'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#59ff15'; ctx.textAlign = 'center';
   ctx.fillText('MEU PALPITE', cx, scoreY + 18);
 
   ctx.font = 'bold 36px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
@@ -2801,11 +2815,11 @@ const generateGameCard = async (game) => {
 
   const accentGrad = () => {
     const g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0,    'rgba(0,200,83,0)');
-    g.addColorStop(0.25, '#00C853');
+    g.addColorStop(0,    'rgba(89,255,21,0)');
+    g.addColorStop(0.25, '#59ff15');
     g.addColorStop(0.5,  '#FFD700');
-    g.addColorStop(0.75, '#00C853');
-    g.addColorStop(1,    'rgba(0,200,83,0)');
+    g.addColorStop(0.75, '#59ff15');
+    g.addColorStop(1,    'rgba(89,255,21,0)');
     return g;
   };
 
@@ -2853,7 +2867,7 @@ const generateGameCard = async (game) => {
   ctx.fillStyle = accentGrad(); ctx.fillRect(0, 0, W, 5);
 
   // ── Header: brand + status badge ────────────────────────────
-  ctx.font = F(13); ctx.fillStyle = '#00C853'; ctx.textAlign = 'left';
+  ctx.font = F(13); ctx.fillStyle = '#59ff15'; ctx.textAlign = 'left';
   ctx.fillText('BetCopa', 18, 26);
 
   {
@@ -2868,7 +2882,7 @@ const generateGameCard = async (game) => {
     } else {
       const dt = new Date(game.data_hora);
       label = dt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      bg = 'rgba(0,200,83,.15)'; col = '#00C853';
+      bg = 'rgba(89,255,21,.15)'; col = '#59ff15';
     }
     const tw = ctx.measureText(label).width + 22;
     rrect(ctx, W - tw - 12, 10, tw, 22, 11);
@@ -2963,7 +2977,7 @@ const generateGameCard = async (game) => {
   // ── Divisor ──────────────────────────────────────────────────
   ctx.save(); ctx.globalAlpha = 0.09;
   const dg = ctx.createLinearGradient(0, 0, W, 0);
-  dg.addColorStop(0, 'transparent'); dg.addColorStop(.5, '#00C853'); dg.addColorStop(1, 'transparent');
+  dg.addColorStop(0, 'transparent'); dg.addColorStop(.5, '#59ff15'); dg.addColorStop(1, 'transparent');
   ctx.strokeStyle = dg; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(30, divY); ctx.lineTo(W - 30, divY); ctx.stroke();
   ctx.restore();
@@ -2973,7 +2987,7 @@ const generateGameCard = async (game) => {
   if (myBet) {
     const won = myBet.status === 'ganhou';
     const lost = myBet.status === 'perdeu';
-    const infoCol = won ? '#00C853' : (lost ? '#EF4444' : 'rgba(255,255,255,.55)');
+    const infoCol = won ? '#59ff15' : (lost ? '#EF4444' : 'rgba(255,255,255,.55)');
     ctx.font = F(9, '600'); ctx.fillStyle = infoCol; ctx.textAlign = 'center';
     ctx.fillText('MEU PALPITE', cx, infoY);
     ctx.save();
@@ -4151,7 +4165,7 @@ const showResultado = (bet, won) => {
   if (won) {
     // Confetti comemorativo
     if (typeof confetti === 'function') {
-      confetti({ particleCount: 150, spread: 80, colors: ['#00C853', '#FFD700', '#ffffff'], origin: { y: 0.6 } });
+      confetti({ particleCount: 150, spread: 80, colors: ['#59ff15', '#FFD700', '#ffffff'], origin: { y: 0.6 } });
     }
 
     content.innerHTML = `
@@ -4642,7 +4656,7 @@ const submitBulkResult = async () => {
     html:         `<small style="color:#888">Esta ação processará todas as apostas e <b>não pode ser desfeita</b>.</small>`,
     confirmText:  'Sim, registrar',
     cancelText:   'Cancelar',
-    confirmColor: '#00c853',
+    confirmColor: '#59ff15',
   });
   if (!ok) return;
 
@@ -4839,7 +4853,7 @@ const submitAdminResult = async (e) => {
     html:         `<strong>${nomeCasa} ${placarCasa} × ${placarFora} ${nomeFora}</strong><br><small style="color:#888">Esta ação processará todas as apostas e <b>não pode ser desfeita</b>.</small>`,
     confirmText:  'Sim, registrar',
     cancelText:   'Cancelar',
-    confirmColor: '#00c853',
+    confirmColor: '#59ff15',
   });
   if (!ok) return;
 
@@ -6005,7 +6019,7 @@ const bind = () => {
     } catch (err) {
       toast(err.message || 'Erro ao excluir.', 'danger');
     } finally {
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Limpar tudo';
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Excluir todos';
     }
   });
   document.getElementById('btnBulkClear')?.addEventListener('click', () => {
@@ -6251,7 +6265,7 @@ const bind = () => {
         modal_close: { icon: 'fa-solid fa-window-minimize',    color: '#f87171' },
         action:      { icon: 'fa-solid fa-bolt',                color: '#fbbf24' },
         form:        { icon: 'fa-solid fa-pen-to-square',       color: '#a78bfa' },
-        bet:         { icon: 'fa-solid fa-futbol',              color: '#00c853' },
+        bet:         { icon: 'fa-solid fa-futbol',              color: '#59ff15' },
         payment:     { icon: 'fa-solid fa-credit-card',         color: '#f59e0b' },
         auth:        { icon: 'fa-solid fa-user-check',          color: '#818cf8' },
         error:       { icon: 'fa-solid fa-circle-exclamation',  color: '#f87171' },
@@ -6391,48 +6405,6 @@ const bind = () => {
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
   document.getElementById('btnSyncImages')?.addEventListener('click', syncImages);
 
-  const LEAGUE_NAMES = {
-    2000: 'Copa do Mundo',   2013: 'Brasileirão',      2001: 'Champions League',
-    2021: 'Premier League',  2014: 'La Liga',           2019: 'Serie A',
-    2002: 'Bundesliga',      2015: 'Ligue 1',           2003: 'Eredivisie',
-    2017: 'Primeira Liga',   2152: 'Libertadores',
-  };
-
-  let _leagueCounts = {};
-
-  const _renderLeagueBadges = () => {
-    const el = document.getElementById('leaguePreviewBadges');
-    if (!el) return;
-    el.innerHTML = Object.entries(LEAGUE_NAMES).map(([id, name]) => {
-      const n = _leagueCounts[id];
-      const hasCount = n !== undefined && n !== null;
-      const cls = hasCount ? (n > 0 ? 'league-badge--ok' : 'league-badge--zero') : '';
-      return `<span class="league-badge ${cls}" data-league-badge="${id}">
-        ${name}
-        ${hasCount ? `<strong>${n}</strong>` : ''}
-        <button class="league-badge__fetch" data-fetch-league="${id}" title="Buscar da API">
-          <i class="fa-solid fa-rotate"></i>
-        </button>
-      </span>`;
-    }).join('');
-  };
-
-  const renderLeaguePreview = async () => {
-    const el   = document.getElementById('leaguePreviewBadges');
-    const meta = document.getElementById('leaguePreviewMeta');
-    if (!el) return;
-    try {
-      const { counts, cached_at } = await api('/api/admin/jogos/preview-all?cache_only=1');
-      _leagueCounts = counts || {};
-      if (meta && cached_at) {
-        const age = Math.round((Date.now() / 1000 - cached_at) / 60);
-        meta.textContent = age < 2 ? 'Cache recente' : `Cache de ${age} min atrás`;
-      } else if (meta) {
-        meta.textContent = 'Clique em  para buscar da API';
-      }
-    } catch { _leagueCounts = {}; }
-    ;
-  };
 
   document.getElementById('leaguePreviewBadges')?.addEventListener('click', async e => {
     const btn = e.target.closest('[data-fetch-league]');
@@ -6443,7 +6415,7 @@ const bind = () => {
     try {
       const { count } = await api(`/api/admin/jogos/preview-league?id=${id}`);
       _leagueCounts[id] = count;
-      ;
+      _renderLeagueBadges();
       const meta = document.getElementById('leaguePreviewMeta');
       if (meta) meta.textContent = 'Atualizado agora';
     } catch (err) {
@@ -6497,6 +6469,49 @@ const statusPill = (s) => {
     ativo: 'Ativo', bloqueado: 'Bloqueado',
   };
   return `<span class="status-pill status-pill--${s}">${labels[s] || s}</span>`;
+};
+
+// ── League preview (escopo global para switchAdminTab acessar) ─
+const _LEAGUE_NAMES = {
+  2000: 'Copa do Mundo',   2013: 'Brasileirão',      2001: 'Champions League',
+  2021: 'Premier League',  2014: 'La Liga',           2019: 'Serie A',
+  2002: 'Bundesliga',      2015: 'Ligue 1',           2003: 'Eredivisie',
+  2017: 'Primeira Liga',   2152: 'Libertadores',
+};
+let _leagueCounts = {};
+
+const _renderLeagueBadges = () => {
+  const el = document.getElementById('leaguePreviewBadges');
+  if (!el) return;
+  el.innerHTML = Object.entries(_LEAGUE_NAMES).map(([id, name]) => {
+    const n = _leagueCounts[id];
+    const hasCount = n !== undefined && n !== null;
+    const cls = hasCount ? (n > 0 ? 'league-badge--ok' : 'league-badge--zero') : '';
+    return `<span class="league-badge ${cls}" data-league-badge="${id}">
+      ${name}
+      ${hasCount ? `<strong>${n}</strong>` : ''}
+      <button class="league-badge__fetch" data-fetch-league="${id}" title="Buscar da API">
+        <i class="fa-solid fa-rotate"></i>
+      </button>
+    </span>`;
+  }).join('');
+};
+
+const renderLeaguePreview = async () => {
+  const el   = document.getElementById('leaguePreviewBadges');
+  const meta = document.getElementById('leaguePreviewMeta');
+  if (!el) return;
+  try {
+    const { counts, cached_at } = await api('/api/admin/jogos/preview-all?cache_only=1');
+    _leagueCounts = counts || {};
+    _renderLeagueBadges();
+    if (meta && cached_at) {
+      const age = Math.round((Date.now() / 1000 - cached_at) / 60);
+      meta.textContent = age < 2 ? 'Cache recente' : `Cache de ${age} min atrás`;
+    } else if (meta) {
+      meta.textContent = 'Clique em ↺ para buscar da API';
+    }
+  } catch { _leagueCounts = {}; _renderLeagueBadges(); }
 };
 
 // ── Admin tab navigation ──────────────────────────────────────
@@ -6751,7 +6766,7 @@ const handleBlockUser = async (uid, block) => {
       : 'O usuário voltará a ter acesso normalmente.',
     confirmText:  block ? 'Bloquear' : 'Desbloquear',
     cancelText:  'Cancelar',
-    confirmColor: block ? '#e63946' : '#00c853',
+    confirmColor: block ? '#e63946' : '#59ff15',
   });
   if (!ok) return;
 
@@ -6795,7 +6810,7 @@ const handleChangeUserPassword = async (uid, nome) => {
     showCancelButton: true,
     confirmButtonText: 'Salvar',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#00c853',
+    confirmButtonColor: '#59ff15',
     reverseButtons: true,
     inputValidator: (v) => (!v || v.length < 6) ? 'Mínimo 6 caracteres.' : null,
   });
@@ -6828,7 +6843,7 @@ const handleUserBonus = async (uid, nome) => {
     showCancelButton: true,
     confirmButtonText: 'Confirmar',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#00c853',
+    confirmButtonColor: '#59ff15',
     reverseButtons: true,
     didOpen: () => {
       let tipo = 'add';
