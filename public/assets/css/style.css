@@ -1314,6 +1314,20 @@ body.scroll-locked {
 }
 .games-section--live .games-section__title     { color: var(--danger); }
 .games-section--live .games-section__count     { background: rgba(255,71,87,.12); color: var(--danger); }
+
+.dot-live {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #EF4444;
+  box-shadow: 0 0 6px rgba(239,68,68,.8);
+  animation: dot-pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.5); opacity: .5; }
+}
 .games-section--upcoming .games-section__title { color: var(--text-muted); }
 .games-section--upcoming .games-section__count { background: var(--surface-2); color: var(--text-muted); }
 .games-section--finished .games-section__title { color: var(--text-muted); }
@@ -1343,13 +1357,37 @@ body.scroll-locked {
   .games-grid .gc-meta                          { font-size: .78rem; }
   .games-grid .btn--bet                         { padding: .52rem .6rem; font-size: .8rem; }
 
-  /* Seção HOJE (3 colunas) — tamanhos normais */
+  /* Seções AO VIVO / DAQUI A POUCO / HOJE — tamanho normal (3 colunas) */
+  .games-section--live .games-grid,
+  .games-section--soon .games-grid,
+  .games-section--today .games-grid              { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .games-section--live .game-card,
+  .games-section--soon .game-card,
   .games-section--today .game-card              { padding: 1.1rem 1.15rem .9rem; gap: .8rem; }
+
+  .games-section--live .game-card__emblem,
+  .games-section--soon .game-card__emblem,
   .games-section--today .game-card__emblem      { width: 62px; height: 46px; }
+
+  .games-section--live .game-card__emblem img,
+  .games-section--soon .game-card__emblem img,
   .games-section--today .game-card__emblem img  { width: 62px !important; height: 46px !important; }
+
+  .games-section--live .game-card__name,
+  .games-section--soon .game-card__name,
   .games-section--today .game-card__name        { font-size: .98rem; letter-spacing: .06em; }
+
+  .games-section--live .game-card__matchup,
+  .games-section--soon .game-card__matchup,
   .games-section--today .game-card__matchup     { gap: .4rem; }
+
+  .games-section--live .game-card__team,
+  .games-section--soon .game-card__team,
   .games-section--today .game-card__team        { gap: .35rem; }
+
+  .games-section--live .gc-league,
+  .games-section--soon .gc-league,
   .games-section--today .gc-league              { display: flex; }
 }
 
@@ -3858,7 +3896,8 @@ button.copa-hero__stat:hover {
   flex-direction: row;
   gap: .4rem;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding: 0 1rem .8rem;

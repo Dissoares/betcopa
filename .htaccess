@@ -2,6 +2,10 @@
   RewriteEngine On
   RewriteBase /
 
+  # Rotas de share e OG — devem ir para share.php/og.php antes do catch-all
+  RewriteRule ^share/game/([0-9]+)/og\.png$ public/og.php?id=$1 [L,QSA]
+  RewriteRule ^share/game/([0-9]+)$          public/share.php?id=$1 [L,QSA]
+
   # Se o arquivo já existir em public, sirva ele diretamente
   RewriteCond %{REQUEST_URI} !^/public/
   RewriteCond %{DOCUMENT_ROOT}/public/%{REQUEST_URI} -f [OR]

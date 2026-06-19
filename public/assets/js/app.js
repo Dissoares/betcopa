@@ -1143,6 +1143,22 @@ const renderMatchBanner = () => {
 
   const isDesktop = () => window.innerWidth >= 768;
   let current = 0;
+  let _mbScrollRaf = null;
+
+  const mbSmoothScroll = (el, targetLeft, duration = 600) => {
+    if (_mbScrollRaf) cancelAnimationFrame(_mbScrollRaf);
+    const startLeft = el.scrollLeft;
+    const diff = targetLeft - startLeft;
+    if (Math.abs(diff) < 1) return;
+    const startTime = performance.now();
+    const easeInOutQuart = t => t < .5 ? 8*t*t*t*t : 1 - Math.pow(-2*t + 2, 4) / 2;
+    const tick = (now) => {
+      const p = Math.min((now - startTime) / duration, 1);
+      el.scrollLeft = startLeft + diff * easeInOutQuart(p);
+      if (p < 1) _mbScrollRaf = requestAnimationFrame(tick);
+    };
+    _mbScrollRaf = requestAnimationFrame(tick);
+  };
 
   const goTo = (idx) => {
     current = Math.max(0, Math.min(idx, slides.length - 1));
@@ -1151,7 +1167,7 @@ const renderMatchBanner = () => {
 
     const strip = document.getElementById('mbStrip');
     const card = strip.children[current];
-    if (card) strip.scrollTo({ left: card.offsetLeft - strip.offsetLeft, behavior: 'smooth' });
+    if (card) mbSmoothScroll(strip, card.offsetLeft - strip.offsetLeft);
     strip.querySelectorAll('.mb-slide').forEach((s, i) => s.classList.toggle('mb-slide--active', i === current));
   };
 
@@ -1414,7 +1430,7 @@ const renderGames = () => {
       liveWrap.innerHTML = renderSection('live', 'Ao Vivo', '', live, 'games-section--live');
     } else if (soon.length) {
       soonFeatured = true;
-      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '', soon, 'games-section--soon');
+      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '<span class="dot-live"></span>', soon, 'games-section--soon');
     } else {
       liveWrap.innerHTML = '';
     }
@@ -1423,9 +1439,9 @@ const renderGames = () => {
   // Demais seções no grid principal (sem ao vivo; soon já pode estar no topo)
   let html = '';
   if (!soonFeatured) {
-    html += renderSection('soon', 'Daqui a Pouco', '', soon, 'games-section--soon');
+    html += renderSection('soon', 'Daqui a Pouco', '<span class="dot-live"></span>', soon, 'games-section--soon');
   }
-  html += renderSection('today',    'Hoje',     '', today,    'games-section--today');
+  html += renderSection('today',    'Ainda hoje!', '', today,    'games-section--today');
   html += renderSection('tomorrow', 'Amanhã',   '', tomorrow, 'games-section--tomorrow');
   weekSections.forEach(ws => {
     html += renderSection(ws.sid, ws.title, '', ws.games, 'games-section--week');
@@ -7703,6 +7719,23 @@ const init = async () => {
   await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
+
+  // Deep link: /share/game/ID redireciona para /?jogo=ID e abre o modal automaticamente
+  const _dlParam = new URLSearchParams(location.search).get('jogo');
+  console.log('[deep-link] param:', _dlParam, '| search:', location.search, '| games:', S.games.length);
+  if (_dlParam) {
+    const _dlGameId = Number(_dlParam);
+    history.replaceState(null, '', location.pathname);
+    if (_dlGameId) {
+      const _dlGame = S.games.find(g => Number(g.id) === _dlGameId);
+      console.log('[deep-link] game found:', _dlGame);
+      if (_dlGame) {
+        setTimeout(() => { console.log('[deep-link] abrindo modal', _dlGame.id); openBetModal(_dlGame.id); }, 600);
+      } else {
+        console.warn('[deep-link] jogo', _dlGameId, 'não encontrado. IDs disponíveis:', S.games.map(g => g.id));
+      }
+    }
+  }
 
   // Restaura palpite pendente salvo no localStorage
   restorePendingBet();

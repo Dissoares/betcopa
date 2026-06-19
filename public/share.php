@@ -18,6 +18,13 @@ if (!$game) {
     exit;
 }
 
+// Humanos recebem redirect direto; bots ficam para ler as OG tags
+$ua    = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$isBot = (bool) preg_match(
+    '/bot|crawl|spider|facebookexternalhit|Twitterbot|WhatsApp\/|Slackbot|TelegramBot|LinkedInBot|Pinterest|Discordbot/i',
+    $ua
+);
+
 $liveCodes = ['1H', '2H', 'ET', 'BT', 'P', 'HT', 'LIVE', 'INT'];
 $isLive    = in_array(strtoupper($game['status_api'] ?? ''), $liveCodes, true)
           || ($game['status'] === 'aberto' && strtotime($game['data_hora']) <= time());
@@ -56,6 +63,11 @@ $imgH   = htmlspecialchars($ogImage,  ENT_QUOTES, 'UTF-8');
 $urlH   = htmlspecialchars($pageUrl,  ENT_QUOTES, 'UTF-8');
 $homeH  = htmlspecialchars($homeUrl,  ENT_QUOTES, 'UTF-8');
 
+if (!$isBot) {
+    header('Location: ' . $homeUrl . '?jogo=' . $id, true, 302);
+    exit;
+}
+
 header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
@@ -77,9 +89,10 @@ header('Content-Type: text/html; charset=UTF-8');
   <meta name="twitter:title"       content="<?= $titleH ?>">
   <meta name="twitter:description" content="<?= $descH ?>">
   <meta name="twitter:image"       content="<?= $imgH ?>">
-  <meta http-equiv="refresh" content="0;url=<?= $homeH ?>">
+  <meta http-equiv="refresh" content="0;url=<?= $homeH ?>?jogo=<?= $id ?>">
+  <script>window.location.replace(<?= json_encode($homeUrl . '?jogo=' . $id) ?>);</script>
 </head>
 <body style="background:#080e1c;color:#fff;font-family:sans-serif;text-align:center;padding:2rem">
-  <p>Redirecionando para <a href="<?= $homeH ?>" style="color:#00C853">BetCopa</a>...</p>
+  <p>Redirecionando... <a href="<?= $homeH ?>?jogo=<?= $id ?>" style="color:#00C853">Clique aqui se não redirecionar</a></p>
 </body>
 </html>
