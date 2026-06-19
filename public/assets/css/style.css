@@ -1672,25 +1672,59 @@ body.scroll-locked {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.1rem 1.4rem;
-  display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
   box-shadow: var(--shadow-card);
 }
 .bet-card--win  { border-color: var(--tint-win-border);  background: var(--tint-win-bg); }
 .bet-card--loss { border-color: var(--tint-loss-border); background: var(--tint-loss-bg); }
 
-.bet-card__game { flex: 1; min-width: 140px; }
-.bet-card__game-name { font-weight: 700; margin-bottom: .18rem; font-size: .95rem; }
-.bet-card__palpite   { color: var(--text-muted); font-size: .85rem; }
+/* Linha 1: times + badge de status */
+.bet-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.bet-card__teams {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+  flex-wrap: wrap;
+}
+.bet-card__teams strong { font-weight: 700; }
+.bet-card__vs { color: var(--text-muted); font-size: .8rem; font-weight: 600; }
+.bet-flag { width: 1.4rem; height: 1rem; border-radius: 2px; object-fit: cover; flex-shrink: 0; }
 
-.bet-card__meta  { display: flex; gap: 1.25rem; }
+/* Linha 2: palpite */
+.bet-card__palpite { color: var(--text-muted); font-size: .82rem; display: flex; align-items: center; gap: .35rem; }
+.bet-card__palpite i { opacity: .55; font-size: .78rem; }
+.bet-card__palpite .score--win  { color: var(--primary); font-weight: 700; }
+.bet-card__palpite .score--lose { color: var(--danger);  font-weight: 700; }
+.bet-card__palpite .score--draw { color: var(--text);    font-weight: 700; }
+
+/* Linha 3: footer com stats + ação */
+.bet-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: .5rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.bet-card__meta  { display: flex; gap: 1.1rem; }
 .bet-card__col   { text-align: center; }
-.bet-card__col-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: .2rem; }
-.bet-card__col-val   { font-size: .95rem; font-weight: 700; }
+.bet-card__col-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: .15rem; }
+.bet-card__col-val   { font-size: .92rem; font-weight: 700; }
 .bet-card__col-val--win  { color: var(--primary); }
 .bet-card__col-val--loss { color: var(--danger); }
-
-.bet-card__actions { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+.bet-card__actions { display: flex; gap: .4rem; align-items: center; margin-left: auto; }
 
 
 /* ============================================================
@@ -3113,8 +3147,8 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .games-grid    { grid-template-columns: 1fr; }
   /* ranking-grid removido — ver hf-grid */
   .form-row      { grid-template-columns: 1fr; }
-  .bet-card      { flex-direction: column; align-items: flex-start; }
-  .bet-card__actions { margin-left: 0; }
+  .bet-card__footer { flex-direction: column; align-items: flex-start; }
+  .bet-card__actions { margin-left: 0; width: 100%; justify-content: flex-end; }
   .view-hero__title  { font-size: 1.75rem; }
   .dash-grid     { grid-template-columns: repeat(2, 1fr); }
 
@@ -3620,7 +3654,13 @@ button.copa-hero__stat:hover {
   background: var(--border); flex-shrink: 0;
   transition: background .2s;
 }
-.bet-step--done   .bet-step__dot { background: var(--primary); }
+.bet-step__dot--check {
+  width: 16px; height: 16px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.bet-step__dot--check i { font-size: .55rem; color: #000; font-weight: 900; }
+.bet-step--done   .bet-step__dot:not(.bet-step__dot--check) { background: var(--primary); }
 .bet-step--active .bet-step__dot { background: var(--text); box-shadow: 0 0 0 3px rgba(249,250,251,.12); }
 .bet-step__label { font-weight: 600; white-space: nowrap; }
 .bet-step__line {
@@ -6644,12 +6684,12 @@ input:focus, select:focus {
 .share-btn:hover  { filter: brightness(1.1); }
 .share-btn:active { transform: scale(.97); filter: brightness(.93); }
 
-/* Cores oficiais */
-#btnGameShareWhatsApp { background: #25D366; }
-#btnGameShareTelegram { background: #229ED9; }
-#btnGameShareFacebook { background: #1877F2; }
-#btnGameShareTwitter  { background: #111;    }
-.share-btn--native    { background: var(--primary, #00C853); }
+/* Cores oficiais — valem para ambos os modais (jogo e palpite) */
+#btnGameShareWhatsApp, #btnShareWhatsApp { background: #25D366; }
+#btnGameShareTelegram, #btnShareTelegram  { background: #229ED9; }
+#btnGameShareFacebook, #btnShareFacebook  { background: #1877F2; }
+#btnGameShareTwitter,  #btnShareTwitter   { background: #111;    }
+.share-btn--native { background: var(--primary, #00C853); }
 .share-btn--copy {
   background: var(--surface-2);
   color: var(--text-muted);
@@ -6657,12 +6697,8 @@ input:focus, select:focus {
 }
 .share-btn--copy:hover { color: var(--text); filter: none; background: var(--surface-3); }
 
-[data-theme="light"] #btnGameShareTwitter,
-.theme-light #btnGameShareTwitter { background: #1a1a1a; }
-
-/* No tema claro, Twitter fica um pouco mais claro para ser visível */
-[data-theme="light"] #btnGameShareTwitter,
-.theme-light #btnGameShareTwitter { background: #1a1a1a; }
+[data-theme="light"] #btnGameShareTwitter, [data-theme="light"] #btnShareTwitter,
+.theme-light #btnGameShareTwitter,         .theme-light #btnShareTwitter { background: #1a1a1a; }
 
 /* Mobile < 380px: 1 coluna */
 @media (max-width: 380px) {
@@ -6692,17 +6728,7 @@ input:focus, select:focus {
 }
 
 /* ── Game header: team name row + status badge side-by-side ── */
-.bet-card__game-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: .5rem;
-  margin-bottom: .15rem;
-}
-.bet-card__game-header .badge {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
+.bet-card__header .badge { flex-shrink: 0; white-space: nowrap; }
 
 /* ── Share row — full-width bottom of card ────────────────── */
 .bet-card__share {
@@ -6718,21 +6744,21 @@ input:focus, select:focus {
   align-items: center;
   justify-content: center;
   gap: .5rem;
-  padding: .5rem 1rem;
+  padding: .55rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
+  border: none;
+  background: rgba(8,12,24,.85);
+  color: rgba(255,255,255,.75);
   font-size: .82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color .15s, color .15s, background .15s;
+  letter-spacing: .01em;
+  transition: background .15s, color .15s, transform .1s;
 }
-.bet-card__share-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--tint-primary);
-}
+.bet-card__share-btn i { font-size: .9rem; opacity: .7; }
+.bet-card__share-btn:hover { background: rgba(8,12,24,1); color: #fff; }
+.bet-card__share-btn:active { transform: scale(.98); }
+
 
 /* Verify-PIX hint inside bet card */
 .bet-verify-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; }

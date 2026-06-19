@@ -1550,23 +1550,29 @@ const startCountdowns = () => {
 
 // ── Bets list ─────────────────────────────────────────────────
 const betTimeline = (status) => {
+  const isWon  = status === 'ganhou';
+  const isLost = status === 'perdido';
   const STEPS = [
-    { key: 'pendente',  label: 'Aguardando' },
-    { key: 'pago',      label: 'Pago' },
-    { key: 'confirmado',label: 'Concorrendo' },
-    { key: 'resultado', label: status === 'ganhou' ? '<span style="color:var(--primary)">Ganhou!</span>' : status === 'perdido' ? '<span style="color:var(--danger)">Perdeu</span>' : 'Resultado' },
+    { key: 'pendente',   label: 'Palpite' },
+    { key: 'pago',       label: 'Pagamento' },
+    { key: 'confirmado', label: 'Aguardando Jogo' },
+    { key: 'resultado',  label: isWon ? '<span style="color:var(--primary)">Ganhou!</span>' : isLost ? '<span style="color:var(--danger)">Perdeu</span>' : 'Resultado' },
   ];
   const ORDER = ['pendente', 'pago', 'confirmado'];
-  const done  = status === 'ganhou' || status === 'perdido';
-  // confirmado: todos os passos anteriores ficam verdes (idx=3 cobre os 3 primeiros)
-  const idx   = done ? 3 : status === 'confirmado' ? 3 : ORDER.indexOf(status);
+  const done  = isWon || isLost;
+  // Palpite (i=0) sempre concluído — o card só existe se o palpite foi feito
+  // +1 faz "Palpite" virar done e aponta o active para o próximo passo
+  const idx   = done ? 4 : status === 'confirmado' ? 3 : ORDER.indexOf(status) + 1;
 
   return `<div class="bet-status-steps">${STEPS.map((step, i) => {
     const state = i < idx ? 'done' : i === idx ? 'active' : '';
+    const dot   = state === 'done'
+      ? `<span class="bet-step__dot bet-step__dot--check"><i class="fa-solid fa-check"></i></span>`
+      : `<span class="bet-step__dot"></span>`;
     const line  = i < STEPS.length - 1
       ? `<span class="bet-step__line${i < idx ? ' bet-step__line--done' : ''}"></span>`
       : '';
-    return `<span class="bet-step bet-step--${state}"><span class="bet-step__dot"></span><span class="bet-step__label">${step.label}</span></span>${line}`;
+    return `<span class="bet-step bet-step--${state}">${dot}<span class="bet-step__label">${step.label}</span></span>${line}`;
   }).join('')}</div>`;
 };
 
@@ -2675,7 +2681,7 @@ const openShareModal = async (betId) => {
   const overlay  = document.getElementById('modalShareOverlay');
   const spinner  = document.getElementById('shareSpinner');
   const canvas   = document.getElementById('shareCanvas');
-  const actionBtns = ['btnShareWhatsApp','btnShareTwitter','btnShareDownload','btnShareNative'];
+  const actionBtns = ['btnShareWhatsApp','btnShareTelegram','btnShareFacebook','btnShareTwitter','btnShareNative','btnShareCopyLink'];
 
   overlay.classList.remove('hidden');
   spinner.classList.remove('hidden');
@@ -2687,9 +2693,8 @@ const openShareModal = async (betId) => {
     await generateBetCard(bet);
     spinner.classList.add('hidden');
     canvas.classList.remove('hidden');
-    document.getElementById('btnShareWhatsApp')?.classList.remove('hidden');
-    document.getElementById('btnShareTwitter')?.classList.remove('hidden');
-    document.getElementById('btnShareDownload')?.classList.remove('hidden');
+    ['btnShareWhatsApp','btnShareTelegram','btnShareFacebook','btnShareTwitter','btnShareCopyLink']
+      .forEach(id => document.getElementById(id)?.classList.remove('hidden'));
     if (navigator.share) document.getElementById('btnShareNative')?.classList.remove('hidden');
   } catch {
     spinner.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#FF4757"></i><span>Erro ao gerar imagem.</span>';
@@ -2790,12 +2795,13 @@ const getShareText = (bet) => {
   const game  = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
   const fH = game?.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
   const fA = game?.bandeira_fora ? flagEmoji(game.bandeira_fora) + ' ' : '';
-  const nH = toPortuguese(bet?.time_casa).toUpperCase();
-  const nA = toPortuguese(bet?.time_fora).toUpperCase();
-  const match = bet ? `${fH}${nH} x ${fA}${nA}` : '';
-  const score = bet ? `${bet.placar_casa} x ${bet.placar_fora}` : '';
-  const liga  = game?.liga_nome ? `${game.liga_nome}` : '';
-  return `🏆 ${liga} 🏆\nMeu palpite para o jogo: ${match}\nAcho que vai ser de: ${score}, será que acerto?\nFaça seu palpite também, acesse! https://placarjogos.online/`;
+  const nH = toPortuguese(bet?.time_casa || '').toUpperCase();
+  const nA = toPortuguese(bet?.time_fora || '').toUpperCase();
+  const match = `${fH}${nH} × ${fA}${nA}`;
+  const score = `${bet?.placar_casa ?? 0} × ${bet?.placar_fora ?? 0}`;
+  const liga  = game?.liga_nome ? `🏆 ${game.liga_nome} 🏆\n` : '';
+  const url   = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+  return `${liga}Chutei ${score} em ${match}!\nSerá que acerto? Faça o seu também 👉 ${url}`;
 };
 
 const shareGameLink = async (gameId) => openGameShareModal(gameId);
@@ -3161,69 +3167,75 @@ const renderBets = () => {
     const isWin  = b.status === 'ganhou';
     const isLoss = b.status === 'perdido';
 
-    const game  = S.games.find(g => g.id === b.jogo_id);
-    const fHome = b.bandeira_casa || game?.bandeira_casa;
-    const fAway = b.bandeira_fora || game?.bandeira_fora;
-    const flagsHtml = (fHome || fAway)
-      ? `<div class="bet-card__game-flags">
-           ${fHome ? `<img src="${flagUrl(fHome)}" alt="${b.time_casa}" />` : ''}
-           <span>${b.time_casa}</span>
-           <span class="flag-sep">×</span>
-           ${fAway ? `<img src="${flagUrl(fAway)}" alt="${b.time_fora}" />` : ''}
-           <span>${b.time_fora}</span>
-         </div>`
-      : `<div class="bet-card__game-name">${b.time_casa} × ${b.time_fora}</div>`;
+    const game     = S.games.find(g => g.id === b.jogo_id);
+    const homeCode = b.bandeira_casa || game?.bandeira_casa || teamNameToIso(game?.time_casa || b.time_casa) || '';
+    const awayCode = b.bandeira_fora || game?.bandeira_fora || teamNameToIso(game?.time_fora || b.time_fora) || '';
+    const homeFlag = homeCode ? `<img src="${flagUrl(homeCode)}" onerror="this.src='${flagUrlCdn(homeCode)}'" class="bet-flag" alt="">` : '';
+    const awayFlag = awayCode ? `<img src="${flagUrl(awayCode)}" onerror="this.src='${flagUrlCdn(awayCode)}'" class="bet-flag" alt="">` : '';
 
-    // Badge de status aparece ao lado do nome do time
-    const statusBadge = b.status === 'confirmado'
-      ? `<span class="badge badge--confirmed"><i class="fa-solid fa-futbol"></i> Concorrendo</span>`
+    const statusBadge = b.status === 'pendente'
+      ? `<span class="badge badge--far"><i class="fa-solid fa-clock"></i> Pagamento Pendente</span>`
+      : b.status === 'pago'
+      ? `<span class="badge badge--soon"><i class="fa-solid fa-calendar-check"></i> Aguardando o Jogo</span>`
+      : b.status === 'confirmado'
+      ? `<span class="badge badge--confirmed"><i class="fa-solid fa-futbol"></i> Jogo em Andamento</span>`
       : isWin
-      ? `<span class="badge badge--open"><i class="fa-solid fa-trophy"></i> Ganhou!</span>`
+      ? `<span class="badge badge--open"><i class="fa-solid fa-trophy"></i> Acertou o Placar!</span>`
       : isLoss
-      ? `<span class="badge badge--closed"><i class="fa-solid fa-x"></i> Perdeu</span>`
-      : b.status === 'pendente'
-      ? `<span class="badge badge--far">Pendente</span>`
+      ? `<span class="badge badge--closed"><i class="fa-solid fa-circle-xmark"></i> Placar Errado</span>`
       : '';
 
-    // Ações de pagamento (apenas pendente/pago)
     const payHtml = b.status === 'pendente'
-      ? `<div class="bet-card__actions">
-           <button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}"><i class="fa-solid fa-credit-card"></i> Pagar PIX</button>
-         </div>`
+      ? `<button class="btn btn--primary btn--sm" data-action="pay" data-id="${b.id}"><i class="fa-brands fa-pix"></i> Pagar PIX</button>`
       : b.status === 'pago'
-      ? `<div class="bet-card__actions">
-           <button class="btn btn--primary btn--sm" data-action="repay" data-id="${b.id}"><i class="fa-brands fa-pix"></i> Ver PIX</button>
-           <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-circle-check"></i> Já Paguei</button>
-         </div>`
+      ? `<button class="btn btn--primary btn--sm" data-action="repay" data-id="${b.id}"><i class="fa-brands fa-pix"></i> Ver PIX</button>
+         <button class="btn btn--ghost btn--sm" data-action="confirm" data-id="${b.id}"><i class="fa-solid fa-circle-check"></i> Já Paguei</button>`
       : '';
 
     return `
       <div class="bet-card ${isWin ? 'bet-card--win' : ''} ${isLoss ? 'bet-card--loss' : ''}">
-        <div class="bet-card__game">
-          <div class="bet-card__game-header">
-            ${flagsHtml}
-            ${statusBadge}
+
+        <!-- Linha 1: times + badge -->
+        <div class="bet-card__header">
+          <div class="bet-card__teams">
+            ${homeFlag}<strong>${b.time_casa}</strong>
+            <span class="bet-card__vs">×</span>
+            ${awayFlag}<strong>${b.time_fora}</strong>
           </div>
-          <div class="bet-card__palpite"><i class="fa-solid fa-bullseye" style="font-size:.75em;opacity:.6"></i> Palpite: ${b.placar_casa} × ${b.placar_fora}</div>
-          ${betTimeline(b.status)}
+          ${statusBadge}
         </div>
-        <div class="bet-card__meta">
-          <div class="bet-card__col">
-            <div class="bet-card__col-label">Pago</div>
-            <div class="bet-card__col-val">${fmtMoney(b.valor)}</div>
-          </div>
-          <div class="bet-card__col">
-            <div class="bet-card__col-label">Mult.</div>
-            <div class="bet-card__col-val">${parseFloat(b.odd).toFixed(0)}×</div>
-          </div>
-          <div class="bet-card__col">
-            <div class="bet-card__col-label">${isWin ? 'Ganhou' : 'Prêmio'}</div>
-            <div class="bet-card__col-val ${isWin ? 'bet-card__col-val--win' : isLoss ? 'bet-card__col-val--loss' : ''}">
-              ${isLoss ? '—' : fmtMoney(b.possivel_ganho)}
+
+        <!-- Linha 2: palpite + timeline -->
+        <div class="bet-card__palpite"><i class="fa-solid fa-bullseye"></i> Palpite: ${(() => {
+          const h = Number(b.placar_casa), a = Number(b.placar_fora);
+          const hClass = h > a ? 'score--win' : h < a ? 'score--lose' : 'score--draw';
+          const aClass = a > h ? 'score--win' : a < h ? 'score--lose' : 'score--draw';
+          return `<span class="${hClass}">${b.placar_casa}</span> × <span class="${aClass}">${b.placar_fora}</span>`;
+        })()}</div>
+        ${betTimeline(b.status)}
+
+        <!-- Linha 3: stats + ação de pagamento -->
+        <div class="bet-card__footer">
+          <div class="bet-card__meta">
+            <div class="bet-card__col">
+              <div class="bet-card__col-label">Pago</div>
+              <div class="bet-card__col-val">${fmtMoney(b.valor)}</div>
+            </div>
+            <div class="bet-card__col">
+              <div class="bet-card__col-label">Mult.</div>
+              <div class="bet-card__col-val">${parseFloat(b.odd).toFixed(0)}×</div>
+            </div>
+            <div class="bet-card__col">
+              <div class="bet-card__col-label">${isWin ? 'Ganhou' : 'Prêmio'}</div>
+              <div class="bet-card__col-val ${isWin ? 'bet-card__col-val--win' : isLoss ? 'bet-card__col-val--loss' : ''}">
+                ${isLoss ? '—' : fmtMoney(b.possivel_ganho)}
+              </div>
             </div>
           </div>
+          ${payHtml ? `<div class="bet-card__actions">${payHtml}</div>` : ''}
         </div>
-        ${payHtml}
+
+        <!-- Linha 4: compartilhar -->
         <div class="bet-card__share">
           <button class="bet-card__share-btn" data-action="share" data-id="${b.id}">
             <i class="fa-solid fa-share-nodes"></i> Compartilhar Palpite
@@ -5791,44 +5803,47 @@ const bind = () => {
     if (e.target === document.getElementById('modalShareOverlay')) closeShareModal();
   });
   document.getElementById('btnShareWhatsApp')?.addEventListener('click', () => {
-    const bet    = S.bets.find(b => Number(b.id) === _shareBetId);
-    const canvas = document.getElementById('shareCanvas');
-    const text   = getShareText(bet);
-    if (canvas && navigator.canShare) {
-      canvas.toBlob(async blob => {
-        const file = new File([blob], 'palpite-betcopa.png', { type: 'image/png' });
-        if (navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ title: 'Meu palpite no BetCopa', text, files: [file] }); return; } catch { /* cancelled */ }
-        }
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-      }, 'image/png');
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    }
+    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
+    window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
+  });
+  document.getElementById('btnShareTelegram')?.addEventListener('click', () => {
+    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
+    const game = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
+    const url  = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(getShareText(bet))}`, '_blank');
+  });
+  document.getElementById('btnShareFacebook')?.addEventListener('click', () => {
+    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
+    const game = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
+    const url  = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
   });
   document.getElementById('btnShareTwitter')?.addEventListener('click', () => {
     const bet = S.bets.find(b => Number(b.id) === _shareBetId);
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText(bet))}`, '_blank');
   });
-  document.getElementById('btnShareDownload')?.addEventListener('click', () => {
-    const canvas = document.getElementById('shareCanvas');
-    if (!canvas) return;
-    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
-    const a = document.createElement('a');
-    a.download = `palpite-betcopa-${bet?.id ?? 'bet'}.png`;
-    a.href = canvas.toDataURL('image/png');
-    a.click();
-  });
   document.getElementById('btnShareNative')?.addEventListener('click', () => {
     const canvas = document.getElementById('shareCanvas');
-    const bet = S.bets.find(b => Number(b.id) === _shareBetId);
+    const bet    = S.bets.find(b => Number(b.id) === _shareBetId);
     if (!canvas || !navigator.share) return;
     canvas.toBlob(async blob => {
       try {
         const file = new File([blob], 'palpite-betcopa.png', { type: 'image/png' });
-        await navigator.share({ title: 'Meu palpite no BetCopa', text: getShareText(bet), files: [file] });
+        await navigator.share({ title: 'BetCopa', text: getShareText(bet), files: [file] });
       } catch { /* user cancelled */ }
     }, 'image/png');
+  });
+  document.getElementById('btnShareCopyLink')?.addEventListener('click', () => {
+    const bet  = S.bets.find(b => Number(b.id) === _shareBetId);
+    const game = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
+    const url  = game ? `${location.origin}/share/game/${game.id}` : location.origin;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('btnShareCopyLink');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Copiado!</span>';
+      btn.style.color = 'var(--primary)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    }).catch(() => toast('Não foi possível copiar o link.', 'danger'));
   });
 
   // Game share modal
