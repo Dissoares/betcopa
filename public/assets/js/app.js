@@ -926,15 +926,22 @@ const renderCard = (g, opts = {}) => {
 
   const cardClickable = !betBlocked && !isLive;
 
+  const shareBtn = !isFinal
+    ? `<button class="gc-share-btn" type="button" data-action="share-game" data-id="${g.id}" title="Compartilhar"><i class="fa-solid fa-share-nodes"></i></button>`
+    : '';
+
   return `
     <article class="game-card game-card--${statusClass}${opts.isToday ? ' game-card--today' : ''}" data-game-id="${g.id}"${!cardClickable ? ' data-blocked' : ''}>
       <div class="game-card__head">
         ${badgeLabel}
         ${leagueHtml}
-        ${isLive
-          ? `<span class="game-card__date game-card__date--live" id="gcdateclock-${g.id}">${liveShort ?? ''}</span>`
-          : `<time class="game-card__date">${fmtGameDate(g.data_hora)}</time>`
-        }
+        <div class="gc-head-right">
+          ${isLive
+            ? `<span class="game-card__date game-card__date--live" id="gcdateclock-${g.id}">${liveShort ?? ''}</span>`
+            : `<time class="game-card__date">${fmtGameDate(g.data_hora)}</time>`
+          }
+          ${shareBtn}
+        </div>
       </div>
       <div class="game-card__matchup">
         <div class="game-card__team">
@@ -2331,19 +2338,24 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
 // ── Share bet helpers ─────────────────────────────────────────
 const _flagCanvasCache = {};
 
-// Carrega bandeira via proxy same-origin (/api/flag/{code}) → sempre canvas-safe.
+// Carrega bandeira via proxy same-origin (/api/flag/{code}) com fallback CDN.
 const loadFlagForCanvas = code => {
   if (!code) return Promise.resolve(null);
-  if (_flagCanvasCache[code]) return _flagCanvasCache[code];
+  const key = code.toLowerCase();
+  if (_flagCanvasCache[key]) return _flagCanvasCache[key];
 
-  _flagCanvasCache[code] = new Promise(resolve => {
+  const tryImg = src => new Promise(res => {
     const img = new Image();
-    img.onload  = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = `/api/flag/${code.toLowerCase()}`;
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => res(img);
+    img.onerror = () => res(null);
+    img.src = src;
   });
 
-  return _flagCanvasCache[code];
+  _flagCanvasCache[key] = tryImg(`/api/flag/${key}`)
+    .then(img => img || tryImg(`https://flagcdn.com/w80/${key}.png`));
+
+  return _flagCanvasCache[key];
 };
 
 const loadImgCors = src => {
@@ -2387,8 +2399,10 @@ const generateBetCard = async (bet) => {
   ctx.scale(dpr, dpr);
 
   const game         = S.games.find(g => Number(g.id) === Number(bet.jogo_id));
-  const bandeiraCasa = bet.bandeira_casa || game?.bandeira_casa || '';
-  const bandeiraFora = bet.bandeira_fora || game?.bandeira_fora || '';
+  const bandeiraCasa = bet.bandeira_casa || game?.bandeira_casa
+    || teamNameToIso(bet.time_casa) || teamNameToIso(game?.time_casa) || '';
+  const bandeiraFora = bet.bandeira_fora || game?.bandeira_fora
+    || teamNameToIso(bet.time_fora) || teamNameToIso(game?.time_fora) || '';
   const siteName     = S.siteName || 'BetCopa';
   const siteLogo     = S.siteLogo || null;
   const ligaName     = bet.liga_nome || game?.liga_nome || '';
@@ -2688,6 +2702,60 @@ const toPortuguese = name => {
   return _ptNames[name.toLowerCase()] || name;
 };
 
+// Team name → ISO 3166 flag code (covers most national teams in PT and EN)
+const _teamIso = {
+  'brasil':'br','brazil':'br','argentina':'ar','franca':'fr','france':'fr',
+  'alemanha':'de','germany':'de','espanha':'es','spain':'es','portugal':'pt',
+  'marrocos':'ma','morocco':'ma','escocia':'gb-sct','escócia':'gb-sct','scotland':'gb-sct',
+  'inglaterra':'gb-eng','england':'gb-eng','pais de gales':'gb-wls','wales':'gb-wls',
+  'país de gales':'gb-wls','irlanda do norte':'gb-nir','northern ireland':'gb-nir',
+  'irlanda':'ie','ireland':'ie','belgica':'be','bélgica':'be','belgium':'be',
+  'croacia':'hr','croácia':'hr','croatia':'hr','japao':'jp','japão':'jp','japan':'jp',
+  'mexico':'mx','méxico':'mx','colombia':'co','colômbia':'co','chile':'cl','peru':'pe',
+  'uruguai':'uy','uruguay':'uy','equador':'ec','ecuador':'ec','bolivia':'bo','bolívia':'bo',
+  'paraguai':'py','paraguay':'py','venezuela':'ve','estados unidos':'us','usa':'us',
+  'canada':'ca','australia':'au','austrália':'au','nigeria':'ng','nigéria':'ng','nigeria':'ng',
+  'ghana':'gh','gana':'gh','senegal':'sn','camaroes':'cm','camarões':'cm','cameroon':'cm',
+  'egito':'eg','egypt':'eg','africa do sul':'za','áfrica do sul':'za','south africa':'za',
+  'italia':'it','itália':'it','italy':'it','russia':'ru','rússia':'ru',
+  'turquia':'tr','turkey':'tr','suica':'ch','suíça':'ch','switzerland':'ch',
+  'dinamarca':'dk','denmark':'dk','suecia':'se','suécia':'se','sweden':'se',
+  'noruega':'no','norway':'no','austria':'at','áustria':'at',
+  'polonia':'pl','polônia':'pl','poland':'pl','ucrania':'ua','ucrânia':'ua','ukraine':'ua',
+  'servia':'rs','sérvia':'rs','serbia':'rs','grecia':'gr','grécia':'gr','greece':'gr',
+  'hungria':'hu','hungary':'hu','romenia':'ro','romênia':'ro','romania':'ro',
+  'paises baixos':'nl','países baixos':'nl','netherlands':'nl','holanda':'nl',
+  'coreia do sul':'kr','south korea':'kr','coreia do norte':'kp','north korea':'kp',
+  'china':'cn','india':'in','índia':'in','indonesia':'id','indonésia':'id',
+  'tailandia':'th','tailândia':'th','thailand':'th','filipinas':'ph','philippines':'ph',
+  'arabia saudita':'sa','arábia saudita':'sa','saudi arabia':'sa',
+  'emirados arabes':'ae','uae':'ae','iran':'ir','irã':'ir',
+  'nigeria':'ng','tunisia':'tn','tunísia':'tn','tunisia':'tn','mali':'ml',
+  'costa do marfim':'ci','ivory coast':'ci','republica tcheca':'cz','czech republic':'cz',
+  'eslovaquia':'sk','slovakia':'sk','eslovenia':'si','slovenia':'si',
+  'albania':'al','albânia':'al','finlandia':'fi','finlândia':'fi','finland':'fi',
+  'islandia':'is','islândia':'is','iceland':'is','bulgaria':'bg','bulgária':'bg',
+  'roménia':'ro','letônia':'lv','latvia':'lv','lituania':'lt','lithuania':'lt',
+  'estonia':'ee','estônia':'ee','estonia':'ee','bielorrussia':'by','belarus':'by',
+  'georgia':'ge','armênia':'am','armenia':'am','azerbaijao':'az','azerbaijan':'az',
+  'cazaquistao':'kz','kazakhstan':'kz','uzbequistao':'uz','uzbekistan':'uz',
+  'chile':'cl','jamaica':'jm','cuba':'cu','haiti':'ht','trinidad e tobago':'tt',
+  'trinidad and tobago':'tt','costa rica':'cr','guatemala':'gt','honduras':'hn',
+  'el salvador':'sv','nicaragua':'ni','panama':'pa','panamá':'pa',
+  'quenia':'ke','kenya':'ke','tanzania':'tz','tanzânia':'tz','angola':'ao',
+  'mocambique':'mz','moçambique':'mz','mozambique':'mz','zimbabue':'zw','zimbabwe':'zw',
+  'zambia':'zm','zâmbia':'zm','etiópia':'et','ethiopia':'et','argelia':'dz','algeria':'dz',
+  'libia':'ly','libya':'ly','tunísia':'tn','sudao':'sd','sudan':'sd',
+};
+
+const teamNameToIso = name => {
+  if (!name) return null;
+  const key = name.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z\s]/g, '').trim();
+  return FLAGS[key] || _teamIso[key] || null;
+};
+
 const getShareText = (bet) => {
   const game  = S.games.find(g => Number(g.id) === Number(bet?.jogo_id));
   const fH = game?.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
@@ -2698,6 +2766,317 @@ const getShareText = (bet) => {
   const score = bet ? `${bet.placar_casa} x ${bet.placar_fora}` : '';
   const liga  = game?.liga_nome ? `${game.liga_nome}` : '';
   return `🏆 ${liga} 🏆\nMeu palpite para o jogo: ${match}\nAcho que vai ser de: ${score}, será que acerto?\nFaça seu palpite também, acesse! https://placarjogos.online/`;
+};
+
+const shareGameLink = async (gameId) => openGameShareModal(gameId);
+
+const generateGameCard = async (game) => {
+  const W = 600, H = 315;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.getElementById('gameShareCanvas');
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const isLive   = isGameLive(game);
+  const isFinal  = game.status === 'finalizado';
+  const score    = game.placar_real ? game.placar_real.replace('x', ' × ') : null;
+  const myBet    = S.bets.find(b => Number(b.jogo_id) === Number(game.id));
+  const nomeHome = toPortuguese(game.time_casa || '').toUpperCase();
+  const nomeAway = toPortuguese(game.time_fora || '').toUpperCase();
+  const ligaName = game.liga_nome || '';
+  const cx       = W / 2;
+
+  const homeCode = game.bandeira_casa || teamNameToIso(game.time_casa) || '';
+  const awayCode = game.bandeira_fora || teamNameToIso(game.time_fora) || '';
+
+  const [imgHome, imgAway] = await Promise.all([
+    loadFlagForCanvas(homeCode),
+    loadFlagForCanvas(awayCode),
+  ]);
+
+  const F = (sz, w = 'bold') =>
+    `${w} ${sz}px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif`;
+
+  const accentGrad = () => {
+    const g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0,    'rgba(0,200,83,0)');
+    g.addColorStop(0.25, '#00C853');
+    g.addColorStop(0.5,  '#FFD700');
+    g.addColorStop(0.75, '#00C853');
+    g.addColorStop(1,    'rgba(0,200,83,0)');
+    return g;
+  };
+
+  // Flag retangular com cantos arredondados
+  const drawFlag = (img, code, name, fx, fy, fw, fh) => {
+    const r = 9;
+    ctx.save();
+    rrect(ctx, fx, fy, fw, fh, r);
+    ctx.clip();
+    if (img) {
+      const iw = img.naturalWidth  || img.width  || fw;
+      const ih = img.naturalHeight || img.height || fh;
+      const scale = Math.max(fw / iw, fh / ih);
+      const sw = iw * scale, sh = ih * scale;
+      ctx.drawImage(img, fx + (fw - sw) / 2, fy + (fh - sh) / 2, sw, sh);
+    } else {
+      const ini  = ((code || name || '??').toUpperCase()).slice(0, 2);
+      const seed = ini.charCodeAt(0) * 53 + (ini.charCodeAt(1) || 0) * 29;
+      const hue  = seed % 360;
+      const gr   = ctx.createLinearGradient(fx, fy, fx + fw, fy + fh);
+      gr.addColorStop(0, `hsla(${hue},55%,28%,1)`);
+      gr.addColorStop(1, `hsla(${hue},40%,14%,1)`);
+      ctx.fillStyle = gr; ctx.fillRect(fx, fy, fw, fh);
+      ctx.font = F(fh * 0.40); ctx.fillStyle = `hsla(${hue},80%,86%,1)`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(ini, fx + fw / 2, fy + fh / 2);
+    }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 1.5;
+    rrect(ctx, fx, fy, fw, fh, r); ctx.stroke();
+  };
+
+  // ── Background ──────────────────────────────────────────────
+  ctx.fillStyle = '#080f1e'; ctx.fillRect(0, 0, W, H);
+  const bgGlow = ctx.createRadialGradient(cx, H / 2, 0, cx, H / 2, 300);
+  bgGlow.addColorStop(0, 'rgba(0,160,70,.13)');
+  bgGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = bgGlow; ctx.fillRect(0, 0, W, H);
+
+  ctx.save(); ctx.globalAlpha = 0.025; ctx.fillStyle = '#fff';
+  for (let gx = 12; gx < W; gx += 24)
+    for (let gy = 12; gy < H; gy += 24) { ctx.beginPath(); ctx.arc(gx, gy, 1, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+
+  ctx.fillStyle = accentGrad(); ctx.fillRect(0, 0, W, 5);
+
+  // ── Header: brand + status badge ────────────────────────────
+  ctx.font = F(13); ctx.fillStyle = '#00C853'; ctx.textAlign = 'left';
+  ctx.fillText('BetCopa', 18, 26);
+
+  {
+    ctx.font = F(10);
+    let label, bg, col;
+    if (isLive) {
+      label = score ? `● ${score}  •  AO VIVO` : '● AO VIVO';
+      bg = 'rgba(239,68,68,.22)'; col = '#FF6B6B';
+    } else if (isFinal) {
+      label = score ? `ENCERRADO  •  ${score}` : 'ENCERRADO';
+      bg = 'rgba(107,114,128,.18)'; col = '#9CA3AF';
+    } else {
+      const dt = new Date(game.data_hora);
+      label = dt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      bg = 'rgba(0,200,83,.15)'; col = '#00C853';
+    }
+    const tw = ctx.measureText(label).width + 22;
+    rrect(ctx, W - tw - 12, 10, tw, 22, 11);
+    ctx.fillStyle = bg; ctx.fill();
+    ctx.strokeStyle = col; ctx.globalAlpha = .5; ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (isLive) {
+      ctx.beginPath(); ctx.arc(W - tw - 12 + 9, 21, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#EF4444';
+      ctx.shadowColor = 'rgba(239,68,68,.9)'; ctx.shadowBlur = 5;
+      ctx.fill(); ctx.shadowBlur = 0;
+    }
+    ctx.fillStyle = col; ctx.textAlign = 'right';
+    ctx.fillText(label, W - 21, 25);
+  }
+
+  // ── Cálculo de layout centralizado verticalmente ─────────────
+  // Bloco de conteúdo: [liga?] + [bandeiras + nomes] + [info]
+  // Área útil: y=36 (abaixo do header) até y=H-14 (acima do bottom bar+watermark)
+  const flagW  = 155, flagH = 94;
+  const gap    = 80;
+  const ligaH  = ligaName ? 30 : 0;   // altura da linha de liga (19px + 11 de margin)
+  const teamNH = 22;                   // altura dos nomes
+  const infoH  = 26;                   // altura da linha de info
+  const blockH = ligaH + flagH + teamNH + 14 + infoH; // altura total do bloco
+  const usable = H - 14 - 36;         // espaço útil (36=abaixo do header, 14=watermark+bar)
+  const blockTop = 36 + Math.max(0, (usable - blockH) / 2); // y de início do bloco
+
+  const ligaY  = blockTop + 18;                            // baseline do título de liga
+  const flagY  = blockTop + ligaH + (ligaName ? 4 : 0);   // topo das bandeiras
+  const nameY  = flagY + flagH + 18;                       // baseline dos nomes
+  const divY   = nameY + 14;                               // linha divisória
+  const infoY  = divY + 14;                                // início da área de info
+
+  const homeFx = cx - flagW - gap / 2;
+  const awayFx = cx + gap / 2;
+
+  // ── Liga com troféus ────────────────────────────────────────
+  if (ligaName) {
+    ctx.font = F(19, '700'); ctx.fillStyle = 'rgba(255,215,0,.90)'; ctx.textAlign = 'center';
+    ctx.fillText(`🏆  ${ligaName.toUpperCase()}  🏆`, cx, ligaY);
+  }
+
+  drawFlag(imgHome, homeCode, nomeHome, homeFx, flagY, flagW, flagH);
+  drawFlag(imgAway, awayCode, nomeAway, awayFx, flagY, flagW, flagH);
+
+  // Nomes das equipes — tamanho adaptativo para nomes longos
+  const nameFont = (name) => {
+    const maxW = flagW + 20;
+    let sz = 17;
+    ctx.font = F(sz, '700');
+    while (sz > 11 && ctx.measureText(name).width > maxW) { sz -= 1; ctx.font = F(sz, '700'); }
+    return sz;
+  };
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.textAlign = 'center';
+  ctx.font = F(nameFont(nomeHome), '700');
+  ctx.fillText(nomeHome, homeFx + flagW / 2, nameY);
+  ctx.font = F(nameFont(nomeAway), '700');
+  ctx.fillText(nomeAway, awayFx + flagW / 2, nameY);
+
+  // ── Centro: placar ou × vermelho ─────────────────────────────
+  const midX = cx;
+  const midY = flagY + flagH / 2;
+
+  if ((isLive || isFinal) && score) {
+    const parts = score.split('×').map(p => p.trim());
+    const g1 = parts[0] || '-', g2 = parts[1] || '-';
+    ctx.font = F(44, '800'); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const g1W = ctx.measureText(g1).width;
+    const xTxt = '×';
+    const xW   = ctx.measureText(xTxt).width;
+    const g2W  = ctx.measureText(g2).width;
+    const pad  = 8;
+    let sx = midX - (g1W + pad + xW + pad + g2W) / 2;
+
+    ctx.save();
+    ctx.shadowColor = isLive ? 'rgba(239,68,68,.55)' : 'rgba(200,200,200,.30)';
+    ctx.shadowBlur  = 18;
+    ctx.fillStyle = '#fff'; ctx.fillText(g1, sx, midY); sx += g1W + pad;
+    ctx.fillStyle = '#EF4444'; ctx.fillText(xTxt, sx, midY); sx += xW + pad;
+    ctx.fillStyle = '#fff'; ctx.fillText(g2, sx, midY);
+    ctx.restore();
+    ctx.textBaseline = 'alphabetic';
+  } else {
+    ctx.save();
+    ctx.shadowColor = 'rgba(239,68,68,.55)';
+    ctx.shadowBlur  = 22;
+    ctx.font = F(64, '800'); ctx.fillStyle = '#EF4444';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('×', midX, midY);
+    ctx.restore();
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ── Divisor ──────────────────────────────────────────────────
+  ctx.save(); ctx.globalAlpha = 0.09;
+  const dg = ctx.createLinearGradient(0, 0, W, 0);
+  dg.addColorStop(0, 'transparent'); dg.addColorStop(.5, '#00C853'); dg.addColorStop(1, 'transparent');
+  ctx.strokeStyle = dg; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(30, divY); ctx.lineTo(W - 30, divY); ctx.stroke();
+  ctx.restore();
+
+  // ── Área de info ─────────────────────────────────────────────
+
+  if (myBet) {
+    const won = myBet.status === 'ganhou';
+    const lost = myBet.status === 'perdeu';
+    const infoCol = won ? '#00C853' : (lost ? '#EF4444' : 'rgba(255,255,255,.55)');
+    ctx.font = F(9, '600'); ctx.fillStyle = infoCol; ctx.textAlign = 'center';
+    ctx.fillText('MEU PALPITE', cx, infoY);
+    ctx.save();
+    ctx.shadowColor = infoCol; ctx.shadowBlur = won || lost ? 10 : 0;
+    ctx.font = F(28, '800'); ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle';
+    ctx.fillText(`${myBet.placar_casa}  ×  ${myBet.placar_fora}`, cx, infoY + 20);
+    ctx.restore(); ctx.textBaseline = 'alphabetic';
+  } else if (!isLive && !isFinal) {
+    const dt = new Date(game.data_hora);
+    const when = dt.toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    ctx.font = F(11, '600'); ctx.fillStyle = 'rgba(255,255,255,.52)'; ctx.textAlign = 'center';
+    ctx.fillText(when, cx, infoY + 14);
+  } else if (isFinal && !score) {
+    ctx.font = F(10, '600'); ctx.fillStyle = 'rgba(156,163,175,.65)'; ctx.textAlign = 'center';
+    ctx.fillText('RESULTADO FINAL', cx, infoY + 12);
+  } else if (isLive && !score) {
+    ctx.font = F(10, '600'); ctx.fillStyle = 'rgba(239,68,68,.70)'; ctx.textAlign = 'center';
+    ctx.fillText('EM ANDAMENTO', cx, infoY + 12);
+  }
+
+  // Watermark
+  ctx.font = F(9, '400'); ctx.fillStyle = 'rgba(107,114,128,.30)'; ctx.textAlign = 'center';
+  ctx.fillText('betcopa.online', cx, H - 9);
+
+  ctx.fillStyle = accentGrad(); ctx.fillRect(0, H - 5, W, 5);
+  return canvas;
+};
+
+let _shareGameId = null;
+
+const openGameShareModal = async (gameId) => {
+  _shareGameId = Number(gameId);
+  const game = S.games.find(g => Number(g.id) === _shareGameId);
+  if (!game) return;
+
+  const overlay = document.getElementById('modalGameShareOverlay');
+  const spinner = document.getElementById('gameShareSpinner');
+  const canvas  = document.getElementById('gameShareCanvas');
+
+  overlay.classList.remove('hidden');
+  spinner.classList.remove('hidden');
+  spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Gerando imagem…</span>';
+  canvas.classList.add('hidden');
+  ['btnGameShareWhatsApp','btnGameShareNative'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+
+  try {
+    await generateGameCard(game);
+    spinner.classList.add('hidden');
+    canvas.classList.remove('hidden');
+    document.getElementById('btnGameShareWhatsApp')?.classList.remove('hidden');
+    if (navigator.share) document.getElementById('btnGameShareNative')?.classList.remove('hidden');
+  } catch {
+    spinner.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#FF4757"></i><span>Erro ao gerar imagem.</span>';
+  }
+};
+
+const closeGameShareModal = () => {
+  document.getElementById('modalGameShareOverlay')?.classList.add('hidden');
+  _shareGameId = null;
+};
+
+const getGameShareText = (game) => {
+  const url     = `${location.origin}/share/game/${game.id}`;
+  const isLive  = isGameLive(game);
+  const isFinal = game.status === 'finalizado';
+  const score   = game.placar_real ? game.placar_real.replace('x', ' x ') : null;
+  const myBet   = S.bets.find(b => Number(b.jogo_id) === Number(game.id));
+  const fH = game.bandeira_casa ? flagEmoji(game.bandeira_casa) + ' ' : '';
+  const fA = game.bandeira_fora ? flagEmoji(game.bandeira_fora) + ' ' : '';
+  const nH = toPortuguese(game.time_casa || '').toUpperCase();
+  const nA = toPortuguese(game.time_fora || '').toUpperCase();
+
+  if (isLive && score) {
+    const bs = myBet ? `${myBet.placar_casa}×${myBet.placar_fora}` : null;
+    if (bs) return `🔴 CARA, olha esse jogo!\n${fH}${nH} ${score} ${fA}${nA} AO VIVO agora...\nEu chutei ${bs} — SE VIRAR EU GANHO 🤑\n👉 ${url}`;
+    return `🔴 OLHA ESSE JOGO!\n${fH}${nH} ${score} ${fA}${nA} AO VIVO agora!\nAinda pode virar — quem você acha que ganha? 👀\n${url}`;
+  }
+  if (isLive) {
+    const bs = myBet ? `${myBet.placar_casa}×${myBet.placar_fora}` : null;
+    if (bs) return `⚽ ${fH}${nH} × ${fA}${nA} COMEÇOU AO VIVO!\nEu chutei ${bs} — torce comigo 🙏\n${url}`;
+    return `⚽ COMEÇOU! ${fH}${nH} × ${fA}${nA} ao vivo agora!\nEntra aqui e aposta no resultado — dá pra ganhar prêmio 🏆\n${url}`;
+  }
+  if (isFinal && score) {
+    if (myBet) {
+      const bs = `${myBet.placar_casa}×${myBet.placar_fora}`;
+      if (myBet.status === 'ganhou') {
+        return `🏆 ACERTEI O PLACAR!\n${fH}${nH} ${score} ${fA}${nA}\nEu chutei exatamente ${bs} no BetCopa e GANHEI! 🎉\nVocê também pode: ${url}`;
+      }
+      return `😅 Quase! Eu chutei ${bs}, mas saiu ${score}...\n${fH}${nH} × ${fA}${nA} | BetCopa\nNa próxima acerto! Entra: ${url}`;
+    }
+    return `⚽ Saiu o resultado: ${fH}${nH} ${score} ${fA}${nA}\nVocê teria acertado o placar? Testa no próximo jogo: ${url}`;
+  }
+  const dt   = new Date(game.data_hora);
+  const when = dt.toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  const date = dt.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+  if (myBet) {
+    const bs = `${myBet.placar_casa}×${myBet.placar_fora}`;
+    return `🔥 Fiz meu palpite: ${fH}${nH} ${bs} ${fA}${nA}\nComeça hoje às ${when} — se eu acertar o placar exato GANHO prêmio!\nVocê chutaria diferente? 👉 ${url}`;
+  }
+  return `⚽ ${fH}${nH} × ${fA}${nA} hoje às ${when}\nEu ainda não sei quanto vai ser... qual seria seu palpite?\nEntra no BetCopa e tenta a sorte: ${url}`;
 };
 
 const renderBets = () => {
@@ -5094,8 +5473,9 @@ const bind = () => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const { action, id } = btn.dataset;
-    if (action === 'bet')   openBetModal(id);
-    if (action === 'share') openShareModal(id);
+    if (action === 'bet')        openBetModal(id);
+    if (action === 'share')      openShareModal(id);
+    if (action === 'share-game') shareGameLink(id);
     if (action === 'pay') {
       const betId   = Number(id);
       const betData = S.bets?.find(b => Number(b.id) === betId);
@@ -5381,6 +5761,39 @@ const bind = () => {
       try {
         const file = new File([blob], 'palpite-betcopa.png', { type: 'image/png' });
         await navigator.share({ title: 'Meu palpite no BetCopa', text: getShareText(bet), files: [file] });
+      } catch { /* user cancelled */ }
+    }, 'image/png');
+  });
+
+  // Game share modal
+  document.getElementById('btnGameShareClose')?.addEventListener('click', closeGameShareModal);
+  document.getElementById('modalGameShareOverlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modalGameShareOverlay')) closeGameShareModal();
+  });
+  document.getElementById('btnGameShareWhatsApp')?.addEventListener('click', () => {
+    const game   = S.games.find(g => Number(g.id) === _shareGameId);
+    const canvas = document.getElementById('gameShareCanvas');
+    const text   = getGameShareText(game);
+    if (canvas && navigator.canShare) {
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'jogo-betcopa.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ title: 'BetCopa', text, files: [file] }); return; } catch { /* cancelled */ }
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      }, 'image/png');
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  });
+  document.getElementById('btnGameShareNative')?.addEventListener('click', () => {
+    const game   = S.games.find(g => Number(g.id) === _shareGameId);
+    const canvas = document.getElementById('gameShareCanvas');
+    if (!canvas || !navigator.share) return;
+    canvas.toBlob(async blob => {
+      try {
+        const file = new File([blob], 'jogo-betcopa.png', { type: 'image/png' });
+        await navigator.share({ title: 'BetCopa', text: getGameShareText(game), files: [file] });
       } catch { /* user cancelled */ }
     }, 'image/png');
   });

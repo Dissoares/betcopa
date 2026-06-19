@@ -1448,6 +1448,17 @@ body.scroll-locked {
   padding: 0 .25rem;
 }
 .gc-league i { color: var(--gold); font-size: .48rem; }
+.gc-head-right {
+  display: flex; align-items: center; gap: .25rem; flex-shrink: 0;
+}
+.gc-share-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: .72rem;
+  padding: .18rem .28rem; border-radius: 4px;
+  transition: color .15s, background .15s; flex-shrink: 0;
+}
+.gc-share-btn:hover { color: var(--primary); background: rgba(0,200,83,.1); }
 .game-card__date {
   font-size: .7rem; font-weight: 500;
   color: var(--text-muted); white-space: nowrap;
@@ -6503,82 +6514,112 @@ input:focus, select:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   §39. SHARE BET MODAL
+   §39. SHARE MODAL (bet + game)
    ═══════════════════════════════════════════════════════════════ */
 .share-modal {
   width: 100%;
   max-width: 560px;
-  padding: 1.5rem;
+  padding: 0;
+  background: linear-gradient(160deg, #0d1627 0%, #080e1c 100%);
+  border: 1px solid rgba(0,200,83,.22);
+  box-shadow: 0 0 40px rgba(0,200,83,.08), 0 24px 64px rgba(0,0,0,.7);
+  border-radius: 18px;
+}
+
+.share-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem .9rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
 }
 
 .share-modal__title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--text);
-  margin: 0 0 1.25rem;
+  color: #fff;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: .5rem;
+  letter-spacing: .02em;
 }
-.share-modal__title i { color: var(--primary); }
+.share-modal__title i {
+  color: var(--primary);
+  font-size: 1.05rem;
+}
+
+.share-modal__body {
+  padding: 1.25rem 1.4rem 1.4rem;
+}
 
 .share-preview {
-  background: #080e1c;
-  border-radius: 12px;
+  background: #04080f;
+  border-radius: 14px;
   overflow: hidden;
   min-height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.25rem;
-  border: 1px solid #1c2333;
+  border: 1px solid rgba(0,200,83,.28);
+  box-shadow: 0 0 20px rgba(0,200,83,.08) inset, 0 4px 24px rgba(0,0,0,.5);
+  position: relative;
+}
+.share-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(0,200,83,.10) inset;
+  pointer-events: none;
 }
 .share-preview canvas {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .share-spinner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .75rem;
-  color: var(--text-muted);
-  font-size: .875rem;
+  gap: .6rem;
+  color: rgba(255,255,255,.45);
+  font-size: .8rem;
+  padding: 2rem 0;
 }
-.share-spinner i { font-size: 1.75rem; color: var(--primary); }
+.share-spinner i {
+  font-size: 1.6rem;
+  color: var(--primary);
+}
 
 .share-actions {
   display: flex;
   gap: .625rem;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: stretch;
+}
+.share-actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
-.share-btn {
-  flex: 1 1 auto;
-  min-width: 120px;
-  max-width: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .4rem;
-  font-size: .85rem;
-  font-weight: 600;
-  padding: .6rem 1rem;
+.share-modal__close {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
   border-radius: 8px;
-  border: none;
+  color: rgba(255,255,255,.55);
+  font-size: 1.15rem;
+  line-height: 1;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: filter .15s, transform .1s;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
 }
-.share-btn:hover  { filter: brightness(1.12); }
-.share-btn:active { transform: scale(.97); }
-.share-btn--whatsapp { background: #25D366; color: #fff; }
-.share-btn--twitter  { background: #000;    color: #fff; }
-.share-btn--download { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
-.share-btn--native   { background: var(--primary);     color: #000; }
+.share-modal__close:hover { background: rgba(255,255,255,.12); color: #fff; }
 
 /* ── Game header: team name row + status badge side-by-side ── */
 .bet-card__game-header {
