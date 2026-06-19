@@ -6597,14 +6597,46 @@ input:focus, select:focus {
 
 .share-actions {
   display: flex;
-  gap: .625rem;
+  gap: .5rem;
   flex-wrap: wrap;
   justify-content: stretch;
 }
 .share-actions .btn {
-  flex: 1 1 0;
+  flex: 1 1 calc(50% - .25rem);
   min-width: 0;
+  font-size: .82rem;
+  padding: .65rem .75rem;
+  border: none;
 }
+
+/* Cores oficiais das redes sociais */
+#btnGameShareWhatsApp, #btnShareWhatsApp {
+  background: #25D366; color: #fff; font-weight: 700;
+  box-shadow: 0 4px 0 0 #1a9e4c;
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s, background .12s;
+}
+#btnGameShareWhatsApp:hover, #btnShareWhatsApp:hover { background: #22c35e; }
+#btnGameShareWhatsApp:active, #btnShareWhatsApp:active {
+  transform: translateY(3px); box-shadow: 0 1px 0 0 #1a9e4c;
+}
+
+#btnGameShareTwitter, #btnShareTwitter {
+  background: #000; color: #fff; font-weight: 700;
+  box-shadow: 0 4px 0 0 #333;
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s, background .12s;
+}
+#btnGameShareTwitter:hover, #btnShareTwitter:hover { background: #1a1a1a; }
+#btnGameShareTwitter:active, #btnShareTwitter:active {
+  transform: translateY(3px); box-shadow: 0 1px 0 0 #333;
+}
+
+#btnGameShareFacebook {
+  background: #1877F2; color: #fff; font-weight: 700;
+  box-shadow: 0 4px 0 0 #0d5dbf;
+  transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s, background .12s;
+}
+#btnGameShareFacebook:hover { background: #166fe5; }
+#btnGameShareFacebook:active { transform: translateY(3px); box-shadow: 0 1px 0 0 #0d5dbf; }
 
 .share-modal__close {
   background: rgba(255,255,255,.06);

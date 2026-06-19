@@ -2885,32 +2885,29 @@ const generateGameCard = async (game) => {
     ctx.fillText(label, W - 21, 25);
   }
 
-  // ── Cálculo de layout centralizado verticalmente ─────────────
-  // Bloco de conteúdo: [liga?] + [bandeiras + nomes] + [info]
-  // Área útil: y=36 (abaixo do header) até y=H-14 (acima do bottom bar+watermark)
+  // ── Título da liga — fixo próximo ao topo, fora do bloco centralizado ──
+  const LIGA_Y = 54;                    // baseline do título (logo abaixo do header)
+  const LIGA_BOTTOM = ligaName ? 70 : 38; // onde o espaço de conteúdo começa
+
+  if (ligaName) {
+    ctx.font = F(23, '700'); ctx.fillStyle = 'rgba(255,215,0,.92)'; ctx.textAlign = 'center';
+    ctx.fillText(`🏆  ${ligaName.toUpperCase()}  🏆`, cx, LIGA_Y);
+  }
+
+  // ── Cálculo de layout: bandeiras + nomes + info centralizados abaixo do título ──
   const flagW  = 155, flagH = 94;
   const gap    = 80;
-  const ligaH  = ligaName ? 30 : 0;   // altura da linha de liga (19px + 11 de margin)
-  const teamNH = 22;                   // altura dos nomes
-  const infoH  = 26;                   // altura da linha de info
-  const blockH = ligaH + flagH + teamNH + 14 + infoH; // altura total do bloco
-  const usable = H - 14 - 36;         // espaço útil (36=abaixo do header, 14=watermark+bar)
-  const blockTop = 36 + Math.max(0, (usable - blockH) / 2); // y de início do bloco
-
-  const ligaY  = blockTop + 18;                            // baseline do título de liga
-  const flagY  = blockTop + ligaH + (ligaName ? 4 : 0);   // topo das bandeiras
-  const nameY  = flagY + flagH + 18;                       // baseline dos nomes
-  const divY   = nameY + 14;                               // linha divisória
-  const infoY  = divY + 14;                                // início da área de info
+  const teamNH = 20;
+  const infoH  = 28;
+  const blockH = flagH + teamNH + 12 + infoH;
+  const usable = H - 14 - LIGA_BOTTOM;
+  const flagY  = LIGA_BOTTOM + Math.max(4, (usable - blockH) / 2);
+  const nameY  = flagY + flagH + 18;
+  const divY   = nameY + 12;
+  const infoY  = divY + 12;
 
   const homeFx = cx - flagW - gap / 2;
   const awayFx = cx + gap / 2;
-
-  // ── Liga com troféus ────────────────────────────────────────
-  if (ligaName) {
-    ctx.font = F(19, '700'); ctx.fillStyle = 'rgba(255,215,0,.90)'; ctx.textAlign = 'center';
-    ctx.fillText(`🏆  ${ligaName.toUpperCase()}  🏆`, cx, ligaY);
-  }
 
   drawFlag(imgHome, homeCode, nomeHome, homeFx, flagY, flagW, flagH);
   drawFlag(imgAway, awayCode, nomeAway, awayFx, flagY, flagW, flagH);
@@ -2987,8 +2984,8 @@ const generateGameCard = async (game) => {
   } else if (!isLive && !isFinal) {
     const dt = new Date(game.data_hora);
     const when = dt.toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    ctx.font = F(11, '600'); ctx.fillStyle = 'rgba(255,255,255,.52)'; ctx.textAlign = 'center';
-    ctx.fillText(when, cx, infoY + 14);
+    ctx.font = F(14, '600'); ctx.fillStyle = 'rgba(255,255,255,.60)'; ctx.textAlign = 'center';
+    ctx.fillText(when, cx, infoY + 16);
   } else if (isFinal && !score) {
     ctx.font = F(10, '600'); ctx.fillStyle = 'rgba(156,163,175,.65)'; ctx.textAlign = 'center';
     ctx.fillText('RESULTADO FINAL', cx, infoY + 12);
@@ -3020,13 +3017,15 @@ const openGameShareModal = async (gameId) => {
   spinner.classList.remove('hidden');
   spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Gerando imagem…</span>';
   canvas.classList.add('hidden');
-  ['btnGameShareWhatsApp','btnGameShareNative'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  ['btnGameShareWhatsApp','btnGameShareTwitter','btnGameShareFacebook','btnGameShareNative']
+    .forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
   try {
     await generateGameCard(game);
     spinner.classList.add('hidden');
     canvas.classList.remove('hidden');
-    document.getElementById('btnGameShareWhatsApp')?.classList.remove('hidden');
+    ['btnGameShareWhatsApp','btnGameShareFacebook','btnGameShareTwitter']
+      .forEach(id => document.getElementById(id)?.classList.remove('hidden'));
     if (navigator.share) document.getElementById('btnGameShareNative')?.classList.remove('hidden');
   } catch {
     spinner.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#FF4757"></i><span>Erro ao gerar imagem.</span>';
@@ -5771,20 +5770,18 @@ const bind = () => {
     if (e.target === document.getElementById('modalGameShareOverlay')) closeGameShareModal();
   });
   document.getElementById('btnGameShareWhatsApp')?.addEventListener('click', () => {
-    const game   = S.games.find(g => Number(g.id) === _shareGameId);
-    const canvas = document.getElementById('gameShareCanvas');
-    const text   = getGameShareText(game);
-    if (canvas && navigator.canShare) {
-      canvas.toBlob(async blob => {
-        const file = new File([blob], 'jogo-betcopa.png', { type: 'image/png' });
-        if (navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ title: 'BetCopa', text, files: [file] }); return; } catch { /* cancelled */ }
-        }
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-      }, 'image/png');
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    }
+    const game = S.games.find(g => Number(g.id) === _shareGameId);
+    const text = getGameShareText(game);
+    window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  });
+  document.getElementById('btnGameShareTwitter')?.addEventListener('click', () => {
+    const game = S.games.find(g => Number(g.id) === _shareGameId);
+    const text = getGameShareText(game);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+  });
+  document.getElementById('btnGameShareFacebook')?.addEventListener('click', () => {
+    const url = `${location.origin}/share/game/${_shareGameId}`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
   });
   document.getElementById('btnGameShareNative')?.addEventListener('click', () => {
     const game   = S.games.find(g => Number(g.id) === _shareGameId);
