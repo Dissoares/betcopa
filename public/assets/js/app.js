@@ -4593,7 +4593,13 @@ const renderAdminGames = () => {
     return true;
   });
 
-  const all        = [...filtered].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+  const _sOrd = { aberto: 0, encerrado: 1, finalizado: 2 };
+  const all = [...filtered].sort((a, b) => {
+    const sd = (_sOrd[a.status] ?? 3) - (_sOrd[b.status] ?? 3);
+    if (sd !== 0) return sd;
+    const da = new Date(a.data_hora), db = new Date(b.data_hora);
+    return a.status === 'finalizado' ? db - da : da - db;
+  });
   const total      = all.length;
   const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
   if (adminGamesPage >= totalPages) adminGamesPage = totalPages - 1;

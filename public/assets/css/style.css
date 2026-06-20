@@ -7277,7 +7277,7 @@ input:focus, select:focus {
   min-width: 16px;
   text-align: center;
 }
-.league-tab:not(.league-tab--active) .league-tab__count { display: none; }
+.league-tab:not(.league-tab--active) .league-tab__count { background: rgba(255,255,255,.1); }
 
 /* ═══════════════════════════════════════════════════════════════
    §43. DEPOSIT MODAL
