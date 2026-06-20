@@ -28,10 +28,22 @@ class TransactionRepository
         return round($balance, 2);
     }
 
-    public function listByUser(int $userId): array
+    public function listByUser(int $userId, int $limit = 30, int $offset = 0): array
     {
-        $stmt = $this->db->prepare('SELECT * FROM transacoes WHERE user_id = :user_id ORDER BY data DESC');
-        $stmt->execute(['user_id' => $userId]);
+        $stmt = $this->db->prepare(
+            'SELECT * FROM transacoes WHERE user_id = :user_id ORDER BY data DESC LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit',   $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset',  $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    public function countByUser(int $userId): int
+    {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM transacoes WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        return (int) $stmt->fetchColumn();
     }
 }

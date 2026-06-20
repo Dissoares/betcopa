@@ -110,6 +110,7 @@ try {
         $gameCtrl    = new GameController($gameService, $games, $betService, $configRepo, $config);
         $betCtrl     = new BetController($betService, $bets, $configRepo);
         $userCtrl    = new UserController($users, $transactions);
+        $userCtrl->setWithdrawalRepository($withdrawals);
         $rankCtrl    = new RankingController($bets);
         $adminCtrl   = new AdminController($adminRepo, $configRepo, $users, $adminEmail);
         $adminCtrl->setTransactionRepository($transactions);
@@ -174,7 +175,9 @@ try {
         routePattern('/^\/api\/apostas\/(\d+)\/confirmar$/',     'POST', fn(int $id) => $betCtrl->confirm($id));
 
         // ── User & Ranking ────────────────────────────────────
-        route('/api/user',    'GET', fn() => $userCtrl->current());
+        route('/api/user',        'GET',  fn() => $userCtrl->current());
+        route('/api/user/perfil', 'GET',  fn() => $userCtrl->profile());
+        route('/api/user/perfil', 'PUT',  fn() => $userCtrl->updateProfile());
         route('/api/ranking', 'GET', fn() => $rankCtrl->index());
 
         // ── Admin: Dashboard ──────────────────────────────────

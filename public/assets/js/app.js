@@ -353,6 +353,12 @@ const navigate = (view) => {
     loadUserTickets();
   }
 
+  // Perfil: exige login e carrega dados
+  if (view === 'perfil') {
+    if (!S.user) { navigate('auth'); return; }
+    loadPerfil();
+  }
+
   history.replaceState(null, '', `/#${view}`);
 };
 
@@ -588,23 +594,20 @@ const renderHeader = () => {
                 <span class="udrop__balance-label">Saldo</span>
                 <span class="udrop__balance">${fmtMoney(saldo)}</span>
                 <button class="btn btn--primary btn--xs udrop__deposit-btn" id="udropBtnDeposit">
-                  <i class="fa-solid fa-plus"></i> Adicionar
+                  <i class="fa-solid fa-plus"></i> 
                 </button>
               </div>
             </div>
           </div>
           <div class="udrop__sep"></div>
-          <button class="udrop__item" data-udrop-nav="jogos">
-            <i class="fa-solid fa-house"></i> Jogos
+          <button class="udrop__item" data-udrop-nav="perfil">
+            <i class="fa-solid fa-circle-user"></i> Meu Perfil
           </button>
           <button class="udrop__item" data-udrop-nav="palpites">
             <i class="fa-solid fa-ticket"></i> Meus Palpites
           </button>
           <button class="udrop__item" id="udropBtnSaque">
             <i class="fa-solid fa-money-bill-transfer"></i> Solicitar Saque
-          </button>
-          <button class="udrop__item" data-udrop-nav="ganhadores">
-            <i class="fa-solid fa-trophy"></i> Ganhadores
           </button>
           ${isAdmin ? `
           <div class="udrop__sep"></div>
@@ -4340,7 +4343,7 @@ const submitLogin = async (e) => {
         }
       }, 350);
     } else {
-      navigate('jogos');
+      navigate(_isAdmin() ? 'admin' : 'jogos');
       showAlert(`Bem-vindo, ${S.user.nome.split(' ')[0]}!`, 'success');
       e.target.reset();
     }
@@ -4439,7 +4442,7 @@ const googleCallback = async (response) => {
         }
       }, 350);
     } else {
-      navigate('jogos');
+      navigate(_isAdmin() ? 'admin' : 'jogos');
       showAlert(`Bem-vindo, ${res.user.nome.split(' ')[0]}!`, 'success');
     }
   } catch (err) {
@@ -5805,6 +5808,7 @@ const bind = () => {
     if (e.target === document.getElementById('modalSaqueOverlay')) closeSaqueModal();
   });
   document.getElementById('formSaque')?.addEventListener('submit', submitSaque);
+  document.getElementById('formPerfil')?.addEventListener('submit', submitPerfil);
 
   // ── Ticket: list item clicks ──────────────────────────────
   document.addEventListener('click', e => {
@@ -8105,13 +8109,181 @@ const init = async () => {
       switchAdminTab(validTabs.includes(tab) ? tab : 'dashboard');
     }
   } else if (hash) {
-    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'grupos', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel', 'suporte'];
+    const validViews = ['jogos', 'palpites', 'ganhadores', 'resultados', 'grupos', 'admin', 'auth', 'termos', 'privacidade', 'jogo-responsavel', 'suporte', 'perfil'];
     if (validViews.includes(hash)) {
       navigate(hash);
       if (hash === 'ganhadores')  renderRanking();
       if (hash === 'resultados')  renderResultados();
       if (hash === 'grupos')      loadGrupos();
     }
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PERFIL DO USUÁRIO
+   ═══════════════════════════════════════════════════════════════ */
+let _perfilPage = 1;
+let _perfilTotalTrans = 0;
+
+const loadPerfil = async () => {
+  if (!S.user) { navigate('auth'); return; }
+  try {
+    const data = await api('/api/user/perfil');
+
+    // Header
+    const initials = data.user.nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const avatarEl = document.getElementById('perfilAvatar');
+    if (avatarEl) avatarEl.textContent = initials;
+    const nomeEl = document.getElementById('perfilNome');
+    if (nomeEl) nomeEl.textContent = data.user.nome;
+    const emailEl = document.getElementById('perfilEmail');
+    if (emailEl) emailEl.textContent = data.user.email;
+    const saldoEl = document.getElementById('perfilSaldo');
+    if (saldoEl) saldoEl.textContent = fmtMoney(parseFloat(data.user.saldo || 0));
+
+    // Stats
+    const st = data.stats || {};
+    const q = id => document.getElementById(id);
+    if (q('statTotalApostas'))   q('statTotalApostas').textContent   = st.total_apostas   || 0;
+    if (q('statTotalApostado'))  q('statTotalApostado').textContent  = fmtMoney(parseFloat(st.total_apostado  || 0));
+    if (q('statTotalGanho'))     q('statTotalGanho').textContent     = fmtMoney(parseFloat(st.total_ganho     || 0));
+    if (q('statApostasGanhas'))  q('statApostasGanhas').textContent  = st.apostas_ganhas  || 0;
+    if (q('statApostasPerdidas')) q('statApostasPerdidas').textContent = st.apostas_perdidas || 0;
+
+    // Form
+    const inputNome     = document.getElementById('perfilInputNome');
+    const inputEmail    = document.getElementById('perfilInputEmail');
+    const inputTelefone = document.getElementById('perfilInputTelefone');
+    const selTipo       = document.getElementById('perfilTipoPix');
+    const inputChave    = document.getElementById('perfilChavePix');
+    if (inputNome)     inputNome.value     = data.user.nome      || '';
+    if (inputEmail)    inputEmail.value    = data.user.email     || '';
+    if (inputTelefone) inputTelefone.value = data.user.telefone  || '';
+    if (selTipo)       selTipo.value       = data.user.tipo_pix  || '';
+    if (inputChave)    inputChave.value    = data.user.chave_pix || '';
+
+    // Transactions
+    _perfilTotalTrans = data.total_trans || 0;
+    _perfilPage = data.page || 1;
+    _renderPerfilTransacoes(data.transacoes || []);
+    _renderPerfilPagination();
+
+    // Saques
+    _renderPerfilSaques(data.saques || []);
+
+  } catch (err) {
+    console.error('loadPerfil error', err);
+  }
+};
+
+const _renderPerfilTransacoes = (list) => {
+  const el = document.getElementById('perfilTransacoes');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div class="perfil-empty"><i class="fa-solid fa-inbox"></i> Nenhuma transação encontrada.</div>';
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const isCredito = t.tipo === 'credito';
+    const icon = isCredito ? 'fa-arrow-down' : 'fa-arrow-up';
+    const cls  = isCredito ? 'credito' : 'debito';
+    const sign = isCredito ? '+' : '-';
+    const date = new Date(t.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="perfil-trans-item">
+        <div class="perfil-trans-item__icon perfil-trans-item__icon--${cls}">
+          <i class="fa-solid ${icon}"></i>
+        </div>
+        <span class="perfil-trans-item__desc">${escHtml(t.descricao || '—')}</span>
+        <span class="perfil-trans-item__date">${date}</span>
+        <span class="perfil-trans-item__val perfil-trans-item__val--${cls}">${sign}${fmtMoney(parseFloat(t.valor))}</span>
+      </div>`;
+  }).join('');
+};
+
+const _renderPerfilPagination = () => {
+  const el = document.getElementById('perfilPagination');
+  if (!el) return;
+  const totalPages = Math.ceil(_perfilTotalTrans / 20);
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  const start = Math.max(1, _perfilPage - 2);
+  const end   = Math.min(totalPages, _perfilPage + 2);
+  if (start > 1) html += `<button data-page="1">1</button>`;
+  if (start > 2) html += `<span style="padding:.3rem .4rem;color:var(--text-muted)">…</span>`;
+  for (let p = start; p <= end; p++) {
+    html += `<button class="${p === _perfilPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+  }
+  if (end < totalPages - 1) html += `<span style="padding:.3rem .4rem;color:var(--text-muted)">…</span>`;
+  if (end < totalPages) html += `<button data-page="${totalPages}">${totalPages}</button>`;
+  el.innerHTML = html;
+  el.querySelectorAll('button[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => _loadPerfilPage(parseInt(btn.dataset.page)));
+  });
+};
+
+const _loadPerfilPage = async (page) => {
+  if (!S.user) return;
+  try {
+    const data = await api(`/api/user/perfil?page=${page}`);
+    _perfilPage = data.page || page;
+    _perfilTotalTrans = data.total_trans || _perfilTotalTrans;
+    _renderPerfilTransacoes(data.transacoes || []);
+    _renderPerfilPagination();
+    document.getElementById('view-perfil')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) { console.error('_loadPerfilPage error', err); }
+};
+
+const _renderPerfilSaques = (list) => {
+  const el = document.getElementById('perfilSaques');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div class="perfil-empty"><i class="fa-solid fa-inbox"></i> Nenhum saque solicitado.</div>';
+    return;
+  }
+  const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Rejeitado', processando: 'Processando' };
+  el.innerHTML = list.map(s => {
+    const lbl  = statusLabel[s.status] || s.status;
+    const date = new Date(s.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    return `
+      <div class="perfil-saque-item">
+        <div class="perfil-saque-item__info">
+          <div class="perfil-saque-item__val">${fmtMoney(parseFloat(s.valor))}</div>
+          <div class="perfil-saque-item__date">${date} · ${escHtml(s.tipo_pix || '')} ${escHtml(s.chave_pix || '')}</div>
+        </div>
+        <span class="perfil-saque-item__badge perfil-saque-item__badge--${s.status}">${lbl}</span>
+      </div>`;
+  }).join('');
+};
+
+const submitPerfil = async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('perfilMsg');
+  const btn   = document.getElementById('btnPerfilSave');
+  const showMsg = (text, ok) => {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.className = `perfil-msg ${ok ? 'perfil-msg--ok' : 'perfil-msg--err'}`;
+    msgEl.classList.remove('hidden');
+    setTimeout(() => msgEl.classList.add('hidden'), 4000);
+  };
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; }
+  try {
+    const body = {
+      nome:      document.getElementById('perfilInputNome')?.value.trim()  || '',
+      telefone:  document.getElementById('perfilInputTelefone')?.value.trim() || '',
+      tipo_pix:  document.getElementById('perfilTipoPix')?.value           || '',
+      chave_pix: document.getElementById('perfilChavePix')?.value.trim()  || '',
+    };
+    const res = await api('/api/user/perfil', 'PUT', body);
+    showMsg(res.message || 'Perfil atualizado!', true);
+    // Refresh user in state
+    const updated = await api('/api/user');
+    if (updated.user) { S.user = { ...S.user, ...updated.user }; renderHeader(); }
+  } catch (err) {
+    showMsg(err.message || 'Erro ao salvar perfil.', false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar alterações'; }
   }
 };
 

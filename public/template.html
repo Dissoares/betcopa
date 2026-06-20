@@ -1153,6 +1153,121 @@
     </div><!-- /admin-layout -->
   </main>
 
+  <!-- ===== VIEW: PERFIL DO USUÁRIO ===== -->
+  <main class="container view hidden" id="view-perfil">
+    <div class="perfil-page">
+
+      <!-- Header do perfil -->
+      <div class="perfil-header">
+        <div class="perfil-header__avatar" id="perfilAvatar"></div>
+        <div class="perfil-header__info">
+          <h1 class="perfil-header__name" id="perfilNome">—</h1>
+          <p class="perfil-header__email" id="perfilEmail">—</p>
+        </div>
+        <div class="perfil-header__balance">
+          <span class="perfil-header__balance-label">Saldo disponível</span>
+          <span class="perfil-header__balance-val" id="perfilSaldo">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Cards de estatísticas -->
+      <div class="perfil-stats" id="perfilStats">
+        <div class="perfil-stat-card">
+          <i class="fa-solid fa-ticket perfil-stat-card__icon"></i>
+          <span class="perfil-stat-card__val" id="statTotalApostas">0</span>
+          <span class="perfil-stat-card__lbl">Apostas</span>
+        </div>
+        <div class="perfil-stat-card">
+          <i class="fa-solid fa-arrow-up-from-bracket perfil-stat-card__icon perfil-stat-card__icon--spend"></i>
+          <span class="perfil-stat-card__val" id="statTotalApostado">R$ 0</span>
+          <span class="perfil-stat-card__lbl">Total apostado</span>
+        </div>
+        <div class="perfil-stat-card">
+          <i class="fa-solid fa-trophy perfil-stat-card__icon perfil-stat-card__icon--win"></i>
+          <span class="perfil-stat-card__val" id="statTotalGanho">R$ 0</span>
+          <span class="perfil-stat-card__lbl">Total ganho</span>
+        </div>
+        <div class="perfil-stat-card">
+          <i class="fa-solid fa-check perfil-stat-card__icon perfil-stat-card__icon--win"></i>
+          <span class="perfil-stat-card__val" id="statApostasGanhas">0</span>
+          <span class="perfil-stat-card__lbl">Apostas ganhas</span>
+        </div>
+        <div class="perfil-stat-card">
+          <i class="fa-solid fa-xmark perfil-stat-card__icon perfil-stat-card__icon--loss"></i>
+          <span class="perfil-stat-card__val" id="statApostasPerdidas">0</span>
+          <span class="perfil-stat-card__lbl">Apostas perdidas</span>
+        </div>
+      </div>
+
+      <div class="perfil-body">
+
+        <!-- Coluna esquerda: dados pessoais + chave PIX -->
+        <div class="perfil-col">
+
+          <!-- Dados pessoais -->
+          <section class="perfil-card">
+            <h2 class="perfil-card__title"><i class="fa-solid fa-user"></i> Dados Pessoais</h2>
+            <form id="formPerfil" novalidate>
+              <div class="perfil-field">
+                <label class="perfil-field__label" for="perfilInputNome">Nome completo</label>
+                <input class="perfil-field__input" type="text" id="perfilInputNome" name="nome" placeholder="Seu nome" required />
+              </div>
+              <div class="perfil-field">
+                <label class="perfil-field__label" for="perfilInputEmail">E-mail</label>
+                <input class="perfil-field__input" type="email" id="perfilInputEmail" name="email" placeholder="—" disabled />
+              </div>
+              <div class="perfil-field">
+                <label class="perfil-field__label" for="perfilInputTelefone">Telefone</label>
+                <input class="perfil-field__input" type="tel" id="perfilInputTelefone" name="telefone" placeholder="(11) 9 0000-0000" />
+              </div>
+
+              <h3 class="perfil-card__sub"><i class="fa-brands fa-pix"></i> Chave PIX para recebimento</h3>
+              <div class="perfil-field">
+                <label class="perfil-field__label" for="perfilTipoPix">Tipo de chave</label>
+                <select class="perfil-field__select" id="perfilTipoPix" name="tipo_pix">
+                  <option value="">— Selecione —</option>
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                  <option value="email">E-mail</option>
+                  <option value="telefone">Telefone</option>
+                  <option value="aleatoria">Chave aleatória</option>
+                </select>
+              </div>
+              <div class="perfil-field">
+                <label class="perfil-field__label" for="perfilChavePix">Chave PIX</label>
+                <input class="perfil-field__input" type="text" id="perfilChavePix" name="chave_pix" placeholder="Informe sua chave PIX" />
+              </div>
+
+              <div id="perfilMsg" class="perfil-msg hidden"></div>
+              <button class="btn btn--primary btn--full" type="submit" id="btnPerfilSave">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar alterações
+              </button>
+            </form>
+          </section>
+        </div>
+
+        <!-- Coluna direita: histórico de transações -->
+        <div class="perfil-col">
+          <section class="perfil-card">
+            <h2 class="perfil-card__title"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Transações</h2>
+            <div id="perfilTransacoes" class="perfil-trans-list">
+              <div class="perfil-empty"><i class="fa-solid fa-inbox"></i> Carregando...</div>
+            </div>
+            <div class="perfil-trans-pagination" id="perfilPagination"></div>
+          </section>
+
+          <section class="perfil-card" id="perfilSaquesCard">
+            <h2 class="perfil-card__title"><i class="fa-solid fa-money-bill-transfer"></i> Saques Solicitados</h2>
+            <div id="perfilSaques" class="perfil-trans-list">
+              <div class="perfil-empty"><i class="fa-solid fa-inbox"></i> Nenhum saque solicitado.</div>
+            </div>
+          </section>
+        </div>
+
+      </div><!-- /perfil-body -->
+    </div><!-- /perfil-page -->
+  </main>
+
   <!-- ===== VIEW: TERMOS DE USO ===== -->
   <main class="container view hidden" id="view-termos">
     <div class="legal-page">

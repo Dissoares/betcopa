@@ -29,6 +29,34 @@ class UserRepository
         return (int) $this->db->lastInsertId();
     }
 
+    public function updateProfile(int $id, array $data): void
+    {
+        $this->db->prepare(
+            'UPDATE users SET nome = :nome, telefone = :telefone, tipo_pix = :tipo_pix, chave_pix = :chave_pix WHERE id = :id'
+        )->execute([
+            'nome'      => $data['nome'],
+            'telefone'  => $data['telefone'] ?? null,
+            'tipo_pix'  => $data['tipo_pix'] ?? null,
+            'chave_pix' => $data['chave_pix'] ?? null,
+            'id'        => $id,
+        ]);
+    }
+
+    public function getStats(int $id): array
+    {
+        $row = $this->db->prepare("
+            SELECT
+              COUNT(a.id)                                                       AS total_apostas,
+              COALESCE(SUM(CASE WHEN a.status IN ('confirmado','ganhou','perdido') THEN a.valor END), 0) AS total_apostado,
+              COALESCE(SUM(CASE WHEN a.status = 'ganhou' THEN a.possivel_ganho END), 0)                 AS total_ganho,
+              COALESCE(SUM(CASE WHEN a.status = 'ganhou' THEN 1 END), 0)                               AS apostas_ganhas,
+              COALESCE(SUM(CASE WHEN a.status = 'perdido' THEN 1 END), 0)                              AS apostas_perdidas
+            FROM apostas a WHERE a.user_id = :id
+        ");
+        $row->execute(['id' => $id]);
+        return $row->fetch() ?: [];
+    }
+
     public function block(int $id): void
     {
         $this->db->prepare('UPDATE users SET bloqueado = 1 WHERE id = :id')->execute(['id' => $id]);
