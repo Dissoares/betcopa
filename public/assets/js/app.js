@@ -3191,12 +3191,15 @@ const renderBets = () => {
     const homeFlag = homeCode ? `<img src="${flagUrl(homeCode)}" onerror="this.src='${flagUrlCdn(homeCode)}'" class="bet-flag" alt="">` : '';
     const awayFlag = awayCode ? `<img src="${flagUrl(awayCode)}" onerror="this.src='${flagUrlCdn(awayCode)}'" class="bet-flag" alt="">` : '';
 
+    const gameIsLive = game ? isGameLive(game) : false;
     const statusBadge = b.status === 'pendente'
       ? `<span class="badge badge--far"><i class="fa-solid fa-clock"></i> Pagamento Pendente</span>`
       : b.status === 'pago'
-      ? `<span class="badge badge--soon"><i class="fa-solid fa-calendar-check"></i> Aguardando o Jogo</span>`
+      ? `<span class="badge badge--confirmed"><i class="fa-solid fa-circle-check"></i> Pagamento Concluído</span>`
+      : b.status === 'confirmado' && gameIsLive
+      ? `<span class="badge badge--live"><i class="fa-solid fa-circle"></i> Jogo em Andamento</span>`
       : b.status === 'confirmado'
-      ? `<span class="badge badge--confirmed"><i class="fa-solid fa-futbol"></i> Jogo em Andamento</span>`
+      ? `<span class="badge badge--soon"><i class="fa-solid fa-hourglass-half"></i> Aguardando o Jogo</span>`
       : isWin
       ? `<span class="badge badge--open"><i class="fa-solid fa-trophy"></i> Acertou o Placar!</span>`
       : isLoss
@@ -4034,8 +4037,10 @@ const openPixModal = (data) => {
     navigator.clipboard.writeText(pixKey).then(() => toast('Chave copiada!', 'success'));
   };
 
-  // Countdown: expires_at ou 10 min padrão
-  let deadline = data.expires_at ? new Date(data.expires_at).getTime() : (Date.now() + 10 * 60 * 1000);
+  // Countdown: máximo 30 min independente do que o gateway retorna
+  const _maxDeadline = Date.now() + 30 * 60 * 1000;
+  const _apiDeadline = data.expires_at ? new Date(data.expires_at).getTime() : 0;
+  let deadline = _apiDeadline > Date.now() ? Math.min(_apiDeadline, _maxDeadline) : _maxDeadline;
   clearInterval(_pixTimerInterval);
   const timerEl  = document.getElementById('pixTimerCount');
   const timerWrap = document.getElementById('pixTimer');
@@ -4081,22 +4086,21 @@ const openPixModal = (data) => {
       } catch { /* silencioso */ }
     }, 5000);
   } else if (S.selectedBet?.id) {
+    const _betId = Number(S.selectedBet.id);
     _pixPollingInterval = setInterval(async () => {
       try {
-        const r = await api('/api/apostas');
-        const updated = (r.apostas || []).find(b => b.id === S.selectedBet.id);
-        if (updated && updated.status === 'confirmado') {
+        const r = await api(`/api/apostas/${_betId}/status`);
+        if (r.status && ['pago', 'confirmado', 'ganhou'].includes(r.status)) {
           clearInterval(_pixPollingInterval);
           clearInterval(_pixTimerInterval);
-          trackEvent('payment', `PIX confirmado · R$${(updated.valor || S.selectedBet?.valor || 0).toFixed(2)}`);
+          trackEvent('payment', `PIX confirmado · R$${(S.selectedBet?.valor || 0).toFixed(2)}`);
           document.getElementById('pixStatusText').textContent = '✓ Pagamento confirmado!';
-          S.bets = r.apostas;
           await loadUser();
-          renderBets();
+          await loadBets();
           setTimeout(() => { closePixModal(); navigate('palpites'); }, 2000);
         }
       } catch { /* silencioso */ }
-    }, 5000);
+    }, 4000);
   }
 
   document.getElementById('modalPixOverlay').classList.remove('hidden');

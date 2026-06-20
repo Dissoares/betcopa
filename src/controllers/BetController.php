@@ -25,6 +25,16 @@ class BetController
         ]);
     }
 
+    public function status(int $id): void
+    {
+        $userId = ensureLogged();
+        $bet    = $this->repository->find($id);
+        if (!$bet || (int) $bet['user_id'] !== $userId) {
+            jsonResponse(['error' => 'Não encontrado.'], 404);
+        }
+        jsonResponse(['id' => $bet['id'], 'status' => $bet['status']]);
+    }
+
     public function create(): void
     {
         Csrf::verify();
