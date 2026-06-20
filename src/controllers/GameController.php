@@ -375,6 +375,22 @@ class GameController
         jsonResponse(['id' => $id, 'count' => $count, 'from_cache' => false]);
     }
 
+    /** POST /api/admin/jogos/excluir/liga */
+    public function deleteByLeague(): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+        $body     = json_decode(file_get_contents('php://input'), true) ?: [];
+        $leagueId = (int) ($body['league_id'] ?? 0);
+        if ($leagueId <= 0) {
+            jsonResponse(['error' => 'Liga inválida.'], 400);
+            return;
+        }
+        $count = $this->repository->deleteByLeague($leagueId);
+        Logger::info('Jogos excluídos por liga', ['league_id' => $leagueId, 'total' => $count]);
+        jsonResponse(['message' => "{$count} jogo(s) da liga excluído(s).", 'excluidos' => $count]);
+    }
+
     /** POST /api/admin/jogos/excluir/todos */
     public function deleteAll(): void
     {

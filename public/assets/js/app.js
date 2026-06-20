@@ -4892,6 +4892,34 @@ const importFromApi = async () => {
   }
 };
 
+const deleteByLeague = async () => {
+  const sel        = document.getElementById('importLeague');
+  const leagueId   = Number(sel.value);
+  const leagueName = sel.selectedOptions[0]?.text ?? 'Liga selecionada';
+  const ok = await confirm({
+    title:        `Excluir jogos de "${leagueName}"?`,
+    message:      'Todos os jogos desta competição serão removidos permanentemente e não poderão ser recuperados.',
+    confirmLabel: 'Excluir',
+    confirmColor: '#FF4757',
+  });
+  if (!ok) return;
+  const btn = document.getElementById('btnDeleteByLeague');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  try {
+    const res = await api('/api/admin/jogos/excluir/liga', 'POST', { league_id: leagueId });
+    toast(res.message, 'success');
+    _selectedGames.clear(); _syncBulkBar();
+    await loadGames();
+    renderAdminGames();
+  } catch (e) {
+    toast(e.message || 'Erro ao excluir jogos da liga.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Excluir por Liga';
+  }
+};
+
 const syncImages = async () => {
   const btn      = document.getElementById('btnSyncImages');
   const resultEl = document.getElementById('importResult');
@@ -6119,6 +6147,7 @@ const bind = () => {
     if (chk) _toggleGameSel(Number(chk.dataset.id), chk.checked);
   });
   document.getElementById('btnBulkDelete')?.addEventListener('click', bulkDeleteGames);
+  document.getElementById('btnDeleteByLeague')?.addEventListener('click', deleteByLeague);
   document.getElementById('btnDeleteAllGames')?.addEventListener('click', async () => {
     const total = S.games?.length ?? 0;
     const ok = await confirm({

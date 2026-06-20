@@ -291,6 +291,13 @@ class GameRepository
         return (int) $this->db->exec('DELETE FROM jogos');
     }
 
+    public function deleteByLeague(int $leagueId): int
+    {
+        $stmt = $this->db->prepare('DELETE FROM jogos WHERE api_league_id = :league_id');
+        $stmt->execute(['league_id' => $leagueId]);
+        return (int) $stmt->rowCount();
+    }
+
     public function deleteMany(array $ids): array
     {
         if (empty($ids)) return [];
