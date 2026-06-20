@@ -670,34 +670,52 @@
 
         <!-- ── ABA: USUÁRIOS ── -->
         <div class="admin-tab hidden" id="atab-usuarios">
-          <div class="admin-page-header admin-page-header--actions">
+          <div class="admin-page-header">
             <div>
               <h2 class="admin-page-header__title"><i class="fa-solid fa-users"></i> Usuários</h2>
               <p class="admin-page-header__sub">Gerenciar contas e permissões de usuários</p>
             </div>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="text--muted" id="adminUsersCount"></span>
+          </div>
+
+          <!-- Sub-tabs -->
+          <div class="users-subtabs">
+            <button class="users-subtab users-subtab--active" data-users-tab="reais">
+              <i class="fa-solid fa-user"></i> Reais <span class="users-subtab__count" id="usersRealCount"></span>
+            </button>
+            <button class="users-subtab" data-users-tab="fake">
+              <i class="fa-solid fa-robot"></i> Fake / Seed <span class="users-subtab__count" id="usersSeedCount"></span>
+            </button>
+          </div>
+
+          <!-- Painel: Usuários reais -->
+          <div id="usersPanel-reais">
+            <div class="admin-toolbar">
+              <input id="filterUser" type="search" placeholder="Buscar por nome ou e-mail…" />
+              <select id="filterUserStatus">
+                <option value="">Todos os status</option>
+                <option value="ativo">Ativos</option>
+                <option value="bloqueado">Bloqueados</option>
+              </select>
               <button class="btn btn--danger btn--sm" id="btnDeleteAllUsers"><i class="fa-solid fa-trash"></i> Excluir tudo</button>
+            </div>
+            <div class="bulk-action-bar hidden" id="bulkUsersActionBar">
+              <span id="bulkUsersSelCount">0</span> usuário(s) selecionado(s)
+              <button class="btn btn--danger btn--sm" id="btnBulkDeleteUsers"><i class="fa-solid fa-trash"></i> Excluir selecionados</button>
+              <button class="btn btn--ghost btn--sm" id="btnBulkClearUsers">Limpar seleção</button>
+            </div>
+            <div class="panel">
+              <div id="adminUsersList"></div>
             </div>
           </div>
 
-          <div class="admin-toolbar">
-            <input id="filterUser" type="search" placeholder="Buscar por nome ou e-mail…" />
-            <select id="filterUserStatus">
-              <option value="">Todos os status</option>
-              <option value="ativo">Ativos</option>
-              <option value="bloqueado">Bloqueados</option>
-            </select>
-          </div>
-
-          <div class="bulk-action-bar hidden" id="bulkUsersActionBar">
-            <span id="bulkUsersSelCount">0</span> usuário(s) selecionado(s)
-            <button class="btn btn--danger btn--sm" id="btnBulkDeleteUsers"><i class="fa-solid fa-trash"></i> Excluir selecionados</button>
-            <button class="btn btn--ghost btn--sm" id="btnBulkClearUsers">Limpar seleção</button>
-          </div>
-
-          <div class="panel">
-            <div id="adminUsersList"></div>
+          <!-- Painel: Usuários fake/seed -->
+          <div id="usersPanel-fake" class="hidden">
+            <div class="admin-toolbar">
+              <button class="btn btn--danger btn--sm" id="btnDeleteAllSeedUsers"><i class="fa-solid fa-trash"></i> Excluir todos os fake</button>
+            </div>
+            <div class="panel">
+              <div id="adminSeedUsersList"></div>
+            </div>
           </div>
         </div>
 

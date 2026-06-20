@@ -46,6 +46,7 @@ class AdminRepository
               )                                             AS saldo
             FROM users u
             LEFT JOIN apostas a ON a.user_id = u.id
+            WHERE u.email NOT LIKE '%.seed@betcopa.local'
             GROUP BY u.id
             ORDER BY u.is_admin DESC, u.criado_em DESC
             LIMIT :limit OFFSET :offset
@@ -58,7 +59,47 @@ class AdminRepository
 
     public function countUsers(): int
     {
-        return (int) $this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
+        return (int) $this->db->query(
+            "SELECT COUNT(*) FROM users WHERE email NOT LIKE '%.seed@betcopa.local'"
+        )->fetchColumn();
+    }
+
+    public function listSeedUsers(int $page = 1, int $limit = 50): array
+    {
+        $offset = ($page - 1) * $limit;
+        $stmt   = $this->db->prepare("
+            SELECT
+              u.id, u.nome, u.email, u.criado_em,
+              COUNT(a.id)                                   AS total_apostas,
+              COALESCE(SUM(CASE WHEN a.status='ganhou' THEN 1 END), 0) AS apostas_ganhas,
+              COALESCE(
+                (SELECT SUM(CASE WHEN t.tipo='credito' THEN t.valor ELSE -t.valor END)
+                 FROM transacoes t WHERE t.user_id = u.id), 0
+              )                                             AS saldo
+            FROM users u
+            LEFT JOIN apostas a ON a.user_id = u.id
+            WHERE u.email LIKE '%.seed@betcopa.local'
+            GROUP BY u.id
+            ORDER BY u.criado_em DESC
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function countSeedUsers(): int
+    {
+        return (int) $this->db->query(
+            "SELECT COUNT(*) FROM users WHERE email LIKE '%.seed@betcopa.local'"
+        )->fetchColumn();
+    }
+
+    public function deleteAllSeedUsers(): int
+    {
+        $stmt = $this->db->query("DELETE FROM users WHERE email LIKE '%.seed@betcopa.local'");
+        return (int) $stmt->rowCount();
     }
 
     public function listBets(int $jogoId = 0, string $status = '', int $page = 1, int $limit = 50): array

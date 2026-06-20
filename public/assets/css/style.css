@@ -193,8 +193,7 @@
    herdem os valores dark, independente do tema do body.
    ============================================================ */
 .header,
-.drawer__panel,
-.admin-sidebar {
+.drawer__panel {
   --bg:          #060C18;
   --surface:     #0D1626;
   --surface-2:   #152032;
@@ -2881,7 +2880,6 @@ select {
   border-right: 1px solid var(--border);
   padding: 1.5rem 1rem;
   position: sticky; top: 86px;
-  height: calc(100vh - 86px);
   overflow-y: auto;
   box-shadow: var(--shadow-sidebar);
 }
@@ -2902,6 +2900,7 @@ select {
 }
 .admin-nav__btn:hover  { background: var(--surface-2); color: var(--text); }
 .admin-nav__btn--active { background: var(--tint-primary); color: var(--primary); font-weight: 700; border-left-color: var(--primary); }
+.theme-light .admin-nav__btn--active { background: rgba(0,0,0,0.08); color: #1e293b; border-left-color: #1e293b; }
 
 .admin-sidebar__footer {
   margin-top: 1.5rem;
@@ -2947,6 +2946,23 @@ select {
 .admin-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
 .admin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
 .admin-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
+
+.users-subtabs { display: flex; gap: .5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: .75rem; }
+.users-subtab {
+  border: 0; background: transparent; color: var(--text-dim);
+  padding: .5rem 1rem; border-radius: 6px 6px 0 0;
+  cursor: pointer; font-size: .9rem; transition: background .15s, color .15s;
+  display: flex; align-items: center; gap: .4rem;
+}
+.users-subtab:hover { background: var(--surface-2); color: var(--text); }
+.users-subtab--active { background: var(--tint-primary); color: var(--primary); font-weight: 600; }
+.theme-light .users-subtab--active { background: rgba(0,0,0,0.07); color: #1e293b; }
+.users-subtab__count {
+  background: var(--surface-3); color: var(--text-dim);
+  font-size: .72rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 600;
+}
+.users-subtab--active .users-subtab__count { background: var(--primary); color: #fff; }
+.theme-light .users-subtab--active .users-subtab__count { background: #1e293b; color: #fff; }
 
 .config-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
 .config-tab {

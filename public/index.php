@@ -181,6 +181,8 @@ try {
 
         // ── Admin: Usuários ───────────────────────────────────
         route('/api/admin/usuarios', 'GET', fn() => $adminCtrl->listUsers());
+        route('/api/admin/usuarios/seed', 'GET', fn() => $adminCtrl->listSeedUsers());
+        route('/api/admin/usuarios/seed/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllSeedUsers());
         route('/api/admin/usuarios/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteUsers());
         route('/api/admin/usuarios/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllUsers());
         routePattern('/^\/api\/admin\/usuarios\/(\d+)\/bloquear$/',    'POST', fn(int $id) => $adminCtrl->blockUser($id));

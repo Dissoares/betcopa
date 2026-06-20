@@ -89,6 +89,27 @@ class AdminController
         ]);
     }
 
+    public function listSeedUsers(): void
+    {
+        ensureAdmin($this->adminEmail);
+        $page  = max(1, (int) ($_GET['page']  ?? 1));
+        $limit = max(10, min(200, (int) ($_GET['limit'] ?? 50)));
+        jsonResponse([
+            'usuarios' => $this->admin->listSeedUsers($page, $limit),
+            'total'    => $this->admin->countSeedUsers(),
+            'page'     => $page,
+            'limit'    => $limit,
+        ]);
+    }
+
+    public function deleteAllSeedUsers(): void
+    {
+        ensureAdmin($this->adminEmail);
+        Csrf::verify();
+        $count = $this->admin->deleteAllSeedUsers();
+        jsonResponse(['ok' => true, 'deleted' => $count]);
+    }
+
     public function blockUser(int $id): void
     {
         Csrf::verify();

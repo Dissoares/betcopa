@@ -6891,8 +6891,8 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
   el.innerHTML = '<p class="text--muted">Carregando...</p>';
   try {
     const { usuarios, total, limit } = await api(`/api/admin/usuarios?page=${page}&limit=${ADMIN_PAGE_LIMIT}`);
-    const countEl = document.getElementById('adminUsersCount');
-    if (countEl) countEl.textContent = `${total} usuário${total !== 1 ? 's' : ''}`;
+    const countEl = document.getElementById('usersRealCount');
+    if (countEl) countEl.textContent = total;
     if (!usuarios.length) { el.innerHTML = '<p class="text--muted">Nenhum usuário.</p>'; return; }
 
     el.innerHTML = `
@@ -6936,6 +6936,83 @@ const loadAdminUsers = async (page = _adminUsersPage) => {
     el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
   }
 };
+
+let _adminSeedUsersPage = 1;
+const loadAdminSeedUsers = async (page = _adminSeedUsersPage) => {
+  _adminSeedUsersPage = page;
+  const el = document.getElementById('adminSeedUsersList');
+  if (!el) return;
+  el.innerHTML = '<p class="text--muted">Carregando...</p>';
+  try {
+    const { usuarios, total, limit } = await api(`/api/admin/usuarios/seed?page=${page}&limit=${ADMIN_PAGE_LIMIT}`);
+    const countEl = document.getElementById('usersSeedCount');
+    if (countEl) countEl.textContent = total;
+    if (!usuarios.length) { el.innerHTML = '<p class="text--muted">Nenhum usuário fake.</p>'; return; }
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Nome</th><th>Email</th><th>Saldo</th><th>Apostas</th><th>Ganhas</th><th>Cadastro</th></tr>
+        </thead>
+        <tbody>
+          ${usuarios.map(u => `
+            <tr>
+              <td>${u.id}</td>
+              <td>${u.nome}</td>
+              <td class="text--muted" style="font-size:.8rem">${u.email}</td>
+              <td>${fmtR$(u.saldo)}</td>
+              <td>${u.total_apostas}</td>
+              <td>${u.apostas_ganhas}</td>
+              <td class="text--muted" style="font-size:.8rem">${new Date(u.criado_em).toLocaleDateString('pt-BR')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${_pager(page, total, limit, 'seed-users')}`;
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert--danger">${err.message}</div>`;
+  }
+};
+
+const _switchUsersSubTab = (tab) => {
+  document.querySelectorAll('.users-subtab').forEach(btn => {
+    btn.classList.toggle('users-subtab--active', btn.dataset.usersTab === tab);
+  });
+  ['reais', 'fake'].forEach(t => {
+    document.getElementById(`usersPanel-${t}`)?.classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'reais') loadAdminUsers(1);
+  if (tab === 'fake')  loadAdminSeedUsers(1);
+};
+
+document.addEventListener('click', async e => {
+  const subTabBtn = e.target.closest('.users-subtab');
+  if (subTabBtn) { _switchUsersSubTab(subTabBtn.dataset.usersTab); return; }
+
+  if (e.target.closest('#btnDeleteAllSeedUsers')) {
+    const ok = await confirm({
+      title:        'Excluir todos os usuários fake?',
+      message:      'Todos os usuários seed/mock serão removidos. Esta ação não pode ser desfeita.',
+      confirmText:  'Excluir tudo',
+      cancelText:   'Cancelar',
+      confirmColor: '#FF4757',
+    });
+    if (!ok) return;
+    const btn = document.getElementById('btnDeleteAllSeedUsers');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      const res = await api('/api/admin/usuarios/seed/excluir/todos', 'POST', {});
+      toast(`${res.deleted} usuário(s) fake excluído(s)`, 'success');
+      await loadAdminSeedUsers(1);
+    } catch (err) {
+      toast(err.message, 'danger');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir todos os fake';
+    }
+    return;
+  }
+
+  if (e.target.closest('[data-action="seed-users-prev"]')) { loadAdminSeedUsers(_adminSeedUsersPage - 1); return; }
+  if (e.target.closest('[data-action="seed-users-next"]')) { loadAdminSeedUsers(_adminSeedUsersPage + 1); return; }
+});
 
 const handleBlockUser = async (uid, block) => {
   const action = block ? 'bloquear' : 'desbloquear';
