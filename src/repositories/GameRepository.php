@@ -63,46 +63,71 @@ class GameRepository
 
     /**
      * Insert ou update de jogo importado da API-Football.
-     * Identifica duplicatas pelo api_fixture_id.
+     * Identifica duplicatas primeiro pelo api_fixture_id; se não encontrar
+     * (ex.: registros criados antes da coluna existir), faz fallback por
+     * time_casa + time_fora + DATE(data_hora) para evitar duplicatas.
      * Retorna o id do registro.
      */
     public function upsertByApiId(array $data): int
     {
-        $stmt = $this->db->prepare('SELECT id FROM jogos WHERE api_fixture_id = :api_fixture_id');
-        $stmt->execute(['api_fixture_id' => $data['api_fixture_id']]);
-        $existing = $stmt->fetch();
+        // Lookup primário: pelo ID da API (garante match exato)
+        $existing = null;
+        if (!empty($data['api_fixture_id'])) {
+            $stmt = $this->db->prepare('SELECT id FROM jogos WHERE api_fixture_id = :api_fixture_id');
+            $stmt->execute(['api_fixture_id' => $data['api_fixture_id']]);
+            $existing = $stmt->fetch();
+        }
+
+        // Fallback: por times + data (captura registros sem api_fixture_id)
+        if (!$existing) {
+            $stmt = $this->db->prepare(
+                'SELECT id FROM jogos
+                 WHERE time_casa = :time_casa
+                   AND time_fora = :time_fora
+                   AND DATE(data_hora) = DATE(:data_hora)
+                 LIMIT 1'
+            );
+            $stmt->execute([
+                'time_casa' => $data['time_casa'],
+                'time_fora' => $data['time_fora'],
+                'data_hora' => $data['data_hora'],
+            ]);
+            $existing = $stmt->fetch();
+        }
 
         if ($existing) {
-            // Atualiza metadados; se finalizado, salva placar e status também
+            // Atualiza metadados; também preenche api_fixture_id caso estivesse nulo
             $isFinal = $data['status'] === 'finalizado';
             $sql = 'UPDATE jogos SET
-                   time_casa     = :time_casa,
-                   time_fora     = :time_fora,
-                   logo_casa     = :logo_casa,
-                   logo_fora     = :logo_fora,
-                   data_hora     = :data_hora,
-                   liga_nome     = :liga_nome,
-                   liga_logo     = :liga_logo,
-                   estadio       = :estadio,
-                   rodada        = :rodada,
-                   api_league_id = :api_league_id,
-                   status_api    = :status_api'
+                   api_fixture_id = :api_fixture_id,
+                   time_casa      = :time_casa,
+                   time_fora      = :time_fora,
+                   logo_casa      = :logo_casa,
+                   logo_fora      = :logo_fora,
+                   data_hora      = :data_hora,
+                   liga_nome      = :liga_nome,
+                   liga_logo      = :liga_logo,
+                   estadio        = :estadio,
+                   rodada         = :rodada,
+                   api_league_id  = :api_league_id,
+                   status_api     = :status_api'
                    . ($isFinal ? ', status = :status, placar_real = :placar_real' : '')
                    . ' WHERE id = :id';
 
             $params = [
-                'time_casa'     => $data['time_casa'],
-                'time_fora'     => $data['time_fora'],
-                'logo_casa'     => $data['logo_casa'],
-                'logo_fora'     => $data['logo_fora'],
-                'data_hora'     => $data['data_hora'],
-                'liga_nome'     => $data['liga_nome'],
-                'liga_logo'     => $data['liga_logo'],
-                'estadio'       => $data['estadio'],
-                'rodada'        => $data['rodada'],
-                'api_league_id' => $data['api_league_id'] ?? null,
-                'status_api'    => $data['status_api'],
-                'id'            => $existing['id'],
+                'api_fixture_id' => $data['api_fixture_id'],
+                'time_casa'      => $data['time_casa'],
+                'time_fora'      => $data['time_fora'],
+                'logo_casa'      => $data['logo_casa'],
+                'logo_fora'      => $data['logo_fora'],
+                'data_hora'      => $data['data_hora'],
+                'liga_nome'      => $data['liga_nome'],
+                'liga_logo'      => $data['liga_logo'],
+                'estadio'        => $data['estadio'],
+                'rodada'         => $data['rodada'],
+                'api_league_id'  => $data['api_league_id'] ?? null,
+                'status_api'     => $data['status_api'],
+                'id'             => $existing['id'],
             ];
             if ($isFinal) {
                 $params['status']      = 'finalizado';
