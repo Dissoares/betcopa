@@ -20,11 +20,14 @@ class AdminRepository
               (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'perdido')           AS apostas_perdidas,
               (SELECT COALESCE(SUM(a.valor),0) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status IN ('confirmado','ganhou','perdido')) AS volume_apostado,
               (SELECT COALESCE(SUM(a.possivel_ganho),0) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status = 'ganhou')                 AS volume_pago,
+              (SELECT COUNT(*) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND EXISTS (SELECT 1 FROM transacoes t WHERE t.user_id = a.user_id AND t.tipo = 'debito' AND t.descricao = CONCAT('Aposta (saldo) #', a.id))) AS apostas_bonus,
+              (SELECT COALESCE(SUM(a.valor),0) FROM apostas a JOIN users u ON u.id = a.user_id WHERE u.email NOT LIKE '%.seed@betcopa.local' AND a.status IN ('confirmado','ganhou','perdido') AND EXISTS (SELECT 1 FROM transacoes t WHERE t.user_id = a.user_id AND t.tipo = 'debito' AND t.descricao = CONCAT('Aposta (saldo) #', a.id))) AS volume_apostado_bonus,
               (SELECT COUNT(*) FROM jogos WHERE status = 'aberto')                                                                                               AS jogos_abertos,
               (SELECT COUNT(*) FROM jogos WHERE status = 'finalizado')                                                                                           AS jogos_finalizados,
               (SELECT COUNT(*) FROM users WHERE bloqueado = 1 AND email NOT LIKE '%.seed@betcopa.local')                                                         AS usuarios_bloqueados
         ")->fetch();
 
+        $stats['volume_apostado_dinheiro'] = (float)$stats['volume_apostado'] - (float)$stats['volume_apostado_bonus'];
         $stats['margem_casa'] = (float)$stats['volume_apostado'] - (float)$stats['volume_pago'];
         return $stats;
     }

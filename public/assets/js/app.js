@@ -6730,14 +6730,16 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
     // Cards de stats (só atualiza na primeira carga)
     if (betsPage === 1 && gamesPage === 1) {
       statsEl.innerHTML = [
-        { label: 'Usuários',        value: stats.total_usuarios,         cls: '' },
-        { label: 'Total apostas',   value: stats.total_apostas,          cls: '' },
-        { label: 'Volume apostado', value: fmtR$(stats.volume_apostado), cls: 'info' },
-        { label: 'Prêmios pagos',   value: fmtR$(stats.volume_pago),     cls: 'danger' },
-        { label: 'Margem da casa',  value: fmtR$(stats.margem_casa),     cls: 'green' },
-        { label: 'Apostas ganhas',  value: stats.apostas_ganhas,         cls: 'green' },
-        { label: 'Pendentes pag.',  value: stats.apostas_pendentes,      cls: 'gold' },
-        { label: 'Jogos abertos',   value: stats.jogos_abertos,          cls: '' },
+        { label: 'Usuários',              value: stats.total_usuarios,                  cls: '' },
+        { label: 'Total apostas',         value: stats.total_apostas,                   cls: '' },
+        { label: 'Apostado (dinheiro)',   value: fmtR$(stats.volume_apostado_dinheiro), cls: 'info' },
+        { label: 'Apostado (bônus)',      value: fmtR$(stats.volume_apostado_bonus),    cls: 'info' },
+        { label: 'Apostas c/ bônus',      value: stats.apostas_bonus,                   cls: 'gold' },
+        { label: 'Prêmios pagos',         value: fmtR$(stats.volume_pago),              cls: 'danger' },
+        { label: 'Margem da casa',        value: fmtR$(stats.margem_casa),              cls: 'green' },
+        { label: 'Apostas ganhas',        value: stats.apostas_ganhas,                  cls: 'green' },
+        { label: 'Pendentes pag.',        value: stats.apostas_pendentes,               cls: 'gold' },
+        { label: 'Jogos abertos',         value: stats.jogos_abertos,                   cls: '' },
       ].map(c => `
         <div class="dash-card ${c.cls ? `dash-card--${c.cls}` : ''}">
           <div class="dash-card__label">${c.label}</div>
