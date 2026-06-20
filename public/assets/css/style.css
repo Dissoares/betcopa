@@ -2946,6 +2946,7 @@ select {
 
 .admin-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
 .admin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+.admin-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
 
 .config-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
 .config-tab {
@@ -3153,6 +3154,7 @@ details[open].admin-import-panel summary { margin-bottom: .25rem; }
   .admin-nav__btn { width: auto; padding: .45rem .75rem; font-size: .82rem; }
   .admin-content  { padding: 1.25rem; }
   .admin-grid-2   { grid-template-columns: 1fr; }
+  .admin-grid-3   { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {

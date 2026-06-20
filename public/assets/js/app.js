@@ -6715,9 +6715,12 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
   _dashBetsPage  = betsPage;
   _dashGamesPage = gamesPage;
 
-  const statsEl  = document.getElementById('dashStats');
-  const recentEl = document.getElementById('dashRecentes');
-  const byGameEl = document.getElementById('dashPorJogo');
+  const statsEl       = document.getElementById('dashStats');
+  const recentEl      = document.getElementById('dashRecentes');
+  const byGameEl      = document.getElementById('dashPorJogo');
+  const newUsersEl    = document.getElementById('dashNewUsers');
+  const topSpendEl    = document.getElementById('dashTopSpenders');
+  const topWinEl      = document.getElementById('dashTopWinners');
   if (!statsEl) return;
 
   if (betsPage === 1 && gamesPage === 1) {
@@ -6726,7 +6729,8 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
 
   try {
     const url = `/api/admin/dashboard?bets_page=${betsPage}&games_page=${gamesPage}`;
-    const { stats, recentes, total_bets, por_jogo, total_jogos, limit } = await api(url);
+    const { stats, recentes, total_bets, por_jogo, total_jogos, limit,
+            novos_usuarios, top_gastadores, top_ganhadores } = await api(url);
 
     // Cards de stats (só atualiza na primeira carga)
     if (betsPage === 1 && gamesPage === 1) {
@@ -6810,6 +6814,54 @@ const loadAdminDashboard = async ({ betsPage = _dashBetsPage, gamesPage = _dashG
       });
     } else {
       byGameEl.innerHTML = '<p class="text--muted">Nenhum jogo com palpites ainda.</p>';
+    }
+
+    // Novos usuários
+    if (newUsersEl) {
+      newUsersEl.innerHTML = novos_usuarios?.length
+        ? `<table class="admin-table">
+             <thead><tr><th>Nome</th><th>Email</th><th>Cadastro</th></tr></thead>
+             <tbody>${novos_usuarios.map(u => `
+               <tr>
+                 <td>${u.nome}</td>
+                 <td class="text--muted" style="font-size:.8rem">${u.email}</td>
+                 <td class="text--muted" style="font-size:.8rem">${new Date(u.criado_em).toLocaleDateString('pt-BR')}</td>
+               </tr>`).join('')}
+             </tbody>
+           </table>`
+        : '<p class="text--muted">Nenhum usuário ainda.</p>';
+    }
+
+    // Top gastadores
+    if (topSpendEl) {
+      topSpendEl.innerHTML = top_gastadores?.length
+        ? `<table class="admin-table">
+             <thead><tr><th>Nome</th><th>Apostas</th><th>Total</th></tr></thead>
+             <tbody>${top_gastadores.map((u, i) => `
+               <tr>
+                 <td><span class="text--muted" style="font-size:.75rem">#${i+1}</span> ${u.nome}</td>
+                 <td>${u.total_apostas}</td>
+                 <td style="font-weight:600">${fmtR$(u.total_apostado)}</td>
+               </tr>`).join('')}
+             </tbody>
+           </table>`
+        : '<p class="text--muted">Sem dados.</p>';
+    }
+
+    // Top ganhadores
+    if (topWinEl) {
+      topWinEl.innerHTML = top_ganhadores?.length
+        ? `<table class="admin-table">
+             <thead><tr><th>Nome</th><th>Acertos</th><th>Ganho</th></tr></thead>
+             <tbody>${top_ganhadores.map((u, i) => `
+               <tr>
+                 <td><span class="text--muted" style="font-size:.75rem">#${i+1}</span> ${u.nome}</td>
+                 <td>${u.apostas_ganhas}</td>
+                 <td style="font-weight:600;color:var(--win-text)">${fmtR$(u.total_ganho)}</td>
+               </tr>`).join('')}
+             </tbody>
+           </table>`
+        : '<p class="text--muted">Sem dados.</p>';
     }
 
   } catch (err) {

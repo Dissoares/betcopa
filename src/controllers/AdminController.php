@@ -61,14 +61,17 @@ class AdminController
         $byGame  = $this->admin->betStatsByGame($gamesPage, $limit);
 
         jsonResponse([
-            'stats'       => $stats,
-            'recentes'    => $recent,
-            'total_bets'  => $this->admin->countBets(),
-            'por_jogo'    => $byGame,
-            'total_jogos' => $this->admin->countGames(),
-            'bets_page'   => $betsPage,
-            'games_page'  => $gamesPage,
-            'limit'       => $limit,
+            'stats'           => $stats,
+            'recentes'        => $recent,
+            'total_bets'      => $this->admin->countBets(),
+            'por_jogo'        => $byGame,
+            'total_jogos'     => $this->admin->countGames(),
+            'bets_page'       => $betsPage,
+            'games_page'      => $gamesPage,
+            'limit'           => $limit,
+            'novos_usuarios'  => $this->admin->newUsers(5),
+            'top_gastadores'  => $this->admin->topSpenders(5),
+            'top_ganhadores'  => $this->admin->topWinners(5),
         ]);
     }
 

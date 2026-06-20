@@ -154,6 +154,58 @@ class AdminRepository
         )->fetchColumn();
     }
 
+    public function newUsers(int $limit = 5): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT id, nome, email, criado_em
+            FROM users
+            WHERE email NOT LIKE '%.seed@betcopa.local'
+            ORDER BY criado_em DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function topSpenders(int $limit = 5): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT u.id, u.nome, u.email,
+                   COALESCE(SUM(a.valor), 0) AS total_apostado,
+                   COUNT(a.id)               AS total_apostas
+            FROM users u
+            JOIN apostas a ON a.user_id = u.id
+            WHERE u.email NOT LIKE '%.seed@betcopa.local'
+              AND a.status IN ('confirmado','ganhou','perdido')
+            GROUP BY u.id
+            ORDER BY total_apostado DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function topWinners(int $limit = 5): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT u.id, u.nome, u.email,
+                   COALESCE(SUM(a.possivel_ganho), 0) AS total_ganho,
+                   COUNT(a.id)                        AS apostas_ganhas
+            FROM users u
+            JOIN apostas a ON a.user_id = u.id
+            WHERE u.email NOT LIKE '%.seed@betcopa.local'
+              AND a.status = 'ganhou'
+            GROUP BY u.id
+            ORDER BY total_ganho DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function recentBets(int $limit = 10, int $offset = 0): array
     {
         $stmt = $this->db->prepare("
