@@ -70,6 +70,10 @@
   --tint-info:    rgba(77,158,255,0.12);
   --tint-gold:    rgba(255,184,0,0.14);
 
+  /* Inputs */
+  --input-bg:     var(--surface-2);
+  --input-border: var(--border);
+
   /* Tints de resultado de aposta */
   --win-text:         var(--primary);
   --win-tint-bg:      var(--tint-primary);
@@ -175,6 +179,10 @@
   --modal-backdrop:        rgba(15,23,42,0.60);
   --score-shadow:          none;
   --ambient-glow:          rgba(5,150,105,0.06);
+
+  /* Inputs mais visíveis no tema claro */
+  --input-bg:     #ffffff;
+  --input-border: rgba(15,23,42,0.28);
 }
 
 
@@ -185,7 +193,8 @@
    herdem os valores dark, independente do tema do body.
    ============================================================ */
 .header,
-.drawer__panel {
+.drawer__panel,
+.admin-sidebar {
   --bg:          #060C18;
   --surface:     #0D1626;
   --surface-2:   #152032;
@@ -199,6 +208,8 @@
   --text-muted: #6B7E9E;
   --text-dim:   #8FA3C0;
   --tint-primary: rgba(89,255,21,0.12);
+  --win-text:    var(--verde-primary);
+  --win-tint-bg: rgba(89,255,21,0.12);
 }
 
 
@@ -1145,7 +1156,7 @@ body.scroll-locked {
 /* ============================================================
    §8  ALERTAS
    ============================================================ */
-.alerts { margin: .75rem auto; }
+
 
 .alert {
   padding: .85rem 1.1rem; border-radius: var(--radius-sm);
@@ -1249,7 +1260,7 @@ body.scroll-locked {
 .badge--open      { background: var(--win-tint-bg);  color: var(--win-text); }
 .badge--today     { background: rgba(245,184,0,.15); color: #c99000; }
 .badge--closed    { background: var(--tint-danger);  color: var(--danger); }
-.badge--confirmed { background: rgba(89,255,21,.12); color: var(--primary); }
+.badge--confirmed { background: var(--win-tint-bg);  color: var(--win-text); }
 .badge--final     { background: var(--surface-3);    color: var(--text-muted); }
 .badge--far       { background: rgba(100,116,139,.15); color: var(--text-dim); }
 .badge--live {
@@ -1987,6 +1998,7 @@ body.scroll-locked {
   text-decoration: underline; text-underline-offset: 2px;
 }
 .btn-link:hover { opacity: .8; }
+.theme-light .btn-link { color: var(--text); }
 
 /* ── Divisor "ou" entre formulário e botão Google ── */
 .auth-divider {
@@ -2022,8 +2034,8 @@ input[type=date],
 input[type=search],
 select {
   width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
   color: var(--text);
   padding: .75rem .95rem;
@@ -2861,15 +2873,15 @@ select {
    ============================================================ */
 #view-admin { padding: 0; }
 
-.admin-layout { display: flex; min-height: calc(100vh - 60px); }
+.admin-layout { display: flex; min-height: calc(100vh - 86px); background: var(--surface); }
 
 .admin-sidebar {
   width: 220px; flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
   padding: 1.5rem 1rem;
-  position: sticky; top: 60px;
-  height: calc(100vh - 60px);
+  position: sticky; top: 86px;
+  height: calc(100vh - 86px);
   overflow-y: auto;
   box-shadow: var(--shadow-sidebar);
 }
@@ -2897,7 +2909,7 @@ select {
   justify-content: flex-start;
 }
 
-.admin-content { flex: 1; padding: 2rem; min-width: 0; }
+.admin-content { flex: 1; padding: 2rem; min-width: 0; background: var(--bg); }
 .admin-tab { display: flex; flex-direction: column; gap: 1.25rem; }
 .admin-tab.hidden { display: none; }
 .admin-tab__title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem; }
@@ -5501,6 +5513,44 @@ input:focus, select:focus {
   transform: translateY(-1px);
 }
 .config-tab:active { transform: scale(0.96); }
+
+/* ── 16b. Config tabs + btn--ghost — tema claro ─────────── */
+.theme-light .config-tab {
+  background: #ffffff;
+  color: var(--text-muted);
+  border: 1px solid rgba(15,23,42,.20);
+}
+.theme-light .config-tab:hover:not(.config-tab--active) {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: rgba(15,23,42,.32);
+}
+.theme-light .config-tab--active {
+  background: var(--win-tint-bg);
+  color: var(--win-text);
+  border-color: transparent;
+}
+.theme-light .badge--far {
+  background: rgba(100,116,139,.12);
+  color: #475569;
+  border: 1px solid rgba(100,116,139,.30);
+}
+.theme-light .btn--ghost {
+  background: #ffffff;
+  color: var(--text-muted);
+  border-color: rgba(15,23,42,.22);
+}
+.theme-light .btn--ghost:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: rgba(15,23,42,.35);
+}
+.theme-light .btn--ghost:disabled {
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border-color: rgba(15,23,42,.12);
+  opacity: .6;
+}
 
 /* ── 17. Tabela admin — row highlight com deslize ────────── */
 .admin-table tr {

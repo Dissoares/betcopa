@@ -185,16 +185,6 @@ const api = async (url, method = 'GET', body = null) => {
   }
 };
 
-// ── Alerts ────────────────────────────────────────────────────
-const showAlert = (msg, type = 'info', ms = 4500) => {
-  const el = document.getElementById('alerts');
-  const div = document.createElement('div');
-  div.className = `alert alert--${type}`;
-  div.textContent = msg;
-  el.appendChild(div);
-  setTimeout(() => div.remove(), ms);
-};
-
 // ── Toast (SweetAlert2) ───────────────────────────────────────
 const _iconMap = { success: 'success', danger: 'error', info: 'info', warning: 'warning' };
 const toast = (msg, type = 'success') => {
@@ -207,6 +197,11 @@ const toast = (msg, type = 'success') => {
     timer: 3500,
     timerProgressBar: true,
   });
+};
+
+// ── Alerts → redireciona para toast ───────────────────────────
+const showAlert = (msg, type = 'info') => {
+  toast(msg.replace(/<[^>]*>/g, ''), type);
 };
 
 // ── Confirm dialog (SweetAlert2) ─────────────────────────────
