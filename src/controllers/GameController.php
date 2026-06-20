@@ -18,6 +18,15 @@ class GameController
         $this->adminEmail = $this->configRepo->get('admin_email', $this->config['admin_email']);
     }
 
+    private function triggerRankingSeed(int $gameId): void
+    {
+        try {
+            (new RankingSeedService(Database::connection()))->run($gameId);
+        } catch (Throwable $e) {
+            Logger::error('RankingSeed falhou', ['game_id' => $gameId, 'err' => $e->getMessage()]);
+        }
+    }
+
     public function list(): void
     {
         jsonResponse(['jogos' => $this->service->listGames()]);
@@ -111,6 +120,7 @@ class GameController
                 if ($norm['status'] === 'finalizado' && $norm['placar_real']) {
                     $this->repository->updateResult((int) $game['id'], $norm['placar_real']);
                     $this->bets->processResult((int) $game['id']);
+                    $this->triggerRankingSeed((int) $game['id']);
                     Logger::info('Auto-sync: finalizado', ['id' => $game['id'], 'placar' => $norm['placar_real']]);
                 } else {
                     if ($norm['placar_real']) {
@@ -155,6 +165,7 @@ class GameController
         $fora = (int) ($body['placar_fora'] ?? 0);
         $this->service->setResult($id, $casa, $fora);
         $this->bets->processResult($id);
+        $this->triggerRankingSeed($id);
         jsonResponse(['message' => 'Resultado inserido e apostas processadas']);
     }
 
@@ -184,6 +195,7 @@ class GameController
             try {
                 $this->service->setResult($id, $casa, $fora);
                 $this->bets->processResult($id);
+                $this->triggerRankingSeed($id);
                 $processados++;
             } catch (Exception $e) {
                 $erros[] = ['id' => $id, 'msg' => $e->getMessage()];
@@ -591,6 +603,7 @@ class GameController
                 if ($statusLocal === 'finalizado' && $normalized['placar_real']) {
                     $this->repository->updateResult((int) $game['id'], $normalized['placar_real']);
                     $this->bets->processResult((int) $game['id']);
+                    $this->triggerRankingSeed((int) $game['id']);
                     $updated++;
                 } elseif ($statusLocal === 'encerrado') {
                     // Ao vivo ou encerrado — atualiza status e placar parcial

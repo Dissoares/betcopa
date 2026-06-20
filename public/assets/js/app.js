@@ -4961,6 +4961,23 @@ const syncResults = async () => {
   }
 };
 
+const seedRanking = async () => {
+  const btn = document.getElementById('btnSeedRanking');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+  try {
+    const res = await api('/api/admin/ranking/seed', 'POST', {});
+    toast(
+      `Ganhadores gerados! ${res.jogos} jogo(s), ${res.apostas} aposta(s) criadas.`,
+      'success'
+    );
+    renderRanking();
+  } catch (err) {
+    toast(err.message, 'danger');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Ganhadores';
+  }
+};
+
 const submitAdminResult = async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
@@ -6531,6 +6548,7 @@ const bind = () => {
   document.getElementById('btnImport')?.addEventListener('click', importFromApi);
   document.getElementById('btnSync')?.addEventListener('click', syncResults);
   document.getElementById('btnSyncImages')?.addEventListener('click', syncImages);
+  document.getElementById('btnSeedRanking')?.addEventListener('click', seedRanking);
 
 
   document.getElementById('leaguePreviewBadges')?.addEventListener('click', async e => {

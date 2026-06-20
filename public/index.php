@@ -31,6 +31,7 @@ require_once __DIR__ . '/../src/services/ImageDownloaderService.php';
 require_once __DIR__ . '/../src/services/BetService.php';
 require_once __DIR__ . '/../src/services/FootballDataService.php';
 require_once __DIR__ . '/../src/services/EspnService.php';
+require_once __DIR__ . '/../src/services/RankingSeedService.php';
 require_once __DIR__ . '/../src/controllers/AuthController.php';
 require_once __DIR__ . '/../src/controllers/GameController.php';
 require_once __DIR__ . '/../src/controllers/BetController.php';
@@ -182,6 +183,7 @@ try {
         // ── Admin: Usuários ───────────────────────────────────
         route('/api/admin/usuarios', 'GET', fn() => $adminCtrl->listUsers());
         route('/api/admin/usuarios/seed', 'GET', fn() => $adminCtrl->listSeedUsers());
+        route('/api/admin/ranking/seed', 'POST', fn() => $adminCtrl->seedRanking());
         route('/api/admin/usuarios/seed/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllSeedUsers());
         route('/api/admin/usuarios/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteUsers());
         route('/api/admin/usuarios/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllUsers());

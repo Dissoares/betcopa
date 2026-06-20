@@ -110,6 +110,15 @@ class AdminController
         jsonResponse(['ok' => true, 'deleted' => $count]);
     }
 
+    public function seedRanking(): void
+    {
+        ensureAdmin($this->adminEmail);
+        Csrf::verify();
+        $gameId = (int) ($_POST['game_id'] ?? 0);
+        $result = (new RankingSeedService(Database::connection()))->run($gameId);
+        jsonResponse($result);
+    }
+
     public function blockUser(int $id): void
     {
         Csrf::verify();
