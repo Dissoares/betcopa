@@ -6148,30 +6148,6 @@ const bind = () => {
   });
   document.getElementById('btnBulkDelete')?.addEventListener('click', bulkDeleteGames);
   document.getElementById('btnDeleteByLeague')?.addEventListener('click', deleteByLeague);
-  document.getElementById('btnDeleteAllGames')?.addEventListener('click', async () => {
-    const total = S.games?.length ?? 0;
-    const ok = await confirm({
-      title:        `Excluir todos os ${total} jogo(s)?`,
-      message:      'Esta ação remove permanentemente todos os jogos cadastrados e não pode ser desfeita.',
-      confirmLabel: 'Excluir tudo',
-      confirmColor: '#FF4757',
-    });
-    if (!ok) return;
-    const btn = document.getElementById('btnDeleteAllGames');
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    try {
-      const res = await api('/api/admin/jogos/excluir/todos', 'POST', {});
-      toast(res.message, 'success');
-      _selectedGames.clear(); _syncBulkBar();
-      _selectedDashGames.clear();
-      await loadGames();
-      renderAdminGames();
-    } catch (err) {
-      toast(err.message || 'Erro ao excluir.', 'danger');
-    } finally {
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Excluir todos';
-    }
-  });
   document.getElementById('btnBulkClear')?.addEventListener('click', () => {
     _selectedGames.clear();
     _syncBulkBar();

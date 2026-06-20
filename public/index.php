@@ -149,7 +149,6 @@ try {
         route('/api/admin/jogos/preview-league',       'GET',  fn() => $gameCtrl->previewLeague());
         route('/api/admin/jogos/resultado/lote',     'POST', fn() => $gameCtrl->bulkResult());
         route('/api/admin/jogos/excluir/lote',       'POST', fn() => $gameCtrl->bulkDelete());
-        route('/api/admin/jogos/excluir/todos',      'POST', fn() => $gameCtrl->deleteAll());
         route('/api/admin/jogos/excluir/liga',       'POST', fn() => $gameCtrl->deleteByLeague());
         routePattern('/^\/api\/admin\/jogos\/(\d+)$/', 'PUT',
             fn(int $id) => $gameCtrl->update($id));

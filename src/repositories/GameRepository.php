@@ -286,11 +286,6 @@ class GameRepository
         return $stmt->execute(['id' => $id]);
     }
 
-    public function deleteAll(): int
-    {
-        return (int) $this->db->exec('DELETE FROM jogos');
-    }
-
     public function deleteByLeague(int $leagueId): int
     {
         $stmt = $this->db->prepare('DELETE FROM jogos WHERE api_league_id = :league_id');
