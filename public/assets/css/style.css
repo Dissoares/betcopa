@@ -71,6 +71,8 @@
   --tint-gold:    rgba(255,184,0,0.14);
 
   /* Tints de resultado de aposta */
+  --win-text:         var(--primary);
+  --win-tint-bg:      var(--tint-primary);
   --tint-win-border:  rgba(89,255,21,0.30);
   --tint-win-bg:      rgba(89,255,21,0.04);
   --tint-loss-border: rgba(255,51,85,0.25);
@@ -145,6 +147,8 @@
   --tint-gold:    rgba(245,158,11,0.14);
 
   /* Tints de resultado */
+  --win-text:         #16a34a;
+  --win-tint-bg:      rgba(22,163,74,.12);
   --tint-win-border:  rgba(5,150,105,0.32);
   --tint-win-bg:      rgba(5,150,105,0.07);
   --tint-loss-border: rgba(220,38,38,0.28);
@@ -1242,7 +1246,7 @@ body.scroll-locked {
   font-size: .73rem; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase;
 }
-.badge--open      { background: var(--tint-primary); color: var(--primary); }
+.badge--open      { background: var(--win-tint-bg);  color: var(--win-text); }
 .badge--today     { background: rgba(245,184,0,.15); color: #c99000; }
 .badge--closed    { background: var(--tint-danger);  color: var(--danger); }
 .badge--confirmed { background: rgba(89,255,21,.12); color: var(--primary); }
@@ -1704,7 +1708,7 @@ body.scroll-locked {
 /* Linha 2: palpite */
 .bet-card__palpite { color: var(--text-muted); font-size: .82rem; display: flex; align-items: center; gap: .35rem; }
 .bet-card__palpite i { opacity: .55; font-size: .78rem; }
-.bet-card__palpite .score--win  { color: var(--primary); font-weight: 700; }
+.bet-card__palpite .score--win  { color: var(--win-text); font-weight: 700; }
 .bet-card__palpite .score--lose { color: var(--danger);  font-weight: 700; }
 .bet-card__palpite .score--draw { color: var(--text);    font-weight: 700; }
 
@@ -1722,7 +1726,7 @@ body.scroll-locked {
 .bet-card__col   { text-align: center; }
 .bet-card__col-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: .15rem; }
 .bet-card__col-val   { font-size: .92rem; font-weight: 700; }
-.bet-card__col-val--win  { color: var(--primary); }
+.bet-card__col-val--win  { color: var(--win-text); }
 .bet-card__col-val--loss { color: var(--danger); }
 .bet-card__actions { display: flex; gap: .4rem; align-items: center; margin-left: auto; }
 
@@ -3646,7 +3650,7 @@ button.copa-hero__stat:hover {
   display: flex; flex-direction: column; align-items: center;
   gap: .2rem; color: var(--text-muted); flex-shrink: 0;
 }
-.bet-step--done   { color: var(--primary); }
+.bet-step--done   { color: var(--win-text); }
 .bet-step--fail   { color: var(--danger); }
 .bet-step--active { color: var(--text); }
 .bet-step__dot {
@@ -3659,18 +3663,18 @@ button.copa-hero__stat:hover {
   width: 16px; height: 16px;
   display: flex; align-items: center; justify-content: center;
 }
-.bet-step__dot--check { background: var(--primary); }
+.bet-step__dot--check { background: var(--win-text); }
 .bet-step__dot--fail  { background: var(--danger); }
 .bet-step__dot--check i,
 .bet-step__dot--fail  i { font-size: .55rem; color: #fff; font-weight: 900; }
-.bet-step--done   .bet-step__dot:not(.bet-step__dot--check) { background: var(--primary); }
+.bet-step--done   .bet-step__dot:not(.bet-step__dot--check) { background: var(--win-text); }
 .bet-step--active .bet-step__dot { background: var(--text); box-shadow: 0 0 0 3px rgba(249,250,251,.12); }
 .bet-step__label { font-weight: 600; white-space: nowrap; }
 .bet-step__line {
   width: 22px; height: 2px; background: var(--border); flex-shrink: 0;
   align-self: flex-start; margin-top: 3px;
 }
-.bet-step__line--done { background: var(--primary); }
+.bet-step__line--done { background: var(--win-text); }
 
 
 /* ============================================================

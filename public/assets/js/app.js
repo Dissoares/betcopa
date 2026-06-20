@@ -1556,7 +1556,7 @@ const betTimeline = (status) => {
     { key: 'pendente',   label: 'Palpite' },
     { key: 'pago',       label: 'Pagamento' },
     { key: 'confirmado', label: 'Aguardando Jogo' },
-    { key: 'resultado',  label: isWon ? '<span style="color:var(--primary)">Acertou!</span>' : isLost ? '<span style="color:var(--danger)">Errou Placar</span>' : 'Resultado' },
+    { key: 'resultado',  label: isWon ? '<span style="color:var(--win-text)">Acertou!</span>' : isLost ? '<span style="color:var(--danger)">Errou Placar</span>' : 'Resultado' },
   ];
   const ORDER = ['pendente', 'pago', 'confirmado'];
   const done  = isWon || isLost;
@@ -3259,7 +3259,7 @@ const renderBets = () => {
         <!-- Linha 4: compartilhar -->
         <div class="bet-card__share">
           <button class="bet-card__share-btn" data-action="share" data-id="${b.id}">
-            <i class="fa-solid fa-share-nodes"></i> Compartilhar Palpite
+            <i class="fa-solid fa-share-nodes"></i> ${isWin ? 'Compartilhar Acerto 🏆' : isLoss ? 'Compartilhar Resultado' : 'Compartilhar Palpite'}
           </button>
         </div>
       </div>`;
