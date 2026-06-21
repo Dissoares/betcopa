@@ -2725,6 +2725,7 @@ const openShareModal = async (betId) => {
   const actionBtns = ['btnShareWhatsApp','btnShareTelegram','btnShareFacebook','btnShareTwitter','btnShareNative','btnShareCopyLink'];
 
   overlay.classList.remove('hidden');
+  lockScroll();
   spinner.classList.remove('hidden');
   spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Gerando imagem…</span>';
   canvas.classList.add('hidden');
@@ -2744,6 +2745,7 @@ const openShareModal = async (betId) => {
 
 const closeShareModal = () => {
   document.getElementById('modalShareOverlay')?.classList.add('hidden');
+  unlockScroll();
   _shareBetId = null;
 };
 
@@ -3134,6 +3136,7 @@ const openGameShareModal = async (gameId) => {
   const canvas  = document.getElementById('gameShareCanvas');
 
   overlay.classList.remove('hidden');
+  lockScroll();
   spinner.classList.remove('hidden');
   spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Gerando imagem…</span>';
   canvas.classList.add('hidden');
@@ -3154,6 +3157,7 @@ const openGameShareModal = async (gameId) => {
 
 const closeGameShareModal = () => {
   document.getElementById('modalGameShareOverlay')?.classList.add('hidden');
+  unlockScroll();
   _shareGameId = null;
 };
 
@@ -4214,6 +4218,7 @@ const openPixModal = (data) => {
   }
 
   document.getElementById('modalPixOverlay').classList.remove('hidden');
+  lockScroll();
 };
 
 const closePixModal = () => {
@@ -4222,6 +4227,7 @@ const closePixModal = () => {
   S._depositId  = null;
   S._depositAmt = 0;
   document.getElementById('modalPixOverlay').classList.add('hidden');
+  unlockScroll();
 };
 
 const _selectPayMethod = (method) => {
@@ -5250,10 +5256,12 @@ const openDepositModal = () => {
   document.getElementById('depositValor').value = '';
   document.querySelectorAll('.dq-btn').forEach(b => b.classList.remove('dq-btn--active'));
   document.getElementById('modalDepositOverlay').classList.remove('hidden');
+  lockScroll();
 };
 
 const closeDepositModal = () => {
   document.getElementById('modalDepositOverlay').classList.add('hidden');
+  unlockScroll();
 };
 
 const submitDeposit = async () => {
@@ -5303,11 +5311,13 @@ const openSaqueModal = async () => {
   document.getElementById('saqueChave').value = '';
   document.getElementById('saqueTipo').value  = '';
   document.getElementById('modalSaqueOverlay').classList.remove('hidden');
+  lockScroll();
   await loadSaques();
 };
 
 const closeSaqueModal = () => {
   document.getElementById('modalSaqueOverlay').classList.add('hidden');
+  unlockScroll();
 };
 
 const loadSaques = async () => {
@@ -5954,13 +5964,19 @@ const bind = () => {
   });
 
   // ── Ticket: new ticket modal ──────────────────────────────
-  document.getElementById('btnNewTicket')?.addEventListener('click', () =>
-    document.getElementById('modalNewTicket')?.classList.remove('hidden'));
-  document.getElementById('btnNewTicketClose')?.addEventListener('click', () =>
-    document.getElementById('modalNewTicket')?.classList.add('hidden'));
+  document.getElementById('btnNewTicket')?.addEventListener('click', () => {
+    document.getElementById('modalNewTicket')?.classList.remove('hidden');
+    lockScroll();
+  });
+  document.getElementById('btnNewTicketClose')?.addEventListener('click', () => {
+    document.getElementById('modalNewTicket')?.classList.add('hidden');
+    unlockScroll();
+  });
   document.getElementById('modalNewTicket')?.addEventListener('click', e => {
-    if (e.target === document.getElementById('modalNewTicket'))
+    if (e.target === document.getElementById('modalNewTicket')) {
       document.getElementById('modalNewTicket')?.classList.add('hidden');
+      unlockScroll();
+    }
   });
   document.getElementById('formNewTicket')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -8469,6 +8485,7 @@ function _showEmailCapture() {
   const el = document.getElementById('modalEmailCapture');
   if (!el) return;
   el.classList.remove('hidden');
+  lockScroll();
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('mlc--in')));
   document.getElementById('mlcEmail')?.focus();
 }
@@ -8477,6 +8494,7 @@ function _hideEmailCapture() {
   const el = document.getElementById('modalEmailCapture');
   if (!el) return;
   el.classList.remove('mlc--in');
+  unlockScroll();
   setTimeout(() => el.classList.add('hidden'), 300);
 }
 
@@ -8547,10 +8565,12 @@ function _showWelcomeBonus(balance, bonus) {
   }
 
   el.classList.remove('hidden');
+  lockScroll();
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('wb--in')));
 
   document.getElementById('wbBtn')?.addEventListener('click', () => {
     el.classList.remove('wb--in');
+    unlockScroll();
     setTimeout(() => el.classList.add('hidden'), 300);
     navigate('jogos');
   }, { once: true });
@@ -8603,6 +8623,7 @@ function _exitIntentInit() {
     // Mostra modal com animação de entrada
     const modal = document.getElementById('modalExitIntent');
     modal.classList.remove('hidden');
+    lockScroll();
     requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('exit-modal--in')));
 
     // Contador regressivo
@@ -8626,6 +8647,7 @@ function _exitIntentInit() {
   function _close() {
     const modal = document.getElementById('modalExitIntent');
     modal.classList.remove('exit-modal--in');
+    unlockScroll();
     setTimeout(() => modal.classList.add('hidden'), 350);
   }
 
