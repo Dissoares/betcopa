@@ -338,6 +338,9 @@ try {
         route('/api/chat/messages',              'GET',  fn() => $chatCtrl->getMessages());
         route('/api/chat/messages',              'POST', fn() => $chatCtrl->sendMessage());
         route('/api/chat/unread',                'GET',  fn() => $chatCtrl->getUnread());
+        route('/api/chat/guest',                 'GET',  fn() => $chatCtrl->guestMessages());
+        route('/api/chat/guest',                 'POST', fn() => $chatCtrl->guestSend());
+        route('/api/chat/claim',                 'POST', fn() => $chatCtrl->claimGuest());
         route('/api/admin/chat/conversations',   'GET',  fn() => $chatCtrl->adminConversations());
         route('/api/admin/chat/conversation',    'GET',  fn() => $chatCtrl->adminConversation());
         route('/api/admin/chat/reply',           'POST', fn() => $chatCtrl->adminReply());

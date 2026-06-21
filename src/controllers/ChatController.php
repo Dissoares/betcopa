@@ -45,6 +45,55 @@ class ChatController
         jsonResponse(['count' => $this->chat->getUnreadCount($userId)]);
     }
 
+    /** GET /api/chat/guest — público, busca mensagens do visitante */
+    public function guestMessages(): void
+    {
+        $guestId = trim((string) ($_GET['guest_id'] ?? ''));
+        $afterId = (int) ($_GET['after'] ?? 0);
+
+        if (!$guestId || strlen($guestId) > 64) {
+            jsonResponse(['messages' => []]);
+            return;
+        }
+
+        $messages = $afterId > 0
+            ? $this->chat->guestAfterIdFromServer($guestId, $afterId)
+            : $this->chat->getGuestConversation($guestId);
+
+        jsonResponse(['messages' => $messages]);
+    }
+
+    /** POST /api/chat/guest — público, sem autenticação */
+    public function guestSend(): void
+    {
+        $body    = json_decode(file_get_contents('php://input'), true) ?: [];
+        $guestId = trim((string) ($body['guest_id'] ?? ''));
+        $msg     = trim((string) ($body['message']  ?? ''));
+
+        if (!$guestId || !$msg || mb_strlen($guestId) > 64 || mb_strlen($msg) > 1000) {
+            jsonResponse(['error' => 'Dados inválidos'], 422);
+        }
+
+        $id = $this->chat->sendGuest($guestId, $msg);
+        jsonResponse(['id' => $id, 'ok' => true]);
+    }
+
+    /** POST /api/chat/claim — vincula guest_id ao user logado */
+    public function claimGuest(): void
+    {
+        $userId  = ensureLogged();
+        $body    = json_decode(file_get_contents('php://input'), true) ?: [];
+        $guestId = trim((string) ($body['guest_id'] ?? ''));
+
+        if (!$guestId) {
+            jsonResponse(['ok' => true]);
+            return;
+        }
+
+        $this->chat->claimGuest($guestId, $userId);
+        jsonResponse(['ok' => true]);
+    }
+
     /** GET /api/admin/chat/conversations */
     public function adminConversations(): void
     {
@@ -52,16 +101,25 @@ class ChatController
         jsonResponse(['conversations' => $this->chat->getConversations()]);
     }
 
-    /** GET /api/admin/chat/conversation?user_id=X */
+    /** GET /api/admin/chat/conversation?user_id=X ou ?guest_id=X */
     public function adminConversation(): void
     {
         ensureAdmin($this->adminEmail);
+
+        $guestId = trim((string) ($_GET['guest_id'] ?? ''));
+        if ($guestId) {
+            $messages = $this->chat->getGuestConversation($guestId);
+            $this->chat->markGuestReadByAdmin($guestId);
+            jsonResponse(['messages' => $messages, 'conv_type' => 'guest', 'conv_key' => $guestId]);
+            return;
+        }
+
         $userId = (int) ($_GET['user_id'] ?? 0);
-        if (!$userId) jsonResponse(['error' => 'user_id obrigatório'], 422);
+        if (!$userId) jsonResponse(['error' => 'user_id ou guest_id obrigatório'], 422);
 
         $messages = $this->chat->getConversation($userId);
         $this->chat->markReadByAdmin($userId);
-        jsonResponse(['messages' => $messages]);
+        jsonResponse(['messages' => $messages, 'conv_type' => 'user', 'conv_key' => $userId]);
     }
 
     /** POST /api/admin/chat/reply */
@@ -69,13 +127,21 @@ class ChatController
     {
         Csrf::verify();
         ensureAdmin($this->adminEmail);
-        $body   = json_decode(file_get_contents('php://input'), true) ?: [];
-        $userId = (int) ($body['user_id'] ?? 0);
-        $msg    = trim((string) ($body['message'] ?? ''));
+        $body    = json_decode(file_get_contents('php://input'), true) ?: [];
+        $userId  = (int) ($body['user_id']  ?? 0);
+        $guestId = trim((string) ($body['guest_id'] ?? ''));
+        $msg     = trim((string) ($body['message']  ?? ''));
 
-        if (!$userId || !$msg) jsonResponse(['error' => 'Dados inválidos'], 422);
+        if (!$msg) jsonResponse(['error' => 'Mensagem vazia'], 422);
 
-        $id = $this->chat->send($userId, 'admin', $msg);
+        if ($guestId) {
+            $id = $this->chat->sendGuestAdmin($guestId, $msg);
+        } elseif ($userId) {
+            $id = $this->chat->send($userId, 'admin', $msg);
+        } else {
+            jsonResponse(['error' => 'Destinatário inválido'], 422);
+        }
+
         jsonResponse(['id' => $id, 'ok' => true]);
     }
 

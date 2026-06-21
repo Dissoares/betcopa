@@ -470,13 +470,14 @@
         <div class="admin-sidebar__title"><i class="fa-solid fa-screwdriver-wrench"></i> Admin</div>
         <nav class="admin-nav">
           <button class="admin-nav__btn" data-admin-tab="online"><i class="fa-solid fa-signal"></i> Online</button>
+          <button class="admin-nav__btn" data-admin-tab="chat"><i class="fa-solid fa-comment-dots"></i> Chat <span class="admin-nav__badge hidden" id="adminChatUnreadBadge">0</span></button>
           <button class="admin-nav__btn admin-nav__btn--active" data-admin-tab="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
           <button class="admin-nav__btn" data-admin-tab="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
           <button class="admin-nav__btn" data-admin-tab="apostas"><i class="fa-solid fa-bullseye"></i> Apostas</button>
           <button class="admin-nav__btn" data-admin-tab="usuarios"><i class="fa-solid fa-users"></i> Usuários</button>
           <button class="admin-nav__btn" data-admin-tab="saques"><i class="fa-solid fa-money-bill-transfer"></i> Saques <span class="admin-nav__badge hidden" id="adminSaquesBadge">0</span></button>
-          <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
           <button class="admin-nav__btn" data-admin-tab="suporte"><i class="fa-solid fa-headset"></i> Suporte <span class="admin-nav__badge hidden" id="adminTicketBadge">0</span></button>
+          <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
           <button class="admin-nav__btn" data-admin-tab="migrations"><i class="fa-solid fa-database"></i> Migrations</button>
         </nav>
       </aside>
@@ -1033,63 +1034,48 @@
 
         </div>
 
-        <!-- ── ABA: SUPORTE ── -->
+        <!-- ── ABA: CHAT ── -->
+        <div class="admin-tab hidden" id="atab-chat">
+          <div class="ticket-split">
+            <div class="ticket-split__list" id="adminChatConvList">
+              <p class="empty-state" style="padding:2rem;text-align:center">Nenhuma conversa ainda.</p>
+            </div>
+            <div class="ticket-split__chat hidden" id="adminChatPanel">
+              <div class="ticket-chat-header" id="adminChatPanelHeader"></div>
+              <div class="ticket-chat-messages" id="adminChatPanelMessages"></div>
+              <div class="ticket-chat-footer">
+                <div class="ticket-chat-input-wrap">
+                  <textarea class="ticket-chat-input" id="adminChatReplyInput" placeholder="Responder ao usuário…" rows="2"></textarea>
+                  <button class="btn btn--primary ticket-chat-send" id="adminChatReplySend"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ABA: SUPORTE (Tickets) ── -->
         <div class="admin-tab hidden" id="atab-suporte">
-          <!-- Sub-tabs -->
-          <div class="suporte-tabs">
-            <button class="suporte-tab suporte-tab--active" data-suporte-tab="chat">
-              <i class="fa-solid fa-comment-dots"></i> Chat
-              <span class="admin-nav__badge hidden" id="adminChatUnreadBadge">0</span>
-            </button>
-            <button class="suporte-tab" data-suporte-tab="tickets">
-              <i class="fa-solid fa-ticket"></i> Tickets
-              <span class="admin-nav__badge hidden" id="adminTicketBadge2">0</span>
-            </button>
-          </div>
-
-          <!-- Chat -->
-          <div class="suporte-content" id="suporte-chat">
-            <div class="ticket-split">
-              <div class="ticket-split__list" id="adminChatConvList">
-                <p class="empty-state" style="padding:2rem;text-align:center">Nenhuma conversa ainda.</p>
-              </div>
-              <div class="ticket-split__chat hidden" id="adminChatPanel">
-                <div class="ticket-chat-header" id="adminChatPanelHeader"></div>
-                <div class="ticket-chat-messages" id="adminChatPanelMessages"></div>
-                <div class="ticket-chat-footer">
-                  <div class="ticket-chat-input-wrap">
-                    <textarea class="ticket-chat-input" id="adminChatReplyInput" placeholder="Responder ao usuário…" rows="2"></textarea>
-                    <button class="btn btn--primary ticket-chat-send" id="adminChatReplySend"><i class="fa-solid fa-paper-plane"></i></button>
-                  </div>
-                </div>
-              </div>
+          <div class="admin-page-header admin-page-header--actions" style="padding:0 0 1rem">
+            <div class="ticket-filter-bar">
+              <button class="ticket-filter-btn ticket-filter-btn--active" data-ticket-filter="todos">Todos</button>
+              <button class="ticket-filter-btn" data-ticket-filter="aberto">Abertos</button>
+              <button class="ticket-filter-btn" data-ticket-filter="em_atendimento">Em atendimento</button>
+              <button class="ticket-filter-btn" data-ticket-filter="fechado">Fechados</button>
             </div>
           </div>
-
-          <!-- Tickets -->
-          <div class="suporte-content hidden" id="suporte-tickets">
-            <div class="admin-page-header admin-page-header--actions" style="padding:0 0 1rem">
-              <div class="ticket-filter-bar">
-                <button class="ticket-filter-btn ticket-filter-btn--active" data-ticket-filter="todos">Todos</button>
-                <button class="ticket-filter-btn" data-ticket-filter="aberto">Abertos</button>
-                <button class="ticket-filter-btn" data-ticket-filter="em_atendimento">Em atendimento</button>
-                <button class="ticket-filter-btn" data-ticket-filter="fechado">Fechados</button>
-              </div>
+          <div class="ticket-split">
+            <div class="ticket-split__list" id="adminTicketList">
+              <p class="empty-state" style="padding:2rem;text-align:center;display:none" id="adminTicketEmpty">Nenhum ticket encontrado.</p>
             </div>
-            <div class="ticket-split">
-              <div class="ticket-split__list" id="adminTicketList">
-                <p class="empty-state" style="padding:2rem;text-align:center;display:none" id="adminTicketEmpty">Nenhum ticket encontrado.</p>
-              </div>
-              <div class="ticket-split__chat hidden" id="adminTicketChat">
-                <div class="ticket-chat-header" id="adminChatHeader"></div>
-                <div class="ticket-chat-messages" id="adminChatMessages"></div>
-                <div class="ticket-chat-footer">
-                  <div class="ticket-chat-input-wrap">
-                    <textarea class="ticket-chat-input" id="adminChatInput" placeholder="Escreva sua resposta…" rows="2"></textarea>
-                    <button class="btn btn--primary ticket-chat-send" id="adminChatSend"><i class="fa-solid fa-paper-plane"></i></button>
-                  </div>
-                  <div class="ticket-chat-actions" id="adminChatActions"></div>
+            <div class="ticket-split__chat hidden" id="adminTicketChat">
+              <div class="ticket-chat-header" id="adminChatHeader"></div>
+              <div class="ticket-chat-messages" id="adminChatMessages"></div>
+              <div class="ticket-chat-footer">
+                <div class="ticket-chat-input-wrap">
+                  <textarea class="ticket-chat-input" id="adminChatInput" placeholder="Escreva sua resposta…" rows="2"></textarea>
+                  <button class="btn btn--primary ticket-chat-send" id="adminChatSend"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
+                <div class="ticket-chat-actions" id="adminChatActions"></div>
               </div>
             </div>
           </div>

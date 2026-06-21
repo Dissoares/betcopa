@@ -6850,7 +6850,8 @@ const switchAdminTab = (tab) => {
   if (tab === 'saques')    loadAdminSaques();
   if (tab === 'config')    loadAdminConfig();
   if (tab === 'jogos')     { populateAdminSelect(); renderLeaguePreview(); }
-  if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); _initAdminSuporteTabs(); loadAdminChat(); }
+  if (tab === 'chat')      loadAdminChat();
+  if (tab === 'suporte')   { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
   if (tab === 'online')    {
     loadAdminAnalytics('today', 1);
     loadAdminOnline();
@@ -8706,9 +8707,6 @@ function _exitIntentInit() {
     _prevT = now;
   }, { passive: true });
 
-  // ── Fallback por timer: 15s sem interação (mobile / usuário passivo) ──
-  setTimeout(_fire, 15000);
-
   // ── Listeners dos botões do modal ──
   document.getElementById('exitModalX').addEventListener('click', () => {
     _close();
@@ -8836,22 +8834,37 @@ const _chatMd = (txt) =>
     .replace(/\n/g, '<br>');
 
 const _chatRenderBubble = (msg) => {
-  const cls   = `chat-msg chat-msg--${msg.sender}`;
-  const label = msg.sender === 'admin' ? '<div class="chat-msg__sender">Suporte BetCopa</div>' : '';
+  const isSupport = msg.sender === 'system' || msg.sender === 'admin';
+  const cls = `chat-msg chat-msg--${msg.sender}`;
+  if (isSupport) {
+    return `<div class="${cls}">
+      <div class="chat-msg__avatar"><i class="fa-solid fa-headset"></i></div>
+      <div class="chat-msg__body">
+        <div class="chat-msg__bubble">${_chatMd(msg.message)}</div>
+        <div class="chat-msg__time">${_chatFmtTime(msg.created_at)}</div>
+      </div>
+    </div>`;
+  }
   return `<div class="${cls}">
-    ${label}
     <div class="chat-msg__bubble">${_chatMd(msg.message)}</div>
     <div class="chat-msg__time">${_chatFmtTime(msg.created_at)}</div>
   </div>`;
 };
 
 // ── Widget do usuário ─────────────────────────────────────────
-let _chatOpen   = false;
-let _chatLastId = 0;
-let _chatPollTimer = null;
+let _chatOpen          = false;
+let _chatLastId        = 0;  // ID do servidor (usuários logados)
+let _guestLastServerId = 0;  // ID do servidor para visitantes (separado dos IDs locais)
+let _chatPollTimer     = null;
 
-// ── Visitantes: mensagens locais no localStorage ──────────────
+// ── Visitantes: ID persistente + mensagens locais ─────────────
 const _GUEST_CHAT_KEY = 'bc_chat_guest';
+
+const _guestId = () => {
+  let id = localStorage.getItem('bc_gid');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('bc_gid', id); }
+  return id;
+};
 
 const _guestMsgs = () => {
   try { return JSON.parse(localStorage.getItem(_GUEST_CHAT_KEY) || '[]'); } catch { return []; }
@@ -8860,6 +8873,17 @@ const _guestSaveMsg = (msg) => {
   const msgs = _guestMsgs();
   msgs.push({ ...msg, id: Date.now() + Math.random() });
   localStorage.setItem(_GUEST_CHAT_KEY, JSON.stringify(msgs.slice(-50)));
+};
+
+// Envia mensagem de visitante ao servidor (sem auth)
+const _guestSendToServer = async (message) => {
+  try {
+    await fetch('/api/chat/guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guest_id: _guestId(), message }),
+    });
+  } catch { /* ignora falhas de rede */ }
 };
 
 // Envia gatilho automático para visitante (sem duplicar)
@@ -8876,6 +8900,17 @@ const _chatScrollBottom = () => {
   const el = document.getElementById('chatMessages');
   if (el) el.scrollTop = el.scrollHeight;
 };
+
+const _chatSound = (() => {
+  let audio = null;
+  return () => {
+    try {
+      if (!audio) audio = new Audio('/assets/sounds/chat.mp3');
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } catch { /* ignore */ }
+  };
+})();
 
 const _chatShowBadge = (n) => {
   const badge = document.getElementById('chatUnreadBadge');
@@ -8905,11 +8940,29 @@ const _chatAppendMessages = (msgs) => {
   msgs.forEach(m => { el.insertAdjacentHTML('beforeend', _chatRenderBubble(m)); });
   _chatLastId = Math.max(_chatLastId, ...msgs.map(m => +m.id || 0));
   _chatScrollBottom();
+  // Som para mensagens recebidas (não as enviadas pelo próprio usuário)
+  if (msgs.some(m => m.sender !== 'user')) _chatSound();
 };
 
 const _chatLoad = async () => {
   if (!S.user) {
+    // Renderiza mensagens locais (IDs são timestamps, não IDs do servidor)
     _chatRenderMessages(_guestMsgs());
+    // Busca todas as mensagens do servidor (inclui respostas do admin)
+    try {
+      const gid = _guestId();
+      const r   = await fetch(`/api/chat/guest?guest_id=${encodeURIComponent(gid)}`);
+      if (r.ok) {
+        const { messages } = await r.json();
+        if (messages?.length) {
+          // Atualiza o tracker de ID do servidor (inteiros pequenos, independente do localStorage)
+          _guestLastServerId = Math.max(...messages.map(m => parseInt(m.id) || 0));
+          // Mostra só as do admin/sistema (as de "user" já estão no localStorage)
+          const adminMsgs = messages.filter(m => m.sender !== 'user');
+          if (adminMsgs.length) _chatAppendMessages(adminMsgs);
+        }
+      }
+    } catch { /* ignore */ }
     return;
   }
   try {
@@ -8919,7 +8972,21 @@ const _chatLoad = async () => {
 };
 
 const _chatPoll = async () => {
-  if (!S.user) return;
+  if (!S.user) {
+    // Poll para visitantes: busca novas mensagens do servidor usando ID correto
+    try {
+      const gid = _guestId();
+      const r   = await fetch(`/api/chat/guest?guest_id=${encodeURIComponent(gid)}&after=${_guestLastServerId}`);
+      if (r.ok) {
+        const { messages } = await r.json();
+        if (messages?.length) {
+          _guestLastServerId = Math.max(...messages.map(m => parseInt(m.id) || 0), _guestLastServerId);
+          _chatAppendMessages(messages);
+        }
+      }
+    } catch { /* ignore */ }
+    return;
+  }
   try {
     const { messages } = await api(`/api/chat/messages?after=${_chatLastId}`);
     if (messages?.length) _chatAppendMessages(messages);
@@ -8945,10 +9012,8 @@ const openChat = () => {
   widget.classList.add('chat-widget--open');
   panel.classList.remove('hidden');
   _chatLoad();
-  if (S.user) {
-    clearInterval(_chatPollTimer);
-    _chatPollTimer = setInterval(_chatPoll, 5000);
-  }
+  clearInterval(_chatPollTimer);
+  _chatPollTimer = setInterval(_chatPoll, 5000);
   const badge = document.getElementById('chatUnreadBadge');
   if (badge) { badge.textContent = '0'; badge.classList.add('hidden'); }
   const input = document.getElementById('chatInput');
@@ -8976,9 +9041,10 @@ const _chatSend = async () => {
     if (_isEmail(msg)) {
       await _chatGuestHandleEmail(msg);
     } else {
-      // Mensagem de texto normal → guarda localmente e bot responde pedindo email
+      // Mensagem de texto normal → guarda localmente e envia ao servidor
       const userMsg = { sender: 'user', message: msg, created_at: new Date().toISOString(), id: Date.now() };
       _guestSaveMsg(userMsg);
+      _guestSendToServer(msg);
       const el = document.getElementById('chatMessages');
       const empty = el?.querySelector('[style*="text-align:center"]');
       if (empty) empty.remove();
@@ -8996,12 +9062,7 @@ const _chatSend = async () => {
 
   input.value = '';
   try {
-    const csrf = await getCsrf();
-    await fetch('/api/chat/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-      body: JSON.stringify({ message: msg }),
-    });
+    await api('/api/chat/messages', 'POST', { message: msg });
     const el = document.getElementById('chatMessages');
     const empty = el?.querySelector('[style*="text-align:center"]');
     if (empty) empty.remove();
@@ -9021,6 +9082,7 @@ const _chatGuestHandleEmail = async (email) => {
   if (empty) empty.remove();
   const userMsg = { sender: 'user', message: email, created_at: new Date().toISOString(), id: Date.now() };
   _guestSaveMsg(userMsg);
+  _guestSendToServer(email);
   el?.insertAdjacentHTML('beforeend', _chatRenderBubble(userMsg));
   _chatScrollBottom();
 
@@ -9042,45 +9104,84 @@ const _chatGuestHandleEmail = async (email) => {
 
     document.getElementById(typingId)?.remove();
 
-    let botText, botMeta;
     if (data.magic_url) {
-      // Dev/mail desabilitado → mostra link direto no chat
-      botText = data.is_new
-        ? `🎉 Conta criada para **${email}**! Clique no link abaixo para entrar agora:`
-        : `✅ Encontrei sua conta! Clique no link abaixo para entrar:`;
-      botMeta = { type: 'magic_sent', link: data.magic_url };
+      // Extrai o token e verifica direto — sem redirecionamento de página
+      const _magicTok = new URL(data.magic_url, location.href).searchParams.get('magic');
+
+      const introText = data.is_new
+        ? `🎉 Conta criada para **${email}**! Entrando automaticamente...`
+        : `✅ Encontrei sua conta! Entrando automaticamente...`;
+      const introMsg = { sender: 'system', message: introText, created_at: new Date().toISOString(), id: Date.now(), meta: { type: 'magic_sent' } };
+      _guestSaveMsg(introMsg);
+      el?.insertAdjacentHTML('beforeend', _chatRenderBubble(introMsg));
+      _chatScrollBottom();
+
+      if (_magicTok) {
+        const vtId = 'chat-tv-' + Date.now();
+        el?.insertAdjacentHTML('beforeend',
+          `<div id="${vtId}" class="chat-msg chat-msg--system"><div class="chat-msg__bubble" style="letter-spacing:.1em;opacity:.6">● ● ●</div></div>`);
+        _chatScrollBottom();
+
+        try {
+          const vr = await fetch('/api/auth/magic-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: _magicTok }),
+          });
+          const vd = await vr.json();
+          document.getElementById(vtId)?.remove();
+
+          if (vr.ok && vd.user) {
+            S.user = vd.user;
+            if (vd.remember_token) localStorage.setItem('bc_rt', vd.remember_token);
+            // Vincula mensagens de guest ao user e limpa localStorage
+            const gid = localStorage.getItem('bc_gid');
+            if (gid) {
+              fetch('/api/chat/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guest_id: gid }),
+              }).catch(() => {});
+            }
+            localStorage.removeItem('bc_chat_guest');
+            renderHeader();
+            loadGames();
+            loadBets();
+
+            const okMsg = { sender: 'system', message: `✅ Pronto, **${vd.user.nome}**! Você está logado. Bora apostar! 🎯`, created_at: new Date().toISOString(), id: Date.now() };
+            el?.insertAdjacentHTML('beforeend', _chatRenderBubble(okMsg));
+
+            const inp = document.getElementById('chatInput');
+            if (inp) inp.placeholder = 'Escreva uma mensagem…';
+            clearInterval(_chatPollTimer);
+            _chatPollTimer = setInterval(_chatPoll, 5000);
+          } else {
+            // Fallback: mostra botão de link
+            el?.insertAdjacentHTML('beforeend',
+              `<div class="chat-msg chat-msg--system">
+                 <a href="${data.magic_url}" class="chat-magic-btn">⚡ Entrar agora</a>
+               </div>`);
+          }
+        } catch {
+          document.getElementById(vtId)?.remove();
+          el?.insertAdjacentHTML('beforeend',
+            `<div class="chat-msg chat-msg--system">
+               <a href="${data.magic_url}" class="chat-magic-btn">⚡ Entrar agora</a>
+             </div>`);
+        }
+      }
     } else if (res.ok) {
-      botText = data.is_new
+      const botText = data.is_new
         ? `🎉 Conta criada! Enviamos um link de acesso para **${email}**. Abra o e-mail e clique no link para entrar — é só isso! 🚀`
         : `✅ Já temos uma conta para **${email}**! Enviamos o link de acesso no seu e-mail. Verifique sua caixa de entrada.`;
-      botMeta = { type: 'magic_sent' };
+      const botMsg = { sender: 'system', message: botText, created_at: new Date().toISOString(), id: Date.now(), meta: { type: 'magic_sent' } };
+      _guestSaveMsg(botMsg);
+      el?.insertAdjacentHTML('beforeend', _chatRenderBubble(botMsg));
     } else {
-      botText = `⚠️ Não conseguimos processar. Tente novamente ou [crie sua conta](//?tab=register).`;
-      botMeta = { type: 'error' };
-    }
-
-    const botMsg = { sender: 'system', message: botText, created_at: new Date().toISOString(), id: Date.now(), meta: botMeta };
-    _guestSaveMsg(botMsg);
-
-    // Renderiza com link se disponível
-    let html = _chatRenderBubble(botMsg);
-    el?.insertAdjacentHTML('beforeend', html);
-
-    if (data.magic_url) {
-      el?.insertAdjacentHTML('beforeend',
-        `<div class="chat-msg chat-msg--system">
-           <a href="${data.magic_url}" class="chat-magic-btn">⚡ Entrar agora</a>
-         </div>`);
-    }
-
-    // Mensagem de recuperação de senha para usuários existentes
-    if (!data.is_new) {
-      const resetMsg = { sender: 'system', message: 'Esqueceu sua senha? Não precisa — o link que enviamos já faz login automático! Mas se quiser redefinir: [Redefinir senha](/?forgot=1)', created_at: new Date().toISOString(), id: Date.now() + 1, meta: { type: 'reset_hint' } };
-      setTimeout(() => {
-        _guestSaveMsg(resetMsg);
-        el?.insertAdjacentHTML('beforeend', _chatRenderBubble(resetMsg));
-        _chatScrollBottom();
-      }, 1500);
+      const errText = `⚠️ Não conseguimos processar. Tente novamente ou [crie sua conta](/?tab=register).`;
+      const errMsg = { sender: 'system', message: errText, created_at: new Date().toISOString(), id: Date.now(), meta: { type: 'error' } };
+      _guestSaveMsg(errMsg);
+      el?.insertAdjacentHTML('beforeend', _chatRenderBubble(errMsg));
     }
 
     _chatScrollBottom();
@@ -9133,23 +9234,8 @@ const _initChat = () => {
   setInterval(_chatUpdateBadge, 30000);
 };
 
-// ── Admin: suporte sub-tabs ───────────────────────────────────
-let _adminChatUserId = null;
-let _adminChatPoll   = null;
-
-const _initAdminSuporteTabs = () => {
-  document.querySelectorAll('[data-suporte-tab]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-suporte-tab]').forEach(b => b.classList.remove('suporte-tab--active'));
-      btn.classList.add('suporte-tab--active');
-      const tab = btn.dataset.suporteTab;
-      document.getElementById('suporte-chat')?.classList.toggle('hidden', tab !== 'chat');
-      document.getElementById('suporte-tickets')?.classList.toggle('hidden', tab !== 'tickets');
-      if (tab === 'tickets') { _allTickets = []; _activeTicketId = null; stopTicketPoll(); loadAdminTickets(); }
-      if (tab === 'chat')    loadAdminChat();
-    });
-  });
-};
+// ── Admin: chat ───────────────────────────────────────────────
+let _adminChatPoll = null;
 
 const loadAdminChat = async () => {
   try {
@@ -9161,6 +9247,9 @@ const loadAdminChat = async () => {
   } catch { /* ignore */ }
 };
 
+// Estado ativo da conversa admin: { type: 'user'|'guest', key: userId|guestId }
+let _adminActiveConv = null;
+
 const _renderAdminChatConvList = (convs) => {
   const el = document.getElementById('adminChatConvList');
   if (!el) return;
@@ -9169,13 +9258,19 @@ const _renderAdminChatConvList = (convs) => {
     return;
   }
   el.innerHTML = convs.map(c => {
-    const initials = (c.user_nome || '?').charAt(0).toUpperCase();
-    const unread   = parseInt(c.unread_admin) || 0;
-    return `<div class="chat-conv-item${_adminChatUserId === c.user_id ? ' chat-conv-item--active' : ''}"
-                 data-conv-user="${c.user_id}">
+    const isGuest   = c.conv_type === 'guest';
+    const activeKey = _adminActiveConv?.key;
+    const thisKey   = isGuest ? c.conv_key : String(c.conv_key);
+    const isActive  = activeKey === thisKey && _adminActiveConv?.type === c.conv_type;
+    const nome      = c.conv_nome || (isGuest ? 'Visitante' : '—');
+    const initials  = nome.charAt(0).toUpperCase();
+    const unread    = parseInt(c.unread_admin) || 0;
+    const badge     = isGuest ? '<span style="font-size:.65rem;background:var(--text-muted);color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px">guest</span>' : '';
+    return `<div class="chat-conv-item${isActive ? ' chat-conv-item--active' : ''}"
+                 data-conv-type="${c.conv_type}" data-conv-key="${c.conv_key}">
       <div class="chat-conv-item__avatar">${initials}</div>
       <div class="chat-conv-item__info">
-        <div class="chat-conv-item__name">${c.user_nome || '—'}</div>
+        <div class="chat-conv-item__name">${nome}${badge}</div>
         <div class="chat-conv-item__preview">${c.last_message || '…'}</div>
       </div>
       <div class="chat-conv-item__meta">
@@ -9185,50 +9280,61 @@ const _renderAdminChatConvList = (convs) => {
     </div>`;
   }).join('');
 
-  el.querySelectorAll('[data-conv-user]').forEach(item => {
-    item.addEventListener('click', () => _openAdminConversation(parseInt(item.dataset.convUser), convs));
+  el.querySelectorAll('[data-conv-key]').forEach(item => {
+    item.addEventListener('click', () =>
+      _openAdminConversation(item.dataset.convType, item.dataset.convKey, convs)
+    );
   });
 };
 
-const _openAdminConversation = async (userId, convs) => {
-  _adminChatUserId = userId;
+const _renderAdminChatMsgs = (messages) => {
+  return messages.map(m => {
+    const cls   = `chat-msg chat-msg--${m.sender}`;
+    const label = m.sender === 'user'  ? '<div class="chat-msg__sender" style="color:var(--text-dim)">Usuário</div>' :
+                  m.sender === 'admin' ? '<div class="chat-msg__sender">Suporte (você)</div>' : '';
+    return `<div class="${cls}">${label}<div class="chat-msg__bubble">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div>`;
+  }).join('');
+};
+
+const _openAdminConversation = async (convType, convKey, convs) => {
+  _adminActiveConv = { type: convType, key: convKey };
   clearInterval(_adminChatPoll); _adminChatPoll = null;
 
-  const conv  = convs?.find(c => parseInt(c.user_id) === userId);
+  const conv  = convs?.find(c => c.conv_type === convType && String(c.conv_key) === String(convKey));
   const panel = document.getElementById('adminChatPanel');
   const hdr   = document.getElementById('adminChatPanelHeader');
   const msgs  = document.getElementById('adminChatPanelMessages');
   if (!panel || !msgs) return;
 
   panel.classList.remove('hidden');
-  if (hdr) hdr.innerHTML = `<strong>${conv?.user_nome || 'Usuário #' + userId}</strong> <small style="color:var(--text-muted)">${conv?.user_email || ''}</small>`;
+  const nome  = conv?.conv_nome  || (convType === 'guest' ? 'Visitante' : 'Usuário');
+  const email = conv?.conv_email || (convType === 'guest' ? convKey : '');
+  if (hdr) hdr.innerHTML = `<strong>${nome}</strong> <small style="color:var(--text-muted)">${email}</small>`;
 
-  // Re-render list ativos
-  document.querySelectorAll('[data-conv-user]').forEach(el => {
-    el.classList.toggle('chat-conv-item--active', parseInt(el.dataset.convUser) === userId);
+  document.querySelectorAll('[data-conv-key]').forEach(el => {
+    el.classList.toggle('chat-conv-item--active',
+      el.dataset.convType === convType && el.dataset.convKey === String(convKey));
   });
 
+  const apiUrl = convType === 'guest'
+    ? `/api/admin/chat/conversation?guest_id=${encodeURIComponent(convKey)}`
+    : `/api/admin/chat/conversation?user_id=${convKey}`;
+
   try {
-    const { messages } = await api(`/api/admin/chat/conversation?user_id=${userId}`);
-    msgs.innerHTML = messages.map(m => {
-      const cls   = `chat-msg chat-msg--${m.sender}`;
-      const label = m.sender === 'user'   ? '<div class="chat-msg__sender" style="color:var(--text-dim)">Usuário</div>' :
-                    m.sender === 'admin'  ? '<div class="chat-msg__sender">Suporte (você)</div>' : '';
-      return `<div class="${cls}">${label}<div class="chat-msg__bubble">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div>`;
-    }).join('');
+    const { messages } = await api(apiUrl);
+    msgs.innerHTML = _renderAdminChatMsgs(messages);
     msgs.scrollTop = msgs.scrollHeight;
   } catch { /* ignore */ }
 
   // Poll por novas mensagens
   _adminChatPoll = setInterval(async () => {
+    if (!_adminActiveConv) return;
     try {
-      const { messages } = await api(`/api/admin/chat/conversation?user_id=${_adminChatUserId}`);
-      msgs.innerHTML = messages.map(m => {
-        const cls   = `chat-msg chat-msg--${m.sender}`;
-        const label = m.sender === 'user'  ? '<div class="chat-msg__sender" style="color:var(--text-dim)">Usuário</div>' :
-                      m.sender === 'admin' ? '<div class="chat-msg__sender">Suporte (você)</div>' : '';
-        return `<div class="${cls}">${label}<div class="chat-msg__bubble">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div>`;
-      }).join('');
+      const url = _adminActiveConv.type === 'guest'
+        ? `/api/admin/chat/conversation?guest_id=${encodeURIComponent(_adminActiveConv.key)}`
+        : `/api/admin/chat/conversation?user_id=${_adminActiveConv.key}`;
+      const { messages } = await api(url);
+      msgs.innerHTML = _renderAdminChatMsgs(messages);
       msgs.scrollTop = msgs.scrollHeight;
       loadAdminChat();
     } catch { /* ignore */ }
@@ -9239,18 +9345,16 @@ const _openAdminConversation = async (userId, convs) => {
   const input   = document.getElementById('adminChatReplyInput');
   const doReply = async () => {
     const msg = input?.value.trim();
-    if (!msg || !_adminChatUserId) return;
+    if (!msg || !_adminActiveConv) return;
     input.value = '';
     try {
-      const csrf = await getCsrf();
-      await fetch('/api/admin/chat/reply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({ user_id: _adminChatUserId, message: msg }),
-      });
+      const body = _adminActiveConv.type === 'guest'
+        ? { guest_id: _adminActiveConv.key, message: msg }
+        : { user_id: parseInt(_adminActiveConv.key), message: msg };
+      await api('/api/admin/chat/reply', 'POST', body);
     } catch { /* ignore */ }
   };
-  sendBtn?.replaceWith(sendBtn.cloneNode(true)); // remove old listeners
+  sendBtn?.replaceWith(sendBtn.cloneNode(true));
   document.getElementById('adminChatReplySend')?.addEventListener('click', doReply);
   input?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doReply(); } });
 };
