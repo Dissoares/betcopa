@@ -48,6 +48,7 @@ require_once __DIR__ . '/../src/repositories/OnlineRepository.php';
 require_once __DIR__ . '/../src/repositories/AnalyticsRepository.php';
 require_once __DIR__ . '/../src/repositories/SessionEventRepository.php';
 require_once __DIR__ . '/../src/repositories/DepositRepository.php';
+require_once __DIR__ . '/../src/repositories/MagicTokenRepository.php';
 require_once __DIR__ . '/../src/controllers/DepositController.php';
 require_once __DIR__ . '/../src/controllers/ReferralController.php';
 require_once __DIR__ . '/../src/controllers/MigrationController.php';
@@ -105,8 +106,11 @@ try {
         $betService->setPaymentRepository($payments);
         $betService->setMailer($mailer);
 
+        $magicTokens = new MagicTokenRepository($db);
+
         $authCtrl    = new AuthController($authService);
         $authCtrl->setPasswordReset($resets, $mailer);
+        $authCtrl->setMagicLink($magicTokens, $transactions, $configRepo);
         $gameCtrl    = new GameController($gameService, $games, $betService, $configRepo, $config);
         $betCtrl     = new BetController($betService, $bets, $configRepo);
         $userCtrl    = new UserController($users, $transactions);
@@ -135,8 +139,11 @@ try {
         route('/api/login',           'POST', fn() => $authCtrl->login());
         route('/api/logout',          'POST', fn() => $authCtrl->logout());
         route('/api/auth/google',     'POST', fn() => $authCtrl->googleLogin());
-        route('/api/auth/forgot',     'POST', fn() => $authCtrl->forgotPassword());
-        route('/api/auth/reset',      'POST', fn() => $authCtrl->resetPassword());
+        route('/api/auth/forgot',         'POST', fn() => $authCtrl->forgotPassword());
+        route('/api/auth/reset',          'POST', fn() => $authCtrl->resetPassword());
+        route('/api/auth/magic-link',     'POST', fn() => $authCtrl->requestMagicLink($users));
+        route('/api/auth/magic-verify',   'POST', fn() => $authCtrl->verifyMagicLink($users));
+        route('/api/auth/session-restore','POST', fn() => $authCtrl->restoreSession($users));
 
         // ── Jogos ─────────────────────────────────────────────
         route('/api/jogos',           'GET', fn() => $gameCtrl->list());

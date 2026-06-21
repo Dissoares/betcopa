@@ -288,7 +288,7 @@ const gameBadge = (g, opts = {}) => {
 
   // 5. Em Breve: aberto + menos de 1h para começar
   if (s === 'aberto' && diff > 0 && diff <= 3600000) {
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Apostas encerram em breve</span>`;
+    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Encerra em breve</span>`;
   }
 
   // 6. Em breve: aberto + mais de 7 dias para começar
@@ -4493,6 +4493,7 @@ const logout = async () => {
   trackEvent('auth', 'Logout');
   _flushEvents();
   try { await api('/api/logout', 'POST'); } catch {}
+  localStorage.removeItem('bc_rt');
   S.user = null; S.bets = [];
   renderHeader();
   renderBets();
@@ -8158,6 +8159,38 @@ const init = async () => {
   initHeroParticles();
   bind();
   await loadCsrf();
+
+  // ── Magic link: ?magic=TOKEN na URL ─────────────────────────
+  const _magicParam = new URLSearchParams(location.search).get('magic');
+  if (_magicParam) {
+    history.replaceState(null, '', location.pathname);
+    try {
+      const r = await api('/api/auth/magic-verify', 'POST', { token: _magicParam });
+      S.user = r.user;
+      if (r.remember_token) localStorage.setItem('bc_rt', r.remember_token);
+      renderHeader();
+      await loadBetConfig();
+      await loadGames();
+      await loadBets();
+      _showWelcomeBonus(r.balance ?? 0, r.bonus ?? 0);
+      return;
+    } catch (err) {
+      toast(err.message || 'Link inválido ou expirado.', 'danger');
+    }
+  }
+
+  // ── Session restore via localStorage ────────────────────────
+  const _rt = localStorage.getItem('bc_rt');
+  if (_rt && !S.user) {
+    try {
+      const r = await api('/api/auth/session-restore', 'POST', { remember_token: _rt });
+      S.user = r.user;
+      renderHeader();
+    } catch {
+      localStorage.removeItem('bc_rt');
+    }
+  }
+
   await Promise.all([loadUser(), loadBetConfig()]);
   await loadGames();
   if (S.user) await loadBets();
@@ -8204,6 +8237,7 @@ const init = async () => {
   }
   pingOnline();
   setInterval(pingOnline, 30000);
+  _initEmailCapture();
   _exitIntentInit();
 
   // Inicializa botões Google com o client_id público da API
@@ -8428,16 +8462,109 @@ const submitPerfil = async (e) => {
 /* ═══════════════════════════════════════════════════════════════
    EXIT INTENT — gatilho de saída psicológico
    ═══════════════════════════════════════════════════════════════ */
+// ── Email Capture Modal ───────────────────────────────────────
+function _showEmailCapture() {
+  if (S.user) return;
+  if (localStorage.getItem('bc_ret')) return;
+  const el = document.getElementById('modalEmailCapture');
+  if (!el) return;
+  el.classList.remove('hidden');
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('mlc--in')));
+  document.getElementById('mlcEmail')?.focus();
+}
+
+function _hideEmailCapture() {
+  const el = document.getElementById('modalEmailCapture');
+  if (!el) return;
+  el.classList.remove('mlc--in');
+  setTimeout(() => el.classList.add('hidden'), 300);
+}
+
+function _initEmailCapture() {
+  document.getElementById('mlcClose')?.addEventListener('click', _hideEmailCapture);
+
+  document.getElementById('formMagicLink')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('mlcEmail')?.value?.trim();
+    if (!email) return;
+    const btn = document.getElementById('mlcSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+    try {
+      const r = await api('/api/auth/magic-link', 'POST', { email });
+      document.getElementById('formMagicLink').classList.add('hidden');
+      const successEl = document.getElementById('mlcSuccess');
+      successEl.classList.remove('hidden');
+      const msgEl = document.getElementById('mlcSuccessMsg');
+      if (r.magic_url) {
+        msgEl.innerHTML = `Link gerado! <a href="${r.magic_url}" style="color:var(--primary);font-weight:700">Clique aqui para entrar</a>`;
+      } else {
+        msgEl.textContent = 'Link enviado! Verifique seu e-mail.';
+      }
+      localStorage.setItem('bc_ret', '1');
+      setTimeout(_hideEmailCapture, 6000);
+    } catch (err) {
+      toast(err.message || 'Erro ao enviar link.', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Enviar link de acesso';
+    }
+  });
+}
+
+// ── Welcome Bonus Modal (pós magic link) ─────────────────────
+function _showWelcomeBonus(balance, bonus) {
+  const el = document.getElementById('modalWelcomeBonus');
+  if (!el) return;
+
+  const amtEl = document.getElementById('wbAmount');
+  if (amtEl) amtEl.textContent = fmtMoney(balance);
+
+  // Mostra jogos abertos com urgência
+  const gamesEl = document.getElementById('wbGames');
+  if (gamesEl) {
+    const now  = Date.now();
+    const open = S.games.filter(g => g.status === 'aberto').slice(0, 3);
+    gamesEl.innerHTML = open.map(g => {
+      const diff = new Date(g.data_hora) - now;
+      const urg  = _bceUrgency(diff);
+      const hc   = g.bandeira_casa || teamNameToIso(g.time_casa) || '';
+      const ac   = g.bandeira_fora || teamNameToIso(g.time_fora) || '';
+      const hf   = hc ? `<img src="${flagUrl(hc)}" class="bet-flag" alt="">` : '';
+      const af   = ac ? `<img src="${flagUrl(ac)}" class="bet-flag" alt="">` : '';
+      return `<div class="wb-game" data-action="bet" data-id="${g.id}">
+        <span class="wb-game__teams">${hf}${g.time_casa} × ${ac ? af : ''}${g.time_fora}</span>
+        <span class="bce-cd ${urg.cls}"><i class="fa-solid ${urg.icon}"></i> ${urg.text}</span>
+      </div>`;
+    }).join('');
+
+    gamesEl.addEventListener('click', e => {
+      const card = e.target.closest('[data-action="bet"]');
+      if (card) {
+        el.classList.add('hidden');
+        openBetModal(Number(card.dataset.id));
+      }
+    });
+  }
+
+  el.classList.remove('hidden');
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('wb--in')));
+
+  document.getElementById('wbBtn')?.addEventListener('click', () => {
+    el.classList.remove('wb--in');
+    setTimeout(() => el.classList.add('hidden'), 300);
+    navigate('jogos');
+  }, { once: true });
+}
+
 function _exitIntentInit() {
-  if (_isAdmin()) return;
+  // Não mostra para usuários logados (admin ou não) nem se já converteu
+  if (S.user) return;
+  if (localStorage.getItem('bc_ret')) return;
 
-  let fired = false;
-  let armed = false;
-
-  // Arma no primeiro movimento real do mouse (sem delay artificial)
-  document.addEventListener('mousemove', () => { armed = true; }, { once: true });
-  document.addEventListener('scroll',    () => { armed = true; }, { once: true });
-  document.addEventListener('click',     () => { armed = true; }, { once: true });
+  let fired   = false;
+  // Arma automaticamente após 3s — sem depender de interação
+  let armed   = false;
+  setTimeout(() => { armed = true; }, 3000);
 
   function _hasActiveBet() {
     return S.bets.some(b => b.status === 'pendente' || b.status === 'confirmado');
@@ -8446,15 +8573,19 @@ function _exitIntentInit() {
   // Views onde o exit intent nunca deve aparecer
   const BLOCKED_VIEWS = ['auth', 'pagamento', 'admin', 'perfil'];
   function _isBlockedView() {
-    return BLOCKED_VIEWS.some(v => !document.getElementById(`view-${v}`)?.classList.contains('hidden'));
+    return BLOCKED_VIEWS.some(v => {
+      const el = document.getElementById(`view-${v}`);
+      return el && !el.classList.contains('hidden');
+    });
   }
 
   function _fire() {
     if (fired || !armed) return;
+    if (S.user) return;
     if (_hasActiveBet()) return;
     if (_isBlockedView()) return;
     // Não dispara se qualquer modal estiver aberto
-    if (document.querySelectorAll('.modal:not(.hidden), .modal-overlay:not(.hidden)').length > 0) return;
+    if (document.querySelectorAll('.modal:not(.hidden), .modal-overlay:not(.hidden), .mlc-overlay:not(.hidden), .wb-overlay:not(.hidden)').length > 0) return;
     fired = true;
 
     // Timer de 10 min por visita (em memória, reinicia a cada acesso)
@@ -8516,12 +8647,22 @@ function _exitIntentInit() {
     _prevT = now;
   }, { passive: true });
 
-  // popstate removido — o sentinel causava disparos falsos no SPA
+  // ── Fallback por timer: 15s sem interação (mobile / usuário passivo) ──
+  setTimeout(_fire, 15000);
 
   // ── Listeners dos botões do modal ──
-  document.getElementById('exitModalX').addEventListener('click', _close);
-  document.getElementById('exitModalOverlay').addEventListener('click', _close);
-  document.getElementById('exitModalDismiss').addEventListener('click', _close);
+  document.getElementById('exitModalX').addEventListener('click', () => {
+    _close();
+    if (!S.user) setTimeout(_showEmailCapture, 380);
+  });
+  document.getElementById('exitModalOverlay').addEventListener('click', () => {
+    _close();
+    if (!S.user) setTimeout(_showEmailCapture, 380);
+  });
+  document.getElementById('exitModalDismiss').addEventListener('click', () => {
+    _close();
+    if (!S.user) setTimeout(_showEmailCapture, 380);
+  });
   document.getElementById('exitModalCta').addEventListener('click', () => {
     _close();
     if (!S.user) {

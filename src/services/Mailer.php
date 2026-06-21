@@ -86,6 +86,31 @@ class Mailer
         return $this->send($to, $subject, $html);
     }
 
+    public function magicLink(string $to, string $nome, string $loginUrl, float $bonus = 0): bool
+    {
+        $subject  = "Seu link de acesso — {$this->siteName}";
+        $bonusHtml = $bonus > 0
+            ? "<div style='background:#0d2b0d;border:1px solid #1a5c1a;padding:.9rem 1.2rem;border-radius:.5rem;text-align:center;margin:1.2rem 0'>
+                 <p style='margin:0 0 .3rem;color:#aaa;font-size:.82rem'>🎁 Bônus de boas-vindas</p>
+                 <p style='margin:0;color:#59ff15;font-size:1.4rem;font-weight:800'>{$this->fmtR($bonus)}</p>
+                 <p style='margin:.3rem 0 0;color:#aaa;font-size:.8rem'>já creditado na sua conta</p>
+               </div>"
+            : '';
+        $html = $this->layout($subject, "
+            <h2>Olá, {$nome}!</h2>
+            <p>Clique no botão abaixo para entrar na sua conta e fazer seus palpites:</p>
+            {$bonusHtml}
+            <p style='text-align:center;margin:2rem 0'>
+                <a href='{$loginUrl}' style='background:#59ff15;color:#001a0d;padding:.85rem 2.5rem;border-radius:.5rem;text-decoration:none;font-weight:800;display:inline-block;font-size:1rem'>
+                    ⚡ Entrar agora
+                </a>
+            </p>
+            <p style='color:#888;font-size:.875rem'>Este link expira em <strong>1 hora</strong> e pode ser usado uma única vez.<br>
+            Se você não solicitou, ignore este e-mail.</p>
+        ");
+        return $this->send($to, $subject, $html);
+    }
+
     public function withdrawalRejected(string $to, string $nome, float $valor, string $motivo): bool
     {
         $subject = "Saque não aprovado — {$this->siteName}";

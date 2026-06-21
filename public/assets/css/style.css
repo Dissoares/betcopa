@@ -8191,6 +8191,105 @@ input:focus, select:focus {
 }
 
 /* ════════════════════════════════════════════════════════════
+   §EMAIL CAPTURE MODAL — retenção step 2
+   ════════════════════════════════════════════════════════════ */
+.mlc-overlay {
+  position: fixed; inset: 0; z-index: 3200;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+}
+.mlc-overlay.hidden { display: none; }
+.mlc-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem 1.25rem 0 0;
+  padding: 2rem 1.5rem 2.5rem;
+  width: 100%; max-width: 480px;
+  text-align: center;
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.22,1,.36,1);
+}
+.mlc--in .mlc-card { transform: translateY(0); }
+.mlc-close {
+  position: absolute; top: .9rem; right: 1rem;
+  background: none; border: none; font-size: 1.4rem;
+  color: var(--text-muted); cursor: pointer; line-height: 1;
+}
+.mlc-icon  { font-size: 2.4rem; margin-bottom: .6rem; }
+.mlc-title { font-size: 1.2rem; font-weight: 800; margin: 0 0 .4rem; }
+.mlc-sub   { font-size: .9rem; color: var(--text-muted); margin: 0 0 1.2rem; }
+.mlc-form  { display: flex; flex-direction: column; gap: .65rem; }
+.mlc-input {
+  width: 100%; padding: .75rem 1rem; border-radius: .6rem;
+  border: 1.5px solid var(--border); background: var(--surface-2);
+  color: var(--text); font-size: 1rem; outline: none;
+  box-sizing: border-box;
+}
+.mlc-input:focus { border-color: var(--primary); }
+.mlc-btn {
+  padding: .8rem 1rem; border-radius: .6rem; border: none;
+  background: var(--primary); color: #001a0d;
+  font-size: 1rem; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+}
+.mlc-btn:disabled { opacity: .6; cursor: default; }
+.mlc-success { padding: 1rem 0; }
+.mlc-success__icon { font-size: 2.5rem; }
+.mlc-success__msg  { margin: .5rem 0 0; font-size: .95rem; }
+.mlc-privacy { font-size: .75rem; color: var(--text-muted); margin: .8rem 0 0; }
+
+/* ════════════════════════════════════════════════════════════
+   §WELCOME BONUS MODAL — pós magic link
+   ════════════════════════════════════════════════════════════ */
+.wb-overlay {
+  position: fixed; inset: 0; z-index: 3300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(6px);
+}
+.wb-overlay.hidden { display: none; }
+.wb-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: 2rem 1.5rem;
+  width: 100%; max-width: 400px;
+  text-align: center;
+  transform: scale(.85); opacity: 0;
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;
+}
+.wb--in .wb-card { transform: scale(1); opacity: 1; }
+.wb-icon   { font-size: 3rem; margin-bottom: .5rem; }
+.wb-title  { font-size: 1.5rem; font-weight: 900; margin: 0 0 .3rem; }
+.wb-sub    { color: var(--text-muted); font-size: .9rem; margin: 0 0 .8rem; }
+.wb-amount {
+  font-size: 2.4rem; font-weight: 900;
+  color: var(--primary); text-shadow: 0 0 20px var(--primary-glow);
+  margin-bottom: 1.2rem;
+}
+.wb-cta-label { font-size: .82rem; color: var(--text-muted); margin: 0 0 .6rem; font-weight: 600; }
+.wb-games { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1rem; }
+.wb-game {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; background: var(--surface-2); border-radius: .5rem;
+  padding: .5rem .75rem; cursor: pointer; border: 1px solid var(--border);
+  transition: border-color .15s;
+}
+.wb-game:hover { border-color: var(--primary); }
+.wb-game__teams { font-size: .82rem; font-weight: 600; display: flex; align-items: center; gap: .3rem; }
+.wb-btn {
+  width: 100%; padding: .8rem 1rem; border-radius: .6rem; border: none;
+  background: var(--primary); color: #001a0d;
+  font-size: 1rem; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+}
+
+/* ════════════════════════════════════════════════════════════
    §EXIT INTENT MODAL — gatilho de saída
    ════════════════════════════════════════════════════════════ */
 .exit-modal {

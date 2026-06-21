@@ -2506,6 +2506,43 @@
   </div>
 
   <!-- ═══ EXIT INTENT MODAL ══════════════════════════════════════ -->
+  <!-- ===== Modal: Captura de Email (retenção step 2) ===== -->
+  <div id="modalEmailCapture" class="mlc-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mlcTitle">
+    <div class="mlc-card">
+      <button class="mlc-close" id="mlcClose" aria-label="Fechar">&times;</button>
+      <div class="mlc-icon">📩</div>
+      <h2 class="mlc-title" id="mlcTitle">Receba os placares no seu email</h2>
+      <p class="mlc-sub">Digite seu email e <strong>criamos sua conta na hora</strong> — com bônus de boas-vindas.</p>
+      <form class="mlc-form" id="formMagicLink" novalidate>
+        <input class="mlc-input" id="mlcEmail" type="email" placeholder="seu@email.com" autocomplete="email" required>
+        <button class="mlc-btn" id="mlcSubmit" type="submit">
+          <i class="fa-solid fa-bolt"></i> Enviar link de acesso
+        </button>
+      </form>
+      <div class="mlc-success hidden" id="mlcSuccess">
+        <div class="mlc-success__icon">✅</div>
+        <p class="mlc-success__msg" id="mlcSuccessMsg">Link enviado! Verifique seu e-mail.</p>
+      </div>
+      <p class="mlc-privacy">Sem spam. Só os placares que importam.</p>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Bônus de boas-vindas (pós magic link) ===== -->
+  <div id="modalWelcomeBonus" class="wb-overlay hidden" role="dialog" aria-modal="true">
+    <div class="wb-card">
+      <div class="wb-confetti" id="wbConfetti"></div>
+      <div class="wb-icon">🎁</div>
+      <h2 class="wb-title">Bônus creditado!</h2>
+      <p class="wb-sub">Seu bônus de boas-vindas já está na sua conta.</p>
+      <div class="wb-amount" id="wbAmount">R$ 0,00</div>
+      <p class="wb-cta-label">Faça seu palpite antes que os jogos comecem</p>
+      <div class="wb-games" id="wbGames"></div>
+      <button class="wb-btn" id="wbBtn">
+        <i class="fa-solid fa-futbol"></i> Ver todos os jogos
+      </button>
+    </div>
+  </div>
+
   <div id="modalExitIntent" class="exit-modal hidden" role="dialog" aria-modal="true" aria-label="Oferta especial">
     <div class="exit-modal__overlay" id="exitModalOverlay"></div>
     <div class="exit-modal__card">
@@ -2549,7 +2586,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=32"></script>
+  <script src="/assets/js/app.js?v=33"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

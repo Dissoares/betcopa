@@ -191,4 +191,33 @@ class UserRepository
         $this->setReferralCode($id, $code);
         return $code;
     }
+
+    // ── Remember Token (login persistente) ────────────────────
+
+    public function setRememberToken(int $id, string $token): void
+    {
+        try {
+            $this->db->prepare("UPDATE users SET remember_token = ? WHERE id = ?")
+                     ->execute([$token, $id]);
+        } catch (PDOException $e) {}
+    }
+
+    public function findByRememberToken(string $token): ?array
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE remember_token = ? LIMIT 1");
+            $stmt->execute([$token]);
+            return $stmt->fetch() ?: null;
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
+
+    public function clearRememberToken(int $id): void
+    {
+        try {
+            $this->db->prepare("UPDATE users SET remember_token = NULL WHERE id = ?")
+                     ->execute([$id]);
+        } catch (PDOException $e) {}
+    }
 }
