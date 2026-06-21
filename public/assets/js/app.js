@@ -7741,9 +7741,25 @@ const submitAdminConfig = async (e) => {
 // ── Live polling ──────────────────────────────────────────────
 const POLL_INTERVAL = 30_000; // 30s
 
+const _golSound = (() => {
+  let audio = null;
+  return () => {
+    try {
+      if (!audio) audio = new Audio('/assets/sounds/gol.mp3');
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } catch { /* ignore */ }
+  };
+})();
+
 // Poll leve: busca só jogos ao vivo e faz merge no S.games
 const loadGamesSilent = async () => {
   try {
+    // Salva placares atuais antes do update
+    const scoresBefore = Object.fromEntries(
+      S.games.filter(isGameLive).map(g => [g.id, g.placar_real ?? ''])
+    );
+
     const r = await api('/api/jogos/live');
     if (r.jogos) {
       const byId = Object.fromEntries(r.jogos.map(g => [g.id, {
@@ -7753,6 +7769,17 @@ const loadGamesSilent = async () => {
         liga_nome: LEAGUE_SHORT[g.liga_nome] || g.liga_nome,
       }]));
       S.games = S.games.map(g => byId[g.id] ?? g);
+
+      // Detecta gol: placar mudou em algum jogo ao vivo
+      const hasGoal = S.games.filter(isGameLive).some(g => {
+        const before = scoresBefore[g.id];
+        const after  = g.placar_real ?? '';
+        if (!before || !after || before === after) return false;
+        const [bH, bA] = before.split('x').map(Number);
+        const [aH, aA] = after.split('x').map(Number);
+        return (aH + aA) > (bH + bA);
+      });
+      if (hasGoal) _golSound();
     }
     renderGames();
   } catch { /* ignora erros silenciosos */ }
@@ -8886,14 +8913,44 @@ const _guestSendToServer = async (message) => {
   } catch { /* ignora falhas de rede */ }
 };
 
+// Mostra typing indicator e depois a mensagem do bot com delay natural
+const _botReply = (message, meta = {}, delayMs = null) => {
+  const el = document.getElementById('chatMessages');
+  // Delay proporcional ao tamanho da mensagem: ~40ms/char, entre 800ms e 2800ms
+  const delay = delayMs ?? Math.min(2800, Math.max(800, message.length * 40));
+  const typingId = 'bt-' + Date.now();
+
+  if (el && _chatOpen) {
+    const empty = el.querySelector('[style*="text-align:center"]');
+    if (empty) empty.remove();
+    el.insertAdjacentHTML('beforeend',
+      `<div id="${typingId}" class="chat-msg chat-msg--system">
+         <div class="chat-msg__avatar"><i class="fa-solid fa-headset"></i></div>
+         <div class="chat-msg__body"><div class="chat-msg__bubble chat-typing-dots">Digitando<span>.</span><span>.</span><span>.</span></div></div>
+       </div>`);
+    _chatScrollBottom();
+  }
+
+  setTimeout(() => {
+    document.getElementById(typingId)?.remove();
+    const msg = { sender: 'system', message, created_at: new Date().toISOString(), id: Date.now(), meta };
+    _guestSaveMsg(msg);
+    if (_chatOpen) {
+      const el2 = document.getElementById('chatMessages');
+      el2?.insertAdjacentHTML('beforeend', _chatRenderBubble(msg));
+      _chatScrollBottom();
+    } else {
+      _chatShowBadge(1);
+    }
+    _chatSound();
+  }, delay);
+};
+
 // Envia gatilho automático para visitante (sem duplicar)
-const chatGuestTrigger = (type, message) => {
+const chatGuestTrigger = (type, message, delayMs = null) => {
   const msgs = _guestMsgs();
   if (msgs.some(m => m.meta?.type === type)) return; // já enviado
-  const msg = { sender: 'system', message, created_at: new Date().toISOString(), meta: { type } };
-  _guestSaveMsg(msg);
-  if (_chatOpen) _chatAppendMessages([msg]);
-  else _chatShowBadge(1);
+  _botReply(message, { type }, delayMs);
 };
 
 const _chatScrollBottom = () => {
@@ -9049,11 +9106,9 @@ const _chatSend = async () => {
       const empty = el?.querySelector('[style*="text-align:center"]');
       if (empty) empty.remove();
       el?.insertAdjacentHTML('beforeend', _chatRenderBubble(userMsg));
-      const alreadySent = _guestMsgs().some(m => m.meta?.type === 'magic_sent');
+      const alreadySent = _guestMsgs().some(m => m.meta?.type === 'magic_sent' || m.meta?.type === 'ask_email');
       if (!alreadySent) {
-        const botReply = { sender: 'system', message: 'Entendi! Para eu te ajudar melhor, me manda o seu **e-mail** e já acesso sua conta ou crio uma nova para você! 😊', created_at: new Date().toISOString(), id: Date.now() + 1, meta: { type: 'ask_email' } };
-        _guestSaveMsg(botReply);
-        el?.insertAdjacentHTML('beforeend', _chatRenderBubble(botReply));
+        _botReply('Entendi! Para eu te ajudar melhor, me manda o seu **e-mail** e já acesso sua conta ou crio uma nova para você! 😊', { type: 'ask_email' });
       }
       _chatScrollBottom();
     }
@@ -9090,7 +9145,8 @@ const _chatGuestHandleEmail = async (email) => {
   const typingId = 'chat-typing-' + Date.now();
   el?.insertAdjacentHTML('beforeend',
     `<div id="${typingId}" class="chat-msg chat-msg--system">
-       <div class="chat-msg__bubble" style="letter-spacing:.1em;opacity:.6">● ● ●</div>
+       <div class="chat-msg__avatar"><i class="fa-solid fa-headset"></i></div>
+       <div class="chat-msg__body"><div class="chat-msg__bubble chat-typing-dots">Digitando<span>.</span><span>.</span><span>.</span></div></div>
      </div>`);
   _chatScrollBottom();
 
