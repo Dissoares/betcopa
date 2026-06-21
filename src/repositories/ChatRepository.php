@@ -52,11 +52,13 @@ class ChatRepository
         return (int) $this->db->lastInsertId();
     }
 
-    public function sendGuest(string $guestId, string $message): int
+    public function sendGuest(string $guestId, string $message, string $sender = 'user'): int
     {
+        $allowed = ['user', 'system'];
+        $sender  = in_array($sender, $allowed, true) ? $sender : 'user';
         $this->db->prepare(
-            'INSERT INTO chat_messages (guest_id, sender, message) VALUES (:gid, "user", :msg)'
-        )->execute(['gid' => $guestId, 'msg' => $message]);
+            'INSERT INTO chat_messages (guest_id, sender, message) VALUES (:gid, :sender, :msg)'
+        )->execute(['gid' => $guestId, 'sender' => $sender, 'msg' => $message]);
         return (int) $this->db->lastInsertId();
     }
 

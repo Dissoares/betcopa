@@ -69,12 +69,13 @@ class ChatController
         $body    = json_decode(file_get_contents('php://input'), true) ?: [];
         $guestId = trim((string) ($body['guest_id'] ?? ''));
         $msg     = trim((string) ($body['message']  ?? ''));
+        $sender  = trim((string) ($body['sender']   ?? 'user'));
 
         if (!$guestId || !$msg || mb_strlen($guestId) > 64 || mb_strlen($msg) > 1000) {
             jsonResponse(['error' => 'Dados inválidos'], 422);
         }
 
-        $id = $this->chat->sendGuest($guestId, $msg);
+        $id = $this->chat->sendGuest($guestId, $msg, $sender);
         jsonResponse(['id' => $id, 'ok' => true]);
     }
 

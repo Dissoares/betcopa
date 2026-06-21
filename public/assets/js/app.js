@@ -8914,12 +8914,10 @@ const _guestSendToServer = async (message) => {
 };
 
 // Mostra typing indicator e depois a mensagem do bot com delay natural
-const _botReply = (message, meta = {}, delayMs = null) => {
-  // Delay de digitação proporcional ao tamanho da resposta: ~38ms/char, entre 1200ms e 3200ms
-  const typingDelay = delayMs ?? Math.min(1200, Math.max(1200, message.length * 38));
-  // Pausa antes de aparecer o "Digitando..." (bot "lendo" a mensagem): 600–1200ms
-  const readDelay = 600 + Math.random() * 600;
-  const typingId  = 'bt-' + Date.now();
+const _botReply = (message, meta = {}, delayMs = null, options = null) => {
+  const typingDelay = delayMs ?? Math.min(3200, Math.max(1200, message.length * 38));
+  const readDelay   = 600 + Math.random() * 600;
+  const typingId    = 'bt-' + Date.now();
 
   setTimeout(() => {
     const el = document.getElementById('chatMessages');
@@ -8938,9 +8936,27 @@ const _botReply = (message, meta = {}, delayMs = null) => {
       document.getElementById(typingId)?.remove();
       const msg = { sender: 'system', message, created_at: new Date().toISOString(), id: Date.now(), meta };
       _guestSaveMsg(msg);
+      // Persiste resposta do bot no servidor para o admin ver
+      fetch('/api/chat/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest_id: _guestId(), message, sender: 'system' }),
+      }).catch(() => {});
       if (_chatOpen) {
         const el2 = document.getElementById('chatMessages');
         el2?.insertAdjacentHTML('beforeend', _chatRenderBubble(msg));
+        if (options?.length) {
+          el2?.insertAdjacentHTML('beforeend', _renderQuickReplies(options));
+          el2?.querySelectorAll('.chat-qr-btn:not([data-bound])').forEach(btn => {
+            btn.dataset.bound = '1';
+            btn.addEventListener('click', () => {
+              el2?.querySelectorAll('.chat-quick-replies').forEach(r => r.remove());
+              const inp = document.getElementById('chatInput');
+              if (inp) inp.value = btn.dataset.qr;
+              _chatSend();
+            });
+          });
+        }
         _chatScrollBottom();
       } else {
         _chatShowBadge(1);
@@ -8964,9 +8980,17 @@ const _chatScrollBottom = () => {
 
 const _chatSound = (() => {
   let audio = null;
+  let unlocked = false;
+  const tryUnlock = () => {
+    if (unlocked || !audio) return;
+    audio.volume = 0;
+    audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; unlocked = true; }).catch(() => {});
+  };
+  document.addEventListener('click', tryUnlock);
+  document.addEventListener('touchstart', tryUnlock);
   return () => {
     try {
-      if (!audio) audio = new Audio('/assets/sounds/chat.mp3');
+      if (!audio) { audio = new Audio('/assets/sounds/chat.mp3'); tryUnlock(); }
       audio.currentTime = 0;
       audio.play().catch(() => {});
     } catch { /* ignore */ }
@@ -9001,8 +9025,8 @@ const _chatAppendMessages = (msgs) => {
   msgs.forEach(m => { el.insertAdjacentHTML('beforeend', _chatRenderBubble(m)); });
   _chatLastId = Math.max(_chatLastId, ...msgs.map(m => +m.id || 0));
   _chatScrollBottom();
-  // Som para mensagens recebidas (não as enviadas pelo próprio usuário)
-  if (msgs.some(m => m.sender !== 'user')) _chatSound();
+  // Som só para resposta humana do admin chegando ao usuário/visitante (não para sistema, não para o próprio admin)
+  if (!_isAdmin() && msgs.some(m => m.sender === 'admin')) _chatSound();
 };
 
 const _chatLoad = async () => {
@@ -9018,8 +9042,8 @@ const _chatLoad = async () => {
         if (messages?.length) {
           // Atualiza o tracker de ID do servidor (inteiros pequenos, independente do localStorage)
           _guestLastServerId = Math.max(...messages.map(m => parseInt(m.id) || 0));
-          // Mostra só as do admin/sistema (as de "user" já estão no localStorage)
-          const adminMsgs = messages.filter(m => m.sender !== 'user');
+          // Mostra só respostas do admin — mensagens 'system' (bot) e 'user' já estão no localStorage
+          const adminMsgs = messages.filter(m => m.sender === 'admin');
           if (adminMsgs.length) _chatAppendMessages(adminMsgs);
         }
       }
@@ -9043,8 +9067,9 @@ const _chatPoll = async () => {
         if (messages?.length) {
           _guestLastServerId = Math.max(...messages.map(m => parseInt(m.id) || 0), _guestLastServerId);
           // Só renderiza respostas do admin/sistema — mensagens do usuário já foram renderizadas localmente
-          const incoming = messages.filter(m => m.sender !== 'user');
-          if (incoming.length) _chatAppendMessages(incoming);
+          // Só mostra respostas do admin — system/bot já estão no localStorage
+          const incoming = messages.filter(m => m.sender === 'admin');
+          if (incoming.length) { _adminTookOver = true; _chatAppendMessages(incoming); }
         }
       }
     } catch { /* ignore */ }
@@ -9104,7 +9129,7 @@ const _chatSend = async () => {
     if (_isEmail(msg)) {
       await _chatGuestHandleEmail(msg);
     } else {
-      // Mensagem de texto normal → guarda localmente e envia ao servidor
+      // Mensagem de texto normal → guarda localmente, envia ao servidor e bot responde
       const userMsg = { sender: 'user', message: msg, created_at: new Date().toISOString(), id: Date.now() };
       _guestSaveMsg(userMsg);
       _guestSendToServer(msg);
@@ -9112,11 +9137,8 @@ const _chatSend = async () => {
       const empty = el?.querySelector('[style*="text-align:center"]');
       if (empty) empty.remove();
       el?.insertAdjacentHTML('beforeend', _chatRenderBubble(userMsg));
-      const alreadySent = _guestMsgs().some(m => m.meta?.type === 'magic_sent' || m.meta?.type === 'ask_email');
-      if (!alreadySent) {
-        _botReply('Entendi! Para eu te ajudar melhor, me manda o seu **e-mail** e já acesso sua conta ou crio uma nova para você! 😊', { type: 'ask_email' });
-      }
       _chatScrollBottom();
+      _botRespond(msg);
     }
     return;
   }
@@ -9133,8 +9155,110 @@ const _chatSend = async () => {
   } catch { /* ignore */ }
 };
 
-// ── Gatilhos automáticos para visitantes ──────────────────────
+// ── Bot inteligente para visitantes ───────────────────────────
 const _isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+
+// Se o admin enviou mensagem recentemente, bot cede o controle
+let _adminTookOver = false;
+
+const _BOT_INTENTS = [
+  {
+    keys: ['oi','olá','ola','ola!','oi!','hey','hi','bom dia','boa tarde','boa noite','hello','eae','e aí','tudo bem'],
+    reply: '👋 Olá! Fico feliz em te atender! Posso te ajudar com:',
+    options: ['Como funciona?', 'Tem bônus?', 'Quero apostar', 'Já tenho conta'],
+  },
+  {
+    keys: ['como funciona','o que é','o que e','me explica','explicar','não entendo','nao entendo','duvida','dúvida'],
+    reply: '🎯 No **BetCopa** você palpita no **placar exato** dos jogos e ganha prêmios reais!\n\n✅ Cadastro gratuito\n✅ Bônus de boas-vindas na primeira entrada\n✅ Saques instantâneos via PIX',
+    options: ['Quero me cadastrar!', 'Qual o bônus?', 'Como sacar?'],
+  },
+  {
+    keys: ['bonus','bônus','gratis','grátis','gratuito','premio','prêmio','ganhar','quanto ganho','quanto posso ganhar'],
+    reply: '🎁 Sim! Todo novo usuário recebe **bônus de boas-vindas** ao criar a conta — já cai direto na carteira.\n\nAlém disso, cada palpite certo multiplica seu valor pela odd do jogo! 🏆',
+    options: ['Quero o bônus agora!', 'Como funciona a odd?', 'Criar conta'],
+  },
+  {
+    keys: ['odd','multiplicador','como calcula','quanto paga'],
+    reply: '📊 A **odd** é o multiplicador do seu palpite. Quanto mais difícil o placar, maior a odd!\n\nExemplo: se você aposta R$10 com odd 3×, ganha **R$30** se acertar! 💰',
+    options: ['Quero apostar!', 'Criar conta'],
+  },
+  {
+    keys: ['apostar','palpite','quero apostar','fazer palpite','como aposto','como faço palpite'],
+    reply: '⚽ Para apostar é bem simples:\n\n1️⃣ Crie sua conta (gratuita)\n2️⃣ Escolha um jogo ao vivo ou futuro\n3️⃣ Digite o placar que você acha que vai sair\n4️⃣ Confirme — é só isso!\n\nAcertou o placar exato? Você **ganha**! 🏆',
+    options: ['Criar conta agora', 'Já tenho conta'],
+  },
+  {
+    keys: ['sacar','saque','retirar','pix','quanto tempo','quando cai','transferência'],
+    reply: '💸 Saques são feitos via **PIX** e caem na hora! Sem taxa, sem burocracia.\n\nBasta ter saldo disponível e solicitar no seu perfil.',
+    options: ['Criar conta', 'Já tenho conta'],
+  },
+  {
+    keys: ['criar conta','cadastrar','registrar','quero me cadastrar','quero criar','quero entrar','quero jogar','novo usuário'],
+    reply: '🚀 Ótimo! É rápido e **100% gratuito**.\n\nMe manda seu **e-mail** que eu crio sua conta agora e você já começa a apostar! 👇',
+    options: null,
+    capture: true,
+  },
+  {
+    keys: ['já tenho conta','ja tenho conta','tenho conta','entrar','login','logar','acessar minha conta','esqueci a senha','esqueci senha'],
+    reply: '✅ Sem problema! Me manda seu **e-mail** e eu te envio um link de acesso — entra direto, sem precisar lembrar senha! 🔑',
+    options: null,
+    capture: true,
+  },
+  {
+    keys: ['problema','erro','bug','não funciona','nao funciona','não consigo','nao consigo','travou','sumiu','cadê meu','cadê minha'],
+    reply: '😕 Poxa, vou te ajudar! Para que o nosso suporte entre em contato mais rápido, me manda seu **e-mail**:',
+    options: null,
+    capture: true,
+  },
+  {
+    keys: ['seguro','confiável','confiavel','golpe','fraude','é seguro','e seguro','posso confiar'],
+    reply: '🔒 O **BetCopa** é 100% seguro! Seus dados são protegidos e os pagamentos processados por gateways certificados.\n\nJá temos milhares de usuários que sacam seus prêmios todo dia! ✅',
+    options: ['Criar conta', 'Como funciona?'],
+  },
+];
+
+const _botMatch = (text) => {
+  const t = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  for (const intent of _BOT_INTENTS) {
+    if (intent.keys.some(k => {
+      const kn = k.normalize('NFD').replace(/[̀-ͯ]/g, '');
+      return t.includes(kn);
+    })) return intent;
+  }
+  return null;
+};
+
+const _renderQuickReplies = (options) => {
+  if (!options?.length) return '';
+  return `<div class="chat-quick-replies">${options.map(o =>
+    `<button class="chat-qr-btn" data-qr="${o.replace(/"/g,'&quot;')}">${o}</button>`
+  ).join('')}</div>`;
+};
+
+const _botRespond = (text) => {
+  if (_adminTookOver) return;
+  if (_guestMsgs().some(m => m.meta?.type === 'magic_sent')) return;
+
+  const intent  = _botMatch(text);
+  const el      = document.getElementById('chatMessages');
+
+  if (intent) {
+    const fullMsg = intent.reply + (intent.options ? '' : '');
+    _botReply(fullMsg, { type: intent.capture ? 'ask_email' : 'bot_' + intent.keys[0] }, null, intent.options);
+  } else {
+    // Fallback genérico
+    const alreadyAsked = _guestMsgs().some(m => m.meta?.type === 'ask_email');
+    if (!alreadyAsked) {
+      _botReply('Entendi! 😊 Posso te ajudar com qualquer dúvida sobre apostas, bônus ou sua conta.\n\nSe quiser começar agora, me manda seu **e-mail**:', { type: 'ask_email' }, null,
+        ['Como funciona?', 'Tem bônus?', 'Quero apostar']
+      );
+    } else {
+      _botReply('Hmm, não entendi muito bem. 😅 Pode reformular?\n\nOu escolha uma opção abaixo:', { type: 'bot_fallback' }, 800,
+        ['Como funciona?', 'Quero apostar', 'Criar conta', 'Já tenho conta']
+      );
+    }
+  }
+};
 
 const _chatGuestHandleEmail = async (email) => {
   // Mostra como mensagem do usuário no chat
@@ -9210,8 +9334,28 @@ const _chatGuestHandleEmail = async (email) => {
             loadGames();
             loadBets();
 
-            const okMsg = { sender: 'system', message: `✅ Pronto, **${vd.user.nome}**! Você está logado. Bora apostar! 🎯`, created_at: new Date().toISOString(), id: Date.now() };
+            const nome = vd.user.nome?.split(' ')[0] || 'campeão';
+            const isNew = data.is_new;
+
+            // Mensagem imediata de boas-vindas
+            const okMsg = { sender: 'system', message: isNew
+              ? `🎉 Conta criada com sucesso, **${nome}**! Seja bem-vindo ao BetCopa!`
+              : `✅ Bem-vindo de volta, **${nome}**! Que bom te ver por aqui!`,
+              created_at: new Date().toISOString(), id: Date.now() };
             el?.insertAdjacentHTML('beforeend', _chatRenderBubble(okMsg));
+            _chatSound();
+            _chatScrollBottom();
+
+            // Mensagem de boa sorte com delay natural
+            setTimeout(() => {
+              const luckMsg = { sender: 'system', message: isNew
+                ? `⚽ Agora é só escolher um jogo, chutar o placar e torcer! Boa sorte, **${nome}** — que venham os prêmios! 🏆🍀`
+                : `⚽ Os jogos estão esperando por você! Boa sorte nos palpites, **${nome}** — que venham os acertos! 🍀`,
+                created_at: new Date().toISOString(), id: Date.now() + 1 };
+              el?.insertAdjacentHTML('beforeend', _chatRenderBubble(luckMsg));
+              _chatSound();
+              _chatScrollBottom();
+            }, 2200);
 
             const inp = document.getElementById('chatInput');
             if (inp) inp.placeholder = 'Escreva uma mensagem…';
@@ -9358,11 +9502,12 @@ const _renderAdminChatMsgs = (messages) => {
         <div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div>
       </div>`;
     }
-    // Mensagens do usuário ou sistema → esquerda
-    const label = m.sender === 'user'
+    // user → esquerda normal; system → esquerda com label "Bot"
+    const isBot  = m.sender === 'system';
+    const label  = m.sender === 'user'
       ? '<div class="chat-msg__sender" style="color:var(--text-dim);font-size:.65rem;margin-bottom:.1rem">Usuário</div>'
-      : '<div class="chat-msg__sender" style="color:var(--text-muted);font-size:.65rem;margin-bottom:.1rem">Sistema</div>';
-    return `<div class="chat-msg chat-msg--system">${label}<div class="chat-msg__body"><div class="chat-msg__bubble">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div></div>`;
+      : `<div class="chat-msg__sender" style="color:#6366f1;font-size:.65rem;margin-bottom:.1rem">${isBot ? '🤖 Bot' : 'Sistema'}</div>`;
+    return `<div class="chat-msg chat-msg--system">${label}<div class="chat-msg__body"><div class="chat-msg__bubble" style="${isBot ? 'opacity:.85;font-style:italic' : ''}">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div></div>`;
   }).join('');
 };
 
