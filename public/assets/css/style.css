@@ -781,6 +781,9 @@ body.scroll-locked {
 
 /* ── Section group ───────────────────────────────────────────── */
 .dr-section { display: flex; flex-direction: column; gap: .06rem; }
+.dr-section--row { flex-direction: row; gap: .4rem; }
+.dr-section--row .dr-item { flex: 1; justify-content: center; }
+.dr-item--mode { justify-content: center; }
 
 /* ── Nav item ────────────────────────────────────────────────── */
 .dr-item {

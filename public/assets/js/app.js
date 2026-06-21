@@ -545,12 +545,12 @@ const renderDrawer = () => {
   if (footer) {
     footer.innerHTML = `
       <div class="dr-sep"></div>
-      <div class="dr-section">
+      <div class="dr-section dr-section--row">
         <button class="dr-item dr-item--pwa hidden" id="drawerBtnPwa">
           <i class="fa-solid fa-download"></i> Instalar App
           <span class="dr-badge-pwa">App</span>
         </button>
-        <button class="dr-item btn-theme-toggle">
+        <button class="dr-item btn-theme-toggle dr-item--mode">
           <i class="fa-solid fa-moon theme-icon"></i>Modo
         </button>
       </div>`;
@@ -1269,7 +1269,6 @@ const renderLeagueTabs = () => {
   const bar = document.getElementById('leagueTabs');
   if (!bar) return;
 
-  // Count games per league (non-cancelled)
   const counts = {};
   S.games.forEach(g => {
     const liga = g.liga_nome || 'Outras';
@@ -1277,11 +1276,8 @@ const renderLeagueTabs = () => {
   });
 
   const leagues = Object.keys(counts);
-
-  // Hide bar only when there are no leagues
   if (leagues.length === 0) { bar.classList.add('hidden'); return; }
 
-  // Sort: priority first, then alphabetical
   leagues.sort((a, b) => {
     const ai = LEAGUE_PRIORITY.findIndex(p => a.toLowerCase().includes(p.toLowerCase()));
     const bi = LEAGUE_PRIORITY.findIndex(p => b.toLowerCase().includes(p.toLowerCase()));
@@ -1290,20 +1286,18 @@ const renderLeagueTabs = () => {
     return av !== bv ? av - bv : a.localeCompare(b, 'pt-BR');
   });
 
-  const totalCount = S.games.length;
-  bar.innerHTML = [
-    `<button class="league-tab ${_activeLeague === 'all' ? 'league-tab--active' : ''}"
-             data-league="all" role="tab" aria-selected="${_activeLeague === 'all'}">
-       ${leagueIcon('all')} Todos <span class="league-tab__count">${totalCount}</span>
-     </button>`,
-    ...leagues.map(liga =>
-      `<button class="league-tab ${_activeLeague === liga ? 'league-tab--active' : ''}"
-               data-league="${liga.replace(/"/g, '&quot;')}" role="tab"
-               aria-selected="${_activeLeague === liga}">
-         ${leagueIcon(liga)} ${leagueShortName(liga)} <span class="league-tab__count">${counts[liga]}</span>
-       </button>`
-    ),
-  ].join('');
+  // Se a liga ativa não existe mais, seleciona a primeira
+  if (_activeLeague === 'all' || !counts[_activeLeague]) {
+    _activeLeague = leagues[0];
+  }
+
+  bar.innerHTML = leagues.map(liga =>
+    `<button class="league-tab ${_activeLeague === liga ? 'league-tab--active' : ''}"
+             data-league="${liga.replace(/"/g, '&quot;')}" role="tab"
+             aria-selected="${_activeLeague === liga}">
+       ${leagueIcon(liga)} ${leagueShortName(liga)} <span class="league-tab__count">${counts[liga]}</span>
+     </button>`
+  ).join('');
 
   bar.classList.remove('hidden');
 };
@@ -1373,9 +1367,7 @@ const renderGames = () => {
   renderHeroUrgency();
 
   // Apply league filter
-  const games = _activeLeague === 'all'
-    ? S.games
-    : S.games.filter(g => (g.liga_nome || 'Outras') === _activeLeague);
+  const games = S.games.filter(g => (g.liga_nome || 'Outras') === _activeLeague);
 
   const now     = new Date();
   const sameDay = (a, b) =>
@@ -5197,7 +5189,7 @@ const loadGames = async () => {
   } catch {
     S.games = [];
   }
-  _activeLeague = 'all'; // reset filter on full reload
+  _activeLeague = 'first'; // será substituído pela primeira liga em renderLeagueTabs
   if (skel) skel.classList.add('hidden');
   renderGames();
   renderTicker();
@@ -5793,6 +5785,7 @@ const bind = () => {
         .catch(err => toast(err.message || 'Erro ao confirmar.', 'danger'));
     }
   });
+
 
   // League tab filter
   document.addEventListener('click', e => {
