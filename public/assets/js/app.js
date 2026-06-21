@@ -2325,7 +2325,15 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
         : srcMeta.label;
       const refUrl   = v.referrer
         ? `<a class="an-ref-link" href="${v.referrer}" target="_blank" rel="noopener" title="${v.referrer}">${v.referrer.length > 60 ? v.referrer.substring(0,60)+'…' : v.referrer} <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`
-        : '—';
+        : `<span class="an-ref-link" style="opacity:.5">${window.location.hostname}</span>`;
+      const utmParts = [
+        v.utm_source   ? `source=${v.utm_source}`     : '',
+        v.utm_medium   ? `medium=${v.utm_medium}`     : '',
+        v.utm_campaign ? `campaign=${v.utm_campaign}` : '',
+      ].filter(Boolean);
+      const utmHtml = utmParts.length
+        ? `<div class="an-utm"><i class="fa-solid fa-chart-line"></i> ${utmParts.join(' · ')}</div>`
+        : '';
       const dt  = _fmtDateTime(v.last_seen);
       const dur = _fmtDuration2(+v.duration_sec || 0);
 
@@ -2352,6 +2360,7 @@ const loadAdminAnalytics = async (period = _analyticsPeriod, page = _analyticsPa
           <div class="an-source-cell">
             <div><span class="online-src online-src--${src}"><i class="${srcMeta.icon}"></i> ${srcLabel}</span></div>
             <div class="an-ref-wrap">${refUrl}</div>
+            ${utmHtml}
           </div>
         </td>
         <td class="an-td-time">
@@ -6534,12 +6543,13 @@ const bind = () => {
                 ${s.nome ? `<strong class="ip-hist-row__nome">${s.nome}</strong>` : ''}
                 ${_brBadge(s.browser, s.os)}
                 ${stBadge}
-                <span class="ip-hist-row__page"><i class="fa-solid fa-location-dot" style="opacity:.5"></i> ${s.current_page || s.landing_page || '—'}</span>
+                <span class="ip-hist-row__page"><i class="fa-solid fa-sign-in-alt" style="opacity:.5"></i> ${s.landing_page || '—'}</span>
+                ${s.current_page && s.current_page !== s.landing_page ? `<span class="ip-hist-row__page" style="opacity:.65"><i class="fa-solid fa-arrow-right" style="opacity:.4"></i> ${s.current_page}</span>` : ''}
               </div>
               <div class="ip-hist-row__meta">
                 <span class="ip-hist-row__date">${dt}</span>
                 <span class="ip-hist-row__dur"><i class="fa-regular fa-clock"></i> ${dur}</span>
-                <span class="ip-hist-row__pv">${s.page_views||1}× págs</span>
+                <span class="ip-hist-row__pv" title="Pings de 30s (aproximação de tempo)">${s.page_views||1} pings</span>
               </div>
               ${renderEventsTimeline(s.events, s)}
             </div>`;

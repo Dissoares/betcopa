@@ -261,9 +261,23 @@ try {
                 $page ?: null, $source ?: null, $referrer ?: null, $device ?: null,
                 $ip, $ua, $utmSource, $utmMedium, $utmCampaign, $screen, $lang
             );
+
+            // Detecta mudança de página para gravar evento de navegação
+            if ($page) {
+                $prevStmt = $db->prepare(
+                    "SELECT current_page FROM analytics_visits WHERE session_id = ? AND visit_date = CURDATE() LIMIT 1"
+                );
+                $prevStmt->execute([$sid]);
+                $prevPage = $prevStmt->fetchColumn();
+                if ($prevPage !== false && $prevPage !== $page) {
+                    (new SessionEventRepository($db))->insert($sid, 'navigate', $page);
+                }
+            }
+
             (new AnalyticsRepository($db))->record(
                 $sid, $userId, $ip, $ua,
-                $page ?: null, $source ?: null, $referrer ?: null, $device ?: null
+                $page ?: null, $source ?: null, $referrer ?: null, $device ?: null,
+                $utmSource, $utmMedium, $utmCampaign
             );
             jsonResponse(['ok' => true]);
         });

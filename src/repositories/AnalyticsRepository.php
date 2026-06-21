@@ -111,7 +111,10 @@ class AnalyticsRepository
         ?string $page,
         ?string $source,
         ?string $referrer,
-        ?string $device
+        ?string $device,
+        ?string $utmSource   = null,
+        ?string $utmMedium   = null,
+        ?string $utmCampaign = null
     ): void {
         $parsed = $this->parseUA($ua);
 
@@ -130,31 +133,60 @@ class AnalyticsRepository
             $isNew = $retChk->fetch() ? 0 : 1;
 
             $geo  = $this->geoLookup($ip);
-            $stmt = $this->db->prepare("
-                INSERT INTO analytics_visits
-                    (session_id, visit_date, user_id, ip,
-                     country, country_name, city, region,
-                     browser, os, device,
-                     source, referrer,
-                     landing_page, current_page,
-                     page_views, is_new, first_seen, last_seen)
-                VALUES
-                    (?, CURDATE(), ?, ?,
-                     ?, ?, ?, ?,
-                     ?, ?, ?,
-                     ?, ?,
-                     ?, ?,
-                     1, ?, NOW(), NOW())
-            ");
-            $stmt->execute([
-                $sessionId, $userId, $ip ?: null,
-                $geo['country'] ?? null, $geo['country_name'] ?? null,
-                $geo['city']    ?? null, $geo['region']       ?? null,
-                $parsed['browser'], $parsed['os'], $device,
-                $source, $referrer,
-                $page, $page,
-                $isNew,
-            ]);
+            try {
+                $stmt = $this->db->prepare("
+                    INSERT INTO analytics_visits
+                        (session_id, visit_date, user_id, ip,
+                         country, country_name, city, region,
+                         browser, os, device,
+                         source, referrer, utm_source, utm_medium, utm_campaign,
+                         landing_page, current_page,
+                         page_views, is_new, first_seen, last_seen)
+                    VALUES
+                        (?, CURDATE(), ?, ?,
+                         ?, ?, ?, ?,
+                         ?, ?, ?,
+                         ?, ?, ?, ?, ?,
+                         ?, ?,
+                         1, ?, NOW(), NOW())
+                ");
+                $stmt->execute([
+                    $sessionId, $userId, $ip ?: null,
+                    $geo['country'] ?? null, $geo['country_name'] ?? null,
+                    $geo['city']    ?? null, $geo['region']       ?? null,
+                    $parsed['browser'], $parsed['os'], $device,
+                    $source, $referrer, $utmSource, $utmMedium, $utmCampaign,
+                    $page, $page,
+                    $isNew,
+                ]);
+            } catch (PDOException $e) {
+                // Fallback sem colunas UTM (migration pendente)
+                $stmt = $this->db->prepare("
+                    INSERT INTO analytics_visits
+                        (session_id, visit_date, user_id, ip,
+                         country, country_name, city, region,
+                         browser, os, device,
+                         source, referrer,
+                         landing_page, current_page,
+                         page_views, is_new, first_seen, last_seen)
+                    VALUES
+                        (?, CURDATE(), ?, ?,
+                         ?, ?, ?, ?,
+                         ?, ?, ?,
+                         ?, ?,
+                         ?, ?,
+                         1, ?, NOW(), NOW())
+                ");
+                $stmt->execute([
+                    $sessionId, $userId, $ip ?: null,
+                    $geo['country'] ?? null, $geo['country_name'] ?? null,
+                    $geo['city']    ?? null, $geo['region']       ?? null,
+                    $parsed['browser'], $parsed['os'], $device,
+                    $source, $referrer,
+                    $page, $page,
+                    $isNew,
+                ]);
+            }
         } else {
             // Atualiza página atual e incrementa contador de páginas
             $stmt = $this->db->prepare("
@@ -263,46 +295,67 @@ class AnalyticsRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    private function _buildVisitSelect(bool $withUtm): string
+    {
+        $utmCols = $withUtm
+            ? 'av.utm_source, av.utm_medium, av.utm_campaign,'
+            : 'NULL AS utm_source, NULL AS utm_medium, NULL AS utm_campaign,';
+        return $utmCols;
+    }
+
     // ── Lista agrupada por IP (1 linha por IP) ────────────────────
     public function getVisitsGroupedByIP(string $period, int $page = 1, int $limit = 50): array
     {
         $w      = $this->periodWhere($period);
         $offset = ($page - 1) * $limit;
-        $stmt   = $this->db->query("
-            SELECT
-                g.ip,
-                g.total_sessions,
-                g.total_page_views,
-                g.logged_sessions,
-                g.anon_sessions,
-                g.last_seen,
-                g.first_seen,
-                av.country, av.country_name, av.city, av.region,
-                av.browser, av.os, av.device, av.source, av.referrer,
-                av.user_id, av.current_page, av.landing_page, av.is_new,
-                u.nome, u.email,
-                TIMESTAMPDIFF(SECOND, g.first_seen, g.last_seen) AS duration_sec
-            FROM (
+
+        $buildQuery = function(bool $withUtm) use ($w, $limit, $offset): string {
+            $utmCols = $withUtm
+                ? 'av.utm_source, av.utm_medium, av.utm_campaign,'
+                : 'NULL AS utm_source, NULL AS utm_medium, NULL AS utm_campaign,';
+            return "
                 SELECT
-                    ip,
-                    COUNT(DISTINCT session_id) AS total_sessions,
-                    SUM(page_views)            AS total_page_views,
-                    SUM(user_id IS NOT NULL)   AS logged_sessions,
-                    SUM(user_id IS NULL)       AS anon_sessions,
-                    MAX(last_seen)             AS last_seen,
-                    MIN(first_seen)            AS first_seen,
-                    MAX(id)                    AS latest_id
-                FROM analytics_visits
-                WHERE $w AND ip IS NOT NULL
-                GROUP BY ip
-                ORDER BY last_seen DESC
-                LIMIT {$limit} OFFSET {$offset}
-            ) g
-            JOIN analytics_visits av ON av.id = g.latest_id
-            LEFT JOIN users u ON av.user_id = u.id
-            ORDER BY g.last_seen DESC
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    g.ip,
+                    g.total_sessions,
+                    g.total_page_views,
+                    g.logged_sessions,
+                    g.anon_sessions,
+                    g.last_seen,
+                    g.first_seen,
+                    av.country, av.country_name, av.city, av.region,
+                    av.browser, av.os, av.device, av.source, av.referrer,
+                    {$utmCols}
+                    av.user_id, av.current_page, av.landing_page, av.is_new,
+                    u.nome, u.email,
+                    TIMESTAMPDIFF(SECOND, g.first_seen, g.last_seen) AS duration_sec
+                FROM (
+                    SELECT
+                        ip,
+                        COUNT(DISTINCT session_id) AS total_sessions,
+                        SUM(page_views)            AS total_page_views,
+                        SUM(user_id IS NOT NULL)   AS logged_sessions,
+                        SUM(user_id IS NULL)       AS anon_sessions,
+                        MAX(last_seen)             AS last_seen,
+                        MIN(first_seen)            AS first_seen,
+                        MAX(id)                    AS latest_id
+                    FROM analytics_visits
+                    WHERE {$w} AND ip IS NOT NULL
+                    GROUP BY ip
+                    ORDER BY last_seen DESC
+                    LIMIT {$limit} OFFSET {$offset}
+                ) g
+                JOIN analytics_visits av ON av.id = g.latest_id
+                LEFT JOIN users u ON av.user_id = u.id
+                ORDER BY g.last_seen DESC
+            ";
+        };
+
+        try {
+            return $this->db->query($buildQuery(true))->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Colunas UTM ainda não existem (migration pendente) — retorna sem elas
+            return $this->db->query($buildQuery(false))->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
 
     public function countVisitsByIP(string $period): int
