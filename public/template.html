@@ -469,6 +469,7 @@
       <aside class="admin-sidebar">
         <div class="admin-sidebar__title"><i class="fa-solid fa-screwdriver-wrench"></i> Admin</div>
         <nav class="admin-nav">
+          <button class="admin-nav__btn" data-admin-tab="online"><i class="fa-solid fa-signal"></i> Online</button>
           <button class="admin-nav__btn admin-nav__btn--active" data-admin-tab="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
           <button class="admin-nav__btn" data-admin-tab="jogos"><i class="fa-solid fa-futbol"></i> Jogos</button>
           <button class="admin-nav__btn" data-admin-tab="apostas"><i class="fa-solid fa-bullseye"></i> Apostas</button>
@@ -476,7 +477,6 @@
           <button class="admin-nav__btn" data-admin-tab="saques"><i class="fa-solid fa-money-bill-transfer"></i> Saques <span class="admin-nav__badge hidden" id="adminSaquesBadge">0</span></button>
           <button class="admin-nav__btn" data-admin-tab="config"><i class="fa-solid fa-gear"></i> Configurações</button>
           <button class="admin-nav__btn" data-admin-tab="suporte"><i class="fa-solid fa-headset"></i> Suporte <span class="admin-nav__badge hidden" id="adminTicketBadge">0</span></button>
-          <button class="admin-nav__btn" data-admin-tab="online"><i class="fa-solid fa-signal"></i> Online</button>
           <button class="admin-nav__btn" data-admin-tab="migrations"><i class="fa-solid fa-database"></i> Migrations</button>
         </nav>
       </aside>
@@ -1166,9 +1166,14 @@
         <div class="perfil-hero__right">
           <span class="perfil-hero__balance-label">Saldo disponível</span>
           <span class="perfil-hero__balance-val" id="perfilSaldo">R$ 0,00</span>
-          <button class="btn btn--primary btn--sm perfil-hero__deposit-btn" id="perfilBtnDeposit">
-            <i class="fa-solid fa-plus"></i> Adicionar
-          </button>
+          <div class="perfil-hero__btns">
+            <button class="btn btn--primary btn--sm perfil-hero__deposit-btn" id="perfilBtnDeposit">
+              <i class="fa-solid fa-plus"></i> Depositar
+            </button>
+            <button class="btn btn--primary btn--sm perfil-hero__deposit-btn" id="perfilBtnSaque">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i> Sacar
+            </button>
+          </div>
         </div>
       </div>
 

@@ -430,6 +430,15 @@ body::before {
 .header__right  { justify-content: flex-end; gap: .75rem; }
 
 .header__user { display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
+#btnNavLogin {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.3) !important;
+  color: rgba(255,255,255,.85) !important;
+}
+#btnNavLogin:hover {
+  background: rgba(255,255,255,.1) !important;
+  color: #fff !important;
+}
 
 /* ── Ações lado direito ─────────────────────────────────── */
 .header__actions {
@@ -722,10 +731,28 @@ body.scroll-locked {
   font-size: .95rem; font-weight: 700; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dr-user__balance-row { display: flex; align-items: center; gap: .4rem; margin-top: .15rem; flex-wrap: wrap; }
+.dr-user__balance-row { display: flex; align-items: center; gap: .4rem; margin-top: .15rem; }
 .dr-user__balance-label { font-size: .72rem; color: var(--text-muted); }
-.dr-user__balance { font-size: .82rem; font-weight: 700; color: var(--primary); }
-.dr-deposit-btn { padding: .22rem .6rem !important; font-size: .72rem !important; border-radius: 20px !important; line-height: 1.4; }
+.dr-user__balance { font-size: .88rem; font-weight: 700; color: var(--primary); }
+.dr-user__actions { display: flex; gap: .4rem; margin-top: .4rem; }
+.dr-action-btn {
+  flex: 1;
+  padding: .25rem .5rem;
+  font-size: .72rem;
+  font-weight: 700;
+  border-radius: 20px;
+  line-height: 1.4;
+  border: none;
+  background: var(--primary);
+  color: #000;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  transition: filter .15s;
+}
+.dr-action-btn:hover { filter: brightness(1.1); }
 
 /* ── Separador ───────────────────────────────────────────────── */
 .dr-sep { height: 1px; background: rgba(255,255,255,.07); margin: .45rem 0; }
@@ -7132,7 +7159,8 @@ input:focus, select:focus {
 .perfil-hero__right { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; flex-shrink: 0; }
 .perfil-hero__balance-label { font-size: .68rem; color: var(--text-muted); }
 .perfil-hero__balance-val   { font-size: 1.2rem; font-weight: 800; color: var(--primary); line-height: 1; }
-.perfil-hero__deposit-btn   { font-size: .75rem; padding: .3rem .75rem; margin-top: .1rem; }
+.perfil-hero__btns          { display: flex; gap: .35rem; margin-top: .1rem; }
+.perfil-hero__deposit-btn   { font-size: .72rem !important; padding: .28rem .6rem !important; flex: 1; }
 
 /* ── Stats bar (faixa horizontal) ──────────────────────────── */
 .perfil-stats-bar {

@@ -421,8 +421,13 @@ const renderDrawer = () => {
           <div class="dr-user__balance-row">
             <span class="dr-user__balance-label">Saldo</span>
             <span class="dr-user__balance">${fmtMoney(saldo)}</span>
-            <button class="btn btn--primary btn--xs dr-deposit-btn" id="drawerBtnDeposit">
-              <i class="fa-solid fa-plus"></i> Adicionar
+          </div>
+          <div class="dr-user__actions">
+            <button class="dr-action-btn" id="drawerBtnDeposit">
+              <i class="fa-solid fa-plus"></i> Depositar
+            </button>
+            <button class="dr-action-btn" id="drawerBtnSaque">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i> Sacar
             </button>
           </div>
         </div>
@@ -997,7 +1002,7 @@ const renderSection = (id, title, iconHtml, games, extraClass = '') => {
     <section class="${cls}" id="gs-${id}">
       <div class="games-section__header">
         <h3 class="games-section__title">${iconHtml}${title}</h3>
-        <span class="games-section__count">${games.length}</span>
+        <span class="games-section__count">${games.length} jogos</span>
       </div>
       <div class="games-grid" id="gs-grid-${id}">${shown.map(g => renderCard(g, { isToday })).join('')}</div>
       ${moreBtn}
@@ -4250,11 +4255,11 @@ const _selectPayMethod = (method) => {
   if (!btn) return;
   const amt = fmtMoney(S.selectedBet?.valor ?? 0);
   if (method === 'saldo') {
-    btn.innerHTML = `<i class="fa-solid fa-wallet"></i> Pagar ${amt} com Saldo`;
+    btn.innerHTML = `<i class="fa-solid fa-wallet"></i> Pagar ${amt} com Bônus`;
   } else if (method === 'expay') {
-    btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pagar ${amt} com ExPay`;
+    btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pagar ${amt}`;
   } else {
-    btn.innerHTML = `<i class="fa-brands fa-pix"></i> Pagar ${amt} com PIX`;
+    btn.innerHTML = `<i class="fa-brands fa-pix"></i> Pagar ${amt}`;
   }
 };
 
@@ -4354,7 +4359,7 @@ const confirmPixPayment = async () => {
     trackEvent('error', `Falha ao gerar PIX: ${err.message || 'desconhecido'}`);
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com PIX';
+    btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar';
   }
 };
 
@@ -4371,7 +4376,7 @@ const confirmExpayPayment = async () => {
   } catch (err) {
     toast(err.message || 'Erro ao processar pagamento.', 'danger');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Pagar com ExPay';
+    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Pagar';
   }
 };
 
@@ -5729,7 +5734,9 @@ const bind = () => {
   document.addEventListener('click', e => {
     if (e.target.closest('#dropdownLogout')) logout();
     if (e.target.closest('#udropBtnDeposit') || e.target.closest('#perfilBtnDeposit')) { closeAllModals?.(); openDepositModal(); }
+    if (e.target.closest('#perfilBtnSaque')) { openSaqueModal(); }
     if (e.target.closest('#drawerBtnDeposit')) { closeMobileMenu(); openDepositModal(); }
+    if (e.target.closest('#drawerBtnSaque'))   { closeMobileMenu(); openSaqueModal(); }
     if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
     if (e.target.closest('#udropBtnReferral')) {
       document.getElementById('userDropdown')?.classList.remove('udrop--open');
