@@ -1687,6 +1687,95 @@ body.scroll-locked {
 
 .bets-list { display: flex; flex-direction: column; gap: .85rem; }
 
+/* ── Bets empty state CTA ─────────────────────────────────── */
+.bets-cta-empty { display: flex; flex-direction: column; gap: 1.2rem; padding: .5rem 0 1.5rem; }
+
+.bce-hero {
+  text-align: center;
+  padding: 2rem 1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.bce-hero__icon {
+  font-size: 2.8rem;
+  color: var(--primary);
+  margin-bottom: .6rem;
+  animation: pulse 2s infinite;
+}
+.bce-hero__title { font-size: 1.25rem; font-weight: 800; margin: 0 0 .4rem; }
+.bce-hero__sub   { color: var(--text-muted); font-size: .9rem; margin: 0; }
+.bce-hero__sub strong { color: var(--primary); }
+
+.bce-games { display: flex; flex-direction: column; gap: .55rem; }
+.bce-games__label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin: 0 0 .2rem; }
+
+.bce-game {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.bce-game:hover { border-color: var(--primary); }
+
+.bce-game__teams {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  font-size: .9rem;
+  flex-wrap: wrap;
+}
+.bce-game__team  { display: flex; align-items: center; gap: .35rem; }
+.bce-game__vs    { color: var(--text-muted); font-size: .8rem; }
+
+.bce-game__meta {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+.bce-game__time { font-size: .78rem; color: var(--text-muted); flex: 1; }
+.bce-game__odd  {
+  font-size: .78rem; font-weight: 800;
+  color: var(--primary);
+  background: rgba(89,255,21,.12);
+  border: 1px solid rgba(89,255,21,.25);
+  border-radius: 6px;
+  padding: .1rem .45rem;
+}
+.bce-game__btn  { margin-left: auto; }
+.bce-all-btn    { margin-top: .3rem; }
+
+/* urgency countdown badge inside empty-bets CTA */
+.bce-cd {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: .18rem .5rem;
+  border-radius: 50px;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.bce-cd--live     { background: #fee2e2; color: #b91c1c; animation: pulse-red .9s infinite alternate; }
+.bce-cd--urgent   { background: #fee2e2; color: #dc2626; }
+.bce-cd--soon     { background: #fef3c7; color: #b45309; }
+.bce-cd--today    { background: #dcfce7; color: #15803d; }
+.bce-cd--tomorrow { background: #dbeafe; color: #1d4ed8; }
+.bce-cd--far      { background: var(--border); color: var(--text-muted); }
+
+@keyframes pulse-red {
+  from { opacity: 1; }
+  to   { opacity: .55; }
+}
+
 .bet-card {
   background: var(--surface);
   border: 1px solid var(--border);

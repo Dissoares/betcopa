@@ -3198,14 +3198,90 @@ const getGameShareText = (game) => {
   return `⚽ ${fH}${nH} × ${fA}${nA} hoje às ${when}\nEu ainda não sei quanto vai ser... qual seria seu palpite?\nEntra no BetCopa e tenta a sorte: ${url}`;
 };
 
+const _bceUrgency = (diff) => {
+  if (diff <= 0)              return { cls: 'bce-cd--live',    icon: 'fa-circle',          text: 'Ao vivo!' };
+  if (diff < 3_600_000)      return { cls: 'bce-cd--urgent',  icon: 'fa-fire',            text: `Fecha em ${fmtCountdown(diff)}` };
+  if (diff < 6 * 3_600_000)  return { cls: 'bce-cd--soon',    icon: 'fa-bolt',            text: `Hoje às ${new Date(Date.now() + diff).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}` };
+  if (diff < 86_400_000)     return { cls: 'bce-cd--today',   icon: 'fa-clock',           text: fmtCountdown(diff) };
+  if (diff < 2 * 86_400_000) return { cls: 'bce-cd--tomorrow','icon': 'fa-calendar-day',  text: 'amanhã' };
+  return { cls: 'bce-cd--far', icon: 'fa-calendar', text: `${Math.floor(diff / 86_400_000)} dias` };
+};
+
+const _renderBetsEmpty = () => {
+  const now  = Date.now();
+  const open = (S.games || [])
+    .filter(g => g.status === 'aberto' && !isGameLive(g) && new Date(g.data_hora) > now)
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
+    .slice(0, 4);
+
+  const gameCards = open.map(g => {
+    const hCode = g.bandeira_casa || teamNameToIso(g.time_casa) || '';
+    const aCode = g.bandeira_fora || teamNameToIso(g.time_fora) || '';
+    const hFlag = hCode ? `<img src="${flagUrl(hCode)}" onerror="this.src='${flagUrlCdn(hCode)}'" class="bet-flag" alt="">` : '';
+    const aFlag = aCode ? `<img src="${flagUrl(aCode)}" onerror="this.src='${flagUrlCdn(aCode)}'" class="bet-flag" alt="">` : '';
+    const odd    = parseFloat(g.odd || 0) > 1 ? parseFloat(g.odd) : (S.oddPadrao || 3);
+    const oddFmt = (odd % 1 === 0 ? odd.toFixed(0) : odd.toFixed(1)) + '×';
+    const diff   = new Date(g.data_hora) - now;
+    const urg    = _bceUrgency(diff);
+    return `
+      <div class="bce-game" data-action="bet" data-id="${g.id}">
+        <div class="bce-game__teams">
+          <span class="bce-game__team">${hFlag} ${g.time_casa}</span>
+          <span class="bce-game__vs">×</span>
+          <span class="bce-game__team">${aFlag} ${g.time_fora}</span>
+        </div>
+        <div class="bce-game__meta">
+          <span class="bce-cd ${urg.cls}" id="bcetime-${g.id}"><i class="fa-solid ${urg.icon}"></i> ${urg.text}</span>
+          <span class="bce-game__odd">${oddFmt}</span>
+          <button class="btn btn--primary btn--sm bce-game__btn" data-action="bet" data-id="${g.id}">
+            <i class="fa-solid fa-bolt"></i> Apostar
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Inicia contadores ao vivo para os cards
+  setTimeout(() => {
+    open.forEach(g => {
+      const el = document.getElementById(`bcetime-${g.id}`);
+      if (!el || el.dataset.t) return;
+      el.dataset.t = '1';
+      const tick = () => {
+        const d = new Date(g.data_hora) - Date.now();
+        const u = _bceUrgency(d);
+        el.className = `bce-cd ${u.cls}`;
+        el.innerHTML = `<i class="fa-solid ${u.icon}"></i> ${u.text}`;
+      };
+      S.timers.push(setInterval(tick, 1000));
+    });
+  }, 50);
+
+  return `
+    <div class="bets-cta-empty">
+      <div class="bce-hero">
+        <div class="bce-hero__icon"><i class="fa-solid fa-futbol"></i></div>
+        <h3 class="bce-hero__title">Faça seu primeiro palpite!</h3>
+        <p class="bce-hero__sub">Acerte o placar exato e ganhe até <strong>5×</strong> seu palpite.</p>
+      </div>
+      ${open.length ? `
+        <div class="bce-games">
+          <p class="bce-games__label"><i class="fa-solid fa-fire"></i> Jogos disponíveis</p>
+          ${gameCards}
+        </div>` : ''}
+      <button class="btn btn--ghost btn--full bce-all-btn" data-nav="jogos">
+        Ver todos os jogos <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>`;
+};
+
 const renderBets = () => {
   const list  = document.getElementById('betsList');
   const empty = document.getElementById('betsEmpty');
   if (!list) return;
 
   if (!S.bets.length) {
-    list.innerHTML = '';
-    empty && empty.classList.remove('hidden');
+    empty && empty.classList.add('hidden');
+    list.innerHTML = _renderBetsEmpty();
     return;
   }
   empty && empty.classList.add('hidden');
