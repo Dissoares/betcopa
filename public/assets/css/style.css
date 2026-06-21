@@ -9400,6 +9400,11 @@ input:focus, select:focus {
 }
 .chat-magic-btn:hover { filter: brightness(1.1); }
 
+/* Mensagem enviada pelo admin no painel admin → lado direito */
+.chat-msg--admin-sent { align-self: flex-end; display: flex; flex-direction: column; max-width: 75%; }
+.chat-msg--admin-sent .chat-msg__bubble { background: var(--primary); color: #000; font-weight: 500; border-radius: 14px; border-bottom-right-radius: 4px; padding: .5rem .7rem; font-size: .85rem; line-height: 1.5; word-break: break-word; }
+.chat-msg--admin-sent .chat-msg__time { font-size: .6rem; color: var(--text-muted); margin-top: .2rem; text-align: right; padding: 0 .2rem; }
+
 /* Typing indicator do bot */
 .chat-typing-dots { display: flex; align-items: center; gap: 2px; min-width: 48px; }
 .chat-typing-dots span {

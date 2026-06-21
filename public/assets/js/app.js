@@ -8915,35 +8915,39 @@ const _guestSendToServer = async (message) => {
 
 // Mostra typing indicator e depois a mensagem do bot com delay natural
 const _botReply = (message, meta = {}, delayMs = null) => {
-  const el = document.getElementById('chatMessages');
-  // Delay proporcional ao tamanho da mensagem: ~40ms/char, entre 800ms e 2800ms
-  const delay = delayMs ?? Math.min(2800, Math.max(800, message.length * 40));
-  const typingId = 'bt-' + Date.now();
-
-  if (el && _chatOpen) {
-    const empty = el.querySelector('[style*="text-align:center"]');
-    if (empty) empty.remove();
-    el.insertAdjacentHTML('beforeend',
-      `<div id="${typingId}" class="chat-msg chat-msg--system">
-         <div class="chat-msg__avatar"><i class="fa-solid fa-headset"></i></div>
-         <div class="chat-msg__body"><div class="chat-msg__bubble chat-typing-dots">Digitando<span>.</span><span>.</span><span>.</span></div></div>
-       </div>`);
-    _chatScrollBottom();
-  }
+  // Delay de digitação proporcional ao tamanho da resposta: ~38ms/char, entre 1200ms e 3200ms
+  const typingDelay = delayMs ?? Math.min(1200, Math.max(1200, message.length * 38));
+  // Pausa antes de aparecer o "Digitando..." (bot "lendo" a mensagem): 600–1200ms
+  const readDelay = 600 + Math.random() * 600;
+  const typingId  = 'bt-' + Date.now();
 
   setTimeout(() => {
-    document.getElementById(typingId)?.remove();
-    const msg = { sender: 'system', message, created_at: new Date().toISOString(), id: Date.now(), meta };
-    _guestSaveMsg(msg);
-    if (_chatOpen) {
-      const el2 = document.getElementById('chatMessages');
-      el2?.insertAdjacentHTML('beforeend', _chatRenderBubble(msg));
+    const el = document.getElementById('chatMessages');
+    if (el && _chatOpen) {
+      const empty = el.querySelector('[style*="text-align:center"]');
+      if (empty) empty.remove();
+      el.insertAdjacentHTML('beforeend',
+        `<div id="${typingId}" class="chat-msg chat-msg--system">
+           <div class="chat-msg__avatar"><i class="fa-solid fa-headset"></i></div>
+           <div class="chat-msg__body"><div class="chat-msg__bubble chat-typing-dots">Digitando<span>.</span><span>.</span><span>.</span></div></div>
+         </div>`);
       _chatScrollBottom();
-    } else {
-      _chatShowBadge(1);
     }
-    _chatSound();
-  }, delay);
+
+    setTimeout(() => {
+      document.getElementById(typingId)?.remove();
+      const msg = { sender: 'system', message, created_at: new Date().toISOString(), id: Date.now(), meta };
+      _guestSaveMsg(msg);
+      if (_chatOpen) {
+        const el2 = document.getElementById('chatMessages');
+        el2?.insertAdjacentHTML('beforeend', _chatRenderBubble(msg));
+        _chatScrollBottom();
+      } else {
+        _chatShowBadge(1);
+      }
+      _chatSound();
+    }, typingDelay);
+  }, readDelay);
 };
 
 // Envia gatilho automático para visitante (sem duplicar)
@@ -9038,7 +9042,9 @@ const _chatPoll = async () => {
         const { messages } = await r.json();
         if (messages?.length) {
           _guestLastServerId = Math.max(...messages.map(m => parseInt(m.id) || 0), _guestLastServerId);
-          _chatAppendMessages(messages);
+          // Só renderiza respostas do admin/sistema — mensagens do usuário já foram renderizadas localmente
+          const incoming = messages.filter(m => m.sender !== 'user');
+          if (incoming.length) _chatAppendMessages(incoming);
         }
       }
     } catch { /* ignore */ }
@@ -9345,10 +9351,18 @@ const _renderAdminChatConvList = (convs) => {
 
 const _renderAdminChatMsgs = (messages) => {
   return messages.map(m => {
-    const cls   = `chat-msg chat-msg--${m.sender}`;
-    const label = m.sender === 'user'  ? '<div class="chat-msg__sender" style="color:var(--text-dim)">Usuário</div>' :
-                  m.sender === 'admin' ? '<div class="chat-msg__sender">Suporte (você)</div>' : '';
-    return `<div class="${cls}">${label}<div class="chat-msg__bubble">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div>`;
+    if (m.sender === 'admin') {
+      // Mensagem enviada pelo admin → direita (igual ao usuário no chat do cliente)
+      return `<div class="chat-msg chat-msg--admin-sent">
+        <div class="chat-msg__bubble">${_chatMd(m.message)}</div>
+        <div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div>
+      </div>`;
+    }
+    // Mensagens do usuário ou sistema → esquerda
+    const label = m.sender === 'user'
+      ? '<div class="chat-msg__sender" style="color:var(--text-dim);font-size:.65rem;margin-bottom:.1rem">Usuário</div>'
+      : '<div class="chat-msg__sender" style="color:var(--text-muted);font-size:.65rem;margin-bottom:.1rem">Sistema</div>';
+    return `<div class="chat-msg chat-msg--system">${label}<div class="chat-msg__body"><div class="chat-msg__bubble">${_chatMd(m.message)}</div><div class="chat-msg__time">${_chatFmtTime(m.created_at)}</div></div></div>`;
   }).join('');
 };
 
