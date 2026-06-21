@@ -8770,7 +8770,6 @@ input:focus, select:focus {
   transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
 }
 .bottom-nav__cta-ring i { color: #001a0d !important; font-size: 1.15rem !important; }
-
 .bottom-nav__cta-label {
   font-size: .6rem !important;
   font-weight: 600 !important;
@@ -8784,12 +8783,10 @@ input:focus, select:focus {
   white-space: nowrap;
   z-index: 1;
 }
-
 .bottom-nav__cta-item:active .bottom-nav__cta-ring {
   transform: translateX(-50%) translateY(3px);
   box-shadow: 0 1px 0 0 var(--primary-dark), 0 0 0 3px rgba(13,18,25,.92), 0 2px 8px rgba(89,255,21,.25);
 }
-
 .bottom-nav__cta-item > i { display: none !important; }
 .bottom-nav__cta-item::before { display: none !important; }
 .bottom-nav__cta-item::after  { display: none !important; }

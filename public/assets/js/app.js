@@ -331,8 +331,10 @@ const navigate = (view) => {
   document.querySelectorAll('.nav__btn').forEach(btn => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
-  const contaBtn = document.getElementById('bottomNavConta');
-  if (contaBtn) contaBtn.classList.toggle('nav__btn--active', view === 'auth' || view === 'perfil');
+  const contaBtn    = document.getElementById('bottomNavConta');
+  const palpitesBtn = document.getElementById('bottomNavPalpites');
+  if (contaBtn)    contaBtn.classList.toggle('nav__btn--active',    view === 'auth' || view === 'perfil');
+  if (palpitesBtn) palpitesBtn.classList.toggle('nav__btn--active', view === 'palpites');
 
   // Banner só aparece na view de jogos
   const bannerWrap = document.getElementById('matchBannerWrap');
@@ -8469,13 +8471,21 @@ function _exitIntentInit() {
   }, 3000);
 })();
 
-// ── Bottom nav: botão "Conta" adapta ao estado de login ───────
-// Intercepta em capture antes do listener global de data-nav
+// ── Bottom nav: botões que precisam de lógica especial ────────
 document.addEventListener('click', (e) => {
-  const btn = e.target.closest('#bottomNavConta');
-  if (!btn) return;
-  e.stopPropagation();
-  navigate(S.user ? 'perfil' : 'auth');
+  // Conta: perfil se logado, auth se não
+  if (e.target.closest('#bottomNavConta')) {
+    e.stopPropagation();
+    navigate(S.user ? 'perfil' : 'auth');
+    return;
+  }
+  // Palpites: exige login e carrega lista
+  if (e.target.closest('#bottomNavPalpites')) {
+    e.stopPropagation();
+    if (!S.user) { navigate('auth'); return; }
+    navigate('palpites');
+    loadBets(1);
+  }
 }, true);
 
 document.addEventListener('DOMContentLoaded', init);
