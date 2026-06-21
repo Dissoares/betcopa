@@ -1504,11 +1504,16 @@ body.scroll-locked {
   font-variant-numeric: tabular-nums;
   letter-spacing: .05em;
   color: #fff;
-  background: rgba(230,57,70,.18);
-  border: 1px solid rgba(230,57,70,.35);
+  background: rgba(230,57,70,.55);
+  border: 1px solid rgba(230,57,70,.7);
   border-radius: 4px;
   padding: .15rem .45rem;
   font-family: ui-monospace, 'Courier New', monospace;
+}
+.theme-light .game-card__date--live {
+  color: #fff;
+  background: #dc2626;
+  border-color: #b91c1c;
 }
 
 /* ─ Matchup row ---------------------------------------------- */
@@ -3765,6 +3770,7 @@ button.copa-hero__stat:hover {
   font-weight: 900;
   letter-spacing: .04em;
   line-height: 1;
+  white-space: nowrap;
 }
 .gc-score--live {
   background: linear-gradient(135deg, rgba(10,10,20,.92), rgba(5,5,15,.95));
@@ -5569,6 +5575,17 @@ input:focus, select:focus {
   border-color: rgba(15,23,42,.12);
   opacity: .6;
 }
+.theme-light .game-card--live  .btn--ghost[disabled],
+.theme-light .game-card--live  .btn--ghost:disabled,
+.theme-light .game-card--final .btn--ghost[disabled],
+.theme-light .game-card--final .btn--ghost:disabled {
+  background: rgba(220,38,38,.10) !important;
+  border: 1px solid rgba(220,38,38,.45) !important;
+  color: #b91c1c !important;
+  opacity: 1 !important;
+}
+.theme-light .game-card--live  .btn--ghost:disabled i,
+.theme-light .game-card--final .btn--ghost:disabled i { color: #b91c1c !important; }
 
 /* ── 17. Tabela admin — row highlight com deslize ────────── */
 .admin-table tr {
@@ -7570,7 +7587,15 @@ input:focus, select:focus {
   min-width: 16px;
   text-align: center;
 }
-.league-tab:not(.league-tab--active) .league-tab__count { background: rgba(255,255,255,.1); }
+.league-tab:not(.league-tab--active) .league-tab__count {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.theme-light .league-tab:not(.league-tab--active) .league-tab__count {
+  background: rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.1);
+  color: var(--text);
+}
 
 /* ═══════════════════════════════════════════════════════════════
    §43. DEPOSIT MODAL
@@ -8449,7 +8474,7 @@ input:focus, select:focus {
     width: 100%;
     padding: .28rem 0 .08rem;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     gap: .4rem;
   }
   .game-card--live  .gc-vs,
@@ -8459,25 +8484,37 @@ input:focus, select:focus {
   .gc-final-cta { display: flex; }
   /* Oculta o placar no mid para não duplicar */
   .game-card--final .game-card__mid { display: none !important; }
-  .game-card--live  .gc-score,
-  .game-card--final .gc-score { flex-direction: row; align-items: center; gap: .4rem; }
-  .game-card--live  .gc-tv-bar { flex-direction: row; gap: .25rem; }
-
-  /* Alinha o botão CTA ao fundo da linha para ficar na mesma altura do placar */
-  .game-card--live .game-card__foot { align-self: end; }
-
-  /* Placar final: label maior e destaque no valor */
-  .game-card--final .gc-score__label {
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .06em;
-    color: var(--text-muted);
+  /* Live: caixa TV em linha horizontal */
+  .game-card--live .gc-score--live {
+    flex-direction: row;
+    align-items: center;
+    gap: .55rem;
+    padding: .4rem .75rem;
+    width: fit-content;
+    min-width: 0;
   }
-  .game-card--live  .gc-score__val,
+  .game-card--live .gc-tv-bar {
+    flex-direction: column;
+    align-items: center;
+    gap: .1rem;
+    flex-shrink: 0;
+  }
+  .game-card--live .gc-tv-bar__period { font-size: .55rem; }
+  .game-card--live .gc-tv-bar__clock  { font-size: .68rem; }
+  .game-card--live .gc-score__val {
+    font-size: 1.35rem;
+    white-space: nowrap;
+  }
+
+  .game-card--final .gc-score { flex-direction: row; align-items: center; gap: .4rem; }
+  .game-card--live  .game-card__foot { align-self: end; }
+
+  .game-card--final .gc-score__label {
+    font-size: .62rem; font-weight: 700;
+    letter-spacing: .06em; color: var(--text-muted);
+  }
   .game-card--final .gc-score__val {
-    font-size: 1.15rem;
-    font-weight: 900;
-    letter-spacing: .02em;
+    font-size: 1.15rem; font-weight: 900; letter-spacing: .02em;
   }
 
   /* ─────────────────────────────────────────────────────────

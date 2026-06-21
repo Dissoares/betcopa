@@ -765,10 +765,13 @@ const leagueShortName = (name) => LEAGUE_SHORT[name] || name;
 
 const LEAGUE_ICONS = {
   'all':                'fa-solid fa-layer-group',
-  'Copa do Mundo 2026': 'fa-solid fa-earth-americas',
+  'Copa do Mundo 2026': 'fa-solid fa-trophy',
+  'Copa do Mundo':      'fa-solid fa-trophy',
+  'Copa do Mundo FIFA': 'fa-solid fa-trophy',
+  'FIFA World Cup':     'fa-solid fa-trophy',
   'Copa Libertadores':  'fa-solid fa-trophy',
   'Copa do Brasil':     'fa-solid fa-flag',
-  'Copa América':       'fa-solid fa-earth-americas',
+  'Copa América':       'fa-solid fa-trophy',
   'Premier League':     'fa-solid fa-crown',
   'La Liga':            'fa-solid fa-star',
   'Serie A':            'fa-solid fa-futbol',
@@ -776,7 +779,7 @@ const LEAGUE_ICONS = {
   'Ligue 1':            'fa-solid fa-circle-dot',
   'Champions League':   'fa-solid fa-star',
 };
-const leagueIcon = (key) => `<i class="${LEAGUE_ICONS[key] || 'fa-solid fa-shield'}"></i>`;
+const leagueIcon = (key) => `<i class="${LEAGUE_ICONS[key] || 'fa-solid fa-trophy'}"></i>`;
 
 const TEAM_NAMES_PT = {
   // Seleções — Copa do Mundo 2026
