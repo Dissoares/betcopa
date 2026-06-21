@@ -897,7 +897,7 @@ const renderCard = (g, opts = {}) => {
     ? ctaOddNum.toFixed(0)
     : ctaOddNum.toFixed(1).replace('.', ',');
   const ctaHtml = !isClosed
-    ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte o placar e ganhe <strong>${ctaOdd}×</strong> vezes o seu palpite!</p>`
+    ? `<p class="gc-cta"><i class="fa-solid fa-fire"></i> Acerte o placar e ganhe <strong>odd ${ctaOdd}×</strong> no seu palpite!</p>`
     : '';
 
   const urgencyHtml = isSoon
@@ -906,7 +906,7 @@ const renderCard = (g, opts = {}) => {
 
   const betBlocked = isClosed || isTooFar;
   const oddPill = (!betBlocked && ctaOddNum > 1)
-    ? `<span class="gc-odd-pill">${ctaOddFmt}<small>×</small></span>` : '';
+    ? `<span class="gc-odd-pill"><small>odd</small> ${ctaOddFmt}×</span>` : '';
 
   const mobileCta = !betBlocked
     ? `<div class="gc-mob-countdown">
@@ -3232,7 +3232,7 @@ const _renderBetsEmpty = () => {
         </div>
         <div class="bce-game__meta">
           <span class="bce-cd ${urg.cls}" id="bcetime-${g.id}"><i class="fa-solid ${urg.icon}"></i> ${urg.text}</span>
-          <span class="bce-game__odd">${oddFmt}</span>
+          <span class="bce-game__odd"><small>odd</small> ${oddFmt}</span>
           <button class="btn btn--primary btn--sm bce-game__btn" data-action="bet" data-id="${g.id}">
             <i class="fa-solid fa-bolt"></i> Apostar
           </button>

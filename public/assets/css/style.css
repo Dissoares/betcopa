@@ -1742,13 +1742,28 @@ body.scroll-locked {
 }
 .bce-game__time { font-size: .78rem; color: var(--text-muted); flex: 1; }
 .bce-game__odd  {
-  font-size: .78rem; font-weight: 800;
+  display: inline-flex;
+  align-items: baseline;
+  gap: .2rem;
+  font-size: .82rem; font-weight: 800;
   color: var(--primary);
   background: rgba(89,255,21,.12);
   border: 1px solid rgba(89,255,21,.25);
   border-radius: 6px;
-  padding: .1rem .45rem;
+  padding: .1rem .5rem;
 }
+.bce-game__odd small {
+  font-size: .65rem;
+  font-weight: 700;
+  opacity: .6;
+  text-transform: lowercase;
+}
+.theme-light .bce-game__odd {
+  color: #1a6e00;
+  background: rgba(0,120,0,.10);
+  border-color: rgba(0,120,0,.28);
+}
+.theme-light .bce-game__odd small { opacity: .7; }
 .bce-game__btn  { margin-left: auto; }
 .bce-all-btn    { margin-top: .3rem; }
 
