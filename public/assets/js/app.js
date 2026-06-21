@@ -4537,6 +4537,7 @@ const googleCallback = async (response) => {
 
     // Fecha qualquer modal de login rápido/pré-login aberto
     closeModal('modalPreLogin');
+    _hideEmailCapture();
 
     if (S.pendingBet) {
       const pb = S.pendingBet;
@@ -4575,7 +4576,7 @@ const initGoogleButtons = (clientId) => {
     client_id: clientId,
     callback:  googleCallback,
   });
-  ['googleBtnLogin', 'googleBtnRegister', 'googleBtnPreLogin'].forEach(id => {
+  ['googleBtnLogin', 'googleBtnRegister', 'googleBtnPreLogin', 'googleBtnEmailCapture'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.innerHTML = '';
@@ -8261,12 +8262,17 @@ const init = async () => {
     const cfg = await api('/api/admin/config-public');
     const googleClientId = cfg?.google_client_id ?? '';
     if (googleClientId) {
+      S.googleClientId = googleClientId;
       if (window.google?.accounts?.id) {
         initGoogleButtons(googleClientId);
       } else {
-        // GSI ainda não carregou — aguarda
         window.addEventListener('load', () => initGoogleButtons(googleClientId));
       }
+    }
+    // Esconde seção Google no email capture se não configurado
+    if (!googleClientId) {
+      document.getElementById('googleBtnEmailCapture')?.closest('.mlc-google')?.remove();
+      document.querySelector('.mlc-divider')?.remove();
     }
   } catch { /* silencioso — login com Google simplesmente não aparece */ }
 
@@ -8486,8 +8492,24 @@ function _showEmailCapture() {
   if (!el) return;
   el.classList.remove('hidden');
   lockScroll();
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('mlc--in')));
-  document.getElementById('mlcEmail')?.focus();
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.classList.add('mlc--in');
+    // Re-renderiza botão Google agora que o modal está visível e tem largura real
+    if (S.googleClientId && window.google?.accounts?.id) {
+      const gEl = document.getElementById('googleBtnEmailCapture');
+      if (gEl) {
+        gEl.innerHTML = '';
+        google.accounts.id.renderButton(gEl, {
+          theme:  'filled_black',
+          size:   'large',
+          width:  gEl.offsetWidth || gEl.parentElement?.offsetWidth || 300,
+          text:   'signup_with',
+          locale: 'pt-BR',
+        });
+      }
+    }
+    document.getElementById('mlcEmail')?.focus();
+  }));
 }
 
 function _hideEmailCapture() {

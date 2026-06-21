@@ -8239,6 +8239,13 @@ input:focus, select:focus {
 .mlc-success { padding: 1rem 0; }
 .mlc-success__icon { font-size: 2.5rem; }
 .mlc-success__msg  { margin: .5rem 0 0; font-size: .95rem; }
+.mlc-google  { width: 100%; display: flex; justify-content: center; margin-bottom: .1rem; }
+.mlc-divider {
+  display: flex; align-items: center; gap: .6rem;
+  color: var(--text-muted); font-size: .8rem; margin: .5rem 0;
+}
+.mlc-divider::before,
+.mlc-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .mlc-privacy { font-size: .75rem; color: var(--text-muted); margin: .8rem 0 0; }
 
 /* ════════════════════════════════════════════════════════════
