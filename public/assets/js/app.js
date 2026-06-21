@@ -878,7 +878,7 @@ const renderCard = (g, opts = {}) => {
     midHtml = `
         <div class="gc-vs">×</div>
         <div class="gc-countdown">
-          <span class="gc-countdown__label">COMEÇA EM</span>
+          <span class="gc-countdown__label" id="cdlabel-${g.id}">COMEÇA EM</span>
           <span class="gc-countdown__time" id="cdtime-${g.id}">--:--:--</span>
         </div>`;
   } else {
@@ -908,8 +908,11 @@ const renderCard = (g, opts = {}) => {
   const oddPill = (!betBlocked && ctaOddNum > 1)
     ? `<span class="gc-odd-pill">${ctaOddFmt}<small>×</small></span>` : '';
 
-  const mobileCta = (opts.isToday && !betBlocked)
-    ? `<div class="gc-mob-countdown"><span class="gc-countdown__time" id="cdtime-mob-${g.id}">--:--:--</span></div>`
+  const mobileCta = !betBlocked
+    ? `<div class="gc-mob-countdown">
+         <span class="gc-countdown__label" id="cdlabel-mob-${g.id}">COMEÇA EM</span>
+         <span class="gc-countdown__time" id="cdtime-mob-${g.id}">--:--:--</span>
+       </div>`
     : oddPill;
 
   const footHtml = isLive
@@ -1532,19 +1535,33 @@ const startLiveClocks = () => {
   });
 };
 
+const _fmtGameCd = (diff, gameDate) => {
+  if (diff <= 0) return { label: 'COMEÇA EM', time: 'Em breve!' };
+  if (diff <= 86_400_000) return { label: 'COMEÇA EM', time: fmtCountdown(diff) };
+  const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+  const gameMidnight  = new Date(gameDate); gameMidnight.setHours(0, 0, 0, 0);
+  const calDays = Math.round((gameMidnight - todayMidnight) / 86_400_000);
+  if (calDays === 1) return { label: 'COMEÇA EM', time: 'amanhã!' };
+  return { label: 'COMEÇA EM', time: `${calDays} dias` };
+};
+
 const startCountdowns = () => {
   S.games.forEach(g => {
     if (g.status !== 'aberto') return;
-    const el    = document.getElementById(`cdtime-${g.id}`);
-    const elMob = document.getElementById(`cdtime-mob-${g.id}`);
+    const el         = document.getElementById(`cdtime-${g.id}`);
+    const elLabel    = document.getElementById(`cdlabel-${g.id}`);
+    const elMob      = document.getElementById(`cdtime-mob-${g.id}`);
+    const elLabelMob = document.getElementById(`cdlabel-mob-${g.id}`);
     if ((!el && !elMob) || (el && el.dataset.t)) return;
     if (el) el.dataset.t = '1';
 
     const tick = () => {
       const diff = new Date(g.data_hora) - Date.now();
-      const txt  = fmtCountdown(diff);
-      if (el)    { el.textContent = txt; if (diff <= 0) el.classList.add('game-card__countdown-time--expired'); }
-      if (elMob) { elMob.textContent = fmtCountdown(diff); if (diff <= 0) elMob.classList.add('game-card__countdown-time--expired'); }
+      const { label, time } = _fmtGameCd(diff, g.data_hora);
+      if (el)         { el.textContent = time; if (diff <= 0) el.classList.add('game-card__countdown-time--expired'); }
+      if (elLabel)    elLabel.textContent = label;
+      if (elMob)      { elMob.textContent = time; if (diff <= 0) elMob.classList.add('game-card__countdown-time--expired'); }
+      if (elLabelMob) elLabelMob.textContent = label;
     };
     tick();
     S.timers.push(setInterval(tick, 1000));
@@ -6282,11 +6299,33 @@ const bind = () => {
   });
 
   // Paginação de apostas via event delegation
-  document.getElementById('adminBetsList')?.addEventListener('click', e => {
+  document.getElementById('adminBetsList')?.addEventListener('click', async e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    if (btn.dataset.action === 'bets-prev') fetchAdminBets(_adminBetsPage - 1);
-    if (btn.dataset.action === 'bets-next') fetchAdminBets(_adminBetsPage + 1);
+    if (btn.dataset.action === 'bets-prev') { fetchAdminBets(_adminBetsPage - 1); return; }
+    if (btn.dataset.action === 'bets-next') { fetchAdminBets(_adminBetsPage + 1); return; }
+    if (btn.dataset.action === 'bet-delete') {
+      const id = Number(btn.dataset.id);
+      const ok = await confirm({
+        title:        `Excluir aposta #${id}?`,
+        message:      'Esta ação não pode ser desfeita.',
+        confirmText:  'Excluir',
+        cancelText:   'Cancelar',
+        confirmColor: '#FF4757',
+      });
+      if (!ok) return;
+      btn.disabled = true;
+      try {
+        const res = await api(`/api/admin/apostas/${id}/excluir`, 'POST', {});
+        toast(res.message, 'success');
+        _selectedBets.delete(id);
+        _syncBetsBulkBar();
+        await fetchAdminBets(_adminBetsPage);
+      } catch (err) {
+        toast(err.message || 'Erro ao excluir aposta.', 'danger');
+        btn.disabled = false;
+      }
+    }
   });
   document.getElementById('adminBetsList')?.addEventListener('change', e => {
     const chk = e.target.closest('.bet-row-chk');
@@ -7311,7 +7350,7 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
         <thead>
           <tr>
             <th style="width:2rem"><input type="checkbox" id="chkAllBets" title="Selecionar todos"></th>
-            <th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Pagamento</th><th>Status</th>
+            <th>#</th><th>Usuário</th><th>Jogo</th><th>Palpite</th><th>Valor</th><th>Mult.</th><th>Prêmio</th><th>Pagamento</th><th>Status</th><th style="width:2.5rem"></th>
           </tr>
         </thead>
         <tbody>
@@ -7331,6 +7370,7 @@ const fetchAdminBets = async (page = _adminBetsPage) => {
               <td>${fmtR$(b.possivel_ganho)}</td>
               <td>${_payMethodBadge(b.metodo_pagamento)}</td>
               <td>${statusPill(b.status)}</td>
+              <td><button class="btn btn--sm btn--danger" data-action="bet-delete" data-id="${b.id}" title="Excluir aposta" style="padding:.25rem .45rem;font-size:.75rem;box-shadow:none"><i class="fa-solid fa-trash"></i></button></td>
             </tr>`;
           }).join('')}
         </tbody>

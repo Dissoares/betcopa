@@ -201,6 +201,7 @@ try {
         route('/api/admin/apostas/excluir/lote', 'POST', fn() => $adminCtrl->bulkDeleteBets($bets));
         route('/api/admin/apostas/excluir/todos', 'POST', fn() => $adminCtrl->deleteAllBets($bets));
         route('/api/admin/apostas/seed',          'POST', fn() => $adminCtrl->seedExampleBets());
+        routePattern('#^/api/admin/apostas/(\d+)/excluir$#', 'POST', fn(int $id) => $adminCtrl->deleteBet($id, $bets));
 
         // ── Config pública (mult range) ───────────────────────────
         route('/api/config/bets',  'GET',  fn() => $adminCtrl->betConfig());

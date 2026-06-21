@@ -71,6 +71,13 @@ class BetRepository
         return (int) $this->db->exec('DELETE FROM apostas');
     }
 
+    public function deleteById(int $id): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM apostas WHERE id = ?');
+        $stmt->execute([$id]);
+        return $stmt->rowCount() > 0;
+    }
+
     /**
      * Exclui apostas em lote — ignora as que estão pago/ganhou/perdido.
      * Retorna IDs efetivamente excluídos.

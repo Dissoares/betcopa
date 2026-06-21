@@ -269,6 +269,26 @@ class AdminController
         ]);
     }
 
+    public function deleteBet(int $id, BetRepository $bets): void
+    {
+        Csrf::verify();
+        ensureAdmin($this->adminEmail);
+
+        if ($id <= 0) {
+            jsonResponse(['error' => 'ID inválido.'], 400);
+            return;
+        }
+
+        $deleted = $bets->deleteById($id);
+        if (!$deleted) {
+            jsonResponse(['error' => 'Aposta não encontrada.'], 404);
+            return;
+        }
+
+        Logger::info('Aposta excluída pelo admin', ['id' => $id]);
+        jsonResponse(['message' => "Aposta #{$id} excluída."]);
+    }
+
     // ── Configurações ─────────────────────────────────────────
     public function getConfig(): void
     {

@@ -3843,8 +3843,8 @@ button.copa-hero__stat:hover {
   letter-spacing: .03em;
 }
 .game-card--today .gc-countdown__time { color: #f5b800; }
-/* Amanhã — verde */
-.games-section--tomorrow .gc-countdown__time { color: var(--primary); }
+/* Amanhã — laranja urgência */
+.games-section--tomorrow .gc-countdown__time { color: #f97316; }
 /* Próximos/week/beyond — azul */
 .games-section--upcoming .gc-countdown__time,
 .games-section--week     .gc-countdown__time,
@@ -8553,12 +8553,21 @@ input:focus, select:focus {
     line-height: 1;
   }
 
-  /* Countdown mobile (seção HOJE) — mesmo estilo do relógio ao vivo */
+  /* Countdown mobile */
   .gc-mob-countdown {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: .1rem;
     margin-bottom: .2rem;
+  }
+  .gc-mob-countdown .gc-countdown__label {
+    font-size: .5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
   }
   .gc-mob-countdown .gc-countdown__time {
     font-size: .68rem;
