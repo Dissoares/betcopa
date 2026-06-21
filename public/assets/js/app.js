@@ -288,7 +288,7 @@ const gameBadge = (g, opts = {}) => {
 
   // 5. Em Breve: aberto + menos de 1h para começar
   if (s === 'aberto' && diff > 0 && diff <= 3600000) {
-    return `<span class="badge badge--soon"><i class="fa-solid fa-clock"></i> Encerra em breve</span>`;
+    return `<span class="badge badge--closing"><i class="fa-solid fa-clock"></i> PALPITES FECHAM EM BREVE</span>`;
   }
 
   // 6. Em breve: aberto + mais de 7 dias para começar
