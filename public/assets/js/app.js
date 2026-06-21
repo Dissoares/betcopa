@@ -8979,21 +8979,20 @@ const _chatScrollBottom = () => {
 };
 
 const _chatSound = (() => {
-  let audio = null;
+  let audio;
   let unlocked = false;
+  try { audio = new Audio('/assets/sounds/chat.mp3'); } catch { /* ignore */ }
   const tryUnlock = () => {
     if (unlocked || !audio) return;
     audio.volume = 0;
     audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; unlocked = true; }).catch(() => {});
   };
-  document.addEventListener('click', tryUnlock);
-  document.addEventListener('touchstart', tryUnlock);
+  ['mousedown','touchstart','keydown','scroll','pointerdown'].forEach(e =>
+    document.addEventListener(e, tryUnlock)
+  );
   return () => {
-    try {
-      if (!audio) { audio = new Audio('/assets/sounds/chat.mp3'); tryUnlock(); }
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    } catch { /* ignore */ }
+    if (!audio) return;
+    try { audio.currentTime = 0; audio.play().catch(() => {}); } catch { /* ignore */ }
   };
 })();
 
@@ -9105,7 +9104,7 @@ const openChat = () => {
   const badge = document.getElementById('chatUnreadBadge');
   if (badge) { badge.textContent = '0'; badge.classList.add('hidden'); }
   const input = document.getElementById('chatInput');
-  if (input) input.placeholder = S.user ? 'Escreva uma mensagem…' : 'Digite para responder (entrará sua conta)…';
+  if (input) input.placeholder = S.user ? 'Escreva uma mensagem…' : 'Escreva uma mensagem…';
 };
 
 const closeChat = () => {

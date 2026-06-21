@@ -9261,10 +9261,11 @@ input:focus, select:focus {
   width: 52px; height: 52px; border-radius: 50%;
   background: var(--primary); color: #000; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 18px rgba(89,255,21,.35);
+  box-shadow: 0 4px 18px rgba(89,255,21,.35), 0 2px 10px rgba(0,0,0,.6);
   position: relative; transition: transform .2s, box-shadow .2s;
+  outline: 2px solid rgba(0,0,0,.18);
 }
-.chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(89,255,21,.5); }
+.chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(89,255,21,.5), 0 2px 10px rgba(0,0,0,.6); }
 .chat-fab__icon  { font-size: 1.25rem; }
 .chat-fab__close { font-size: 1.2rem; display: none; }
 .chat-widget--open .chat-fab__icon  { display: none; }
