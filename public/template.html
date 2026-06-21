@@ -1764,6 +1764,16 @@
         </div>
       </div>
 
+      <!-- Urgency countdown (jogos do dia) -->
+      <div class="bm-urgency hidden" id="betUrgencyBar">
+        <span class="bm-urgency__label"><i class="fa-solid fa-fire"></i> PALPITES ENCERRAM EM</span>
+        <div class="bm-urgency__clock">
+          <div class="bm-urgency__unit"><span id="bmCdM">00</span><small>min</small></div>
+          <div class="bm-urgency__colon">:</div>
+          <div class="bm-urgency__unit"><span id="bmCdS">00</span><small>seg</small></div>
+        </div>
+      </div>
+
       <!-- Times + Scoreboard -->
       <div class="bm__matchup">
         <div class="bm__team">
@@ -2585,7 +2595,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=33"></script>
+  <script src="/assets/js/app.js?v=34"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

@@ -1428,7 +1428,7 @@ const renderGames = () => {
       liveWrap.innerHTML = renderSection('live', 'Ao Vivo', '', live, 'games-section--live');
     } else if (soon.length) {
       soonFeatured = true;
-      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '<span class="dot-live"></span>', soon, 'games-section--soon');
+      liveWrap.innerHTML = renderSection('soon', 'Daqui a Pouco', '<i class="fa-regular fa-clock" style="color:#f59e0b;font-size:.85rem"></i>', soon, 'games-section--soon');
     } else {
       liveWrap.innerHTML = '';
     }
@@ -1437,7 +1437,7 @@ const renderGames = () => {
   // Demais seções no grid principal (sem ao vivo; soon já pode estar no topo)
   let html = '';
   if (!soonFeatured) {
-    html += renderSection('soon', 'Daqui a Pouco', '<span class="dot-live"></span>', soon, 'games-section--soon');
+    html += renderSection('soon', 'Daqui a Pouco', '<i class="fa-regular fa-clock" style="color:#f59e0b;font-size:.85rem"></i>', soon, 'games-section--soon');
   }
   html += renderSection('today',    'Ainda hoje!', '', today,    'games-section--today');
   html += renderSection('tomorrow', 'Amanhã',   '', tomorrow, 'games-section--tomorrow');
@@ -3889,27 +3889,41 @@ const startBetCountdown = (gameDate) => {
   if (_betCountdownTimer) { clearInterval(_betCountdownTimer); _betCountdownTimer = null; }
   const cdEl  = document.getElementById('betGameCountdown');
   const rowEl = document.getElementById('betCountdownRow');
+  const urgEl = document.getElementById('betUrgencyBar');
+  const urgM  = document.getElementById('bmCdM');
+  const urgS  = document.getElementById('bmCdS');
   if (!cdEl || !rowEl) return;
   const tick = () => {
     const diff = gameDate - Date.now();
     if (diff <= 0) {
       cdEl.textContent = 'Jogo em andamento';
       rowEl.className  = 'bm__meta-row2 bm__meta-row2--live';
+      if (urgEl) urgEl.classList.add('hidden');
       clearInterval(_betCountdownTimer); _betCountdownTimer = null;
       return;
     }
-    const s = Math.floor(diff / 1000);
-    const d = Math.floor(s / 86400);
-    const h = Math.floor((s % 86400) / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sc = s % 60;
-    const label = d > 0
-      ? `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`
-      : h > 0
-        ? `${h}h ${String(m).padStart(2,'0')}m ${String(sc).padStart(2,'0')}s`
-        : `${String(m).padStart(2,'0')}m ${String(sc).padStart(2,'0')}s`;
-    cdEl.textContent = `O jogo começa em ${label}`;
-    rowEl.className  = diff <= 3_600_000 ? 'bm__meta-row2 bm__meta-row2--soon' : 'bm__meta-row2';
+    const totalSec = Math.floor(diff / 1000);
+    const d  = Math.floor(totalSec / 86400);
+    const h  = Math.floor((totalSec % 86400) / 3600);
+    const m  = Math.floor((totalSec % 3600) / 60);
+    const sc = totalSec % 60;
+    if (d > 0) {
+      // Mais de 1 dia: texto simples
+      cdEl.textContent = `O jogo começa em ${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
+      rowEl.className  = 'bm__meta-row2';
+      if (urgEl) urgEl.classList.add('hidden');
+    } else {
+      // Jogo hoje: contador de urgência com dígitos
+      cdEl.textContent = '';
+      rowEl.classList.add('hidden');
+      if (urgEl) {
+        urgEl.classList.remove('hidden');
+        const critical = diff <= 3_600_000;
+        urgEl.classList.toggle('bm-urgency--critical', critical);
+        if (urgM) urgM.textContent = String(m).padStart(2, '0');
+        if (urgS) urgS.textContent = String(sc).padStart(2, '0');
+      }
+    }
   };
   tick();
   _betCountdownTimer = setInterval(tick, 1000);

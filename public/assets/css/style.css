@@ -2584,6 +2584,99 @@ select {
 .bm__meta-icon  { color: var(--text-muted); font-size: .72rem; }
 .bm__meta-league { font-weight: 700; color: var(--text-dim); }
 .bm__meta-sep   { opacity: .4; }
+
+/* ── Urgency countdown (jogos do dia) ───────────────────────── */
+.bm-urgency {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  padding: .55rem .85rem;
+  background: rgba(255,109,0,.1);
+  border: 1px solid rgba(255,109,0,.35);
+  border-radius: var(--radius-sm);
+  margin: 0 0 .75rem;
+}
+.bm-urgency--critical {
+  background: rgba(239,68,68,.1);
+  border-color: rgba(239,68,68,.4);
+  animation: bmUrgencyPulse 1.4s ease-in-out infinite;
+}
+@keyframes bmUrgencyPulse {
+  0%,100% { background: rgba(239,68,68,.08); }
+  50%     { background: rgba(239,68,68,.18); }
+}
+.bm-urgency__label {
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: #f59e0b;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+.bm-urgency--critical .bm-urgency__label { color: #f87171; }
+.bm-urgency__clock {
+  display: flex;
+  align-items: center;
+  gap: .2rem;
+}
+.bm-urgency__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .04rem;
+  min-width: 2.1rem;
+  background: rgba(0,0,0,.3);
+  border-radius: 6px;
+  padding: .22rem .35rem;
+}
+.bm-urgency__unit span {
+  font-family: 'Barlow Condensed', monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.bm-urgency--critical .bm-urgency__unit span { color: #fca5a5; }
+.bm-urgency__unit small {
+  font-size: .48rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: rgba(255,255,255,.35);
+  text-transform: uppercase;
+}
+.bm-urgency__colon {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: rgba(255,255,255,.3);
+  line-height: 1;
+  padding-bottom: .7rem;
+}
+
+/* ── Urgency countdown — tema claro ─────────────────────────── */
+.theme-light .bm-urgency {
+  background: rgba(255,109,0,.08);
+  border-color: rgba(255,109,0,.45);
+}
+.theme-light .bm-urgency--critical {
+  background: rgba(220,38,38,.08);
+  border-color: rgba(220,38,38,.45);
+}
+.theme-light .bm-urgency__label        { color: #c2410c; }
+.theme-light .bm-urgency--critical .bm-urgency__label { color: #dc2626; }
+.theme-light .bm-urgency__unit {
+  background: rgba(0,0,0,.07);
+  border: 1px solid rgba(0,0,0,.1);
+}
+.theme-light .bm-urgency__unit span    { color: #1e293b; }
+.theme-light .bm-urgency--critical .bm-urgency__unit span { color: #dc2626; }
+.theme-light .bm-urgency__unit small   { color: rgba(0,0,0,.4); }
+.theme-light .bm-urgency__colon        { color: rgba(0,0,0,.25); }
+
 .bm__meta-date  { font-variant-numeric: tabular-nums; }
 
 /* Times */
