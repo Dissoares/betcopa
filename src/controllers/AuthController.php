@@ -137,7 +137,10 @@ class AuthController
         $loginUrl = $baseUrl . '/?magic=' . $token;
         $sent     = $this->mailer?->magicLink($email, $user['nome'], $loginUrl, $bonus);
 
-        $response = ['message' => 'Link de acesso enviado! Verifique seu e-mail.'];
+        $response = [
+            'message' => 'Link de acesso enviado! Verifique seu e-mail.',
+            'is_new'  => $isNew,
+        ];
         if (!$sent) {
             $response['magic_url'] = $loginUrl;
         }

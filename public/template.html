@@ -1035,31 +1035,61 @@
 
         <!-- ── ABA: SUPORTE ── -->
         <div class="admin-tab hidden" id="atab-suporte">
-          <div class="admin-page-header admin-page-header--actions">
-            <div>
-              <h2 class="admin-page-header__title"><i class="fa-solid fa-headset"></i> Suporte</h2>
-              <p class="admin-page-header__sub">Tickets de suporte dos usuários</p>
-            </div>
-            <div class="ticket-filter-bar">
-              <button class="ticket-filter-btn ticket-filter-btn--active" data-ticket-filter="todos">Todos</button>
-              <button class="ticket-filter-btn" data-ticket-filter="aberto">Abertos</button>
-              <button class="ticket-filter-btn" data-ticket-filter="em_atendimento">Em atendimento</button>
-              <button class="ticket-filter-btn" data-ticket-filter="fechado">Fechados</button>
+          <!-- Sub-tabs -->
+          <div class="suporte-tabs">
+            <button class="suporte-tab suporte-tab--active" data-suporte-tab="chat">
+              <i class="fa-solid fa-comment-dots"></i> Chat
+              <span class="admin-nav__badge hidden" id="adminChatUnreadBadge">0</span>
+            </button>
+            <button class="suporte-tab" data-suporte-tab="tickets">
+              <i class="fa-solid fa-ticket"></i> Tickets
+              <span class="admin-nav__badge hidden" id="adminTicketBadge2">0</span>
+            </button>
+          </div>
+
+          <!-- Chat -->
+          <div class="suporte-content" id="suporte-chat">
+            <div class="ticket-split">
+              <div class="ticket-split__list" id="adminChatConvList">
+                <p class="empty-state" style="padding:2rem;text-align:center">Nenhuma conversa ainda.</p>
+              </div>
+              <div class="ticket-split__chat hidden" id="adminChatPanel">
+                <div class="ticket-chat-header" id="adminChatPanelHeader"></div>
+                <div class="ticket-chat-messages" id="adminChatPanelMessages"></div>
+                <div class="ticket-chat-footer">
+                  <div class="ticket-chat-input-wrap">
+                    <textarea class="ticket-chat-input" id="adminChatReplyInput" placeholder="Responder ao usuário…" rows="2"></textarea>
+                    <button class="btn btn--primary ticket-chat-send" id="adminChatReplySend"><i class="fa-solid fa-paper-plane"></i></button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="ticket-split">
-            <div class="ticket-split__list" id="adminTicketList">
-              <p class="empty-state" style="padding:2rem;text-align:center;display:none" id="adminTicketEmpty">Nenhum ticket encontrado.</p>
+
+          <!-- Tickets -->
+          <div class="suporte-content hidden" id="suporte-tickets">
+            <div class="admin-page-header admin-page-header--actions" style="padding:0 0 1rem">
+              <div class="ticket-filter-bar">
+                <button class="ticket-filter-btn ticket-filter-btn--active" data-ticket-filter="todos">Todos</button>
+                <button class="ticket-filter-btn" data-ticket-filter="aberto">Abertos</button>
+                <button class="ticket-filter-btn" data-ticket-filter="em_atendimento">Em atendimento</button>
+                <button class="ticket-filter-btn" data-ticket-filter="fechado">Fechados</button>
+              </div>
             </div>
-            <div class="ticket-split__chat hidden" id="adminTicketChat">
-              <div class="ticket-chat-header" id="adminChatHeader"></div>
-              <div class="ticket-chat-messages" id="adminChatMessages"></div>
-              <div class="ticket-chat-footer">
-                <div class="ticket-chat-input-wrap">
-                  <textarea class="ticket-chat-input" id="adminChatInput" placeholder="Escreva sua resposta…" rows="2"></textarea>
-                  <button class="btn btn--primary ticket-chat-send" id="adminChatSend"><i class="fa-solid fa-paper-plane"></i></button>
+            <div class="ticket-split">
+              <div class="ticket-split__list" id="adminTicketList">
+                <p class="empty-state" style="padding:2rem;text-align:center;display:none" id="adminTicketEmpty">Nenhum ticket encontrado.</p>
+              </div>
+              <div class="ticket-split__chat hidden" id="adminTicketChat">
+                <div class="ticket-chat-header" id="adminChatHeader"></div>
+                <div class="ticket-chat-messages" id="adminChatMessages"></div>
+                <div class="ticket-chat-footer">
+                  <div class="ticket-chat-input-wrap">
+                    <textarea class="ticket-chat-input" id="adminChatInput" placeholder="Escreva sua resposta…" rows="2"></textarea>
+                    <button class="btn btn--primary ticket-chat-send" id="adminChatSend"><i class="fa-solid fa-paper-plane"></i></button>
+                  </div>
+                  <div class="ticket-chat-actions" id="adminChatActions"></div>
                 </div>
-                <div class="ticket-chat-actions" id="adminChatActions"></div>
               </div>
             </div>
           </div>
@@ -2517,6 +2547,32 @@
     </div>
   </div>
 
+  <!-- ═══ CHAT DE SUPORTE ════════════════════════════════════════ -->
+  <div id="chatWidget" class="chat-widget hidden">
+    <!-- Botão flutuante -->
+    <button class="chat-fab" id="chatFab" aria-label="Abrir chat de suporte">
+      <i class="fa-solid fa-comment-dots chat-fab__icon"></i>
+      <i class="fa-solid fa-xmark chat-fab__close"></i>
+      <span class="chat-fab__badge hidden" id="chatUnreadBadge">0</span>
+    </button>
+    <!-- Painel -->
+    <div class="chat-panel hidden" id="chatPanel">
+      <div class="chat-panel__header">
+        <div class="chat-panel__title">
+          <i class="fa-solid fa-headset"></i> Suporte BetCopa
+        </div>
+        <span class="chat-panel__status"><span class="chat-online-dot"></span> Online</span>
+      </div>
+      <div class="chat-panel__messages" id="chatMessages"></div>
+      <div class="chat-panel__footer">
+        <textarea class="chat-panel__input" id="chatInput" placeholder="Escreva uma mensagem…" rows="1"></textarea>
+        <button class="chat-panel__send" id="chatSend" aria-label="Enviar">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ EXIT INTENT MODAL ══════════════════════════════════════ -->
   <!-- ===== Modal: Captura de Email (retenção step 2) ===== -->
   <div id="modalEmailCapture" class="mlc-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mlcTitle">
@@ -2600,7 +2656,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/app.js?v=34"></script>
+  <script src="/assets/js/app.js?v=35"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

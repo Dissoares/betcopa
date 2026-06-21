@@ -5,7 +5,8 @@ class WithdrawalController
 {
     private const VALOR_MINIMO = 10.00;
 
-    private ?Mailer $mailer = null;
+    private ?Mailer         $mailer = null;
+    private ?ChatRepository $chat   = null;
 
     public function __construct(
         private readonly WithdrawalRepository  $withdrawals,
@@ -15,6 +16,7 @@ class WithdrawalController
     ) {}
 
     public function setMailer(Mailer $mailer): void { $this->mailer = $mailer; }
+    public function setChat(ChatRepository $chat): void { $this->chat = $chat; }
 
     /** POST /api/user/saques */
     public function request(): void
@@ -50,8 +52,13 @@ class WithdrawalController
         $this->transactions->create($userId, 'debito', $valor, 'Solicitação de saque #aguardando');
         $id = $this->withdrawals->create($userId, $valor, $chave, $tipo);
 
-        // Atualiza descrição da transação com ID do saque
         Logger::info('Saque solicitado', ['user_id' => $userId, 'saque_id' => $id, 'valor' => $valor]);
+
+        $this->chat?->send($userId, 'system',
+            "📤 Pedido de saque de **R\$ " . number_format($valor, 2, ',', '.') . "** recebido! Estamos processando. Prazo: até 48h úteis.",
+            ['type' => 'withdrawal_requested', 'saque_id' => $id]
+        );
+
         jsonResponse(['message' => 'Saque solicitado! Prazo: até 48h úteis.', 'id' => $id], 201);
     }
 
@@ -79,6 +86,11 @@ class WithdrawalController
             try { $this->mailer->withdrawalApproved($saque['user_email'], $saque['user_nome'], (float) $saque['valor']); }
             catch (\Throwable $e) { Logger::info('Mail falhou (withdrawalApproved)', ['err' => $e->getMessage()]); }
         }
+
+        $this->chat?->send((int) $saque['user_id'], 'system',
+            "✅ Seu saque de **R\$ " . number_format((float) $saque['valor'], 2, ',', '.') . "** foi aprovado e enviado para sua chave PIX! Pode levar até 1 hora para cair na sua conta.",
+            ['type' => 'withdrawal_approved', 'saque_id' => $id]
+        );
 
         jsonResponse(['message' => 'Saque aprovado.']);
     }
@@ -110,6 +122,12 @@ class WithdrawalController
             try { $this->mailer->withdrawalRejected($saque['user_email'], $saque['user_nome'], (float) $saque['valor'], $obs); }
             catch (\Throwable $e) { Logger::info('Mail falhou (withdrawalRejected)', ['err' => $e->getMessage()]); }
         }
+
+        $motivo = $obs ? " Motivo: {$obs}." : '';
+        $this->chat?->send((int) $saque['user_id'], 'system',
+            "❌ Seu saque de **R\$ " . number_format((float) $saque['valor'], 2, ',', '.') . "** foi cancelado e o valor foi estornado ao seu saldo.{$motivo}",
+            ['type' => 'withdrawal_rejected', 'saque_id' => $id]
+        );
 
         jsonResponse(['message' => 'Saque rejeitado e saldo estornado.']);
     }

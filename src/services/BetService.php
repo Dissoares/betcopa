@@ -8,6 +8,7 @@ class BetService
     private ConfigRepository $configRepo;
     private ?PaymentRepository $paymentsRepo = null;
     private ?Mailer             $mailer       = null;
+    private ?ChatRepository     $chat         = null;
 
     public function __construct(BetRepository $bets, GameRepository $games, TransactionRepository $transactions, array $config, ConfigRepository $configRepo)
     {
@@ -26,6 +27,11 @@ class BetService
     public function setMailer(Mailer $mailer): void
     {
         $this->mailer = $mailer;
+    }
+
+    public function setChat(ChatRepository $chat): void
+    {
+        $this->chat = $chat;
     }
 
     /**
@@ -86,6 +92,12 @@ class BetService
         ]);
 
         Logger::info('Aposta criada', ['bet_id' => $id, 'user_id' => $userId, 'game_id' => $jogoId, 'valor' => $valor, 'odd' => $odd]);
+
+        $this->chat?->send($userId, 'system',
+            "🎯 Palpite registrado! Você apostou **{$placarCasa} × {$placarFora}** em **{$game['time_casa']} vs {$game['time_fora']}**. Boa sorte! 🍀",
+            ['type' => 'bet_placed', 'bet_id' => $id]
+        );
+
         return [
             'id'             => $id,
             'jogo_id'        => $jogoId,
@@ -224,13 +236,24 @@ class BetService
         foreach ($bets as $bet) {
             $acertou = (int) $bet['placar_casa'] === $realCasa && (int) $bet['placar_fora'] === $realFora;
             $status  = $acertou ? 'ganhou' : 'perdido';
+            $uid     = (int) $bet['user_id'];
             if ($acertou) {
-                $this->transactions->create((int) $bet['user_id'], 'credito', (float) $bet['possivel_ganho'], 'Prêmio aposta #' . $bet['id']);
+                $ganho = (float) $bet['possivel_ganho'];
+                $this->transactions->create($uid, 'credito', $ganho, 'Prêmio aposta #' . $bet['id']);
                 if ($this->mailer && !empty($bet['email'])) {
                     $palpite = $bet['placar_casa'] . ' × ' . $bet['placar_fora'];
-                    try { $this->mailer->betWon($bet['email'], $bet['nome'], $jogo, $palpite, $placar, (float) $bet['possivel_ganho']); }
+                    try { $this->mailer->betWon($bet['email'], $bet['nome'], $jogo, $palpite, $placar, $ganho); }
                     catch (\Throwable $e) { Logger::info('Mail falhou (betWon)', ['err' => $e->getMessage()]); }
                 }
+                $this->chat?->send($uid, 'system',
+                    "🏆 Parabéns! Você acertou o placar **{$bet['placar_casa']} × {$bet['placar_fora']}** em **{$jogo}** e ganhou **R\$ " . number_format($ganho, 2, ',', '.') . "**! O valor já está no seu saldo. 🎉",
+                    ['type' => 'bet_won', 'bet_id' => (int) $bet['id'], 'valor' => $ganho]
+                );
+            } else {
+                $this->chat?->send($uid, 'system',
+                    "😔 Desta vez não rolou — o placar foi **{$placar}** em **{$jogo}**. Não desanime, o próximo palpite pode ser o certo! 💪",
+                    ['type' => 'bet_lost', 'bet_id' => (int) $bet['id']]
+                );
             }
             $this->bets->updateStatus((int) $bet['id'], $status);
             Logger::info('Aposta processada', ['bet_id' => $bet['id'], 'status' => $status]);

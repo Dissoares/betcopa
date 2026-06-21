@@ -3,11 +3,15 @@ declare(strict_types=1);
 
 class DepositController
 {
+    private ?ChatRepository $chat = null;
+
     public function __construct(
         private readonly DepositRepository     $deposits,
         private readonly TransactionRepository $transactions,
         private readonly ConfigRepository      $config
     ) {}
+
+    public function setChat(ChatRepository $chat): void { $this->chat = $chat; }
 
     public function create(): void
     {
@@ -90,6 +94,12 @@ class DepositController
         $this->deposits->updateStatus($id, 'confirmado');
         $this->transactions->create($userId, 'credito', (float) $deposit['valor'], 'Depósito via PIX #' . $id);
         Logger::info('Depósito confirmado', ['deposit_id' => $id, 'user_id' => $userId]);
+
+        $this->chat?->send($userId, 'system',
+            "💰 Depósito de **R\$ " . number_format((float) $deposit['valor'], 2, ',', '.') . "** confirmado! Seu saldo foi atualizado. Bora apostar! ⚡",
+            ['type' => 'deposit_confirmed', 'deposit_id' => $id]
+        );
+
         jsonResponse(['message' => 'Depósito confirmado! Saldo adicionado.', 'status' => 'confirmado']);
     }
 

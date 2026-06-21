@@ -52,6 +52,8 @@ require_once __DIR__ . '/../src/repositories/MagicTokenRepository.php';
 require_once __DIR__ . '/../src/controllers/DepositController.php';
 require_once __DIR__ . '/../src/controllers/ReferralController.php';
 require_once __DIR__ . '/../src/controllers/MigrationController.php';
+require_once __DIR__ . '/../src/repositories/ChatRepository.php';
+require_once __DIR__ . '/../src/controllers/ChatController.php';
 
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -127,10 +129,18 @@ try {
         $notifCtrl    = new NotificationController($notifsRepo);
         $ticketCtrl   = new TicketController($ticketsRepo, $adminEmail);
         $ticketCtrl->setNotificationRepository($notifsRepo);
+        $chatRepo     = new ChatRepository($db);
+        $chatCtrl     = new ChatController($chatRepo, $adminEmail);
+
+        $authService->setChat($chatRepo);
+        $betService->setChat($chatRepo);
+
         $withdrawCtrl = new WithdrawalController($withdrawals, $transactions, $configRepo, $adminEmail);
         $withdrawCtrl->setMailer($mailer);
+        $withdrawCtrl->setChat($chatRepo);
         $depositRepo  = new DepositRepository($db);
         $depositCtrl  = new DepositController($depositRepo, $transactions, $configRepo);
+        $depositCtrl->setChat($chatRepo);
         $webhookCtrl  = new WebhookController($payments, $bets, $transactions, $configRepo, $depositRepo);
 
         // ── Auth ──────────────────────────────────────────────
@@ -323,6 +333,15 @@ try {
         route('/api/notifications',          'GET',  fn() => $notifCtrl->list());
         route('/api/notifications/read-all', 'POST', fn() => $notifCtrl->markAllRead());
         routePattern('/^\/api\/notifications\/(\d+)\/read$/', 'POST', fn(int $id) => $notifCtrl->markRead($id));
+
+        // ── Chat de suporte ───────────────────────────────────────────────
+        route('/api/chat/messages',              'GET',  fn() => $chatCtrl->getMessages());
+        route('/api/chat/messages',              'POST', fn() => $chatCtrl->sendMessage());
+        route('/api/chat/unread',                'GET',  fn() => $chatCtrl->getUnread());
+        route('/api/admin/chat/conversations',   'GET',  fn() => $chatCtrl->adminConversations());
+        route('/api/admin/chat/conversation',    'GET',  fn() => $chatCtrl->adminConversation());
+        route('/api/admin/chat/reply',           'POST', fn() => $chatCtrl->adminReply());
+        route('/api/admin/chat/unread',          'GET',  fn() => $chatCtrl->adminUnread());
 
         // ── Tickets (suporte) ─────────────────────────────────────────────
         route('/api/tickets',            'GET',  fn() => $ticketCtrl->listMine());

@@ -4,6 +4,7 @@ class AuthService
     private UserRepository $users;
     private TransactionRepository $transactions;
     private ConfigRepository $config;
+    private ?ChatRepository $chat = null;
 
     public function __construct(UserRepository $users, TransactionRepository $transactions, ConfigRepository $config)
     {
@@ -11,6 +12,8 @@ class AuthService
         $this->transactions = $transactions;
         $this->config       = $config;
     }
+
+    public function setChat(ChatRepository $chat): void { $this->chat = $chat; }
 
     public function register(string $nome, string $email, string $senha, ?string $referralCode = null): array
     {
@@ -56,6 +59,12 @@ class AuthService
         }
 
         Logger::info('Novo usuário', ['id' => $userId, 'email' => $email]);
+
+        $boasVindas = "👋 Bem-vindo ao BetCopa, **{$nome}**! Aqui você palpita no placar exato dos jogos e pode ganhar prêmios reais. Qualquer dúvida é só responder aqui — estamos sempre por perto! ⚽";
+        if ($bonus > 0) {
+            $boasVindas .= "\n\n🎁 Você já recebeu **R\$ " . number_format($bonus, 2, ',', '.') . "** de bônus de boas-vindas no seu saldo!";
+        }
+        $this->chat?->send($userId, 'system', $boasVindas, ['type' => 'welcome']);
 
         return ['id' => $userId, 'nome' => $nome, 'email' => $email];
     }
