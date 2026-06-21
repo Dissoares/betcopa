@@ -332,7 +332,7 @@ const navigate = (view) => {
     btn.classList.toggle('nav__btn--active', btn.dataset.nav === view);
   });
   const contaBtn = document.getElementById('bottomNavConta');
-  if (contaBtn) contaBtn.classList.toggle('nav__btn--active', view === 'auth' || view === 'palpites');
+  if (contaBtn) contaBtn.classList.toggle('nav__btn--active', view === 'auth' || view === 'perfil');
 
   // Banner só aparece na view de jogos
   const bannerWrap = document.getElementById('matchBannerWrap');
@@ -3291,28 +3291,33 @@ const renderResultCard = (g) => {
     ? `<img src="${g.logo_fora}" class="rc__emblem-img" alt="${g.time_fora}" loading="lazy">`
     : `<span class="rc__emblem-flag">${flagEmoji(g.bandeira_fora || '')}</span>`;
 
-  const homeClass = !hasScore ? '' : homeWin ? 'rc__half--win' : draw ? 'rc__half--draw' : 'rc__half--loss';
-  const awayClass = !hasScore ? '' : awayWin ? 'rc__half--win' : draw ? 'rc__half--draw' : 'rc__half--loss';
+  const homeMod = !hasScore ? '' : homeWin ? 'rc__team--win' : draw ? 'rc__team--draw' : 'rc__team--loss';
+  const awayMod = !hasScore ? '' : awayWin ? 'rc__team--win' : draw ? 'rc__team--draw' : 'rc__team--loss';
+  const hScMod  = !hasScore ? '' : homeWin ? 'rc__score--win' : draw ? 'rc__score--draw' : 'rc__score--loss';
+  const aScMod  = !hasScore ? '' : awayWin ? 'rc__score--win' : draw ? 'rc__score--draw' : 'rc__score--loss';
 
   const timeStr     = new Date(g.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const leagueLabel = g.liga_nome ? (leagueShortName(g.liga_nome) || g.liga_nome) : '';
 
   return `
     <div class="rc">
-      <div class="rc__top">
+      <div class="rc__meta">
         <span class="rc__league">${leagueLabel}</span>
         <time class="rc__time">${timeStr}</time>
       </div>
-      <div class="rc__duel">
-        <div class="rc__half rc__half--home ${homeClass}">
+      <div class="rc__row">
+        <div class="rc__team rc__team--home ${homeMod}">
           <div class="rc__emblem">${emblemH}</div>
-          <span class="rc__name">${g.time_casa}</span>
-          <strong class="rc__half-score">${homeGoals !== null ? homeGoals : '—'}</strong>
+          <span class="rc__team-name">${g.time_casa}</span>
         </div>
-        <div class="rc__half rc__half--away ${awayClass}">
+        <div class="rc__scoreline">
+          <strong class="rc__score ${hScMod}">${homeGoals !== null ? homeGoals : '—'}</strong>
+          <span class="rc__sep">×</span>
+          <strong class="rc__score ${aScMod}">${awayGoals !== null ? awayGoals : '—'}</strong>
+        </div>
+        <div class="rc__team rc__team--away ${awayMod}">
+          <span class="rc__team-name">${g.time_fora}</span>
           <div class="rc__emblem">${emblemA}</div>
-          <span class="rc__name">${g.time_fora}</span>
-          <strong class="rc__half-score">${awayGoals !== null ? awayGoals : '—'}</strong>
         </div>
       </div>
     </div>`;
@@ -5598,7 +5603,7 @@ const bind = () => {
 
   document.addEventListener('click', e => {
     if (e.target.closest('#dropdownLogout')) logout();
-    if (e.target.closest('#udropBtnDeposit')) { closeAllModals?.(); openDepositModal(); }
+    if (e.target.closest('#udropBtnDeposit') || e.target.closest('#perfilBtnDeposit')) { closeAllModals?.(); openDepositModal(); }
     if (e.target.closest('#drawerBtnDeposit')) { closeMobileMenu(); openDepositModal(); }
     if (e.target.closest('#udropBtnSaque')) { openSaqueModal(); }
     if (e.target.closest('#udropBtnReferral')) {
@@ -8194,8 +8199,10 @@ const _renderPerfilTransacoes = (list) => {
         <div class="perfil-trans-item__icon perfil-trans-item__icon--${cls}">
           <i class="fa-solid ${icon}"></i>
         </div>
-        <span class="perfil-trans-item__desc">${escHtml(t.descricao || '—')}</span>
-        <span class="perfil-trans-item__date">${date}</span>
+        <div class="perfil-trans-item__body">
+          <div class="perfil-trans-item__desc">${escHtml(t.descricao || '—')}</div>
+          <div class="perfil-trans-item__date">${date}</div>
+        </div>
         <span class="perfil-trans-item__val perfil-trans-item__val--${cls}">${sign}${fmtMoney(parseFloat(t.valor))}</span>
       </div>`;
   }).join('');
@@ -8465,7 +8472,7 @@ document.addEventListener('click', (e) => {
   const btn = e.target.closest('#bottomNavConta');
   if (!btn) return;
   e.stopPropagation();
-  navigate(S.user ? 'palpites' : 'auth');
+  navigate(S.user ? 'perfil' : 'auth');
 }, true);
 
 document.addEventListener('DOMContentLoaded', init);
