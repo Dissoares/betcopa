@@ -62,18 +62,21 @@ class ChatRepository
         return (int) $this->db->lastInsertId();
     }
 
-    /** Vincula mensagens de guest a um user após login */
+    /** Vincula mensagens de guest a um user após login (exclui mensagens do bot) */
     public function claimGuest(string $guestId, int $userId): void
     {
         $this->db->prepare(
-            'UPDATE chat_messages SET user_id = :uid, guest_id = NULL WHERE guest_id = :gid AND user_id IS NULL'
+            'UPDATE chat_messages SET user_id = :uid, guest_id = NULL
+             WHERE guest_id = :gid AND user_id IS NULL AND sender != "system"'
         )->execute(['uid' => $userId, 'gid' => $guestId]);
     }
 
     public function getForUser(int $userId, int $limit = 100): array
     {
         $stmt = $this->db->prepare(
-            'SELECT * FROM chat_messages WHERE user_id = :uid ORDER BY created_at ASC LIMIT :lim'
+            'SELECT * FROM chat_messages
+             WHERE user_id = :uid AND (sender != "system" OR meta IS NOT NULL)
+             ORDER BY created_at ASC LIMIT :lim'
         );
         $stmt->bindValue('uid', $userId, PDO::PARAM_INT);
         $stmt->bindValue('lim', $limit,  PDO::PARAM_INT);
@@ -84,10 +87,24 @@ class ChatRepository
     public function afterId(int $userId, int $afterId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT * FROM chat_messages WHERE user_id = :uid AND id > :aid ORDER BY created_at ASC'
+            'SELECT * FROM chat_messages
+             WHERE user_id = :uid AND id > :aid AND (sender != "system" OR meta IS NOT NULL)
+             ORDER BY created_at ASC'
         );
         $stmt->execute(['uid' => $userId, 'aid' => $afterId]);
         return $stmt->fetchAll();
+    }
+
+    public function shouldSendAutoReply(int $userId): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM chat_messages
+             WHERE user_id = :uid AND sender = "system"
+             AND JSON_UNQUOTE(JSON_EXTRACT(meta, "$.type")) = "auto_reply"
+             AND created_at > NOW() - INTERVAL 4 HOUR'
+        );
+        $stmt->execute(['uid' => $userId]);
+        return (int) $stmt->fetchColumn() === 0;
     }
 
     public function getUnreadCount(int $userId): int

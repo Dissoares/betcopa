@@ -319,6 +319,13 @@
    position:fixed relativo ao viewport (não ao body) */
 html { scroll-behavior: smooth; overflow-x: hidden; }
 
+/* Scrollbar global */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-card); }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+* { scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-card); }
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);

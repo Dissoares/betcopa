@@ -35,6 +35,14 @@ class ChatController
         }
 
         $id = $this->chat->send($userId, 'user', $msg);
+
+        if ($this->chat->shouldSendAutoReply($userId)) {
+            $this->chat->send($userId, 'system',
+                "📨 Mensagem recebida! Nossa equipe responderá em breve. Se preferir, entre em contato pelo e-mail de suporte.",
+                ['type' => 'auto_reply']
+            );
+        }
+
         jsonResponse(['id' => $id, 'ok' => true]);
     }
 
